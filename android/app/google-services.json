@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "383311248166",
+    "project_id": "myduitgweh",
+    "storage_bucket": "myduitgweh.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:383311248166:android:b82694c0ba2047c4291fe7",
+        "android_client_info": {
+          "package_name": "com.myduitgweh.my_duit_gweh"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDduf13vr1dlQ5OWiJ-jAXh09eaQtOmmn8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
