@@ -1,92 +1,60 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import '../models/user_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  User? get currentUser => _auth.currentUser;
-  Stream<User?> get authStateChanges => _auth.authStateChanges();
-
-  Future<UserModel?> signInWithGoogle() async {
+  Future<UserCredential?> signInWithGoogle() async {
     try {
-      print('DEBUG AUTH: Step 1 - Menunggu Google Login UI...');
+      // Potentially force account selection by disconnecting first if needed, 
+      // but usually the standard way is to just sign out during logout.
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) {
-        print('DEBUG AUTH: User membatalkan login');
-        return null;
-      }
+      if (googleUser == null) return null;
 
-      print('DEBUG AUTH: Step 2 - Mendapatkan credential Google...');
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-
-      final credential = GoogleAuthProvider.credential(
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final OAuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      print('DEBUG AUTH: Step 3 - Signing in ke Firebase dengan credential...');
-      final UserCredential userCredential =
-          await _auth.signInWithCredential(credential);
-
-      final User? user = userCredential.user;
-      if (user == null) {
-        print('DEBUG AUTH: User Firebase null');
-        return null;
+      final UserCredential userCredential = await _auth.signInWithCredential(credential);
+      
+      // Sync user data to Firestore
+      if (userCredential.user != null) {
+        await _firestore.collection('users').doc(userCredential.user!.uid).set({
+          'uid': userCredential.user!.uid,
+          'email': userCredential.user!.email,
+          'displayName': userCredential.user!.displayName,
+          'photoURL': userCredential.user!.photoURL,
+          'lastSeen': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
       }
 
-      print('DEBUG AUTH: Step 4 - Mengirim data user ke Firestore...');
-      final userDoc = await _firestore.collection('users').doc(user.uid).get();
-
-      UserModel userModel;
-      if (!userDoc.exists) {
-        print('DEBUG AUTH: User baru terdeteksi, mendaftarkan akun baru...');
-        userModel = UserModel(
-          uid: user.uid,
-          name: user.displayName ?? 'User',
-          email: user.email ?? '',
-          photoUrl: user.photoURL,
-          createdAt: DateTime.now(),
-        );
-        await _firestore
-            .collection('users')
-            .doc(user.uid)
-            .set(userModel.toJson());
-
-        print('DEBUG AUTH: Membuat dompet default dengan ID professional...');
-        // Menentukan ID Dompet baru dengan format kita
-        final now = DateTime.now().millisecondsSinceEpoch.toString().substring(5);
-        final customId = 'WLT-$now-INIT';
-        final walletRef = _firestore.collection('wallets').doc(customId);
-        
-        await walletRef.set({
-          'id': customId,
-          'walletName': 'Dompet Utama',
-          'balance': 0.0,
-          'type': 'personal',
-          'members': [user.uid],
-          'owner': user.uid,
-          'createdAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-      } else {
-        print('DEBUG AUTH: Selamat datang kembali, ${user.displayName}');
-        userModel = UserModel.fromJson(userDoc.data()!);
-      }
-
-      return userModel;
+      return userCredential;
     } catch (e) {
-      print('DEBUG AUTH ERROR: $e');
-      rethrow;
+      print('Google Sign-In Error: $e');
+      return null;
     }
   }
 
   Future<void> signOut() async {
-    await _googleSignIn.signOut();
-    await _auth.signOut();
+    try {
+      // 1. Sign out from Firebase
+      await _auth.signOut();
+      
+      // 2. Sign out from Google (Clears the local session)
+      await _googleSignIn.signOut();
+      
+      // 3. DISCONNECT from Google (This FORCES the account selection dialog next time)
+      await _googleSignIn.disconnect();
+      
+    } catch (e) {
+      print('Sign-Out Error: $e');
+    }
   }
+
+  Stream<User?> get userStream => _auth.authStateChanges();
 }

@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import '../models/wallet_model.dart';
 import '../models/transaction_model.dart';
 
@@ -69,13 +70,27 @@ class FirestoreService {
   }
 
   Future<bool> joinWalletByCode(String code, String uid) async {
-    final query = await _firestore.collection('wallets').where('inviteCode', isEqualTo: code.toUpperCase()).limit(1).get();
-    if (query.docs.isEmpty) return false;
-    final doc = query.docs.first;
-    final members = List<String>.from(doc.data()['members'] ?? []);
-    if (members.contains(uid)) return true;
-    await doc.reference.update({'members': FieldValue.arrayUnion([uid])});
-    return true;
+    try {
+      final query = await _firestore.collection('wallets')
+          .where('inviteCode', isEqualTo: code.toUpperCase().trim())
+          .limit(1)
+          .get();
+          
+      if (query.docs.isEmpty) return false;
+      
+      final doc = query.docs.first;
+      final members = List<String>.from(doc.data()['members'] ?? []);
+      
+      if (members.contains(uid)) return true;
+      
+      await doc.reference.update({
+        'members': FieldValue.arrayUnion([uid])
+      });
+      return true;
+    } catch (e) {
+      debugPrint('Join error: $e');
+      return false;
+    }
   }
 
   Future<void> addTransaction(TransactionModel transaction) async {
