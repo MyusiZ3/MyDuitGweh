@@ -9,6 +9,7 @@ class TransactionModel {
   final String category;
   final String note;
   final String createdBy;
+  final String createdByName;
   final DateTime date;
 
   TransactionModel({
@@ -19,6 +20,7 @@ class TransactionModel {
     required this.category,
     required this.note,
     required this.createdBy,
+    required this.createdByName,
     required this.date,
   });
 
@@ -31,6 +33,7 @@ class TransactionModel {
       category: json['category'] as String,
       note: json['note'] as String? ?? '',
       createdBy: json['createdBy'] as String,
+      createdByName: json['createdByName'] as String? ?? 'Teman Kamu',
       date: (json['date'] as Timestamp).toDate(),
     );
   }
@@ -43,6 +46,7 @@ class TransactionModel {
       'category': category,
       'note': note,
       'createdBy': createdBy,
+      'createdByName': createdByName,
       'date': Timestamp.fromDate(date),
     };
   }
@@ -58,6 +62,7 @@ class TransactionModel {
     String? category,
     String? note,
     String? createdBy,
+    String? createdByName,
     DateTime? date,
   }) {
     return TransactionModel(
@@ -68,6 +73,7 @@ class TransactionModel {
       category: category ?? this.category,
       note: note ?? this.note,
       createdBy: createdBy ?? this.createdBy,
+      createdByName: createdByName ?? this.createdByName,
       date: date ?? this.date,
     );
   }

@@ -77,6 +77,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         category: _selectedCategory!,
         note: _noteController.text.trim(),
         createdBy: _uid,
+        createdByName: FirebaseAuth.instance.currentUser?.displayName ?? 'Anonim',
         date: DateTime.now(),
       );
 

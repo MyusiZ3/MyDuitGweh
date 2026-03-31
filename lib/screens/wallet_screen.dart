@@ -410,7 +410,19 @@ class _WalletScreenState extends State<WalletScreen> {
                               ),
                             ),
                             title: Text(t.category, style: const TextStyle(fontWeight: FontWeight.bold)),
-                            subtitle: Text(DateFormat('dd MMM yyyy').format(t.date)),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(DateFormat('dd MMM yyyy • HH:mm').format(t.date), style: const TextStyle(fontSize: 12)),
+                                if (wallet.isColab) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Dibuat oleh: ${t.createdByName}',
+                                    style: const TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w600),
+                                  ),
+                                ]
+                              ],
+                            ),
                             trailing: Text(
                               '${t.isIncome ? '+' : '-'}${CurrencyFormatter.formatCurrency(t.amount)}',
                               style: TextStyle(
@@ -442,15 +454,18 @@ class _WalletScreenState extends State<WalletScreen> {
           const Text('Belum ada dompet', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const Text('Ayo buat satu untuk mulai mencatat!', style: TextStyle(color: AppColors.textHint)),
           const SizedBox(height: 32),
-          ElevatedButton.icon(
-            onPressed: _showCreateWalletDialog,
-            icon: const Icon(Icons.add_rounded),
-            label: const Text('Buat Dompet'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          SizedBox(
+            width: 220, // Give it a fixed width for better balance
+            height: 52,
+            child: ElevatedButton(
+              onPressed: _showCreateWalletDialog,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              ),
+              child: const Text('Buat Dompet', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
             ),
           ),
         ],
