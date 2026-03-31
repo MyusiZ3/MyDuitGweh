@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/wallet_model.dart';
 import '../models/transaction_model.dart';
@@ -45,11 +46,49 @@ class FirestoreService {
             .toList());
   }
 
-  /// Create a new wallet
+  /// Create a new wallet with invite code if it's a colab wallet
   Future<String> createWallet(WalletModel wallet) async {
     final docRef = _firestore.collection('wallets').doc();
-    await docRef.set(wallet.copyWith(id: docRef.id).toJson());
+    
+    String? inviteCode;
+    if (wallet.type == 'colab') {
+      inviteCode = _generateInviteCode();
+    }
+    
+    await docRef.set(wallet.copyWith(
+      id: docRef.id,
+      inviteCode: inviteCode,
+    ).toJson());
+    
     return docRef.id;
+  }
+
+  /// Generate a random 6-character invite code
+  String _generateInviteCode() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    return List.generate(6, (index) => chars[Random().nextInt(chars.length)]).join();
+  }
+
+  /// Join a wallet using an invite code
+  Future<bool> joinWalletByCode(String code, String uid) async {
+    final query = await _firestore
+        .collection('wallets')
+        .where('inviteCode', isEqualTo: code.toUpperCase())
+        .limit(1)
+        .get();
+
+    if (query.docs.isEmpty) return false;
+
+    final doc = query.docs.first;
+    final members = List<String>.from(doc.data()['members'] ?? []);
+
+    if (members.contains(uid)) return true; // Already a member
+
+    await doc.reference.update({
+      'members': FieldValue.arrayUnion([uid]),
+    });
+
+    return true;
   }
 
   // ============================================================

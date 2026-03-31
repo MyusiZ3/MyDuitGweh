@@ -8,6 +8,7 @@ class WalletModel {
   final List<String> members; // List of UIDs for colab wallets
   final String owner;
   final DateTime createdAt;
+  final String? inviteCode;
 
   WalletModel({
     required this.id,
@@ -17,17 +18,19 @@ class WalletModel {
     required this.members,
     required this.owner,
     required this.createdAt,
+    this.inviteCode,
   });
 
   factory WalletModel.fromJson(Map<String, dynamic> json, {String? docId}) {
     return WalletModel(
-      id: docId ?? json['id'] as String,
-      walletName: json['walletName'] as String,
-      balance: (json['balance'] as num).toDouble(),
-      type: json['type'] as String,
+      id: docId ?? json['id'] as String? ?? '',
+      walletName: json['walletName'] as String? ?? 'Unnamed Wallet',
+      balance: (json['balance'] as num?)?.toDouble() ?? 0.0,
+      type: json['type'] as String? ?? 'personal',
       members: List<String>.from(json['members'] ?? []),
-      owner: json['owner'] as String,
-      createdAt: (json['createdAt'] as Timestamp).toDate(),
+      owner: json['owner'] as String? ?? '',
+      createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      inviteCode: json['inviteCode'] as String?,
     );
   }
 
@@ -39,6 +42,7 @@ class WalletModel {
       'members': members,
       'owner': owner,
       'createdAt': Timestamp.fromDate(createdAt),
+      'inviteCode': inviteCode,
     };
   }
 
@@ -50,6 +54,7 @@ class WalletModel {
     List<String>? members,
     String? owner,
     DateTime? createdAt,
+    String? inviteCode,
   }) {
     return WalletModel(
       id: id ?? this.id,
@@ -59,6 +64,7 @@ class WalletModel {
       members: members ?? this.members,
       owner: owner ?? this.owner,
       createdAt: createdAt ?? this.createdAt,
+      inviteCode: inviteCode ?? this.inviteCode,
     );
   }
 

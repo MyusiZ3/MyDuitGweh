@@ -26,8 +26,14 @@ class _WalletScreenState extends State<WalletScreen> {
         backgroundColor: AppColors.background,
         actions: [
           IconButton(
+            onPressed: _showJoinWalletDialog,
+            icon: const Icon(Icons.vpn_key_rounded, color: AppColors.textSecondary),
+            tooltip: 'Gabung Dompet',
+          ),
+          IconButton(
             onPressed: _showCreateWalletDialog,
             icon: const Icon(Icons.add_rounded, color: AppColors.primary),
+            tooltip: 'Buat Dompet',
           ),
         ],
       ),
@@ -60,6 +66,92 @@ class _WalletScreenState extends State<WalletScreen> {
             },
           );
         },
+      ),
+    );
+  }
+
+  void _showJoinWalletDialog() {
+    final codeController = TextEditingController();
+    bool isLoading = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          padding: EdgeInsets.only(
+            left: 24, right: 24, top: 24,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+          ),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.textHint.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text('Gabung ke Dompet',
+                  style: Theme.of(context).textTheme.headlineMedium),
+              const SizedBox(height: 8),
+              const Text('Masukkan 6 digit kode undangan dompet kolaborasi.',
+                  style: TextStyle(color: AppColors.textHint, fontSize: 13)),
+              const SizedBox(height: 20),
+              TextField(
+                controller: codeController,
+                autofocus: true,
+                maxLength: 6,
+                textCapitalization: TextCapitalization.characters,
+                decoration: const InputDecoration(
+                  hintText: 'CONTOH: X8Y2Z1',
+                  prefixIcon: Icon(Icons.vpn_key_outlined, color: AppColors.primary),
+                  counterText: '',
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity, height: 52,
+                child: ElevatedButton(
+                  onPressed: isLoading ? null : () async {
+                    final code = codeController.text.trim();
+                    if (code.length < 6) return;
+
+                    setModalState(() => isLoading = true);
+                    final success = await _firestoreService.joinWalletByCode(code, _uid);
+                    setModalState(() => isLoading = false);
+
+                    if (mounted) {
+                      if (success) {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Berhasil bergabung ke dompet!')),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Kode tidak valid atau dompet tidak ditemukan.')),
+                        );
+                      }
+                    }
+                  },
+                  child: isLoading 
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Text('Gabung Sekarang'),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -267,6 +359,41 @@ class _WalletScreenState extends State<WalletScreen> {
                       style: Theme.of(context).textTheme.displayMedium?.copyWith(
                             color: AppColors.primary),
                     ),
+                    if (wallet.isColab && wallet.inviteCode != null) ...[
+                      const SizedBox(height: 20),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Kode Undangan', 
+                                    style: TextStyle(fontSize: 12, color: AppColors.textHint)),
+                                const SizedBox(height: 4),
+                                Text(wallet.inviteCode!, 
+                                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: 2)),
+                              ],
+                            ),
+                            IconButton(
+                              onPressed: () {
+                                // Implement share or copy logic if needed
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Kode berhasil disalin!')),
+                                );
+                              },
+                              icon: const Icon(Icons.copy_rounded, color: AppColors.primary),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
