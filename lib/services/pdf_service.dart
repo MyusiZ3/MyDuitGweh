@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:csv/csv.dart';
+import 'package:path_provider/path_provider.dart';
 import '../models/transaction_model.dart';
 import '../utils/currency_formatter.dart';
 import 'package:intl/intl.dart';
@@ -44,6 +46,39 @@ class PdfService {
     await Printing.layoutPdf(
       onLayout: (PdfPageFormat format) async => pdf.save(),
       name: 'Laporan_Keuangan_${DateFormat('yyyyMMdd').format(startDate)}.pdf',
+    );
+  }
+
+  static Future<void> generateAndExportCSV({
+    required List<TransactionModel> transactions,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    List<List<dynamic>> rows = [];
+    
+    // Header
+    rows.add(['Tanggal', 'Kategori', 'Catatan', 'Tipe', 'Jumlah']);
+
+    // Data
+    for (var t in transactions) {
+      rows.add([
+        DateFormat('dd/MM/yyyy HH:mm').format(t.date),
+        t.category,
+        t.note,
+        t.isIncome ? 'Pemasukan' : 'Pengeluaran',
+        t.amount,
+      ]);
+    }
+
+    String csvData = const ListToCsvConverter().convert(rows);
+    final directory = await getTemporaryDirectory();
+    final path = '${directory.path}/Laporan_Keuangan_${DateFormat('yyyyMMdd').format(startDate)}.csv';
+    final file = File(path);
+    await file.writeAsString(csvData);
+
+    await Printing.sharePdf(
+      bytes: await file.readAsBytes(),
+      filename: 'Laporan_Keuangan_${DateFormat('yyyyMMdd').format(startDate)}.csv',
     );
   }
 
