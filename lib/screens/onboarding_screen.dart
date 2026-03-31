@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 import 'login_screen.dart';
 import '../utils/app_theme.dart';
 
@@ -16,68 +15,74 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<OnboardingData> _pages = [
     OnboardingData(
-      title: 'Pantau Keuangan\nJadi Lebih Mudah',
-      subtitle: 'Catat pemasukan dan pengeluaran harianmu dalam hitungan detik dengan MyDuitGweh.',
-      lottieUrl: 'https://assets2.lottiefiles.com/packages/lf20_yoz7bk8l.json', // Wallet & Chart
+      title: 'Solusi Cerdas\nAtur Keuanganmu',
+      subtitle: 'Semua transaksi harian tercatat otomatis\ndan rapi dalam satu genggaman.',
+      icon: Icons.account_balance_wallet_rounded,
+      iconColor: AppColors.primary,
     ),
     OnboardingData(
-      title: 'Tabungan Bareng\nDompet Kolaborasi',
-      subtitle: 'Kelola keuangan bersama keluarga atau teman dalam satu dompet yang transparan.',
-      lottieUrl: 'https://assets5.lottiefiles.com/packages/lf20_cc9vS3.json', // People collaborating
+      title: 'Pantau Bersama\ndengan Kolaborasi',
+      subtitle: 'Bikin dompet bareng teman atau pasangan,\nbiar makin transparan dan seru!',
+      icon: Icons.groups_rounded,
+      iconColor: Colors.orangeAccent,
     ),
     OnboardingData(
-      title: 'Laporan Detail\nAnalisis Pintar',
-      subtitle: 'Dapatkan insight mendalam tentang pola belanjamu lewat grafik yang informatif.',
-      lottieUrl: 'https://assets1.lottiefiles.com/private_files/lf30_89sh9v.json', // Detailed analytics
+      title: 'Export Laporan\nSecepat Kilat',
+      subtitle: 'Download laporan bulanan dalam format PDF\nyang rapi, siap untuk dicetak kapan saja.',
+      icon: Icons.picture_as_pdf_rounded,
+      iconColor: Colors.redAccent,
     ),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: Stack(
+      backgroundColor: const Color(0xFFF9FAFF), // Soft background like Gojek
+      body: Column(
         children: [
-          PageView.builder(
-            controller: _pageController,
-            onPageChanged: (index) {
-              setState(() => _currentPage = index);
-            },
-            itemCount: _pages.length,
-            itemBuilder: (context, index) {
-              return _buildPage(_pages[index]);
-            },
+          // Onboarding Content
+          Expanded(
+            child: PageView.builder(
+              controller: _pageController,
+              onPageChanged: (index) {
+                setState(() => _currentPage = index);
+              },
+              itemCount: _pages.length,
+              itemBuilder: (context, index) {
+                return _buildPage(_pages[index]);
+              },
+            ),
           ),
           
-          // Navigation Bottom Area
-          Positioned(
-            bottom: 60,
-            left: 24,
-            right: 24,
+          // Bottom area - Actions
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+            color: Colors.white,
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                // Dots Indicator
+                // Minimalist Dots Indicator
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(
                     _pages.length,
                     (index) => AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
-                      margin: const EdgeInsets.only(right: 8),
-                      height: 8,
-                      width: _currentPage == index ? 24 : 8,
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      height: 6,
+                      width: _currentPage == index ? 24 : 6,
                       decoration: BoxDecoration(
                         color: _currentPage == index 
                           ? AppColors.primary 
-                          : AppColors.primary.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(4),
+                          : AppColors.primary.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(3),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 32),
                 
-                // Primary Button
+                // Gojek Style Login/Start Button
                 SizedBox(
                   width: double.infinity,
                   height: 56,
@@ -85,14 +90,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     onPressed: () {
                       if (_currentPage < _pages.length - 1) {
                         _pageController.nextPage(
-                          duration: const Duration(milliseconds: 500),
-                          curve: Curves.easeInOut,
+                          duration: const Duration(milliseconds: 600),
+                          curve: Curves.fastOutSlowIn,
                         );
                       } else {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (context) => const LoginScreen()),
-                        );
+                        _navigateToLogin();
                       }
                     },
                     style: ElevatedButton.styleFrom(
@@ -100,7 +102,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(28), // Very rounded like Gopay
                       ),
                     ),
                     child: Text(
@@ -110,20 +112,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                 ),
                 
-                // Skip Button
-                if (_currentPage < _pages.length - 1)
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (context) => const LoginScreen()),
-                      );
-                    },
-                    child: const Text(
-                      'Lewati',
-                      style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                // Skip / Login link
+                const SizedBox(height: 16),
+                GestureDetector(
+                  onTap: _navigateToLogin,
+                  child: RichText(
+                    text: TextSpan(
+                      text: 'Tiba-tiba sudah punya akun? ',
+                      style: const TextStyle(color: AppColors.textHint, fontSize: 13),
+                      children: [
+                        TextSpan(
+                          text: 'Masuk',
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
+                ),
               ],
             ),
           ),
@@ -132,41 +140,79 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
+  void _navigateToLogin() {
+    Navigator.pushReplacement(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, anim, secondAnim) => const LoginScreen(),
+        transitionsBuilder: (context, anim, secondAnim, child) {
+          return FadeTransition(opacity: anim, child: child);
+        },
+      ),
+    );
+  }
+
   Widget _buildPage(OnboardingData data) {
-    return Padding(
-      padding: const EdgeInsets.all(40.0),
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 80, 24, 24),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Lottie.network(
-            data.lottieUrl,
-            height: 300,
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) => const Icon(Icons.wallet, size: 100, color: AppColors.primary),
-          ),
-          const SizedBox(height: 48),
-          Text(
-            data.title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary,
-              height: 1.2,
-              letterSpacing: -1,
+          // Illustration Box ala Gojek
+          Expanded(
+            flex: 6,
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(40),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(40),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                   Container(
+                    width: 140,
+                    height: 140,
+                    decoration: BoxDecoration(
+                      color: data.iconColor.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(data.icon, size: 80, color: data.iconColor),
+                  ),
+                  const SizedBox(height: 48),
+                  Text(
+                    data.title,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.textPrimary,
+                      height: 1.2,
+                      letterSpacing: -1,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    data.subtitle,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      color: AppColors.textSecondary,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 16),
-          Text(
-            data.subtitle,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 15,
-              color: AppColors.textSecondary,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 100), // Space for button
+          const Spacer(flex: 1),
         ],
       ),
     );
@@ -176,7 +222,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 class OnboardingData {
   final String title;
   final String subtitle;
-  final String lottieUrl;
+  final IconData icon;
+  final Color iconColor;
 
-  OnboardingData({required this.title, required this.subtitle, required this.lottieUrl});
+  OnboardingData({
+    required this.title, 
+    required this.subtitle, 
+    required this.icon,
+    required this.iconColor,
+  });
 }
