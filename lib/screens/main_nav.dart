@@ -9,12 +9,23 @@ import 'report_screen.dart';
 class MainNav extends StatefulWidget {
   const MainNav({super.key});
 
+  static _MainNavState? of(BuildContext context) =>
+      context.findAncestorStateOfType<_MainNavState>();
+
   @override
   State<MainNav> createState() => _MainNavState();
 }
 
 class _MainNavState extends State<MainNav> {
   int _currentIndex = 0;
+
+  void setTab(int index) {
+    if (index == 2) {
+      _showAddTransaction();
+      return;
+    }
+    setState(() => _currentIndex = index);
+  }
 
   final List<Widget> _screens = [
     const HomeScreen(),
@@ -67,7 +78,8 @@ class _MainNavState extends State<MainNav> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _buildNavItem(Icons.home_rounded, 'Home', 0),
-                _buildNavItem(Icons.account_balance_wallet_outlined, 'Wallet', 1),
+                _buildNavItem(
+                    Icons.account_balance_wallet_outlined, 'Wallet', 1),
                 _buildAddButton(),
                 _buildNavItem(Icons.group_outlined, 'Colab', 3),
                 _buildNavItem(Icons.bar_chart_rounded, 'Report', 4),
