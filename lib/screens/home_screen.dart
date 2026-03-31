@@ -8,6 +8,9 @@ import '../utils/app_theme.dart';
 import '../utils/currency_formatter.dart';
 import '../widgets/loading_widget.dart';
 import 'login_screen.dart';
+import 'edit_profile_screen.dart';
+import 'help_screen.dart';
+import 'about_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -106,33 +109,84 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showProfileMenu() {
+    final user = FirebaseAuth.instance.currentUser;
+    
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
         decoration: const BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Handle Bar
             Container(
-              width: 40,
-              height: 4,
+              width: 40, height: 4,
               decoration: BoxDecoration(
                 color: AppColors.textHint.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const SizedBox(height: 24),
-            ListTile(
-              leading: const Icon(Icons.logout_rounded, color: AppColors.expense),
-              title: const Text('Keluar'),
+            const SizedBox(height: 32),
+            
+            // User Info Header
+            CircleAvatar(
+              radius: 40,
+              backgroundColor: AppColors.primary.withOpacity(0.1),
+              backgroundImage: user?.photoURL != null ? NetworkImage(user!.photoURL!) : null,
+              child: user?.photoURL == null ? const Icon(Icons.person_rounded, size: 40, color: AppColors.primary) : null,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              user?.displayName ?? 'User',
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+            ),
+            Text(
+              user?.email ?? '',
+              style: const TextStyle(fontSize: 14, color: AppColors.textHint),
+            ),
+            
+            const SizedBox(height: 40),
+            
+            // Menu Items
+            const Divider(height: 1),
+            _buildProfileMenuItem(
+              icon: Icons.person_outline_rounded,
+              label: 'Edit Nama Profil',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const EditProfileScreen()));
+              },
+            ),
+            _buildProfileMenuItem(
+              icon: Icons.help_outline_rounded,
+              label: 'Bantuan & Dukungan',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpScreen()));
+              },
+            ),
+            _buildProfileMenuItem(
+              icon: Icons.info_outline_rounded,
+              label: 'Tentang Aplikasi',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const AboutScreen()));
+              },
+            ),
+            _buildProfileMenuItem(
+              icon: Icons.logout_rounded,
+              label: 'Keluar dari Akun',
+              iconColor: AppColors.expense,
+              textColor: AppColors.expense,
               onTap: () async {
                 final navigator = Navigator.of(context);
-                navigator.pop();
+                navigator.pop(); // Close bottom sheet
                 await _authService.signOut();
                 if (mounted) {
                   navigator.pushAndRemoveUntil(
@@ -142,10 +196,36 @@ class _HomeScreenState extends State<HomeScreen> {
                 }
               },
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildProfileMenuItem({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    Color iconColor = AppColors.textPrimary,
+    Color textColor = AppColors.textPrimary,
+  }) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(vertical: 4),
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: iconColor.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, size: 22, color: iconColor),
+      ),
+      title: Text(
+        label,
+        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: textColor),
+      ),
+      trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textHint),
+      onTap: onTap,
     );
   }
 
