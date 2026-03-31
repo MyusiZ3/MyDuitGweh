@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/firestore_service.dart';
+import '../services/pdf_service.dart';
 import '../models/wallet_model.dart';
 import '../models/transaction_model.dart';
+import '../widgets/loading_widget.dart';
 import '../utils/app_theme.dart';
 import '../utils/currency_formatter.dart';
+import 'package:intl/intl.dart';
 
 class ReportScreen extends StatefulWidget {
   const ReportScreen({super.key});
@@ -24,17 +27,19 @@ class _ReportScreenState extends State<ReportScreen> {
       appBar: AppBar(
         title: const Text('Laporan'),
         backgroundColor: AppColors.background,
+        actions: [
+          IconButton(
+            onPressed: () => _showExportDialog(context),
+            icon: const Icon(Icons.picture_as_pdf_rounded, color: AppColors.primary),
+            tooltip: 'Download PDF',
+          ),
+        ],
       ),
       body: StreamBuilder<List<WalletModel>>(
         stream: _firestoreService.getWalletsStream(_uid),
         builder: (context, walletSnapshot) {
           if (!walletSnapshot.hasData) {
-            return const Center(
-              child: CircularProgressIndicator(
-                color: AppColors.primary,
-                strokeWidth: 2.5,
-              ),
-            );
+            return const LoadingWidget();
           }
 
           if (walletSnapshot.data!.isEmpty) {
@@ -331,6 +336,184 @@ class _ReportScreenState extends State<ReportScreen> {
           ),
         ),
       ],
+    );
+  }
+  Future<void> _showExportDialog(BuildContext context) async {
+    DateTimeRange selectedDateRange = DateTimeRange(
+      start: DateTime.now().subtract(const Duration(days: 30)),
+      end: DateTime.now(),
+    );
+    
+    // Get all unique categories for filter
+    List<String> allCategories = [
+      'All', 
+      ...TransactionCategory.incomeCategories,
+      ...TransactionCategory.expenseCategories,
+    ].toSet().toList(); // toSet() to remove potential duplicates like 'Lainnya'
+    List<String> selectedCategories = ['All'];
+    bool isExporting = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          padding: EdgeInsets.only(
+            left: 24, right: 24, top: 24,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+          ),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Export Laporan PDF', style: Theme.of(context).textTheme.headlineMedium),
+              const SizedBox(height: 24),
+              
+              // Date Range Picker
+              const Text('Pilih Rentang Waktu', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              InkWell(
+                onTap: () async {
+                  final picked = await showDateRangePicker(
+                    context: context,
+                    initialDateRange: selectedDateRange,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime.now(),
+                  );
+                  if (picked != null) {
+                    setModalState(() => selectedDateRange = picked);
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: AppColors.surfaceVariant),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.calendar_today_rounded, size: 18, color: AppColors.primary),
+                      const SizedBox(width: 12),
+                      Text('${DateFormat('dd/MM/yy').format(selectedDateRange.start)} - ${DateFormat('dd/MM/yy').format(selectedDateRange.end)}'),
+                    ],
+                  ),
+                ),
+              ),
+              
+              const SizedBox(height: 20),
+              
+              // Category Multi-select
+              const Text('Kategori', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: allCategories.map((cat) {
+                  final isSelected = selectedCategories.contains(cat);
+                  return FilterChip(
+                    label: Text(cat, style: TextStyle(fontSize: 12, color: isSelected ? Colors.white : AppColors.textPrimary)),
+                    selected: isSelected,
+                    selectedColor: AppColors.primary,
+                    checkmarkColor: Colors.white,
+                    onSelected: (selected) {
+                      setModalState(() {
+                        if (cat == 'All') {
+                          selectedCategories = ['All'];
+                        } else {
+                          selectedCategories.remove('All');
+                          if (selected) {
+                            selectedCategories.add(cat);
+                          } else {
+                            selectedCategories.remove(cat);
+                            if (selectedCategories.isEmpty) selectedCategories.add('All');
+                          }
+                        }
+                      });
+                    },
+                  );
+                }).toList(),
+              ),
+              
+              const SizedBox(height: 32),
+              
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: isExporting ? null : () async {
+                    setModalState(() => isExporting = true);
+                    
+                    try {
+                      // 1. Get Wallet IDs
+                      final wallets = await _firestoreService.getWalletsStream(_uid).first;
+                      final walletIds = wallets.map((w) => w.id).toList();
+                      
+                      if (walletIds.isEmpty) throw 'Kamu tidak memiliki dompet.';
+
+                      // 2. Fetch filtered transactions
+                      final txns = await _firestoreService.getFilteredTransactions(
+                        walletIds: walletIds,
+                        startDate: selectedDateRange.start,
+                        endDate: selectedDateRange.end,
+                        categories: selectedCategories,
+                      );
+                      
+                      if (txns.isEmpty) {
+                        throw 'Tidak ada transaksi ditemukan pada rentang waktu ini.';
+                      }
+
+                      // 3. Calc totals
+                      double income = 0;
+                      double expense = 0;
+                      for (var t in txns) {
+                        if (t.isIncome) income += t.amount;
+                        else expense += t.amount;
+                      }
+
+                      // 4. Generate PDF
+                      await PdfService.generateAndPrintReport(
+                        transactions: txns,
+                        startDate: selectedDateRange.start,
+                        endDate: selectedDateRange.end,
+                        selectedCategories: selectedCategories,
+                        totalIncome: income,
+                        totalExpense: expense,
+                      );
+                      
+                      if (mounted) Navigator.pop(context);
+                    } catch (e) {
+                      print('EXPORT ERROR: $e');
+                      String msg = e.toString();
+                      if (msg.contains('failed-precondition') || msg.contains('index')) {
+                        msg = 'Indeks Firestore sedang dibuat atau diperlukan. Silakan cek terminal dan klik link yang tersedia.';
+                      }
+                      
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(msg.replaceFirst('Exception: ', '').replaceFirst('error: ', '')),
+                            backgroundColor: Colors.redAccent,
+                          ),
+                        );
+                      }
+                    } finally {
+                      if (mounted) setModalState(() => isExporting = false);
+                    }
+                  },
+                  child: isExporting 
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('Download PDF'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
