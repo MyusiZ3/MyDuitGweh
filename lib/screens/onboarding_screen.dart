@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../utils/app_theme.dart';
+import 'package:lottie/lottie.dart';
 import 'login_screen.dart';
+import '../utils/app_theme.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -14,253 +14,169 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  final List<_OnboardingData> _pages = [
-    _OnboardingData(
-      icon: Icons.account_balance_wallet_rounded,
-      gradient: [AppColors.primary, AppColors.primaryLight],
-      title: 'Kelola Duitmu\nTanpa Ribet 💸',
-      subtitle:
-          'Satu app buat semua keuanganmu.\nCatat pemasukan & pengeluaran\ndengan gampang banget!',
+  final List<OnboardingData> _pages = [
+    OnboardingData(
+      title: 'Pantau Keuangan\nJadi Lebih Mudah',
+      subtitle: 'Catat pemasukan dan pengeluaran harianmu dalam hitungan detik dengan MyDuitGweh.',
+      lottieUrl: 'https://assets2.lottiefiles.com/packages/lf20_yoz7bk8l.json', // Wallet & Chart
     ),
-    _OnboardingData(
-      icon: Icons.group_rounded,
-      gradient: [AppColors.deepBlue, AppColors.primary],
-      title: 'Patungan\nBareng Squad 🤝',
-      subtitle:
-          'Bikin dompet kolaborasi buat\narisan, kos-kosan, atau trip\nbareng geng. Transparan abis!',
+    OnboardingData(
+      title: 'Tabungan Bareng\nDompet Kolaborasi',
+      subtitle: 'Kelola keuangan bersama keluarga atau teman dalam satu dompet yang transparan.',
+      lottieUrl: 'https://assets5.lottiefiles.com/packages/lf20_cc9vS3.json', // People collaborating
     ),
-    _OnboardingData(
-      icon: Icons.insights_rounded,
-      gradient: [AppColors.primaryDark, AppColors.deepBlue],
-      title: 'Insight Keuangan\nLebih Cerdas 📊',
-      subtitle:
-          'Pantau arus kasmu secara real-time.\nBiar makin paham kemana aja\nduitmu pergi, bestie!',
+    OnboardingData(
+      title: 'Laporan Detail\nAnalisis Pintar',
+      subtitle: 'Dapatkan insight mendalam tentang pola belanjamu lewat grafik yang informatif.',
+      lottieUrl: 'https://assets1.lottiefiles.com/private_files/lf30_89sh9v.json', // Detailed analytics
     ),
   ];
-
-  void _onNext() {
-    if (_currentPage < _pages.length - 1) {
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOut,
-      );
-    } else {
-      _completeOnboarding();
-    }
-  }
-
-  Future<void> _completeOnboarding() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('onboarding_completed', true);
-    if (mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
-    }
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Skip button
-            Align(
-              alignment: Alignment.topRight,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 16, right: 24),
-                child: TextButton(
-                  onPressed: _completeOnboarding,
-                  child: Text(
-                    'Skip',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            // PageView
-            Expanded(
-              child: PageView.builder(
-                controller: _pageController,
-                itemCount: _pages.length,
-                onPageChanged: (index) {
-                  setState(() => _currentPage = index);
-                },
-                itemBuilder: (context, index) {
-                  return _OnboardingPage(data: _pages[index]);
-                },
-              ),
-            ),
-
-            // Dots indicator & Next button
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Dots
-                  Row(
-                    children: List.generate(
-                      _pages.length,
-                      (index) => AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        margin: const EdgeInsets.only(right: 8),
-                        width: _currentPage == index ? 28 : 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: _currentPage == index
-                              ? AppColors.primary
-                              : AppColors.primary.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // Next / Get Started button
-                  GestureDetector(
-                    onTap: _onNext,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: _currentPage == _pages.length - 1 ? 32 : 20,
-                        vertical: 16,
-                      ),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [AppColors.primary, AppColors.primaryDark],
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primary.withOpacity(0.3),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            _currentPage == _pages.length - 1
-                                ? 'Mulai Yuk!'
-                                : 'Next',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          const Icon(
-                            Icons.arrow_forward_rounded,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _OnboardingData {
-  final IconData icon;
-  final List<Color> gradient;
-  final String title;
-  final String subtitle;
-
-  _OnboardingData({
-    required this.icon,
-    required this.gradient,
-    required this.title,
-    required this.subtitle,
-  });
-}
-
-class _OnboardingPage extends StatelessWidget {
-  final _OnboardingData data;
-
-  const _OnboardingPage({required this.data});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      backgroundColor: Colors.white,
+      body: Stack(
         children: [
-          // Illustration placeholder with gradient
-          Container(
-            width: 200,
-            height: 200,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: data.gradient,
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(40),
-              boxShadow: [
-                BoxShadow(
-                  color: data.gradient[0].withOpacity(0.3),
-                  blurRadius: 40,
-                  offset: const Offset(0, 16),
+          PageView.builder(
+            controller: _pageController,
+            onPageChanged: (index) {
+              setState(() => _currentPage = index);
+            },
+            itemCount: _pages.length,
+            itemBuilder: (context, index) {
+              return _buildPage(_pages[index]);
+            },
+          ),
+          
+          // Navigation Bottom Area
+          Positioned(
+            bottom: 60,
+            left: 24,
+            right: 24,
+            child: Column(
+              children: [
+                // Dots Indicator
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    _pages.length,
+                    (index) => AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      margin: const EdgeInsets.only(right: 8),
+                      height: 8,
+                      width: _currentPage == index ? 24 : 8,
+                      decoration: BoxDecoration(
+                        color: _currentPage == index 
+                          ? AppColors.primary 
+                          : AppColors.primary.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ),
                 ),
+                const SizedBox(height: 40),
+                
+                // Primary Button
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      if (_currentPage < _pages.length - 1) {
+                        _pageController.nextPage(
+                          duration: const Duration(milliseconds: 500),
+                          curve: Curves.easeInOut,
+                        );
+                      } else {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => const LoginScreen()),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: Text(
+                      _currentPage == _pages.length - 1 ? 'Mulai Sekarang' : 'Lanjut',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+                
+                // Skip Button
+                if (_currentPage < _pages.length - 1)
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => const LoginScreen()),
+                      );
+                    },
+                    child: const Text(
+                      'Lewati',
+                      style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                    ),
+                  ),
               ],
             ),
-            child: Icon(
-              data.icon,
-              size: 80,
-              color: Colors.white.withOpacity(0.9),
-            ),
-          ),
-
-          const SizedBox(height: 48),
-
-          // Title
-          Text(
-            data.title,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                  height: 1.2,
-                ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Subtitle
-          Text(
-            data.subtitle,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: AppColors.textSecondary,
-                  height: 1.6,
-                ),
           ),
         ],
       ),
     );
   }
+
+  Widget _buildPage(OnboardingData data) {
+    return Padding(
+      padding: const EdgeInsets.all(40.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Lottie.network(
+            data.lottieUrl,
+            height: 300,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) => const Icon(Icons.wallet, size: 100, color: AppColors.primary),
+          ),
+          const SizedBox(height: 48),
+          Text(
+            data.title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
+              height: 1.2,
+              letterSpacing: -1,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            data.subtitle,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 15,
+              color: AppColors.textSecondary,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 100), // Space for button
+        ],
+      ),
+    );
+  }
+}
+
+class OnboardingData {
+  final String title;
+  final String subtitle;
+  final String lottieUrl;
+
+  OnboardingData({required this.title, required this.subtitle, required this.lottieUrl});
 }

@@ -6,6 +6,7 @@ import '../models/wallet_model.dart';
 import '../models/transaction_model.dart';
 import '../utils/app_theme.dart';
 import '../utils/currency_formatter.dart';
+import '../widgets/loading_widget.dart';
 import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -269,15 +270,7 @@ class _HomeScreenState extends State<HomeScreen> {
           stream: _firestoreService.getLatestTransactions(walletIds, limit: 5),
           builder: (context, txnSnapshot) {
             if (txnSnapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(32),
-                  child: CircularProgressIndicator(
-                    color: AppColors.primary,
-                    strokeWidth: 2.5,
-                  ),
-                ),
-              );
+              return const LoadingWidget(size: 150);
             }
 
             if (!txnSnapshot.hasData || txnSnapshot.data!.isEmpty) {
