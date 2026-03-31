@@ -5,6 +5,9 @@ import '../models/wallet_model.dart';
 import '../models/transaction_model.dart';
 import '../utils/app_theme.dart';
 import '../utils/currency_formatter.dart';
+import '../utils/ui_helper.dart';
+import 'package:intl/intl.dart';
+import 'package:flutter/services.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -24,16 +27,11 @@ class _WalletScreenState extends State<WalletScreen> {
       appBar: AppBar(
         title: const Text('Dompet Saya'),
         backgroundColor: AppColors.background,
+        elevation: 0,
         actions: [
           IconButton(
-            onPressed: _showJoinWalletDialog,
-            icon: const Icon(Icons.vpn_key_rounded, color: AppColors.textSecondary),
-            tooltip: 'Gabung Dompet',
-          ),
-          IconButton(
             onPressed: _showCreateWalletDialog,
-            icon: const Icon(Icons.add_rounded, color: AppColors.primary),
-            tooltip: 'Buat Dompet',
+            icon: const Icon(Icons.add_circle_outline_rounded, color: AppColors.primary),
           ),
         ],
       ),
@@ -41,153 +39,23 @@ class _WalletScreenState extends State<WalletScreen> {
         stream: _firestoreService.getWalletsStream(_uid),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(
-                color: AppColors.primary,
-                strokeWidth: 2.5,
-              ),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
-
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return _buildEmptyState();
           }
 
+          final wallets = snapshot.data!;
           return ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-            itemCount: snapshot.data!.length,
-            itemBuilder: (context, index) {
-              final wallet = snapshot.data![index];
-              return _WalletCard(
-                wallet: wallet,
-                onTap: () => _showWalletDetail(wallet),
-              );
-            },
+            itemCount: wallets.length,
+            itemBuilder: (context, index) => _WalletCard(
+              wallet: wallets[index],
+              onTap: () => _showWalletDetails(wallets[index]),
+            ),
           );
         },
-      ),
-    );
-  }
-
-  void _showJoinWalletDialog() {
-    final codeController = TextEditingController();
-    bool isLoading = false;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          padding: EdgeInsets.only(
-            left: 24, right: 24, top: 24,
-            bottom: MediaQuery.of(context).viewInsets.bottom + MediaQuery.of(context).padding.bottom + 24,
-          ),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40, height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.textHint.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text('Gabung ke Dompet',
-                  style: Theme.of(context).textTheme.headlineMedium),
-              const SizedBox(height: 8),
-              const Text('Masukkan 6 digit kode undangan dompet kolaborasi.',
-                  style: TextStyle(color: AppColors.textHint, fontSize: 13)),
-              const SizedBox(height: 20),
-              TextField(
-                controller: codeController,
-                autofocus: true,
-                maxLength: 6,
-                textCapitalization: TextCapitalization.characters,
-                decoration: const InputDecoration(
-                  hintText: 'CONTOH: X8Y2Z1',
-                  prefixIcon: Icon(Icons.vpn_key_outlined, color: AppColors.primary),
-                  counterText: '',
-                ),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity, height: 52,
-                child: ElevatedButton(
-                  onPressed: isLoading ? null : () async {
-                    final code = codeController.text.trim();
-                    if (code.length < 6) return;
-
-                    setModalState(() => isLoading = true);
-                    final success = await _firestoreService.joinWalletByCode(code, _uid);
-                    setModalState(() => isLoading = false);
-
-                    if (mounted) {
-                      if (success) {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Berhasil bergabung ke dompet!')),
-                        );
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Kode tidak valid atau dompet tidak ditemukan.')),
-                        );
-                      }
-                    }
-                  },
-                  child: isLoading 
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Text('Gabung Sekarang'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.account_balance_wallet_outlined,
-              size: 64,
-              color: AppColors.textHint.withOpacity(0.4),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Belum ada dompet',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Buat dompet pertamamu yuk!',
-              style: TextStyle(color: AppColors.textHint),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: _showCreateWalletDialog,
-              icon: const Icon(Icons.add_rounded),
-              label: const Text('Buat Dompet'),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -210,106 +78,105 @@ class _WalletScreenState extends State<WalletScreen> {
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40, height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.textHint.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(2),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40, height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.textHint.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              Text('Buat Dompet Baru',
-                  style: Theme.of(context).textTheme.headlineMedium),
-              const SizedBox(height: 20),
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  hintText: 'Nama dompet',
-                  prefixIcon: Icon(Icons.edit_outlined, color: AppColors.primary),
+                const SizedBox(height: 24),
+                const Text('Buat Dompet Baru', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    _buildTypeOption(setModalState, 'personal', 'Pribadi', Icons.person_outline, selectedType, (val) => selectedType = val),
+                    const SizedBox(width: 12),
+                    _buildTypeOption(setModalState, 'kolaborasi', 'Bersama', Icons.groups_outlined, selectedType, (val) => selectedType = val),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 16),
-              // Type selector
-              Row(
-                children: [
-                  _typeChip(
-                    label: 'Personal',
-                    icon: Icons.person_rounded,
-                    selected: selectedType == 'personal',
-                    onTap: () => setModalState(() => selectedType = 'personal'),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: nameController,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: InputDecoration(
+                    hintText: selectedType == 'kolaborasi' ? 'Nama kelompok/tujuan' : 'Nama dompet (misal: Jajan)',
+                    prefixIcon: Icon(selectedType == 'kolaborasi' ? Icons.groups_rounded : Icons.account_balance_wallet_outlined, color: AppColors.primary),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppColors.primary)),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppColors.primary, width: 2)),
                   ),
-                  const SizedBox(width: 12),
-                  _typeChip(
-                    label: 'Kolaborasi',
-                    icon: Icons.group_rounded,
-                    selected: selectedType == 'colab',
-                    onTap: () => setModalState(() => selectedType = 'colab'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity, height: 52,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    if (nameController.text.trim().isEmpty) return;
-                    final wallet = WalletModel(
-                      id: '', walletName: nameController.text.trim(),
-                      balance: 0, type: selectedType,
-                      members: [_uid], owner: _uid,
-                      createdAt: DateTime.now(),
-                    );
-                    await _firestoreService.createWallet(wallet);
-                    if (context.mounted) Navigator.pop(context);
-                  },
-                  child: const Text('Buat Dompet'),
                 ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _typeChip({
-    required String label,
-    required IconData icon,
-    required bool selected,
-    required VoidCallback onTap,
-  }) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: selected
-                ? AppColors.primary.withOpacity(0.1)
-                : AppColors.surfaceVariant,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: selected ? AppColors.primary : Colors.transparent,
-              width: 1.5,
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      if (nameController.text.isNotEmpty) {
+                        final newWallet = WalletModel(
+                          id: '', // Will be set by service
+                          walletName: nameController.text,
+                          balance: 0,
+                          type: selectedType == 'kolaborasi' ? 'colab' : 'personal',
+                          members: [_uid],
+                          owner: _uid,
+                          createdAt: DateTime.now(),
+                        );
+                        
+                        await _firestoreService.createWallet(newWallet);
+                        if (mounted) {
+                          Navigator.pop(context);
+                          UIHelper.showSuccessSnackBar(context, 'Dompet "${nameController.text}" berhasil dibuat! 🎉');
+                        }
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                    child: const Text('Simpan Dompet', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Center(
+                  child: TextButton(
+                    onPressed: () { Navigator.pop(context); _showJoinWalletDialog(); },
+                    child: const Text('Sudah punya kode undangan? Gabung di sini', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600)),
+                  ),
+                ),
+              ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTypeOption(StateSetter setModalState, String type, String label, IconData icon, String current, Function(String) onSelect) {
+    final isSelected = current == type;
+    return Expanded(
+      child: InkWell(
+        onTap: () => setModalState(() => onSelect(type)),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primary.withOpacity(0.05) : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: isSelected ? AppColors.primary : AppColors.textHint.withOpacity(0.2), width: 1.5),
+          ),
           child: Column(
             children: [
-              Icon(icon,
-                  color: selected ? AppColors.primary : AppColors.textHint),
-              const SizedBox(height: 8),
-              Text(label,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: selected ? AppColors.primary : AppColors.textSecondary,
-                  )),
+              Icon(icon, color: isSelected ? AppColors.primary : AppColors.textHint, size: 24),
+              const SizedBox(height: 4),
+              Text(label, style: TextStyle(color: isSelected ? AppColors.primary : AppColors.textHint, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
             ],
           ),
         ),
@@ -317,178 +184,238 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 
-  void _showWalletDetail(WalletModel wallet) {
+  void _showJoinWalletDialog() {
+    final codeController = TextEditingController();
+    bool isChecking = false;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          title: const Text('Gabung Dompet Bersama'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Masukkan 6 digit kode undangan dari temanmu untuk mulai mencatat bersama.'),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: codeController,
+                  maxLength: 6,
+                  textCapitalization: TextCapitalization.characters,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 4),
+                  decoration: InputDecoration(
+                    hintText: 'ABCXYZ',
+                    counterText: '',
+                    filled: true,
+                    fillColor: AppColors.surfaceVariant,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: isChecking ? null : () => Navigator.pop(context), 
+              child: const Text('Batal', style: TextStyle(color: AppColors.textHint))
+            ),
+            ElevatedButton(
+              onPressed: isChecking ? null : () async {
+                if (codeController.text.length == 6) {
+                  setDialogState(() => isChecking = true);
+                  final success = await _firestoreService.joinWalletByCode(codeController.text, _uid);
+                  if (mounted) {
+                    Navigator.pop(context); // Close dialog
+                    if (success) {
+                      UIHelper.showSuccessSnackBar(context, 'Berhasil bergabung! Selamat berkolaborasi 🎉');
+                    } else {
+                      UIHelper.showErrorSnackBar(context, 'Kode tidak valid atau kamu sudah bergabung ❌');
+                    }
+                  }
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: isChecking 
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                : const Text('Gabung Sekarang', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showWalletDetails(WalletModel wallet) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.75,
-        maxChildSize: 0.95,
+        initialChildSize: 0.7,
         minChildSize: 0.5,
-        builder: (context, scrollController) => Container(
+        maxChildSize: 0.95,
+        builder: (_, scrollController) => Container(
           decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            color: AppColors.background,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
           ),
           child: Column(
             children: [
               const SizedBox(height: 12),
-              Container(
-                width: 40, height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.textHint.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
+              Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
               Padding(
                 padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(wallet.walletName,
-                                  style: Theme.of(context).textTheme.headlineMedium),
-                              const SizedBox(height: 4),
-                              Text(
-                                wallet.isColab ? 'Dompet Kolaborasi' : 'Dompet Personal',
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                            ],
-                          ),
-                        ),
-                        // Only owner can delete personal wallet or the colab creator
-                        if (wallet.owner == _uid)
-                          IconButton(
-                            onPressed: () => _confirmDeleteWallet(wallet),
-                            icon: const Icon(Icons.delete_outline_rounded, color: AppColors.expense),
-                            tooltip: 'Hapus Dompet',
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      CurrencyFormatter.formatCurrency(wallet.balance),
-                      style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                            color: AppColors.primary),
-                    ),
-                    if (wallet.isColab && wallet.inviteCode != null) ...[
-                      const SizedBox(height: 20),
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.05),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.primary.withOpacity(0.1)),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('Kode Undangan', 
-                                    style: TextStyle(fontSize: 12, color: AppColors.textHint)),
-                                const SizedBox(height: 4),
-                                Text(wallet.inviteCode!, 
-                                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: 2)),
-                              ],
-                            ),
-                            IconButton(
-                              onPressed: () {
-                                // Implement share or copy logic if needed
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Kode berhasil disalin!')),
-                                );
-                              },
-                              icon: const Icon(Icons.copy_rounded, color: AppColors.primary),
-                            ),
-                          ],
-                        ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(wallet.walletName, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 4),
+                          Text(wallet.isColab ? 'Dompet Bersama' : 'Dompet Pribadi', style: const TextStyle(color: AppColors.textHint)),
+                        ],
                       ),
-                    ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline_rounded, color: AppColors.expense),
+                      onPressed: () async {
+                        final confirm = await UIHelper.showConfirmDialog(
+                          context: context, 
+                          title: 'Hapus Dompet?',
+                          message: 'Semua data transaksi di dompet "${wallet.walletName}" akan ikut terhapus permanen.',
+                        );
+                        if (confirm == true) {
+                          await _firestoreService.deleteWallet(wallet.id);
+                          if (mounted) {
+                            Navigator.pop(context);
+                            UIHelper.showSuccessSnackBar(context, 'Dompet berhasil dihapus');
+                          }
+                        }
+                      },
+                    ),
                   ],
                 ),
               ),
-              const Divider(),
+              if (wallet.isColab) ...[
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 24),
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('KODE UNDANGAN', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textHint, letterSpacing: 1)),
+                          const SizedBox(height: 6),
+                          Text(
+                            wallet.inviteCode ?? '-', 
+                            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 2, color: AppColors.primary)
+                          ),
+                        ],
+                      ),
+                      InkWell(
+                        onTap: () {
+                          Clipboard.setData(ClipboardData(text: wallet.inviteCode ?? ''));
+                          UIHelper.showSuccessSnackBar(context, 'Kode disalin ke clipboard! 📋');
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))],
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.copy_rounded, size: 18, color: Colors.white),
+                              SizedBox(width: 8),
+                              Text('Salin', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+              const Divider(height: 1),
               Expanded(
                 child: StreamBuilder<List<TransactionModel>>(
                   stream: _firestoreService.getTransactionsStream(wallet.id),
                   builder: (context, snapshot) {
-                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return const Center(
-                        child: Text('Belum ada transaksi',
-                            style: TextStyle(color: AppColors.textHint)),
-                      );
-                    }
+                    if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                    final txns = snapshot.data!;
+                    if (txns.isEmpty) return const Center(child: Text('Belum ada transaksi', style: TextStyle(color: AppColors.textHint)));
+                    
                     return ListView.builder(
                       controller: scrollController,
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      itemCount: snapshot.data!.length,
+                      padding: const EdgeInsets.all(20),
+                      itemCount: txns.length,
                       itemBuilder: (context, index) {
-                        final txn = snapshot.data![index];
-                        final isIncome = txn.isIncome;
-                        final color = isIncome ? AppColors.income : AppColors.expense;
-                        
+                        final t = txns[index];
                         return Dismissible(
-                          key: Key(txn.id),
+                          key: Key(t.id),
                           direction: DismissDirection.endToStart,
+                          confirmDismiss: (direction) async {
+                            return await UIHelper.showConfirmDialog(
+                              context: context, 
+                              title: 'Hapus Transaksi?',
+                              message: 'Catatan transaksi ini akan dihapus permanen dari riwayat.',
+                            );
+                          },
+                          onDismissed: (direction) async {
+                            await _firestoreService.deleteTransaction(t);
+                            if (mounted) {
+                              UIHelper.showSuccessSnackBar(context, 'Transaksi berhasil dihapus');
+                            }
+                          },
                           background: Container(
                             alignment: Alignment.centerRight,
                             padding: const EdgeInsets.only(right: 20),
+                            margin: const EdgeInsets.symmetric(vertical: 4),
                             decoration: BoxDecoration(
-                              color: AppColors.expense.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
+                              color: AppColors.expense.withOpacity(0.9),
+                              borderRadius: BorderRadius.circular(16),
                             ),
-                            child: const Icon(Icons.delete_sweep_rounded, color: AppColors.expense),
+                            child: const Icon(Icons.delete_outline_rounded, color: Colors.white),
                           ),
-                          confirmDismiss: (direction) async {
-                            return await _showModernConfirmDialog(
-                              context: context,
-                              title: 'Hapus Transaksi?',
-                              message: 'Saldo dompet akan disesuaikan secara otomatis.',
-                              confirmText: 'Hapus',
-                            );
-                          },
-                          onDismissed: (direction) {
-                            _firestoreService.deleteTransaction(txn);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Transaksi dihapus & Saldo diperbarui!')),
-                            );
-                          },
                           child: ListTile(
-                            contentPadding: EdgeInsets.zero,
+                            contentPadding: const EdgeInsets.symmetric(vertical: 4),
                             leading: Container(
-                              width: 40, height: 40,
+                              padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: color.withOpacity(0.1),
+                                color: (t.isIncome ? AppColors.income : AppColors.expense).withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Icon(
-                                TransactionCategory.getIconForCategory(txn.category),
-                                color: color, size: 20,
+                                TransactionCategory.getIconForCategory(t.category),
+                                color: t.isIncome ? AppColors.income : AppColors.expense,
                               ),
                             ),
-                            title: Text(txn.category,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.w600, fontSize: 14)),
-                            subtitle: Text(
-                              txn.note.isNotEmpty
-                                  ? txn.note
-                                  : CurrencyFormatter.formatRelativeDate(txn.date),
-                              style: const TextStyle(fontSize: 12),
-                            ),
+                            title: Text(t.category, style: const TextStyle(fontWeight: FontWeight.bold)),
+                            subtitle: Text(DateFormat('dd MMM yyyy').format(t.date)),
                             trailing: Text(
-                              '${isIncome ? '+' : '-'}${CurrencyFormatter.formatCurrency(txn.amount)}',
+                              '${t.isIncome ? '+' : '-'}${CurrencyFormatter.formatCurrency(t.amount)}',
                               style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: color, fontSize: 14,
+                                color: t.isIncome ? AppColors.income : AppColors.expense,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ),
@@ -504,96 +431,29 @@ class _WalletScreenState extends State<WalletScreen> {
       ),
     );
   }
-  void _confirmDeleteWallet(WalletModel wallet) async {
-    final confirmed = await _showModernConfirmDialog(
-      context: context,
-      title: 'Hapus Dompet?',
-      message: 'Semua data transaksi di dompet "${wallet.walletName}" juga akan ikut terhapus selamanya. Yakin?',
-      confirmText: 'Hapus',
-    );
 
-    if (confirmed == true) {
-      if (context.mounted) Navigator.pop(context); // Close bottom sheet detail
-      await _firestoreService.deleteWallet(wallet.id);
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Dompet "${wallet.walletName}" berhasil dihapus.')),
-        );
-      }
-    }
-  }
-
-  Future<bool?> _showModernConfirmDialog({
-    required BuildContext context,
-    required String title,
-    required String message,
-    required String confirmText,
-  }) {
-    return showDialog<bool>(
-      context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        elevation: 0,
-        backgroundColor: Colors.white,
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: AppColors.expense.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.warning_amber_rounded, color: AppColors.expense, size: 32),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.6),
-              ),
-              const SizedBox(height: 32),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      ),
-                      child: const Text('Batal', style: TextStyle(color: AppColors.textHint, fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.expense,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      ),
-                      child: Text(confirmText, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.account_balance_wallet_outlined, size: 80, color: AppColors.textHint.withOpacity(0.3)),
+          const SizedBox(height: 20),
+          const Text('Belum ada dompet', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text('Ayo buat satu untuk mulai mencatat!', style: TextStyle(color: AppColors.textHint)),
+          const SizedBox(height: 32),
+          ElevatedButton.icon(
+            onPressed: _showCreateWalletDialog,
+            icon: const Icon(Icons.add_rounded),
+            label: const Text('Buat Dompet'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -610,33 +470,23 @@ class _WalletCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
+        margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
         ),
         child: Row(
           children: [
             Container(
-              width: 48, height: 48,
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: wallet.isColab
-                    ? AppColors.deepBlue.withOpacity(0.1)
-                    : AppColors.primary.withOpacity(0.1),
+                color: (wallet.isColab ? AppColors.deepBlue : AppColors.primary).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(
-                wallet.isColab
-                    ? Icons.group_rounded
-                    : Icons.account_balance_wallet_rounded,
+                wallet.isColab ? Icons.group_rounded : Icons.account_balance_wallet_rounded,
                 color: wallet.isColab ? AppColors.deepBlue : AppColors.primary,
               ),
             ),
@@ -645,27 +495,17 @@ class _WalletCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(wallet.walletName,
-                      style: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 2),
+                  Text(wallet.walletName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   Text(
-                    wallet.isColab
-                        ? '${wallet.members.length} anggota'
-                        : 'Personal',
-                    style: const TextStyle(fontSize: 12, color: AppColors.textHint),
+                    wallet.isColab ? 'Bersama (${wallet.members.length} anggota)' : 'Pribadi', 
+                    style: TextStyle(fontSize: 12, color: wallet.isColab ? AppColors.deepBlue : AppColors.textHint, fontWeight: wallet.isColab ? FontWeight.bold : FontWeight.normal),
                   ),
                 ],
               ),
             ),
             Text(
               CurrencyFormatter.formatCurrency(wallet.balance),
-              style: TextStyle(
-                fontSize: 15, fontWeight: FontWeight.w700,
-                color: wallet.balance >= 0
-                    ? AppColors.textPrimary
-                    : AppColors.expense,
-              ),
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
             ),
           ],
         ),

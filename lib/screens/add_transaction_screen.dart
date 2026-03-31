@@ -5,6 +5,7 @@ import '../services/firestore_service.dart';
 import '../models/wallet_model.dart';
 import '../models/transaction_model.dart';
 import '../utils/app_theme.dart';
+import '../utils/ui_helper.dart';
 
 class AddTransactionScreen extends StatefulWidget {
   const AddTransactionScreen({super.key});
@@ -83,14 +84,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Transaksi berhasil disimpan! ✅'),
-            backgroundColor: AppColors.income,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        );
+        UIHelper.showSuccessSnackBar(context, 'Transaksi berhasil disimpan! ✅');
       }
     } catch (e) {
       if (mounted) {
