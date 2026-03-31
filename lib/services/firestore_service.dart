@@ -7,6 +7,18 @@ class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // ============================================================
+  //  ID GENERATORS (FOR PROFESSIONAL LOOK)
+  // ============================================================
+  
+  String _generateProfessionalId(String prefix) {
+    // Menghasilkan ID unik: PREFIX-TIMESTAMP-RANDOM4
+    final now = DateTime.now().millisecondsSinceEpoch.toString().substring(5);
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final random = List.generate(4, (index) => chars[Random().nextInt(chars.length)]).join();
+    return '$prefix-$now-$random';
+  }
+
+  // ============================================================
   //  WALLET OPERATIONS
   // ============================================================
 
@@ -21,16 +33,42 @@ class FirestoreService {
             .toList());
   }
 
+  /// Get personal wallets only
+  Stream<List<WalletModel>> getPersonalWalletsStream(String uid) {
+    return _firestore
+        .collection('wallets')
+        .where('members', arrayContains: uid)
+        .where('type', isEqualTo: 'personal')
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => WalletModel.fromJson(doc.data(), docId: doc.id))
+            .toList());
+  }
+
+  /// Get colab wallets only
+  Stream<List<WalletModel>> getColabWalletsStream(String uid) {
+    return _firestore
+        .collection('wallets')
+        .where('members', arrayContains: uid)
+        .where('type', isEqualTo: 'colab')
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => WalletModel.fromJson(doc.data(), docId: doc.id))
+            .toList());
+  }
+
   Future<String> createWallet(WalletModel wallet) async {
-    final docRef = _firestore.collection('wallets').doc();
+    final customId = _generateProfessionalId('WLT');
+    final docRef = _firestore.collection('wallets').doc(customId);
+    
     String? inviteCode;
     if (wallet.type == 'colab') inviteCode = _generateInviteCode();
     
     await docRef.set(wallet.copyWith(
-      id: docRef.id,
+      id: customId,
       inviteCode: inviteCode,
     ).toJson());
-    return docRef.id;
+    return customId;
   }
 
   Future<void> deleteWallet(String walletId) async {
@@ -66,43 +104,24 @@ class FirestoreService {
     return true;
   }
 
-  /// Get personal wallets only
-  Stream<List<WalletModel>> getPersonalWalletsStream(String uid) {
-    return _firestore
-        .collection('wallets')
-        .where('members', arrayContains: uid)
-        .where('type', isEqualTo: 'personal')
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => WalletModel.fromJson(doc.data(), docId: doc.id))
-            .toList());
-  }
-
-  /// Get colab wallets only
-  Stream<List<WalletModel>> getColabWalletsStream(String uid) {
-    return _firestore
-        .collection('wallets')
-        .where('members', arrayContains: uid)
-        .where('type', isEqualTo: 'colab')
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => WalletModel.fromJson(doc.data(), docId: doc.id))
-            .toList());
-  }
-
   // ============================================================
   //  TRANSACTION OPERATIONS
   // ============================================================
 
   Future<void> addTransaction(TransactionModel transaction) async {
+    final customTxId = _generateProfessionalId('TX');
+    
     await _firestore.runTransaction((txn) async {
       final walletRef = _firestore.collection('wallets').doc(transaction.walletId);
       final walletSnapshot = await txn.get(walletRef);
       if (!walletSnapshot.exists) throw Exception('Wallet not found');
+      
       final currentBalance = (walletSnapshot.data()!['balance'] as num).toDouble();
       final double newBalance = transaction.isIncome ? currentBalance + transaction.amount : currentBalance - transaction.amount;
-      final transactionRef = _firestore.collection('transactions').doc();
-      txn.set(transactionRef, transaction.toJson());
+      
+      final transactionRef = _firestore.collection('transactions').doc(customTxId);
+      
+      txn.set(transactionRef, transaction.copyWith(id: customTxId).toJson());
       txn.update(walletRef, {'balance': newBalance});
     });
   }
@@ -157,8 +176,10 @@ class FirestoreService {
       final walletRef = _firestore.collection('wallets').doc(transaction.walletId);
       final walletSnapshot = await txn.get(walletRef);
       if (!walletSnapshot.exists) throw Exception('Wallet not found');
+      
       final currentBalance = (walletSnapshot.data()!['balance'] as num).toDouble();
       final double newBalance = transaction.isIncome ? currentBalance - transaction.amount : currentBalance + transaction.amount;
+      
       final transactionRef = _firestore.collection('transactions').doc(transaction.id);
       txn.delete(transactionRef);
       txn.update(walletRef, {'balance': newBalance});
@@ -185,27 +206,8 @@ class FirestoreService {
     return true;
   }
 
-  Future<void> removeMember(String walletId, String memberUid) async {
-    await _firestore.collection('wallets').doc(walletId).update({
-      'members': FieldValue.arrayRemove([memberUid]),
-    });
-  }
-
   Future<Map<String, dynamic>?> getUserInfo(String uid) async {
     final doc = await _firestore.collection('users').doc(uid).get();
     return doc.data();
-  }
-
-  Future<double> getTotalBalance(String uid) async {
-    final snapshot = await _firestore
-        .collection('wallets')
-        .where('members', arrayContains: uid)
-        .get();
-
-    double total = 0;
-    for (final doc in snapshot.docs) {
-      total += (doc.data()['balance'] as num).toDouble();
-    }
-    return total;
   }
 }
