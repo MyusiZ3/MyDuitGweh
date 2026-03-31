@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
 import '../utils/app_theme.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -143,16 +144,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  void _navigateToLogin() {
-    Navigator.pushReplacement(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (context, anim, secondAnim) => const LoginScreen(),
-        transitionsBuilder: (context, anim, secondAnim, child) {
-          return FadeTransition(opacity: anim, child: child);
-        },
-      ),
-    );
+  void _navigateToLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('onboarding_completed', true);
+    
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        PageRouteBuilder(
+          pageBuilder: (context, anim, secondAnim) => const LoginScreen(),
+          transitionsBuilder: (context, anim, secondAnim, child) {
+            return FadeTransition(opacity: anim, child: child);
+          },
+        ),
+      );
+    }
   }
 
   Widget _buildPage(OnboardingData data) {
