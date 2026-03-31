@@ -140,12 +140,14 @@ class FirestoreService {
     Query query = _firestore.collection('transactions')
         .where('walletId', whereIn: walletIds.take(30).toList())
         .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
-        .where('date', isLessThanOrEqualTo: Timestamp.fromDate(end))
-        .orderBy('date', descending: true);
+        .where('date', isLessThanOrEqualTo: Timestamp.fromDate(end));
 
     if (categories != null && categories.isNotEmpty && !categories.contains('All')) {
-      query = query.where('category', whereIn: categories);
+      query = query.where('category', whereIn: categories.take(30).toList());
     }
+
+    // IMPORTANT: Make sure to order by date AFTER applying where filters if needed
+    query = query.orderBy('date', descending: true);
 
     final snapshot = await query.get();
     return snapshot.docs

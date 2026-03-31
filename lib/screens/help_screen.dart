@@ -55,6 +55,8 @@ class HelpScreen extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(height: 24),
+          SizedBox(height: MediaQuery.of(context).padding.bottom),
         ],
       ),
     );

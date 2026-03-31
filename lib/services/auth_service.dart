@@ -13,9 +13,14 @@ class AuthService {
 
   Future<UserModel?> signInWithGoogle() async {
     try {
+      print('DEBUG AUTH: Step 1 - Menunggu Google Login UI...');
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) return null;
+      if (googleUser == null) {
+        print('DEBUG AUTH: User membatalkan login');
+        return null;
+      }
 
+      print('DEBUG AUTH: Step 2 - Mendapatkan credential Google...');
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
 
@@ -24,18 +29,22 @@ class AuthService {
         idToken: googleAuth.idToken,
       );
 
+      print('DEBUG AUTH: Step 3 - Signing in ke Firebase dengan credential...');
       final UserCredential userCredential =
           await _auth.signInWithCredential(credential);
 
       final User? user = userCredential.user;
-      if (user == null) return null;
+      if (user == null) {
+        print('DEBUG AUTH: User Firebase null');
+        return null;
+      }
 
-      // Check if user document exists
+      print('DEBUG AUTH: Step 4 - Mengirim data user ke Firestore...');
       final userDoc = await _firestore.collection('users').doc(user.uid).get();
 
       UserModel userModel;
       if (!userDoc.exists) {
-        // Create new user document
+        print('DEBUG AUTH: User baru terdeteksi, mendaftarkan akun baru...');
         userModel = UserModel(
           uid: user.uid,
           name: user.displayName ?? 'User',
@@ -48,22 +57,30 @@ class AuthService {
             .doc(user.uid)
             .set(userModel.toJson());
 
-        // Create a default personal wallet
-        final walletRef = _firestore.collection('wallets').doc();
+        print('DEBUG AUTH: Membuat dompet default dengan ID professional...');
+        // Menentukan ID Dompet baru dengan format kita
+        final now = DateTime.now().millisecondsSinceEpoch.toString().substring(5);
+        final customId = 'WLT-$now-INIT';
+        final walletRef = _firestore.collection('wallets').doc(customId);
+        
         await walletRef.set({
+          'id': customId,
           'walletName': 'Dompet Utama',
           'balance': 0.0,
           'type': 'personal',
           'members': [user.uid],
           'owner': user.uid,
-          'createdAt': Timestamp.now(),
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
         });
       } else {
+        print('DEBUG AUTH: Selamat datang kembali, ${user.displayName}');
         userModel = UserModel.fromJson(userDoc.data()!);
       }
 
       return userModel;
     } catch (e) {
+      print('DEBUG AUTH ERROR: $e');
       rethrow;
     }
   }

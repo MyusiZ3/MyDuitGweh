@@ -361,7 +361,7 @@ class _ReportScreenState extends State<ReportScreen> {
         builder: (context, setModalState) => Container(
           padding: EdgeInsets.only(
             left: 24, right: 24, top: 24,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+            bottom: MediaQuery.of(context).viewInsets.bottom + MediaQuery.of(context).padding.bottom + 24,
           ),
           decoration: const BoxDecoration(
             color: Colors.white,
@@ -423,13 +423,17 @@ class _ReportScreenState extends State<ReportScreen> {
                     onSelected: (selected) {
                       setModalState(() {
                         if (cat == 'All') {
-                          selectedCategories = ['All'];
+                          if (selected) {
+                            selectedCategories = ['All'];
+                          }
                         } else {
+                          // Remove 'All' if selecting something else
                           selectedCategories.remove('All');
                           if (selected) {
                             selectedCategories.add(cat);
                           } else {
                             selectedCategories.remove(cat);
+                            // If nothing selected, default back to 'All'
                             if (selectedCategories.isEmpty) selectedCategories.add('All');
                           }
                         }
