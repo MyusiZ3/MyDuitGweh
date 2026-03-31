@@ -279,21 +279,24 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
         return FutureBuilder<Map<String, dynamic>?>(
           future: widget.firestoreService.getUserInfo(uid),
           builder: (context, snapshot) {
-            final name = snapshot.data?['name'] ?? 'Loading...';
+            String name = 'Loading...';
+            if (snapshot.connectionState == ConnectionState.done) {
+              if (snapshot.hasData) {
+                // Mencari dari 'displayName' (default Firebase) atau 'name' sebagai fallback
+                name = snapshot.data?['displayName'] ?? snapshot.data?['name'] ?? 'Pengguna';
+              } else {
+                name = 'Tidak diketahui';
+              }
+            }
+
             final isOwner = uid == widget.wallet.owner;
 
             return Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: isOwner
-                    ? AppColors.primary.withOpacity(0.1)
-                    : AppColors.surfaceVariant,
+                color: isOwner ? AppColors.primary.withOpacity(0.1) : AppColors.surfaceVariant,
                 borderRadius: BorderRadius.circular(20),
-                border: isOwner
-                    ? Border.all(
-                        color: AppColors.primary.withOpacity(0.3))
-                    : null,
+                border: isOwner ? Border.all(color: AppColors.primary.withOpacity(0.3)) : null,
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
