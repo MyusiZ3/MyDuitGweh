@@ -449,23 +449,11 @@ class _WalletScreenState extends State<WalletScreen> {
                             child: const Icon(Icons.delete_sweep_rounded, color: AppColors.expense),
                           ),
                           confirmDismiss: (direction) async {
-                            return await showDialog(
+                            return await _showModernConfirmDialog(
                               context: context,
-                              builder: (context) => AlertDialog(
-                                title: const Text('Hapus Transaksi?'),
-                                content: const Text('Saldo dompet akan disesuaikan secara otomatis.'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context, false),
-                                    child: const Text('Batal'),
-                                  ),
-                                  ElevatedButton(
-                                    onPressed: () => Navigator.pop(context, true),
-                                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.expense, foregroundColor: Colors.white),
-                                    child: const Text('Hapus'),
-                                  ),
-                                ],
-                              ),
+                              title: 'Hapus Transaksi?',
+                              message: 'Saldo dompet akan disesuaikan secara otomatis.',
+                              confirmText: 'Hapus',
                             );
                           },
                           onDismissed: (direction) {
@@ -516,40 +504,96 @@ class _WalletScreenState extends State<WalletScreen> {
       ),
     );
   }
-  void _confirmDeleteWallet(WalletModel wallet) {
-    showDialog(
+  void _confirmDeleteWallet(WalletModel wallet) async {
+    final confirmed = await _showModernConfirmDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Hapus Dompet?'),
-        content: Text(
-          'Semua data transaksi di dompet "${wallet.walletName}" juga akan ikut terhapus selamanya. Yakin?'
+      title: 'Hapus Dompet?',
+      message: 'Semua data transaksi di dompet "${wallet.walletName}" juga akan ikut terhapus selamanya. Yakin?',
+      confirmText: 'Hapus',
+    );
+
+    if (confirmed == true) {
+      if (context.mounted) Navigator.pop(context); // Close bottom sheet detail
+      await _firestoreService.deleteWallet(wallet.id);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Dompet "${wallet.walletName}" berhasil dihapus.')),
+        );
+      }
+    }
+  }
+
+  Future<bool?> _showModernConfirmDialog({
+    required BuildContext context,
+    required String title,
+    required String message,
+    required String confirmText,
+  }) {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        elevation: 0,
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: AppColors.expense.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.warning_amber_rounded, color: AppColors.expense, size: 32),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.6),
+              ),
+              const SizedBox(height: 32),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                      child: const Text('Batal', style: TextStyle(color: AppColors.textHint, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.expense,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                      child: Text(confirmText, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Batal', style: TextStyle(color: AppColors.textSecondary)),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context); // Close dialog
-              Navigator.pop(context); // Close bottom sheet detail
-              
-              await _firestoreService.deleteWallet(wallet.id);
-              
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Dompet "${wallet.walletName}" berhasil dihapus.')),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.expense, 
-              foregroundColor: Colors.white,
-              elevation: 0,
-            ),
-            child: const Text('Hapus'),
-          ),
-        ],
       ),
     );
   }
