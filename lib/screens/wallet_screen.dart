@@ -346,12 +346,31 @@ class _WalletScreenState extends State<WalletScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(wallet.walletName,
-                        style: Theme.of(context).textTheme.headlineMedium),
-                    const SizedBox(height: 4),
-                    Text(
-                      wallet.isColab ? 'Dompet Kolaborasi' : 'Dompet Personal',
-                      style: Theme.of(context).textTheme.bodySmall,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(wallet.walletName,
+                                  style: Theme.of(context).textTheme.headlineMedium),
+                              const SizedBox(height: 4),
+                              Text(
+                                wallet.isColab ? 'Dompet Kolaborasi' : 'Dompet Personal',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Only owner can delete personal wallet or the colab creator
+                        if (wallet.owner == _uid)
+                          IconButton(
+                            onPressed: () => _confirmDeleteWallet(wallet),
+                            icon: const Icon(Icons.delete_outline_rounded, color: AppColors.expense),
+                            tooltip: 'Hapus Dompet',
+                          ),
+                      ],
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -454,6 +473,43 @@ class _WalletScreenState extends State<WalletScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+  void _confirmDeleteWallet(WalletModel wallet) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Hapus Dompet?'),
+        content: Text(
+          'Semua data transaksi di dompet "${wallet.walletName}" juga akan ikut terhapus selamanya. Yakin?'
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal', style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context); // Close dialog
+              Navigator.pop(context); // Close bottom sheet detail
+              
+              await _firestoreService.deleteWallet(wallet.id);
+              
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Dompet "${wallet.walletName}" berhasil dihapus.')),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.expense, 
+              foregroundColor: Colors.white,
+              elevation: 0,
+            ),
+            child: const Text('Hapus'),
+          ),
+        ],
       ),
     );
   }

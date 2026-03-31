@@ -63,6 +63,29 @@ class FirestoreService {
     return docRef.id;
   }
 
+  /// Delete a wallet and all its related transactions
+  Future<void> deleteWallet(String walletId) async {
+    // 1. Get all transactions for this wallet
+    final transactions = await _firestore
+        .collection('transactions')
+        .where('walletId', isEqualTo: walletId)
+        .get();
+
+    // 2. Start a batch write for performance and atomicity
+    final batch = _firestore.batch();
+
+    // 3. Delete all related transactions
+    for (var doc in transactions.docs) {
+      batch.delete(doc.reference);
+    }
+
+    // 4. Delete the wallet document
+    batch.delete(_firestore.collection('wallets').doc(walletId));
+
+    // 5. Commit the batch
+    await batch.commit();
+  }
+
   /// Generate a random 6-character invite code
   String _generateInviteCode() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
