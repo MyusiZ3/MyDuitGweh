@@ -7,10 +7,9 @@ class AuthService {
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  // GOOGLE SIGN IN
   Future<UserCredential?> signInWithGoogle() async {
     try {
-      // Potentially force account selection by disconnecting first if needed, 
-      // but usually the standard way is to just sign out during logout.
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) return null;
 
@@ -22,7 +21,6 @@ class AuthService {
 
       final UserCredential userCredential = await _auth.signInWithCredential(credential);
       
-      // Sync user data to Firestore
       if (userCredential.user != null) {
         await _firestore.collection('users').doc(userCredential.user!.uid).set({
           'uid': userCredential.user!.uid,
@@ -35,24 +33,79 @@ class AuthService {
 
       return userCredential;
     } catch (e) {
-      print('Google Sign-In Error: $e');
       return null;
     }
   }
 
+  // EMAIL SIGN UP
+  Future<UserCredential?> signUpWithEmail(String email, String password, String name) async {
+    try {
+      final UserCredential userCredential = await _auth.createUserWithEmailAndPassword(email: email, password: password);
+      
+      if (userCredential.user != null) {
+        await _firestore.collection('users').doc(userCredential.user!.uid).set({
+          'uid': userCredential.user!.uid,
+          'email': email,
+          'displayName': name,
+          'photoURL': null,
+          'lastSeen': FieldValue.serverTimestamp(),
+          'createdAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+        
+        await userCredential.user!.updateDisplayName(name);
+      }
+      return userCredential;
+    } catch (e) {
+      throw _getAuthErrorMessage(e);
+    }
+  }
+
+  // EMAIL SIGN IN
+  Future<UserCredential?> signInWithEmail(String email, String password) async {
+    try {
+      final UserCredential userCredential = await _auth.signInWithEmailAndPassword(email: email, password: password);
+      
+      if (userCredential.user != null) {
+        await _firestore.collection('users').doc(userCredential.user!.uid).update({
+          'lastSeen': FieldValue.serverTimestamp(),
+        });
+      }
+      return userCredential;
+    } catch (e) {
+      throw _getAuthErrorMessage(e);
+    }
+  }
+
+  // PASSWORD RESET
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+    } catch (e) {
+      throw _getAuthErrorMessage(e);
+    }
+  }
+
+  String _getAuthErrorMessage(dynamic e) {
+    if (e is FirebaseAuthException) {
+      switch (e.code) {
+        case 'user-not-found': return 'Email tidak terdaftar.';
+        case 'wrong-password': return 'Password salah.';
+        case 'email-already-in-use': return 'Email sudah digunakan.';
+        case 'weak-password': return 'Password terlalu lemah.';
+        case 'invalid-email': return 'Format email salah.';
+        default: return 'Gagal: ${e.message ?? e.code}';
+      }
+    }
+    return 'Terjadi kesalahan tidak terduga.';
+  }
+
   Future<void> signOut() async {
     try {
-      // 1. Sign out from Firebase
       await _auth.signOut();
-      
-      // 2. Sign out from Google (Clears the local session)
       await _googleSignIn.signOut();
-      
-      // 3. DISCONNECT from Google (This FORCES the account selection dialog next time)
       await _googleSignIn.disconnect();
-      
     } catch (e) {
-      print('Sign-Out Error: $e');
+      // Ignore
     }
   }
 

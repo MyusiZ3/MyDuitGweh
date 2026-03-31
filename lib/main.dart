@@ -13,13 +13,10 @@ import 'screens/main_nav.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Set system UI overlay style
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
-      systemNavigationBarColor: Colors.white,
-      systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
 
@@ -39,142 +36,87 @@ class MyDuitGwehApp extends StatelessWidget {
       title: 'My Duit Gweh',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const SplashRouter(),
+      home: const AuthGate(),
     );
   }
 }
 
-/// Determines the initial screen based on onboarding status and auth state.
-class SplashRouter extends StatefulWidget {
-  const SplashRouter({super.key});
+class AuthGate extends StatelessWidget {
+  const AuthGate({super.key});
 
   @override
-  State<SplashRouter> createState() => _SplashRouterState();
-}
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        // DEBUG LOG
+        debugPrint('--- AUTH GATE STATE: ${snapshot.connectionState} ---');
+        debugPrint('--- HAS USER: ${snapshot.hasData} | UID: ${snapshot.data?.uid} ---');
 
-class _SplashRouterState extends State<SplashRouter>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animController;
-  late Animation<double> _scaleAnim;
-  late Animation<double> _fadeAnim;
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SplashView();
+        }
 
-  @override
-  void initState() {
-    super.initState();
-    _animController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    );
-    _scaleAnim = Tween<double>(begin: 0.5, end: 1.0).animate(
-      CurvedAnimation(parent: _animController, curve: Curves.elasticOut),
-    );
-    _fadeAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animController,
-        curve: const Interval(0.0, 0.5, curve: Curves.easeIn),
-      ),
-    );
-    _animController.forward();
-    _navigate();
-  }
+        final user = snapshot.data;
 
-  Future<void> _navigate() async {
-    // Wait for splash animation
-    await Future.delayed(const Duration(milliseconds: 1800));
+        return FutureBuilder<bool>(
+          // Use a unique key to force rebuild of FutureBuilder when user changes
+          key: ValueKey(user?.uid ?? 'logged-out'),
+          future: _checkOnboarding(),
+          builder: (context, onbSnapshot) {
+            if (onbSnapshot.connectionState == ConnectionState.waiting) {
+              return const SplashView();
+            }
 
-    if (!mounted) return;
+            final onboardingDone = onbSnapshot.data ?? false;
+            debugPrint('--- ONBOARDING DONE: $onboardingDone ---');
 
-    final prefs = await SharedPreferences.getInstance();
-    final onboardingDone = prefs.getBool('onboarding_completed') ?? false;
-    final user = FirebaseAuth.instance.currentUser;
+            if (!onboardingDone) {
+              return const OnboardingScreen();
+            }
 
-    Widget destination;
-    if (!onboardingDone) {
-      destination = const OnboardingScreen();
-    } else if (user == null) {
-      destination = const LoginScreen();
-    } else {
-      destination = const MainNav();
-    }
-
-    if (mounted) {
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          pageBuilder: (_, __, ___) => destination,
-          transitionsBuilder: (_, animation, __, child) {
-            return FadeTransition(opacity: animation, child: child);
+            if (user != null) {
+              debugPrint('--- NAVIGATING TO MAIN NAV ---');
+              return const MainNav();
+            } else {
+              debugPrint('--- NAVIGATING TO LOGIN SCREEN ---');
+              return const LoginScreen();
+            }
           },
-          transitionDuration: const Duration(milliseconds: 500),
-        ),
-      );
-    }
+        );
+      },
+    );
   }
 
-  @override
-  void dispose() {
-    _animController.dispose();
-    super.dispose();
+  Future<bool> _checkOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('onboarding_completed') ?? false;
   }
+}
+
+class SplashView extends StatelessWidget {
+  const SplashView({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Center(
-        child: FadeTransition(
-          opacity: _fadeAnim,
-          child: ScaleTransition(
-            scale: _scaleAnim,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // App logo
-                Container(
-                  width: 88,
-                  height: 88,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [AppColors.primary, AppColors.deepBlue],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withOpacity(0.3),
-                        blurRadius: 28,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.account_balance_wallet_rounded,
-                    size: 42,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  'My Duit Gweh',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Smart Money Manager',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w400,
-                    color: AppColors.textHint,
-                  ),
-                ),
-              ],
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Icon(Icons.account_balance_wallet_rounded, size: 40, color: Colors.white),
             ),
-          ),
+            const SizedBox(height: 24),
+            const CircularProgressIndicator(color: AppColors.primary),
+          ],
         ),
       ),
     );

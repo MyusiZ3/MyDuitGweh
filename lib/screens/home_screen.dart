@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
 import '../services/firestore_service.dart';
 import '../services/auth_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/security_service.dart';
 import '../models/transaction_model.dart';
 import '../models/wallet_model.dart';
@@ -17,6 +19,7 @@ import 'edit_profile_screen.dart';
 import 'help_screen.dart';
 import 'about_screen.dart';
 import 'login_screen.dart';
+import 'notifications_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -37,12 +40,46 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isBalanceVisible = true;
   double _monthlyBudget = 0.0;
   TimeOfDay _reminderTime = const TimeOfDay(hour: 20, minute: 0);
+  StreamSubscription? _notifListener;
 
   @override
   void initState() {
     super.initState();
     _loadSettings();
     _checkAppLock();
+    _initNotificationListener();
+  }
+
+  void _initNotificationListener() {
+    _notifListener = FirebaseFirestore.instance
+        .collection('users')
+        .doc(_uid)
+        .collection('notifications')
+        .where('isRead', isEqualTo: false)
+        .snapshots()
+        .listen((snapshot) {
+      for (var change in snapshot.docChanges) {
+        if (change.type == DocumentChangeType.added) {
+          final data = change.doc.data() as Map<String, dynamic>;
+          final title = data['title'] ?? 'Notifikasi Baru';
+          final message = data['message'] ?? '';
+          
+          _showPopupNotification(title, message);
+        }
+      }
+    });
+  }
+
+  void _showPopupNotification(String title, String message) {
+    if (mounted) {
+      UIHelper.showSuccessSnackBar(context, '$title: $message');
+    }
+  }
+
+  @override
+  void dispose() {
+    _notifListener?.cancel();
+    super.dispose();
   }
 
   Future<void> _checkAppLock() async {
@@ -125,6 +162,40 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                     const Spacer(),
+                    StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(_uid)
+                          .collection('notifications')
+                          .where('isRead', isEqualTo: false)
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        final unreadCount = snapshot.hasData ? snapshot.data!.docs.length : 0;
+                        return Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            IconButton(
+                              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen())),
+                              icon: const Icon(Icons.notifications_none_rounded, color: AppColors.textPrimary, size: 26),
+                            ),
+                            if (unreadCount > 0)
+                              Positioned(
+                                top: 12,
+                                right: 12,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(color: AppColors.expense, shape: BoxShape.circle),
+                                  child: Text(
+                                    unreadCount > 9 ? '9+' : '$unreadCount',
+                                    style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 4),
                     GestureDetector(
                       onTap: _showProfileMenu,
                       child: Container(
@@ -752,9 +823,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       title: 'Keluar Akun?',
                       message:
                           'Pastikan kamu sudah mencatat semua transaksi hari ini ya!',
+                      confirmText: 'Ya, Keluar',
+                      cancelText: 'Batal',
+                      isDangerous: false, // Logout isn't scary like a deletion
                     );
                     if (confirm == true) {
-                      await _authService.signOut();
+                      Navigator.pop(context); await _authService.signOut();
                       if (mounted)
                         Navigator.pushAndRemoveUntil(
                             context,
