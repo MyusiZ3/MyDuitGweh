@@ -82,7 +82,7 @@ class _WalletScreenState extends State<WalletScreen> {
         builder: (context, setModalState) => Container(
           padding: EdgeInsets.only(
             left: 24, right: 24, top: 24,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+            bottom: MediaQuery.of(context).viewInsets.bottom + MediaQuery.of(context).padding.bottom + 24,
           ),
           decoration: const BoxDecoration(
             color: Colors.white,
@@ -204,7 +204,7 @@ class _WalletScreenState extends State<WalletScreen> {
         builder: (context, setModalState) => Container(
           padding: EdgeInsets.only(
             left: 24, right: 24, top: 24,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+            bottom: MediaQuery.of(context).viewInsets.bottom + MediaQuery.of(context).padding.bottom + 24,
           ),
           decoration: const BoxDecoration(
             color: Colors.white,
@@ -435,33 +435,73 @@ class _WalletScreenState extends State<WalletScreen> {
                         final txn = snapshot.data![index];
                         final isIncome = txn.isIncome;
                         final color = isIncome ? AppColors.income : AppColors.expense;
-                        return ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: Container(
-                            width: 40, height: 40,
+                        
+                        return Dismissible(
+                          key: Key(txn.id),
+                          direction: DismissDirection.endToStart,
+                          background: Container(
+                            alignment: Alignment.centerRight,
+                            padding: const EdgeInsets.only(right: 20),
                             decoration: BoxDecoration(
-                              color: color.withOpacity(0.1),
+                              color: AppColors.expense.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: Icon(
-                              TransactionCategory.getIconForCategory(txn.category),
-                              color: color, size: 20,
+                            child: const Icon(Icons.delete_sweep_rounded, color: AppColors.expense),
+                          ),
+                          confirmDismiss: (direction) async {
+                            return await showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Hapus Transaksi?'),
+                                content: const Text('Saldo dompet akan disesuaikan secara otomatis.'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context, false),
+                                    child: const Text('Batal'),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () => Navigator.pop(context, true),
+                                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.expense, foregroundColor: Colors.white),
+                                    child: const Text('Hapus'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                          onDismissed: (direction) {
+                            _firestoreService.deleteTransaction(txn);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Transaksi dihapus & Saldo diperbarui!')),
+                            );
+                          },
+                          child: ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: Container(
+                              width: 40, height: 40,
+                              decoration: BoxDecoration(
+                                color: color.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(
+                                TransactionCategory.getIconForCategory(txn.category),
+                                color: color, size: 20,
+                              ),
                             ),
-                          ),
-                          title: Text(txn.category,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w600, fontSize: 14)),
-                          subtitle: Text(
-                            txn.note.isNotEmpty
-                                ? txn.note
-                                : CurrencyFormatter.formatRelativeDate(txn.date),
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                          trailing: Text(
-                            '${isIncome ? '+' : '-'}${CurrencyFormatter.formatCurrency(txn.amount)}',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              color: color, fontSize: 14,
+                            title: Text(txn.category,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w600, fontSize: 14)),
+                            subtitle: Text(
+                              txn.note.isNotEmpty
+                                  ? txn.note
+                                  : CurrencyFormatter.formatRelativeDate(txn.date),
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                            trailing: Text(
+                              '${isIncome ? '+' : '-'}${CurrencyFormatter.formatCurrency(txn.amount)}',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: color, fontSize: 14,
+                              ),
                             ),
                           ),
                         );
