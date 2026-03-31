@@ -83,10 +83,6 @@ class _Dot extends StatelessWidget {
     return AnimatedBuilder(
       animation: controller,
       builder: (context, child) {
-        final double opacity = ((controller.value - delay).clamp(0.0, 1.0));
-        // Simple sine wave for bounce effect
-        final double transform = 1.0 - (0.3 * (1.0 - opacity)); 
-        
         return Container(
           margin: const EdgeInsets.symmetric(horizontal: 4),
           height: 8,

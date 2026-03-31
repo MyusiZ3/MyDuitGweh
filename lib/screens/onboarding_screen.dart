@@ -55,84 +55,87 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
           
           // Bottom area - Actions
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-            color: Colors.white,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Minimalist Dots Indicator
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(
-                    _pages.length,
-                    (index) => AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      height: 6,
-                      width: _currentPage == index ? 24 : 6,
-                      decoration: BoxDecoration(
-                        color: _currentPage == index 
-                          ? AppColors.primary 
-                          : AppColors.primary.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(3),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 32),
-                
-                // Gojek Style Login/Start Button
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      if (_currentPage < _pages.length - 1) {
-                        _pageController.nextPage(
-                          duration: const Duration(milliseconds: 600),
-                          curve: Curves.fastOutSlowIn,
-                        );
-                      } else {
-                        _navigateToLogin();
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(28), // Very rounded like Gopay
-                      ),
-                    ),
-                    child: Text(
-                      _currentPage == _pages.length - 1 ? 'Mulai Sekarang' : 'Lanjut',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-                
-                // Skip / Login link
-                const SizedBox(height: 16),
-                GestureDetector(
-                  onTap: _navigateToLogin,
-                  child: RichText(
-                    text: TextSpan(
-                      text: 'Tiba-tiba sudah punya akun? ',
-                      style: const TextStyle(color: AppColors.textHint, fontSize: 13),
-                      children: [
-                        TextSpan(
-                          text: 'Masuk',
-                          style: TextStyle(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.bold,
-                          ),
+          SafeArea(
+            top: false,
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+              color: Colors.white,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Minimalist Dots Indicator
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(
+                      _pages.length,
+                      (index) => AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        height: 6,
+                        width: _currentPage == index ? 24 : 6,
+                        decoration: BoxDecoration(
+                          color: _currentPage == index 
+                            ? AppColors.primary 
+                            : AppColors.primary.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(3),
                         ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 32),
+                  
+                  // Gojek Style Login/Start Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        if (_currentPage < _pages.length - 1) {
+                          _pageController.nextPage(
+                            duration: const Duration(milliseconds: 600),
+                            curve: Curves.fastOutSlowIn,
+                          );
+                        } else {
+                          _navigateToLogin();
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(28), // Very rounded like Gopay
+                        ),
+                      ),
+                      child: Text(
+                        _currentPage == _pages.length - 1 ? 'Mulai Sekarang' : 'Lanjut',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                  
+                  // Skip / Login link
+                  const SizedBox(height: 16),
+                  GestureDetector(
+                    onTap: _navigateToLogin,
+                    child: RichText(
+                      text: TextSpan(
+                        text: 'Tiba-tiba sudah punya akun? ',
+                        style: const TextStyle(color: AppColors.textHint, fontSize: 13),
+                        children: [
+                          const TextSpan(
+                            text: 'Masuk',
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],

@@ -115,7 +115,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     return Container(
       padding: EdgeInsets.only(
         left: 24, right: 24, top: 24,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        bottom: MediaQuery.of(context).viewInsets.bottom + MediaQuery.of(context).padding.bottom + 24,
       ),
       decoration: const BoxDecoration(
         color: Colors.white,
