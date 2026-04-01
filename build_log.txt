@@ -1,0 +1,33 @@
+﻿
+flutter : Support for 
+Android x86 targets will 
+be removed in the next 
+stable release after 
+3.27. See https://github.c
+om/flutter/flutter/issues/
+157543 for details.
+At line:1 char:1
++ flutter build apk 
+--debug 2>&1 | Out-File 
+-FilePath build_log.txt 
+-En ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~
+    + CategoryInfo        
+      : NotSpecified: (S  
+  upport for And...43 f   
+ or details.:String) [    
+], RemoteException
+    + FullyQualifiedError 
+   Id : NativeCommandErr  
+  or
+ 
+Running Gradle task 'assembleDebug'...                          
+Note: Some input files 
+use or override a 
+deprecated API.
+Note: Recompile with 
+-Xlint:deprecation for 
+details.
+Running Gradle task 'assembleDebug'...                            136.7s
+ΓêÜ Built build\app\outputs\flutter-apk\app-debug.apk
