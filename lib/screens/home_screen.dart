@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:async';
@@ -22,6 +23,7 @@ import 'help_screen.dart';
 import 'about_screen.dart';
 import 'login_screen.dart';
 import 'notifications_screen.dart';
+import 'admin/admin_dashboard_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -43,6 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
   double _monthlyBudget = 0.0;
   TimeOfDay _reminderTime = const TimeOfDay(hour: 20, minute: 0);
   StreamSubscription? _notifListener;
+  bool _isAdmin = false; // Add state for admin role
 
   @override
   void initState() {
@@ -50,6 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadSettings();
     _checkAppLock();
     _initNotificationListener();
+    _checkAdminRole(); // Initial check for admin role
   }
 
   void _initNotificationListener() {
@@ -63,19 +67,160 @@ class _HomeScreenState extends State<HomeScreen> {
       for (var change in snapshot.docChanges) {
         if (change.type == DocumentChangeType.added) {
           final data = change.doc.data() as Map<String, dynamic>;
-          final title = data['title'] ?? 'Notifikasi Baru';
+          final docId = change.doc.id;
+          final displayCount = data['displayCount'] ?? 0;
+          final title = data['title'] ?? '📢 Kabar Baru!';
           final message = data['message'] ?? '';
 
-          _showPopupNotification(title, message);
+          // 1. Tampilkan System Notification (Agar muncul di HP luar aplikasi)
+          _notificationService.showInstant(
+            id: docId.hashCode,
+            title: title,
+            body: message.replaceAll('*', '').replaceAll('_', ''), // Bersihkan tag untuk sistem
+          );
+
+          // 2. Tampilkan Premium In-App Alert (Maksimal 2x tampil)
+          if (displayCount < 2) {
+            _showPremiumBroadcast(docId, title, message, displayCount);
+          }
         }
       }
     });
   }
 
-  void _showPopupNotification(String title, String message) {
-    if (mounted) {
-      UIHelper.showSuccessSnackBar(context, '$title: $message');
+  void _showPremiumBroadcast(String docId, String title, String message, int currentCount) {
+    if (!mounted) return;
+
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(_uid)
+        .collection('notifications')
+        .doc(docId)
+        .update({'displayCount': currentCount + 1});
+
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: '',
+      barrierColor: Colors.black.withOpacity(0.4),
+      transitionDuration: const Duration(milliseconds: 500),
+      pageBuilder: (ctx, anim1, anim2) => Center(
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 24),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 40, offset: const Offset(0, 15)),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+              child: Container(
+                padding: const EdgeInsets.all(28),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.85),
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(color: Colors.white.withOpacity(0.5), width: 1),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      height: 4, width: 40,
+                      decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(2)),
+                    ),
+                    const SizedBox(height: 24),
+                    const Icon(Icons.auto_awesome_rounded, color: AppColors.primary, size: 32),
+                    const SizedBox(height: 16),
+                    Text(title.toUpperCase(), 
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 13, 
+                        fontWeight: FontWeight.w900, 
+                        letterSpacing: 2,
+                        color: AppColors.primary,
+                        decoration: TextDecoration.none
+                      )
+                    ),
+                    const SizedBox(height: 12),
+                    Material(
+                      color: Colors.transparent,
+                      child: _renderMarkdown(message)
+                    ),
+                    const SizedBox(height: 32),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        width: double.infinity,
+                        height: 54,
+                        decoration: BoxDecoration(
+                          color: Colors.black,
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: const Center(
+                          child: Text('OK, UNDERSTOOD', 
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, letterSpacing: 0.5, fontSize: 13, decoration: TextDecoration.none)
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+      transitionBuilder: (ctx, anim1, anim2, child) => FadeTransition(
+        opacity: anim1,
+        child: SlideTransition(
+          position: Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(CurvedAnimation(parent: anim1, curve: Curves.easeOutCubic)),
+          child: child,
+        ),
+      ),
+    );
+  }
+
+  Widget _renderMarkdown(String text) {
+    // Parser Sederhana untuk Bold (**) dan Italic (*)
+    List<TextSpan> spans = [];
+    final regExp = RegExp(r'(\*\*.*?\*\*|\*.*?\*)');
+    int lastMatchEnd = 0;
+
+    for (var match in regExp.allMatches(text)) {
+      // Teks sebelum match
+      if (match.start > lastMatchEnd) {
+        spans.add(TextSpan(text: text.substring(lastMatchEnd, match.start)));
+      }
+
+      String found = match.group(0)!;
+      if (found.startsWith('**')) {
+        spans.add(TextSpan(
+          text: found.substring(2, found.length - 2),
+          style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)
+        ));
+      } else {
+        spans.add(TextSpan(
+          text: found.substring(1, found.length - 1),
+          style: const TextStyle(fontStyle: FontStyle.italic, color: AppColors.textPrimary)
+        ));
+      }
+      lastMatchEnd = match.end;
     }
+
+    if (lastMatchEnd < text.length) {
+      spans.add(TextSpan(text: text.substring(lastMatchEnd)));
+    }
+
+    return RichText(
+      textAlign: TextAlign.center,
+      text: TextSpan(
+        style: const TextStyle(fontSize: 15, color: AppColors.textSecondary, height: 1.5),
+        children: spans,
+      ),
+    );
   }
 
   @override
@@ -104,6 +249,13 @@ class _HomeScreenState extends State<HomeScreen> {
       final savedMinute = prefs.getInt('reminder_minute') ?? 0;
       _reminderTime = TimeOfDay(hour: savedHour, minute: savedMinute);
     });
+  }
+
+  Future<void> _checkAdminRole() async {
+    final isAdmin = await _authService.isAdmin();
+    if (mounted) {
+      setState(() => _isAdmin = isAdmin);
+    }
   }
 
   Future<void> _handleRefresh() async {
@@ -139,7 +291,8 @@ class _HomeScreenState extends State<HomeScreen> {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const ShimmerHomeScreen();
               }
-              if (!snapshot.hasData) return const Center(child: Text('Tidak ada data'));
+              if (!snapshot.hasData)
+                return const Center(child: Text('Tidak ada data'));
 
               final wallets = snapshot.data!;
               final totalBalance =
@@ -151,7 +304,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: AppColors.primary,
                 backgroundColor: Colors.white,
                 child: CustomScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                  physics: const AlwaysScrollableScrollPhysics(
+                      parent: BouncingScrollPhysics()),
                   slivers: [
                     // 1. STICKY APP BAR & GREETING
                     SliverAppBar(
@@ -175,12 +329,53 @@ class _HomeScreenState extends State<HomeScreen> {
                                       fontSize: 12,
                                       color: AppColors.textHint,
                                       fontWeight: FontWeight.w500)),
-                              Text(user?.displayName ?? 'Pengguna',
-                                  style: const TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppColors.textPrimary,
-                                      letterSpacing: -0.5)),
+                              Row(
+                                children: [
+                                  Text(user?.displayName ?? 'Pengguna',
+                                      style: const TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w800,
+                                          color: AppColors.textPrimary,
+                                          letterSpacing: -0.5)),
+                                  if (_isAdmin) ...[
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        gradient: const LinearGradient(
+                                          colors: [
+                                            Color(0xFFFFD700),
+                                            Color(0xFFFFA500)
+                                          ],
+                                        ),
+                                        borderRadius: BorderRadius.circular(12),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: const Color(0xFFFFD700)
+                                                .withOpacity(0.3),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: const Row(
+                                        children: [
+                                          Icon(Icons.workspace_premium_rounded,
+                                              color: Colors.white, size: 10),
+                                          SizedBox(width: 4),
+                                          Text('OWNER',
+                                              style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 8,
+                                                  fontWeight: FontWeight.w900,
+                                                  letterSpacing: 0.5)),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
                             ],
                           ),
                           const Spacer(),
@@ -192,8 +387,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 .where('isRead', isEqualTo: false)
                                 .snapshots(),
                             builder: (context, snapshot) {
-                              final unreadCount =
-                                  snapshot.hasData ? snapshot.data!.docs.length : 0;
+                              final unreadCount = snapshot.hasData
+                                  ? snapshot.data!.docs.length
+                                  : 0;
                               return Stack(
                                 clipBehavior: Clip.none,
                                 children: [
@@ -203,8 +399,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                         MaterialPageRoute(
                                             builder: (_) =>
                                                 const NotificationsScreen())),
-                                    icon: const Icon(Icons.notifications_none_rounded,
-                                        color: AppColors.textPrimary, size: 26),
+                                    icon: const Icon(
+                                        Icons.notifications_none_rounded,
+                                        color: AppColors.textPrimary,
+                                        size: 26),
                                   ),
                                   if (unreadCount > 0)
                                     Positioned(
@@ -216,7 +414,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                             color: AppColors.expense,
                                             shape: BoxShape.circle),
                                         child: Text(
-                                          unreadCount > 9 ? '9+' : '$unreadCount',
+                                          unreadCount > 9
+                                              ? '9+'
+                                              : '$unreadCount',
                                           style: const TextStyle(
                                               color: Colors.white,
                                               fontSize: 8,
@@ -237,19 +437,44 @@ class _HomeScreenState extends State<HomeScreen> {
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                      color: AppColors.primary.withOpacity(0.15),
+                                      color:
+                                          AppColors.primary.withOpacity(0.15),
                                       width: 1.5),
                                 ),
-                                child: CircleAvatar(
-                                  radius: 19,
-                                  backgroundColor: AppColors.primary.withOpacity(0.1),
-                                  backgroundImage: user?.photoURL != null
-                                      ? NetworkImage(user!.photoURL!)
-                                      : null,
-                                  child: user?.photoURL == null
-                                      ? const Icon(Icons.person_rounded,
-                                          size: 22, color: AppColors.primary)
-                                      : null,
+                                child: Stack(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 19,
+                                      backgroundColor:
+                                          AppColors.primary.withOpacity(0.1),
+                                      backgroundImage: user?.photoURL != null
+                                          ? NetworkImage(user!.photoURL!)
+                                          : null,
+                                      child: user?.photoURL == null
+                                          ? const Icon(Icons.person_rounded,
+                                              size: 22,
+                                              color: AppColors.primary)
+                                          : null,
+                                    ),
+                                    if (_isAdmin)
+                                      // Admin Badge (Top Left)
+                                      Positioned(
+                                        top: -3,
+                                        left: -3,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(2),
+                                          decoration: const BoxDecoration(
+                                            color: Colors.white,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            Icons.verified_rounded,
+                                            color: AppColors.primary,
+                                            size: 14,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
                                 ),
                               ),
                             ),
@@ -261,8 +486,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     // 2. MAIN BALANCE CARD
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 8),
                         child: Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(24),
@@ -270,7 +495,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             gradient: const LinearGradient(
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
-                              colors: [AppColors.primary, AppColors.primaryDark],
+                              colors: [
+                                AppColors.primary,
+                                AppColors.primaryDark
+                              ],
                             ),
                             borderRadius: BorderRadius.circular(32),
                             boxShadow: [
@@ -285,7 +513,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(ToneManager.t('home_balance'),
                                       style: const TextStyle(
@@ -316,7 +545,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               FittedBox(
                                 child: Text(
                                   _isBalanceVisible
-                                      ? CurrencyFormatter.formatCurrency(totalBalance)
+                                      ? CurrencyFormatter.formatCurrency(
+                                          totalBalance)
                                       : 'Rp ••••••••',
                                   style: const TextStyle(
                                       color: Colors.white,
@@ -330,15 +560,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                 children: [
                                   Expanded(
                                     child: _balanceAction(
-                                        Icons.account_balance_wallet_rounded, ToneManager.t('nav_wallet'),
-                                        () {
+                                        Icons.account_balance_wallet_rounded,
+                                        ToneManager.t('nav_wallet'), () {
                                       MainNav.of(context)?.setTab(1);
                                     }),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
-                                    child: _balanceAction(Icons.insights_rounded, ToneManager.t('nav_report'),
-                                        () {
+                                    child: _balanceAction(
+                                        Icons.insights_rounded,
+                                        ToneManager.t('nav_report'), () {
                                       MainNav.of(context)?.setTab(4);
                                     }),
                                   ),
@@ -363,29 +594,36 @@ class _HomeScreenState extends State<HomeScreen> {
                     // 4. WALLET SUMMARY (SMALL CARDS)
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.only(top: 16, bottom: 12, left: 24),
+                        padding: const EdgeInsets.only(
+                            top: 16, bottom: 12, left: 24),
                         child: Text('Daftar Dompet',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.w800, fontSize: 18)),
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(
+                                    fontWeight: FontWeight.w800, fontSize: 18)),
                       ),
                     ),
                     SliverToBoxAdapter(
                       child: wallets.isEmpty
                           ? Container(
                               height: 120,
-                              margin: const EdgeInsets.symmetric(horizontal: 24),
+                              margin:
+                                  const EdgeInsets.symmetric(horizontal: 24),
                               width: double.infinity,
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(24),
                                 border: Border.all(
-                                    color: AppColors.surfaceVariant.withAlpha(50)),
+                                    color:
+                                        AppColors.surfaceVariant.withAlpha(50)),
                               ),
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(Icons.account_balance_wallet_outlined,
-                                      color: AppColors.textHint.withOpacity(0.3),
+                                      color:
+                                          AppColors.textHint.withOpacity(0.3),
                                       size: 32),
                                   const SizedBox(height: 8),
                                   const Text('Belum ada dompet nih!',
@@ -395,14 +633,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                           fontWeight: FontWeight.w700)),
                                   const Text('Buat dompet pertamamu yuk!',
                                       style: TextStyle(
-                                          color: AppColors.textHint, fontSize: 11)),
+                                          color: AppColors.textHint,
+                                          fontSize: 11)),
                                 ],
                               ),
                             )
                           : SizedBox(
                               height: 100,
                               child: ListView.builder(
-                                padding: const EdgeInsets.symmetric(horizontal: 24),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 24),
                                 scrollDirection: Axis.horizontal,
                                 physics: const BouncingScrollPhysics(),
                                 itemCount: wallets.length,
@@ -422,8 +662,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                                 .withOpacity(0.4)),
                                       ),
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
                                           Text(w.walletName,
                                               style: const TextStyle(
@@ -434,12 +676,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                           const SizedBox(height: 6),
                                           FittedBox(
                                             child: Text(
-                                                CurrencyFormatter.formatCurrency(
-                                                    w.balance),
+                                                CurrencyFormatter
+                                                    .formatCurrency(w.balance),
                                                 style: const TextStyle(
-                                                    color: AppColors.textPrimary,
+                                                    color:
+                                                        AppColors.textPrimary,
                                                     fontSize: 15,
-                                                    fontWeight: FontWeight.w800)),
+                                                    fontWeight:
+                                                        FontWeight.w800)),
                                           ),
                                         ],
                                       ),
@@ -463,11 +707,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                     .textTheme
                                     .titleLarge
                                     ?.copyWith(
-                                        fontWeight: FontWeight.w800, fontSize: 18)),
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 18)),
                             TextButton(
                               onPressed: () => MainNav.of(context)?.setTab(4),
                               child: const Text('Semua',
-                                  style: TextStyle(fontWeight: FontWeight.w700)),
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.w700)),
                             ),
                           ],
                         ),
@@ -505,7 +751,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 13)),
-            ), 
+            ),
           ],
         ),
       ),
@@ -575,7 +821,8 @@ class _HomeScreenState extends State<HomeScreen> {
         if (!snapshot.hasData)
           return const SliverToBoxAdapter(
               child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24), child: ShimmerTransactionList()));
+                  padding: EdgeInsets.symmetric(horizontal: 24),
+                  child: ShimmerTransactionList()));
         final txns = snapshot.data!;
         if (txns.isEmpty) {
           return SliverToBoxAdapter(
@@ -601,8 +848,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           fontSize: 13,
                           fontWeight: FontWeight.w700)),
                   Text(ToneManager.t('home_empty'),
-                      style:
-                          const TextStyle(color: AppColors.textHint, fontSize: 11)),
+                      style: const TextStyle(
+                          color: AppColors.textHint, fontSize: 11)),
                 ],
               ),
             ),
@@ -718,7 +965,22 @@ class _HomeScreenState extends State<HomeScreen> {
               Text(user?.displayName ?? 'User',
                   style: const TextStyle(
                       fontSize: 20, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 32),
+              const SizedBox(height: 16),
+              if (_isAdmin) // Special menu for Admin/Owner
+                _buildProfileMenuItem(
+                  icon: Icons.dashboard_customize_rounded,
+                  label: 'Owner Dashboard',
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const AdminDashboardScreen()));
+                  },
+                  trailing: const Icon(Icons.arrow_forward_ios_rounded,
+                      size: 16, color: AppColors.primary),
+                ),
+              const SizedBox(height: 16),
               _buildProfileMenuItem(
                 icon: Icons.shield_outlined,
                 label: 'Kunci Sidik Jari/Wajah',
@@ -848,8 +1110,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   Navigator.pop(context);
                   _showToneSelector();
                 },
-                trailing: Text(ToneManager.notifier.value.name.toUpperCase(), 
-                  style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+                trailing: Text(ToneManager.notifier.value.name.toUpperCase(),
+                    style: const TextStyle(
+                        color: AppColors.primary, fontWeight: FontWeight.bold)),
               ),
               _buildProfileMenuItem(
                   icon: Icons.person_outline,
@@ -903,33 +1166,53 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showToneSelector() {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => Container(
         padding: const EdgeInsets.only(top: 16, bottom: 40),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+            Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2))),
             const SizedBox(height: 24),
-            const Text('Vibe Bahasa (App Tone)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text('Vibe Bahasa (App Tone)',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             ...AppTone.values.map((t) => ListTile(
-              leading: Icon(
-                t == AppTone.genZ ? Icons.rocket_launch :
-                t == AppTone.milenial ? Icons.coffee :
-                t == AppTone.boomer ? Icons.elderly : Icons.notes,
-                color: ToneManager.notifier.value == t ? AppColors.primary : Colors.grey,
-              ),
-              title: Text(t.name.toUpperCase(), style: TextStyle(
-                fontWeight: ToneManager.notifier.value == t ? FontWeight.bold : FontWeight.normal,
-                color: ToneManager.notifier.value == t ? AppColors.primary : Colors.black87,
-              )),
-              trailing: ToneManager.notifier.value == t ? const Icon(Icons.check_circle, color: AppColors.primary) : null,
-              onTap: () async {
-                await ToneManager.setTone(t);
-                if (mounted) Navigator.pop(ctx);
-              },
-            )),
+                  leading: Icon(
+                    t == AppTone.genZ
+                        ? Icons.rocket_launch
+                        : t == AppTone.milenial
+                            ? Icons.coffee
+                            : t == AppTone.boomer
+                                ? Icons.elderly
+                                : Icons.notes,
+                    color: ToneManager.notifier.value == t
+                        ? AppColors.primary
+                        : Colors.grey,
+                  ),
+                  title: Text(t.name.toUpperCase(),
+                      style: TextStyle(
+                        fontWeight: ToneManager.notifier.value == t
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                        color: ToneManager.notifier.value == t
+                            ? AppColors.primary
+                            : Colors.black87,
+                      )),
+                  trailing: ToneManager.notifier.value == t
+                      ? const Icon(Icons.check_circle, color: AppColors.primary)
+                      : null,
+                  onTap: () async {
+                    await ToneManager.setTone(t);
+                    if (mounted) Navigator.pop(ctx);
+                  },
+                )),
           ],
         ),
       ),
