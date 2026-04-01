@@ -239,7 +239,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                           size: 16, color: AppColors.primary),
                       SizedBox(width: 4),
                       Text(
-                        'Tambah',
+                        'Undang',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -417,11 +417,11 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
       builder: (ctx) => AlertDialog(
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Tambah Anggota'),
+        title: const Text('Undang Anggota'),
         content: TextField(
           controller: emailController,
           decoration: const InputDecoration(
-            hintText: 'Email anggota baru',
+            hintText: 'Email teman untuk diundang',
             prefixIcon:
                 Icon(Icons.email_outlined, color: AppColors.primary),
           ),
@@ -445,7 +445,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                 scaffoldMessenger.showSnackBar(
                   SnackBar(
                     content: Text(success
-                        ? 'Anggota berhasil ditambahkan! ✅'
+                        ? 'Undangan berhasil dikirim! 📩'
                         : 'Email tidak ditemukan 😕'),
                     backgroundColor:
                         success ? AppColors.income : AppColors.expense,
@@ -456,7 +456,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                 );
               }
             },
-            child: const Text('Tambah'),
+            child: const Text('Kirim Undangan'),
           ),
         ],
       ),

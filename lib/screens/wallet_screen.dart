@@ -6,8 +6,10 @@ import '../models/transaction_model.dart';
 import '../utils/app_theme.dart';
 import '../utils/currency_formatter.dart';
 import '../utils/ui_helper.dart';
+import '../utils/tone_dictionary.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -22,47 +24,97 @@ class _WalletScreenState extends State<WalletScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Dompet Saya'),
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
         backgroundColor: AppColors.background,
-        elevation: 0,
-        actions: [
-          IconButton(
-            onPressed: _showCreateWalletDialog,
-            icon: const Icon(Icons.add_circle_outline_rounded, color: AppColors.primary),
+        appBar: AppBar(
+          title: const Text('Dompet Saya'),
+          backgroundColor: AppColors.background,
+          elevation: 0,
+          bottom: const TabBar(
+            indicatorColor: AppColors.primary,
+            labelColor: AppColors.primary,
+            unselectedLabelColor: AppColors.textHint,
+            tabs: [
+              Tab(text: 'Pribadi'),
+              Tab(text: 'Bersama'),
+              Tab(text: 'Hutang'),
+            ],
           ),
-        ],
-      ),
+          actions: [
+            IconButton(
+              onPressed: _showCreateWalletDialog,
+              icon: const Icon(Icons.add_circle_outline_rounded, color: AppColors.primary),
+            ),
+          ],
+        ),
       body: StreamBuilder<List<WalletModel>>(
         stream: _firestoreService.getWalletsStream(_uid),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (snapshot.connectionState == ConnectionState.waiting)
             return const Center(child: CircularProgressIndicator());
-          }
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return _buildEmptyState();
-          }
 
-          final wallets = snapshot.data!;
-          return ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          final wallets = snapshot.data ?? [];
+          final personalWallets = wallets.where((w) => w.isPersonal).toList();
+          final colabWallets = wallets.where((w) => w.isColab).toList();
+          final debtWallets = wallets.where((w) => w.isDebt).toList();
+
+          return TabBarView(
             physics: const BouncingScrollPhysics(),
-            itemCount: wallets.length,
-            itemBuilder: (context, index) => _WalletCard(
-              wallet: wallets[index],
-              onTap: () => _showWalletDetails(wallets[index]),
-            ),
+            children: [
+              // Tab 1: Pribadi
+              personalWallets.isEmpty 
+                ? _buildEmptyState()
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: personalWallets.length,
+                    itemBuilder: (context, index) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _WalletCard(wallet: personalWallets[index], onTap: () => _showWalletDetails(personalWallets[index]))
+                    ),
+                  ),
+              
+              // Tab 2: Bersama
+              colabWallets.isEmpty
+                ? _buildEmptyState()
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: colabWallets.length,
+                    itemBuilder: (context, index) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _WalletCard(wallet: colabWallets[index], onTap: () => _showWalletDetails(colabWallets[index]))
+                    ),
+                  ),
+
+              // Tab 3: Hutang
+              debtWallets.isEmpty
+                ? _buildEmptyState()
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: debtWallets.length,
+                    itemBuilder: (context, index) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _WalletCard(wallet: debtWallets[index], onTap: () => _showWalletDetails(debtWallets[index]))
+                    ),
+                  ),
+            ],
           );
         },
       ),
-    );
-  }
+    ),
+  );
+}
 
   void _showCreateWalletDialog() {
     final nameController = TextEditingController();
+    final debtorNameController = TextEditingController();
+    final debtorPhoneController = TextEditingController();
     String selectedType = 'personal';
+    String debtType = 'payable'; // 'payable' = ngutang, 'receivable' = minjamin
 
     showModalBottomSheet(
       context: context,
@@ -98,17 +150,108 @@ class _WalletScreenState extends State<WalletScreen> {
                 Row(
                   children: [
                     _buildTypeOption(setModalState, 'personal', 'Pribadi', Icons.person_outline, selectedType, (val) => selectedType = val),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 8),
                     _buildTypeOption(setModalState, 'kolaborasi', 'Bersama', Icons.groups_outlined, selectedType, (val) => selectedType = val),
+                    const SizedBox(width: 8),
+                    _buildTypeOption(setModalState, 'debt', 'Hutang', Icons.handshake_outlined, selectedType, (val) => selectedType = val),
                   ],
                 ),
                 const SizedBox(height: 20),
+                if (selectedType == 'debt') ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(color: AppColors.surfaceVariant, borderRadius: BorderRadius.circular(16)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Posisi Anda', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: AppColors.textHint)),
+                        Row(
+                          children: [
+                            Expanded(child: RadioListTile<String>(
+                              title: const Text('Saya Ngutang', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                              value: 'payable',
+                              groupValue: debtType,
+                              onChanged: (val) => setModalState(() => debtType = val!),
+                              contentPadding: EdgeInsets.zero,
+                              dense: true,
+                              activeColor: AppColors.primary,
+                            )),
+                            Expanded(child: RadioListTile<String>(
+                              title: const Text('Saya Minjamin', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                              value: 'receivable',
+                              groupValue: debtType,
+                              onChanged: (val) => setModalState(() => debtType = val!),
+                              contentPadding: EdgeInsets.zero,
+                              dense: true,
+                              activeColor: AppColors.primary,
+                            )),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: debtorNameController,
+                          textCapitalization: TextCapitalization.words,
+                          decoration: InputDecoration(
+                            hintText: 'Nama Teman / Pihak Lain',
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                            suffixIcon: IconButton(
+                              icon: const Icon(Icons.contacts, color: AppColors.primary),
+                              onPressed: () async {
+                                if (await FlutterContacts.requestPermission()) {
+                                  final contacts = await FlutterContacts.getContacts(withProperties: true);
+                                  if (!context.mounted) return;
+                                  showModalBottomSheet(
+                                    context: context,
+                                    builder: (ctx) => ListView.builder(
+                                      itemCount: contacts.length,
+                                      itemBuilder: (ctx, i) => ListTile(
+                                        title: Text(contacts[i].displayName),
+                                        subtitle: Text(contacts[i].phones.isNotEmpty ? contacts[i].phones.first.number : 'Tanpa nomor HP'),
+                                        onTap: () {
+                                          setModalState(() {
+                                            debtorNameController.text = contacts[i].displayName;
+                                            if (contacts[i].phones.isNotEmpty) {
+                                              debtorPhoneController.text = contacts[i].phones.first.number;
+                                            }
+                                            nameController.text = debtType == 'payable' ? 'Hutang ke ${contacts[i].displayName}' : 'Piutang ${contacts[i].displayName}';
+                                          });
+                                          Navigator.pop(ctx);
+                                        },
+                                      )
+                                    )
+                                  );
+                                } else {
+                                  if (!context.mounted) return;
+                                  UIHelper.showErrorSnackBar(context, 'Izin akses kontak ditolak!');
+                                }
+                              }
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: debtorPhoneController,
+                          keyboardType: TextInputType.phone,
+                          decoration: InputDecoration(
+                            hintText: 'Nomor HP (bisa via kontak)',
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                          ),
+                        ),
+                      ]
+                    )
+                  )
+                ],
                 TextField(
                   controller: nameController,
                   textCapitalization: TextCapitalization.words,
                   decoration: InputDecoration(
-                    hintText: selectedType == 'kolaborasi' ? 'Nama kelompok/tujuan' : 'Nama dompet (misal: Jajan)',
-                    prefixIcon: Icon(selectedType == 'kolaborasi' ? Icons.groups_rounded : Icons.account_balance_wallet_outlined, color: AppColors.primary),
+                    hintText: selectedType == 'kolaborasi' ? 'Nama kelompok/tujuan' : selectedType == 'debt' ? 'Label Catatan (Misal: Hutang Budi)' : 'Nama dompet (misal: Jajan)',
+                    prefixIcon: Icon(selectedType == 'kolaborasi' ? Icons.groups_rounded : selectedType == 'debt' ? Icons.receipt_long : Icons.account_balance_wallet_outlined, color: AppColors.primary),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppColors.primary)),
                     focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppColors.primary, width: 2)),
                   ),
@@ -124,17 +267,19 @@ class _WalletScreenState extends State<WalletScreen> {
                           id: '', // Will be set by service
                           walletName: nameController.text,
                           balance: 0,
-                          type: selectedType == 'kolaborasi' ? 'colab' : 'personal',
+                          type: selectedType, // 'personal', 'colab', or 'debt'
                           members: [_uid],
                           owner: _uid,
                           createdAt: DateTime.now(),
+                          debtorName: selectedType == 'debt' ? debtorNameController.text : null,
+                          debtorPhone: selectedType == 'debt' ? debtorPhoneController.text : null,
+                          debtType: selectedType == 'debt' ? debtType : null,
                         );
                         
                         await _firestoreService.createWallet(newWallet);
-                        if (mounted) {
-                          Navigator.pop(context);
-                          UIHelper.showSuccessSnackBar(context, 'Dompet "${nameController.text}" berhasil dibuat! 🎉');
-                        }
+                        if (!context.mounted) return;
+                        Navigator.pop(context);
+                        UIHelper.showSuccessSnackBar(context, 'Dompet "${nameController.text}" berhasil dibuat! 🎉');
                       }
                     },
                     style: ElevatedButton.styleFrom(
@@ -227,13 +372,12 @@ class _WalletScreenState extends State<WalletScreen> {
                 if (codeController.text.length == 6) {
                   setDialogState(() => isChecking = true);
                   final success = await _firestoreService.joinWalletByCode(codeController.text, _uid);
-                  if (mounted) {
-                    Navigator.pop(context); // Close dialog
-                    if (success) {
-                      UIHelper.showSuccessSnackBar(context, 'Berhasil bergabung! Selamat berkolaborasi 🎉');
-                    } else {
-                      UIHelper.showErrorSnackBar(context, 'Kode tidak valid atau kamu sudah bergabung ❌');
-                    }
+                  if (!context.mounted) return;
+                  Navigator.pop(context); // Close dialog
+                  if (success) {
+                    UIHelper.showSuccessSnackBar(context, 'Berhasil bergabung! Selamat berkolaborasi 🎉');
+                  } else {
+                    UIHelper.showErrorSnackBar(context, 'Kode tidak valid atau kamu sudah bergabung ❌');
                   }
                 }
               },
@@ -284,23 +428,40 @@ class _WalletScreenState extends State<WalletScreen> {
                         ],
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline_rounded, color: AppColors.expense),
-                      onPressed: () async {
-                        final confirm = await UIHelper.showConfirmDialog(
-                          context: context, 
-                          title: 'Hapus Dompet?',
-                          message: 'Semua data transaksi di dompet "${wallet.walletName}" akan ikut terhapus permanen.',
-                        );
-                        if (confirm == true) {
-                          await _firestoreService.deleteWallet(wallet.id);
-                          if (mounted) {
+                    if (wallet.owner == _uid || !wallet.isColab)
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline_rounded, color: AppColors.expense),
+                        onPressed: () async {
+                          final confirm = await UIHelper.showConfirmDialog(
+                            context: context, 
+                            title: '${ToneManager.t('dialog_del_wallet_title')} "${wallet.walletName}"?',
+                            message: ToneManager.t('dialog_del_wallet_msg'),
+                          );
+                          if (confirm == true) {
+                            await _firestoreService.deleteWallet(wallet.id);
+                            if (!context.mounted) return;
                             Navigator.pop(context);
                             UIHelper.showSuccessSnackBar(context, 'Dompet berhasil dihapus');
                           }
-                        }
-                      },
-                    ),
+                        },
+                      )
+                    else 
+                      IconButton(
+                        icon: const Icon(Icons.exit_to_app_rounded, color: AppColors.expense),
+                        onPressed: () async {
+                          final confirm = await UIHelper.showConfirmDialog(
+                            context: context, 
+                            title: '${ToneManager.t('dialog_leave_wallet_title')} "${wallet.walletName}"?',
+                            message: ToneManager.t('dialog_leave_wallet_msg'),
+                          );
+                          if (confirm == true) {
+                            await _firestoreService.leaveWallet(wallet.id, _uid);
+                            if (!context.mounted) return;
+                            Navigator.pop(context);
+                            UIHelper.showSuccessSnackBar(context, 'Berhasil keluar dari dompet. 👋');
+                          }
+                        },
+                      ),
                   ],
                 ),
               ),
@@ -376,15 +537,14 @@ class _WalletScreenState extends State<WalletScreen> {
                           confirmDismiss: (direction) async {
                             return await UIHelper.showConfirmDialog(
                               context: context, 
-                              title: 'Hapus Transaksi?',
-                              message: 'Catatan transaksi ini akan dihapus permanen dari riwayat.',
+                              title: ToneManager.t('dialog_del_tx_title'),
+                              message: ToneManager.t('dialog_del_tx_msg'),
                             );
                           },
                           onDismissed: (direction) async {
                             await _firestoreService.deleteTransaction(t);
-                            if (mounted) {
-                              UIHelper.showSuccessSnackBar(context, 'Transaksi berhasil dihapus');
-                            }
+                            if (!context.mounted) return;
+                            UIHelper.showSuccessSnackBar(context, 'Transaksi berhasil dihapus');
                           },
                           background: Container(
                             alignment: Alignment.centerRight,

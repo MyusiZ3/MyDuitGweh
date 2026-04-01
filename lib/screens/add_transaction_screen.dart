@@ -6,6 +6,7 @@ import '../models/wallet_model.dart';
 import '../models/transaction_model.dart';
 import '../utils/app_theme.dart';
 import '../utils/ui_helper.dart';
+import '../utils/tone_dictionary.dart';
 
 class AddTransactionScreen extends StatefulWidget {
   const AddTransactionScreen({super.key});
@@ -85,7 +86,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
       if (mounted) {
         Navigator.pop(context);
-        UIHelper.showSuccessSnackBar(context, 'Transaksi berhasil disimpan! ✅');
+        UIHelper.showSuccessSnackBar(context, ToneManager.t('snack_tx_success'));
       }
     } catch (e) {
       if (mounted) {

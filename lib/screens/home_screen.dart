@@ -11,6 +11,7 @@ import '../widgets/loading_widget.dart';
 import '../utils/app_theme.dart';
 import '../utils/currency_formatter.dart';
 import '../utils/ui_helper.dart';
+import '../utils/tone_dictionary.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import '../services/notification_service.dart';
@@ -63,7 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
           final data = change.doc.data() as Map<String, dynamic>;
           final title = data['title'] ?? 'Notifikasi Baru';
           final message = data['message'] ?? '';
-          
+
           _showPopupNotification(title, message);
         }
       }
@@ -116,33 +117,36 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: StreamBuilder<List<WalletModel>>(
-        stream: _firestoreService.getWalletsStream(_uid),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) return const Center(child: LoadingWidget());
+    return ValueListenableBuilder<AppTone>(
+      valueListenable: ToneManager.notifier,
+      builder: (context, activeTone, child) {
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          body: StreamBuilder<List<WalletModel>>(
+            stream: _firestoreService.getWalletsStream(_uid),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) return const Center(child: LoadingWidget());
 
-          final wallets = snapshot.data!;
-          final totalBalance =
-              wallets.fold<double>(0, (sum, w) => sum + w.balance);
-          final walletIds = wallets.map((w) => w.id).toList();
+              final wallets = snapshot.data!;
+              final totalBalance =
+                  wallets.fold<double>(0, (sum, w) => sum + w.balance);
+              final walletIds = wallets.map((w) => w.id).toList();
 
-          return CustomScrollView(
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              // 1. STICKY APP BAR & GREETING
-              SliverAppBar(
-                pinned: true,
-                floating: true,
-                elevation: 0,
-                backgroundColor: AppColors.background,
-                expandedHeight: 90,
-                toolbarHeight: 80,
-                centerTitle: false,
-                automaticallyImplyLeading: false,
-                titleSpacing: 24,
-                title: Row(
+              return CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  // 1. STICKY APP BAR & GREETING
+                  SliverAppBar(
+                    pinned: true,
+                    floating: true,
+                    elevation: 0,
+                    backgroundColor: AppColors.background,
+                    expandedHeight: 90,
+                    toolbarHeight: 80,
+                    centerTitle: false,
+                    automaticallyImplyLeading: false,
+                    titleSpacing: 24,
+                    title: Row(
                   children: [
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -170,13 +174,19 @@ class _HomeScreenState extends State<HomeScreen> {
                           .where('isRead', isEqualTo: false)
                           .snapshots(),
                       builder: (context, snapshot) {
-                        final unreadCount = snapshot.hasData ? snapshot.data!.docs.length : 0;
+                        final unreadCount =
+                            snapshot.hasData ? snapshot.data!.docs.length : 0;
                         return Stack(
                           clipBehavior: Clip.none,
                           children: [
                             IconButton(
-                              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen())),
-                              icon: const Icon(Icons.notifications_none_rounded, color: AppColors.textPrimary, size: 26),
+                              onPressed: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) =>
+                                          const NotificationsScreen())),
+                              icon: const Icon(Icons.notifications_none_rounded,
+                                  color: AppColors.textPrimary, size: 26),
                             ),
                             if (unreadCount > 0)
                               Positioned(
@@ -184,10 +194,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                 right: 12,
                                 child: Container(
                                   padding: const EdgeInsets.all(4),
-                                  decoration: const BoxDecoration(color: AppColors.expense, shape: BoxShape.circle),
+                                  decoration: const BoxDecoration(
+                                      color: AppColors.expense,
+                                      shape: BoxShape.circle),
                                   child: Text(
                                     unreadCount > 9 ? '9+' : '$unreadCount',
-                                    style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 8,
+                                        fontWeight: FontWeight.bold),
                                   ),
                                 ),
                               ),
@@ -252,8 +267,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Total Saldo Seluruh Dompet',
-                                style: TextStyle(
+                            Text(ToneManager.t('home_balance'),
+                                style: const TextStyle(
                                     color: Colors.white70,
                                     fontSize: 13,
                                     fontWeight: FontWeight.w500)),
@@ -293,16 +308,20 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(height: 24),
                         Row(
                           children: [
-                            _balanceAction(
-                                Icons.account_balance_wallet_rounded, 'Dompet',
-                                () {
-                              MainNav.of(context)?.setTab(1);
-                            }),
+                            Expanded(
+                              child: _balanceAction(
+                                  Icons.account_balance_wallet_rounded, ToneManager.t('nav_wallet'),
+                                  () {
+                                MainNav.of(context)?.setTab(1);
+                              }),
+                            ),
                             const SizedBox(width: 12),
-                            _balanceAction(Icons.insights_rounded, 'Laporan',
-                                () {
-                              MainNav.of(context)?.setTab(4);
-                            }),
+                            Expanded(
+                              child: _balanceAction(Icons.insights_rounded, ToneManager.t('nav_report'),
+                                  () {
+                                MainNav.of(context)?.setTab(4);
+                              }),
+                            ),
                           ],
                         ),
                       ],
@@ -419,7 +438,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Transaksi Terakhir',
+                      Text(ToneManager.t('home_recent'),
                           style: Theme.of(context)
                               .textTheme
                               .titleLarge
@@ -441,6 +460,8 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       ),
     );
+      },
+    );
   }
 
   Widget _balanceAction(IconData icon, String label, VoidCallback onTap) {
@@ -451,14 +472,19 @@ class _HomeScreenState extends State<HomeScreen> {
         decoration: BoxDecoration(
             color: Colors.white12, borderRadius: BorderRadius.circular(14)),
         child: Row(
+          mainAxisSize: MainAxisSize.min, // CRITICAL: Wrap tightly
+          mainAxisAlignment: MainAxisAlignment.center, // Bikin tengah
           children: [
-            Icon(icon, color: Colors.white, size: 14),
-            const SizedBox(width: 6),
-            Text(label,
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12)),
+            Icon(icon, color: Colors.white, size: 16), // Slightly bigger
+            const SizedBox(width: 8), // More breathing room
+            Flexible(
+              child: Text(label,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13)),
+            ), 
           ],
         ),
       ),
@@ -554,9 +580,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           color: AppColors.textPrimary,
                           fontSize: 13,
                           fontWeight: FontWeight.w700)),
-                  const Text('Belum ada transaksi di bulan ini uuu.',
+                  Text(ToneManager.t('home_empty'),
                       style:
-                          TextStyle(color: AppColors.textHint, fontSize: 11)),
+                          const TextStyle(color: AppColors.textHint, fontSize: 11)),
                 ],
               ),
             ),
@@ -796,6 +822,16 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const Divider(),
               _buildProfileMenuItem(
+                icon: Icons.language_rounded,
+                label: ToneManager.t('profile_tone'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showToneSelector();
+                },
+                trailing: Text(ToneManager.notifier.value.name.toUpperCase(), 
+                  style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+              ),
+              _buildProfileMenuItem(
                   icon: Icons.person_outline,
                   label: 'Edit Profil',
                   onTap: () => Navigator.push(
@@ -814,21 +850,21 @@ class _HomeScreenState extends State<HomeScreen> {
                       MaterialPageRoute(builder: (_) => const AboutScreen()))),
               _buildProfileMenuItem(
                   icon: Icons.logout,
-                  label: 'Keluar',
+                  label: ToneManager.t('profile_logout'),
                   iconColor: AppColors.expense,
                   textColor: AppColors.expense,
                   onTap: () async {
                     final confirm = await UIHelper.showConfirmDialog(
                       context: context,
-                      title: 'Keluar Akun?',
-                      message:
-                          'Pastikan kamu sudah mencatat semua transaksi hari ini ya!',
-                      confirmText: 'Ya, Keluar',
-                      cancelText: 'Batal',
+                      title: ToneManager.t('dialog_logout_title'),
+                      message: ToneManager.t('dialog_logout_msg'),
+                      confirmText: ToneManager.t('dialog_yes'),
+                      cancelText: ToneManager.t('dialog_no'),
                       isDangerous: false, // Logout isn't scary like a deletion
                     );
                     if (confirm == true) {
-                      Navigator.pop(context); await _authService.signOut();
+                      Navigator.pop(context);
+                      await _authService.signOut();
                       if (mounted)
                         Navigator.pushAndRemoveUntil(
                             context,
@@ -839,6 +875,42 @@ class _HomeScreenState extends State<HomeScreen> {
                   }),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  void _showToneSelector() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.only(top: 16, bottom: 40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 24),
+            const Text('Vibe Bahasa (App Tone)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            ...AppTone.values.map((t) => ListTile(
+              leading: Icon(
+                t == AppTone.genZ ? Icons.rocket_launch :
+                t == AppTone.milenial ? Icons.coffee :
+                t == AppTone.boomer ? Icons.elderly : Icons.notes,
+                color: ToneManager.notifier.value == t ? AppColors.primary : Colors.grey,
+              ),
+              title: Text(t.name.toUpperCase(), style: TextStyle(
+                fontWeight: ToneManager.notifier.value == t ? FontWeight.bold : FontWeight.normal,
+                color: ToneManager.notifier.value == t ? AppColors.primary : Colors.black87,
+              )),
+              trailing: ToneManager.notifier.value == t ? const Icon(Icons.check_circle, color: AppColors.primary) : null,
+              onTap: () async {
+                await ToneManager.setTone(t);
+                if (mounted) Navigator.pop(ctx);
+              },
+            )),
+          ],
         ),
       ),
     );
