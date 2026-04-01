@@ -92,7 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
           // Premium In-App Dialog
           if (displayCount < 2) {
-            _showPremiumBroadcast(docId, title, message, displayCount);
+            _showPremiumBroadcast(docId, title, message, currentCount: displayCount);
           }
         }
       }
@@ -125,20 +125,27 @@ class _HomeScreenState extends State<HomeScreen> {
             body: latest['title'] ?? '',
           );
           await prefs.setString('last_notified_broadcast_id', latestId);
+          
+          // Premium In-App Dialog for Broadcast
+          if (mounted) {
+            _showPremiumBroadcast(null, latest['title'] ?? 'PENGUMUMAN', latest['message'] ?? '');
+          }
         }
       }
     });
   }
 
-  void _showPremiumBroadcast(String docId, String title, String message, int currentCount) {
+  void _showPremiumBroadcast(String? docId, String title, String message, {int? currentCount}) {
     if (!mounted) return;
 
-    FirebaseFirestore.instance
-        .collection('users')
-        .doc(_uid)
-        .collection('notifications')
-        .doc(docId)
-        .update({'displayCount': currentCount + 1});
+    if (docId != null && currentCount != null) {
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(_uid)
+          .collection('notifications')
+          .doc(docId)
+          .update({'displayCount': currentCount + 1});
+    }
 
     showGeneralDialog(
       context: context,
