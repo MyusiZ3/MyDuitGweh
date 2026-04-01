@@ -4,7 +4,7 @@ import '../services/firestore_service.dart';
 import '../services/pdf_service.dart';
 import '../models/wallet_model.dart';
 import '../models/transaction_model.dart';
-import '../widgets/loading_widget.dart';
+import '../widgets/shimmer_loading.dart';
 import '../utils/app_theme.dart';
 import '../utils/currency_formatter.dart';
 import 'package:intl/intl.dart';
@@ -84,7 +84,7 @@ class _ReportScreenState extends State<ReportScreen> {
               stream: _firestoreService.getWalletsStream(_uid),
               builder: (context, walletSnapshot) {
                 if (walletSnapshot.connectionState == ConnectionState.waiting)
-                  return const Center(child: LoadingWidget());
+                  return const Padding(padding: EdgeInsets.symmetric(horizontal: 24), child: ShimmerTransactionList());
 
                 final wallets = walletSnapshot.data ?? [];
                 if (wallets.isEmpty)
@@ -101,7 +101,7 @@ class _ReportScreenState extends State<ReportScreen> {
                   ),
                   builder: (context, txnSnapshot) {
                     if (txnSnapshot.connectionState == ConnectionState.waiting)
-                      return const Center(child: LoadingWidget());
+                      return const Padding(padding: EdgeInsets.symmetric(horizontal: 24), child: ShimmerTransactionList());
 
                     final transactions = txnSnapshot.data ?? [];
                     if (transactions.isEmpty)

@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../services/firestore_service.dart';
 import '../models/wallet_model.dart';
 import '../models/transaction_model.dart';
+import '../widgets/shimmer_loading.dart';
 import '../utils/app_theme.dart';
 import '../utils/currency_formatter.dart';
 import '../utils/ui_helper.dart';
@@ -91,8 +92,17 @@ class _WalletScreenState extends State<WalletScreen> {
         body: StreamBuilder<List<WalletModel>>(
           stream: _firestoreService.getWalletsStream(_uid),
           builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting)
-              return const Center(child: CircularProgressIndicator());
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return TabBarView(
+                physics: const NeverScrollableScrollPhysics(),
+                children: List.generate(3, (index) => ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: 4,
+                  itemBuilder: (context, _) => const ShimmerWalletCard(),
+                )),
+              );
+            }
 
             final wallets = snapshot.data ?? [];
             
@@ -111,6 +121,7 @@ class _WalletScreenState extends State<WalletScreen> {
                 // Tab 1: Pribadi
                 personalWallets.isEmpty 
                   ? _buildEmptyState()
+
                   : ListView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                       physics: const BouncingScrollPhysics(),

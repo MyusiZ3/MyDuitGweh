@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../services/firestore_service.dart';
 import '../models/wallet_model.dart';
 import '../models/transaction_model.dart';
+import '../widgets/shimmer_loading.dart';
 import '../utils/app_theme.dart';
 import '../utils/currency_formatter.dart';
 import 'wallet_chat_screen.dart';
@@ -30,11 +31,11 @@ class _ColabScreenState extends State<ColabScreen> {
         stream: _firestoreService.getColabWalletsStream(_uid),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(
-                color: AppColors.primary,
-                strokeWidth: 2.5,
-              ),
+            return ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: 4,
+              itemBuilder: (context, _) => const ShimmerWalletCard(),
             );
           }
 
