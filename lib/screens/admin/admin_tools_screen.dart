@@ -6,6 +6,7 @@ import 'user_management_screen.dart';
 import 'global_insights_screen.dart';
 import 'app_config_screen.dart';
 import 'broadcast_center_screen.dart';
+import 'admin_logs_screen.dart';
 import '../../services/auth_service.dart';
 import '../../utils/currency_formatter.dart';
 
@@ -192,7 +193,10 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                             ),
                             TextButton(
                               onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Full log history coming soon.')));
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => const AdminLogsScreen()),
+                                );
                               },
                               child: const Text('VIEW ALL', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
                             ),
