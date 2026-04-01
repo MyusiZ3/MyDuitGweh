@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/ui_helper.dart';
+import '../../services/auth_service.dart';
 
 class AppConfigScreen extends StatefulWidget {
   const AppConfigScreen({super.key});
@@ -12,6 +14,8 @@ class AppConfigScreen extends StatefulWidget {
 
 class _AppConfigScreenState extends State<AppConfigScreen> {
   final _firestore = FirebaseFirestore.instance;
+  final _authService = AuthService();
+  bool _isSuperAdmin = false;
   bool _maintenanceMode = false;
   final TextEditingController _minVersionController = TextEditingController();
   final TextEditingController _maintenanceMsgController = TextEditingController();
@@ -23,6 +27,16 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
   void initState() {
     super.initState();
     _loadConfig();
+    _checkSuperAdmin();
+  }
+
+  Future<void> _checkSuperAdmin() async {
+    final isSuper = await _authService.isSuperAdmin();
+    if (mounted) {
+      setState(() {
+        _isSuperAdmin = isSuper;
+      });
+    }
   }
 
   Future<void> _loadConfig() async {
@@ -108,28 +122,64 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
     }
   }
 
+  Future<void> _clearHistory({DocumentReference? singleDoc}) async {
+    final isSingle = singleDoc != null;
+    final confirmed = await UIHelper.showConfirmDialog(
+      context: context,
+      title: isSingle ? 'Hapus Histori Ini?' : 'Clear Semua History?',
+      message: isSingle ? 'Data konfigurasi ini akan dihapus permanen.' : 'Hapus seluruh histori konfigurasi aplikasi? Tindakan ini tidak bisa dibatalkan.',
+    );
+
+    if (confirmed == true) {
+      try {
+        if (isSingle) {
+          await singleDoc.delete();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Item histori dihapus.')));
+          }
+        } else {
+          final snapshot = await _firestore.collection('app_config').doc('global').collection('history').get();
+          final batch = _firestore.batch();
+          for (var doc in snapshot.docs) {
+            batch.delete(doc.reference);
+          }
+          await batch.commit();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Semua histori dihapus.')));
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal menghapus histori: $e')));
+        }
+      }
+    }
+  }
+
   void _showSuccessSheet() {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(32),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.check_circle_rounded, color: Colors.green, size: 72),
-            const SizedBox(height: 16),
-            const Text('Config Updated!', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
-            const SizedBox(height: 8),
-            const Text('Semua perubahan berhasil disimpan dan tercatat di histori.', textAlign: TextAlign.center),
-            const SizedBox(height: 32),
-            SizedBox(width: double.infinity, height: 50, child: ElevatedButton(onPressed: () => Navigator.pop(ctx), child: const Text('SIP!'))),
-          ],
+      builder: (ctx) => SafeArea(
+        child: Container(
+          padding: const EdgeInsets.all(32),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.check_circle_rounded, color: Colors.green, size: 72),
+              const SizedBox(height: 16),
+              const Text('Config Updated!', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
+              const SizedBox(height: 8),
+              const Text('Semua perubahan berhasil disimpan dan tercatat di histori.', textAlign: TextAlign.center),
+              const SizedBox(height: 32),
+              SizedBox(width: double.infinity, height: 50, child: ElevatedButton(onPressed: () => Navigator.pop(ctx), child: const Text('SIP!'))),
+            ],
+          ),
         ),
       ),
     );
@@ -149,7 +199,18 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
             const SizedBox(height: 24),
             _buildConfigTile(),
             const SizedBox(height: 32),
-            const Text('Change History', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Change History', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
+                if (_isSuperAdmin)
+                  TextButton.icon(
+                    onPressed: () => _clearHistory(),
+                    icon: const Icon(Icons.delete_sweep_rounded, size: 16, color: Colors.redAccent),
+                    label: const Text('Clear All', style: TextStyle(color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.bold)),
+                  ),
+              ],
+            ),
             const SizedBox(height: 16),
             _buildHistoryList(),
           ],
@@ -366,6 +427,14 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                     Text(DateFormat('dd MMM HH:mm').format(date), style: TextStyle(fontSize: 10, color: Colors.grey[500])),
                   ],
                 ),
+                trailing: _isSuperAdmin 
+                  ? IconButton(
+                      icon: const Icon(Icons.delete_outline_rounded, size: 18, color: Colors.redAccent),
+                      onPressed: () => _clearHistory(singleDoc: doc.reference),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ) 
+                  : null,
               ),
             );
           },

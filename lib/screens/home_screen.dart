@@ -1113,8 +1113,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 16),
               if (_isAdmin)
-                const SizedBox(height: 12),
-              if (_isAdmin)
                 _buildProfileMenuItem(
                   icon: Icons.auto_fix_high_rounded,
                   label: 'Admin Control Tools',
@@ -1129,7 +1127,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   trailing: const Icon(Icons.arrow_forward_ios_rounded,
                       size: 16, color: AppColors.primary),
                 ),
-              const SizedBox(height: 16),
+
               _buildProfileMenuItem(
                 icon: Icons.shield_outlined,
                 label: 'Kunci Sidik Jari/Wajah',

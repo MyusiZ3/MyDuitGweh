@@ -134,7 +134,7 @@ class GlobalInsightsScreen extends StatelessWidget {
       backgroundColor: Colors.white,
       elevation: 0,
       flexibleSpace: FlexibleSpaceBar(
-        titlePadding: const EdgeInsets.only(left: 24, bottom: 20),
+        titlePadding: const EdgeInsets.only(left: 56, bottom: 16),
         title: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
