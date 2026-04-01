@@ -22,7 +22,10 @@ class NotificationsScreen extends StatelessWidget {
             style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 20),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            _markAllAsRead(uid);
+            Navigator.pop(context);
+          },
         ),
       ),
       body: StreamBuilder<QuerySnapshot>(
@@ -44,7 +47,46 @@ class NotificationsScreen extends StatelessWidget {
             itemBuilder: (context, index) {
               final doc = snapshot.data!.docs[index];
               final data = doc.data() as Map<String, dynamic>;
-              return _buildNotificationCard(context, doc.id, data);
+              
+              return Dismissible(
+                key: Key(doc.id),
+                direction: DismissDirection.endToStart,
+                confirmDismiss: (direction) async {
+                  return await UIHelper.showConfirmDialog(
+                    context: context,
+                    title: 'Hapus Notifikasi?',
+                    message: 'Notifikasi ini akan dihapus permanen dari riwayat kamu.',
+                    confirmText: 'Hapus',
+                    cancelText: 'Batal',
+                    isDangerous: true,
+                  );
+                },
+                onDismissed: (direction) {
+                  FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(uid)
+                      .collection('notifications')
+                      .doc(doc.id)
+                      .delete();
+                },
+                background: Container(
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 24),
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: AppColors.expense.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.delete_sweep_rounded, color: Colors.white, size: 28),
+                      Text('Hapus', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ),
+                child: _buildNotificationCard(context, doc.id, data),
+              );
             },
           );
         },
@@ -238,5 +280,23 @@ class NotificationsScreen extends StatelessWidget {
     } catch (e) {
       UIHelper.showErrorSnackBar(context, 'Gagal menanggapi undangan.');
     }
+  }
+
+  void _markAllAsRead(String? uid) async {
+    if (uid == null) return;
+    final unread = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('notifications')
+        .where('isRead', isEqualTo: false)
+        .get();
+
+    if (unread.docs.isEmpty) return;
+
+    final batch = FirebaseFirestore.instance.batch();
+    for (var doc in unread.docs) {
+      batch.update(doc.reference, {'isRead': true});
+    }
+    await batch.commit();
   }
 }
