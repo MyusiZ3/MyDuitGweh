@@ -45,5 +45,7 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSContactsUsageDescription</key>
+	<string>Aplikasi ini sesekali butuh mengakses buku kontak agar kamu tidak direpotkan mengetik nama dan nomer teman yang ngutang atau dihutangin.</string>
 </dict>
 </plist>

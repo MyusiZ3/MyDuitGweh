@@ -4,11 +4,14 @@ class WalletModel {
   final String id;
   final String walletName;
   final double balance;
-  final String type; // "personal" or "colab"
+  final String type; // "personal", "colab", "debt"
   final List<String> members; // List of UIDs for colab wallets
   final String owner;
   final DateTime createdAt;
   final String? inviteCode;
+  final String? debtorName;
+  final String? debtorPhone;
+  final String? debtType; // "payable" (Hutang), "receivable" (Piutang)
 
   WalletModel({
     required this.id,
@@ -19,6 +22,9 @@ class WalletModel {
     required this.owner,
     required this.createdAt,
     this.inviteCode,
+    this.debtorName,
+    this.debtorPhone,
+    this.debtType,
   });
 
   factory WalletModel.fromJson(Map<String, dynamic> json, {String? docId}) {
@@ -31,6 +37,9 @@ class WalletModel {
       owner: json['owner'] as String? ?? '',
       createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       inviteCode: json['inviteCode'] as String?,
+      debtorName: json['debtorName'] as String?,
+      debtorPhone: json['debtorPhone'] as String?,
+      debtType: json['debtType'] as String?,
     );
   }
 
@@ -43,6 +52,9 @@ class WalletModel {
       'owner': owner,
       'createdAt': Timestamp.fromDate(createdAt),
       'inviteCode': inviteCode,
+      'debtorName': debtorName,
+      'debtorPhone': debtorPhone,
+      'debtType': debtType,
     };
   }
 
@@ -55,6 +67,9 @@ class WalletModel {
     String? owner,
     DateTime? createdAt,
     String? inviteCode,
+    String? debtorName,
+    String? debtorPhone,
+    String? debtType,
   }) {
     return WalletModel(
       id: id ?? this.id,
@@ -65,9 +80,13 @@ class WalletModel {
       owner: owner ?? this.owner,
       createdAt: createdAt ?? this.createdAt,
       inviteCode: inviteCode ?? this.inviteCode,
+      debtorName: debtorName ?? this.debtorName,
+      debtorPhone: debtorPhone ?? this.debtorPhone,
+      debtType: debtType ?? this.debtType,
     );
   }
 
   bool get isColab => type == 'colab';
   bool get isPersonal => type == 'personal';
+  bool get isDebt => type == 'debt';
 }
