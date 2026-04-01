@@ -149,4 +149,34 @@ class NotificationService {
   Future<void> cancelAll() async {
     await _notificationsPlugin.cancelAll();
   }
+
+  /// Tampilkan notifikasi instan (untuk Broadcast)
+  Future<void> showInstant({int id = 0, required String title, required String body}) async {
+    try {
+      const androidDetails = AndroidNotificationDetails(
+        'broadcast_channel',
+        'Pesan Broadcast',
+        channelDescription: 'Notifikasi pesan penting dari admin',
+        importance: Importance.max,
+        priority: Priority.max,
+        showWhen: true,
+        playSound: true,
+      );
+      
+      const iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      );
+
+      await _notificationsPlugin.show(
+        id,
+        title,
+        body,
+        const NotificationDetails(android: androidDetails, iOS: iosDetails),
+      );
+    } catch (e) {
+      print('Error showing instant notification: $e');
+    }
+  }
 }

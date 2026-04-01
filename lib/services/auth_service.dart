@@ -29,6 +29,7 @@ class AuthService {
           'email': userCredential.user!.email,
           'displayName': userCredential.user!.displayName,
           'photoURL': userCredential.user!.photoURL,
+          'role': 'user', // Default role for new Google users
           'lastSeen': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
       }
@@ -51,6 +52,7 @@ class AuthService {
           'email': email,
           'displayName': name,
           'photoURL': null,
+          'role': 'user', // Default role for email users
           'lastSeen': FieldValue.serverTimestamp(),
           'createdAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
@@ -113,4 +115,13 @@ class AuthService {
   }
 
   Stream<User?> get userStream => _auth.authStateChanges();
+
+  // CHECK IF ADMIN
+  Future<bool> isAdmin() async {
+    final user = _auth.currentUser;
+    if (user == null) return false;
+    
+    final doc = await _firestore.collection('users').doc(user.uid).get();
+    return doc.exists && doc.data()?['role'] == 'admin';
+  }
 }
