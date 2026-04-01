@@ -5,6 +5,7 @@ import '../models/wallet_model.dart';
 import '../models/transaction_model.dart';
 import '../utils/app_theme.dart';
 import '../utils/currency_formatter.dart';
+import 'wallet_chat_screen.dart';
 
 class ColabScreen extends StatefulWidget {
   const ColabScreen({super.key});
@@ -253,6 +254,45 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
           ),
           const SizedBox(height: 8),
           _buildMembersList(),
+          const SizedBox(height: 16),
+
+          // Chat Button
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => WalletChatScreen(
+                    walletId: widget.wallet.id,
+                    walletName: widget.wallet.walletName,
+                  ),
+                ),
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.primary.withOpacity(0.15)),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.chat_rounded, size: 18, color: AppColors.primary),
+                  SizedBox(width: 8),
+                  Text(
+                    'Buka Chat Grup',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(height: 16),
 
           // Recent transactions

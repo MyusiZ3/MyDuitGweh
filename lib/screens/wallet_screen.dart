@@ -10,6 +10,7 @@ import '../utils/tone_dictionary.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -151,7 +152,7 @@ class _WalletScreenState extends State<WalletScreen> {
                   children: [
                     _buildTypeOption(setModalState, 'personal', 'Pribadi', Icons.person_outline, selectedType, (val) => selectedType = val),
                     const SizedBox(width: 8),
-                    _buildTypeOption(setModalState, 'kolaborasi', 'Bersama', Icons.groups_outlined, selectedType, (val) => selectedType = val),
+                    _buildTypeOption(setModalState, 'colab', 'Bersama', Icons.groups_outlined, selectedType, (val) => selectedType = val),
                     const SizedBox(width: 8),
                     _buildTypeOption(setModalState, 'debt', 'Hutang', Icons.handshake_outlined, selectedType, (val) => selectedType = val),
                   ],
@@ -200,7 +201,11 @@ class _WalletScreenState extends State<WalletScreen> {
                             suffixIcon: IconButton(
                               icon: const Icon(Icons.contacts, color: AppColors.primary),
                               onPressed: () async {
-                                if (await FlutterContacts.requestPermission()) {
+                                var status = await Permission.contacts.status;
+                                if (!status.isGranted) {
+                                  status = await Permission.contacts.request();
+                                }
+                                if (status.isGranted) {
                                   final contacts = await FlutterContacts.getContacts(withProperties: true);
                                   if (!context.mounted) return;
                                   showModalBottomSheet(
@@ -208,6 +213,10 @@ class _WalletScreenState extends State<WalletScreen> {
                                     builder: (ctx) => ListView.builder(
                                       itemCount: contacts.length,
                                       itemBuilder: (ctx, i) => ListTile(
+                                        leading: CircleAvatar(
+                                          backgroundColor: AppColors.primary.withOpacity(0.1),
+                                          child: Text(contacts[i].displayName.isNotEmpty ? contacts[i].displayName[0] : '?', style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+                                        ),
                                         title: Text(contacts[i].displayName),
                                         subtitle: Text(contacts[i].phones.isNotEmpty ? contacts[i].phones.first.number : 'Tanpa nomor HP'),
                                         onTap: () {
@@ -223,6 +232,10 @@ class _WalletScreenState extends State<WalletScreen> {
                                       )
                                     )
                                   );
+                                } else if (status.isPermanentlyDenied) {
+                                  if (!context.mounted) return;
+                                  UIHelper.showErrorSnackBar(context, 'Izin kontak ditolak permanen. Buka Settings untuk mengizinkan.');
+                                  openAppSettings();
                                 } else {
                                   if (!context.mounted) return;
                                   UIHelper.showErrorSnackBar(context, 'Izin akses kontak ditolak!');
@@ -250,8 +263,8 @@ class _WalletScreenState extends State<WalletScreen> {
                   controller: nameController,
                   textCapitalization: TextCapitalization.words,
                   decoration: InputDecoration(
-                    hintText: selectedType == 'kolaborasi' ? 'Nama kelompok/tujuan' : selectedType == 'debt' ? 'Label Catatan (Misal: Hutang Budi)' : 'Nama dompet (misal: Jajan)',
-                    prefixIcon: Icon(selectedType == 'kolaborasi' ? Icons.groups_rounded : selectedType == 'debt' ? Icons.receipt_long : Icons.account_balance_wallet_outlined, color: AppColors.primary),
+                    hintText: selectedType == 'colab' ? 'Nama kelompok/tujuan' : selectedType == 'debt' ? 'Label Catatan (Misal: Hutang Budi)' : 'Nama dompet (misal: Jajan)',
+                    prefixIcon: Icon(selectedType == 'colab' ? Icons.groups_rounded : selectedType == 'debt' ? Icons.receipt_long : Icons.account_balance_wallet_outlined, color: AppColors.primary),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppColors.primary)),
                     focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppColors.primary, width: 2)),
                   ),
@@ -267,7 +280,7 @@ class _WalletScreenState extends State<WalletScreen> {
                           id: '', // Will be set by service
                           walletName: nameController.text,
                           balance: 0,
-                          type: selectedType, // 'personal', 'colab', or 'debt'
+                          type: selectedType,
                           members: [_uid],
                           owner: _uid,
                           createdAt: DateTime.now(),
@@ -424,7 +437,12 @@ class _WalletScreenState extends State<WalletScreen> {
                         children: [
                           Text(wallet.walletName, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 4),
-                          Text(wallet.isColab ? 'Dompet Bersama' : 'Dompet Pribadi', style: const TextStyle(color: AppColors.textHint)),
+                          Text(
+                            wallet.isDebt
+                              ? (wallet.debtType == 'payable' ? 'Hutang (Saya Ngutang)' : 'Piutang (Saya Minjamin)')
+                              : wallet.isColab ? 'Dompet Bersama' : 'Dompet Pribadi',
+                            style: TextStyle(color: wallet.isDebt ? AppColors.warning : AppColors.textHint, fontWeight: wallet.isDebt ? FontWeight.w600 : FontWeight.normal),
+                          ),
                         ],
                       ),
                     ),
@@ -510,6 +528,68 @@ class _WalletScreenState extends State<WalletScreen> {
                             ],
                           ),
                         ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+              // Info Hutang/Piutang
+              if (wallet.isDebt) ...[
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 24),
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: (wallet.debtType == 'payable' ? AppColors.expense : AppColors.income).withOpacity(0.06),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: (wallet.debtType == 'payable' ? AppColors.expense : AppColors.income).withOpacity(0.15)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            wallet.debtType == 'payable' ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                            size: 18,
+                            color: wallet.debtType == 'payable' ? AppColors.expense : AppColors.income,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            wallet.debtType == 'payable' ? 'SAYA NGUTANG' : 'SAYA MINJAMIN',
+                            style: TextStyle(
+                              fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.2,
+                              color: wallet.debtType == 'payable' ? AppColors.expense : AppColors.income,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          Container(
+                            width: 40, height: 40,
+                            decoration: BoxDecoration(
+                              color: Colors.white, borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(Icons.person_rounded, color: AppColors.textHint),
+                          ),
+                          const SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                wallet.debtorName?.isNotEmpty == true ? wallet.debtorName! : 'Tidak disebutkan',
+                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                              ),
+                              if (wallet.debtorPhone?.isNotEmpty == true)
+                                Text(
+                                  wallet.debtorPhone!,
+                                  style: const TextStyle(fontSize: 12, color: AppColors.textHint),
+                                ),
+                            ],
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -640,6 +720,30 @@ class _WalletCard extends StatelessWidget {
 
   const _WalletCard({required this.wallet, required this.onTap});
 
+  Color get _cardAccent {
+    if (wallet.isDebt) {
+      return wallet.debtType == 'payable' ? AppColors.expense : AppColors.income;
+    }
+    if (wallet.isColab) return AppColors.deepBlue;
+    return AppColors.primary;
+  }
+
+  IconData get _cardIcon {
+    if (wallet.isDebt) return Icons.handshake_rounded;
+    if (wallet.isColab) return Icons.group_rounded;
+    return Icons.account_balance_wallet_rounded;
+  }
+
+  String get _subtitle {
+    if (wallet.isDebt) {
+      final label = wallet.debtType == 'payable' ? 'Hutang' : 'Piutang';
+      final name = wallet.debtorName?.isNotEmpty == true ? ' · ${wallet.debtorName}' : '';
+      return '$label$name';
+    }
+    if (wallet.isColab) return 'Bersama (${wallet.members.length} anggota)';
+    return 'Pribadi';
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -657,13 +761,10 @@ class _WalletCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: (wallet.isColab ? AppColors.deepBlue : AppColors.primary).withOpacity(0.1),
+                color: _cardAccent.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Icon(
-                wallet.isColab ? Icons.group_rounded : Icons.account_balance_wallet_rounded,
-                color: wallet.isColab ? AppColors.deepBlue : AppColors.primary,
-              ),
+              child: Icon(_cardIcon, color: _cardAccent),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -672,8 +773,8 @@ class _WalletCard extends StatelessWidget {
                 children: [
                   Text(wallet.walletName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   Text(
-                    wallet.isColab ? 'Bersama (${wallet.members.length} anggota)' : 'Pribadi', 
-                    style: TextStyle(fontSize: 12, color: wallet.isColab ? AppColors.deepBlue : AppColors.textHint, fontWeight: wallet.isColab ? FontWeight.bold : FontWeight.normal),
+                    _subtitle,
+                    style: TextStyle(fontSize: 12, color: _cardAccent, fontWeight: FontWeight.w600),
                   ),
                 ],
               ),

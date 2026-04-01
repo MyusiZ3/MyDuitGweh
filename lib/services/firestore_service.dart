@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../models/wallet_model.dart';
 import '../models/transaction_model.dart';
+import '../models/chat_message_model.dart';
 
 class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -207,6 +208,41 @@ class FirestoreService {
   Future<void> leaveWallet(String walletId, String uid) async {
     await _firestore.collection('wallets').doc(walletId).update({
       'members': FieldValue.arrayRemove([uid])
+    });
+  }
+
+  // ══════════════════════════════════════════════════
+  // CHAT KOLABORASI
+  // ══════════════════════════════════════════════════
+
+  Stream<List<ChatMessage>> getMessagesStream(String walletId) {
+    return _firestore
+        .collection('wallets')
+        .doc(walletId)
+        .collection('messages')
+        .orderBy('timestamp', descending: true)
+        .limit(100)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => ChatMessage.fromJson(doc.data(), docId: doc.id))
+            .toList());
+  }
+
+  Future<void> sendMessage({
+    required String walletId,
+    required String senderUid,
+    required String senderName,
+    required String message,
+  }) async {
+    await _firestore
+        .collection('wallets')
+        .doc(walletId)
+        .collection('messages')
+        .add({
+      'senderUid': senderUid,
+      'senderName': senderName,
+      'message': message,
+      'timestamp': FieldValue.serverTimestamp(),
     });
   }
 }
