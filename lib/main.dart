@@ -121,20 +121,42 @@ class _AuthGateState extends State<AuthGate> {
   }
 }
 
-class MaintenanceGateWrapper extends StatelessWidget {
+class MaintenanceGateWrapper extends StatefulWidget {
   final User user;
   const MaintenanceGateWrapper({super.key, required this.user});
 
   @override
+  State<MaintenanceGateWrapper> createState() => _MaintenanceGateWrapperState();
+}
+
+class _MaintenanceGateWrapperState extends State<MaintenanceGateWrapper> {
+  late final Stream<DocumentSnapshot> _configStream;
+  Future<bool>? _adminFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _configStream = FirebaseFirestore.instance
+        .collection('app_config')
+        .doc('global')
+        .snapshots();
+    _adminFuture = AuthService().isAdmin(uid: widget.user.uid);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance.collection('app_config').doc('global').snapshots(),
+      stream: _configStream,
       builder: (context, snapshot) {
+        debugPrint('--- MAINTENANCE GATE: connState=${snapshot.connectionState}, hasData=${snapshot.hasData}, hasError=${snapshot.hasError} ---');
+
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const SplashView();
         }
 
-        if (!snapshot.hasData || !snapshot.data!.exists) {
+        // Jika error atau dokumen tidak ada, langsung masuk
+        if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
+          debugPrint('--- MAINTENANCE GATE: No config doc or error, going to MainNav ---');
           return const MainNav();
         }
 
@@ -148,7 +170,7 @@ class MaintenanceGateWrapper extends StatelessWidget {
 
         // Jika maintenance aktif, cek apakah user adalah admin/superadmin
         return FutureBuilder<bool>(
-          future: AuthService().isAdmin(uid: user.uid),
+          future: _adminFuture,
           builder: (context, adminSnapshot) {
             if (adminSnapshot.connectionState == ConnectionState.waiting) {
               return const SplashView();
@@ -157,10 +179,8 @@ class MaintenanceGateWrapper extends StatelessWidget {
             final isAdmin = adminSnapshot.data ?? false;
 
             if (isAdmin) {
-              // Admin bisa tembus/bypass maintenance
               return const MainNav();
             } else {
-              // User biasa terhadang
               return MaintenanceGateScreen(message: maintenanceMsg);
             }
           },
