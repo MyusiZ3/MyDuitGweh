@@ -98,16 +98,17 @@ class FirestoreService {
 
   Future<void> addTransaction(TransactionModel transaction) async {
     final customTxId = _generateProfessionalId('TX');
-    await _firestore.runTransaction((txn) async {
-      final walletRef = _firestore.collection('wallets').doc(transaction.walletId);
-      final walletSnapshot = await txn.get(walletRef);
-      if (!walletSnapshot.exists) throw Exception('Wallet not found');
-      final currentBalance = (walletSnapshot.data()!['balance'] as num).toDouble();
-      final double newBalance = transaction.isIncome ? currentBalance + transaction.amount : currentBalance - transaction.amount;
-      final transactionRef = _firestore.collection('transactions').doc(customTxId);
-      txn.set(transactionRef, transaction.copyWith(id: customTxId).toJson());
-      txn.update(walletRef, {'balance': newBalance});
-    });
+    final batch = _firestore.batch();
+    
+    final walletRef = _firestore.collection('wallets').doc(transaction.walletId);
+    final transactionRef = _firestore.collection('transactions').doc(customTxId);
+
+    batch.set(transactionRef, transaction.copyWith(id: customTxId).toJson());
+    
+    final incrementVal = transaction.isIncome ? transaction.amount : -transaction.amount;
+    batch.update(walletRef, {'balance': FieldValue.increment(incrementVal)});
+    
+    await batch.commit();
   }
 
   Stream<List<TransactionModel>> getAllTransactionsStream(List<String> walletIds) {
@@ -163,16 +164,17 @@ class FirestoreService {
   }
 
   Future<void> deleteTransaction(TransactionModel transaction) async {
-    await _firestore.runTransaction((txn) async {
-      final walletRef = _firestore.collection('wallets').doc(transaction.walletId);
-      final walletSnapshot = await txn.get(walletRef);
-      if (!walletSnapshot.exists) throw Exception('Wallet not found');
-      final currentBalance = (walletSnapshot.data()!['balance'] as num).toDouble();
-      final double newBalance = transaction.isIncome ? currentBalance - transaction.amount : currentBalance + transaction.amount;
-      final transactionRef = _firestore.collection('transactions').doc(transaction.id);
-      txn.delete(transactionRef);
-      txn.update(walletRef, {'balance': newBalance});
-    });
+    final batch = _firestore.batch();
+    
+    final walletRef = _firestore.collection('wallets').doc(transaction.walletId);
+    final transactionRef = _firestore.collection('transactions').doc(transaction.id);
+    
+    batch.delete(transactionRef);
+    
+    final incrementVal = transaction.isIncome ? -transaction.amount : transaction.amount;
+    batch.update(walletRef, {'balance': FieldValue.increment(incrementVal)});
+    
+    await batch.commit();
   }
 
   Future<bool> addMemberByEmail(String walletId, String email) async {

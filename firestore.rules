@@ -45,10 +45,12 @@ service cloud.firestore {
       }
     }
 
-    // 3. Koleksi Transactions (Sudah Aman)
+    // 3. Koleksi Transactions (Sangat Aman)
     match /transactions/{transactionId} {
-      // Pastikan siapa saja yang login boleh tulis transaksi
-      allow read, write, delete: if request.auth != null;
+      // Izinkan baca & hapus jika user log in dan termaktub sebagai member di dompet terkait
+      allow read, delete: if request.auth != null && (request.auth.uid in get(/databases/$(database)/documents/wallets/$(resource.data.walletId)).data.members);
+      // Izinkan tulis/edit jika user log in dan termaktub sebagai member di dompet yang dituju
+      allow create, update: if request.auth != null && (request.auth.uid in get(/databases/$(database)/documents/wallets/$(request.resource.data.walletId)).data.members);
     }
 
   }
