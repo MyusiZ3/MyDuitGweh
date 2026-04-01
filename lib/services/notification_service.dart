@@ -40,6 +40,18 @@ class NotificationService {
       );
 
       await androidPlugin?.createNotificationChannel(channel);
+
+      const AndroidNotificationChannel broadcastChannel = AndroidNotificationChannel(
+        'broadcast_channel',
+        'Pesan Broadcast',
+        description: 'Notifikasi pesan penting dari admin',
+        importance: Importance.max,
+        playSound: true,
+        enableVibration: true,
+        showBadge: true,
+      );
+
+      await androidPlugin?.createNotificationChannel(broadcastChannel);
     }
 
     const AndroidInitializationSettings initializationSettingsAndroid =
