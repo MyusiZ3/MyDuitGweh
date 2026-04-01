@@ -525,13 +525,11 @@ class _ReportScreenState extends State<ReportScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         disabledBackgroundColor: color.withOpacity(0.3),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 18),
-          const SizedBox(width: 8),
-          Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-        ],
+      child: Center(
+        child: Text(
+          label,
+          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: 1.2),
+        ),
       ),
     );
   }
