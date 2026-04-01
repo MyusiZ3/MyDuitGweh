@@ -217,7 +217,7 @@ class NotificationsScreen extends StatelessWidget {
       if (accept) {
         // Logic tambah user ke wallet
         await FirebaseFirestore.instance.collection('wallets').doc(walletId).update({
-          'collaborators': FieldValue.arrayUnion([uid])
+          'members': FieldValue.arrayUnion([uid])
         });
         UIHelper.showSuccessSnackBar(context, 'Berhasil bergabung dengan dompet!');
       } else {

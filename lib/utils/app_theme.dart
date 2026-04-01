@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppColors {
-  // Primary palette
-  static const Color primary = Color(0xFF2A9D8F);
-  static const Color primaryDark = Color(0xFF1E7A6E);
-  static const Color primaryLight = Color(0xFF5DC4B8);
+  // Primary palette (iOS Modern Blue)
+  static const Color primary = Color(0xFF007AFF); // Standard Apple Blue
+  static const Color primaryDark = Color(0xFF0056D6); // Deep blue for pressed/header states
+  static const Color primaryLight = Color(0xFF5AC8FA); // Apple Cyan for gradients/accents
 
   // Accent / Deep Blue
-  static const Color deepBlue = Color(0xFF264653);
-  static const Color deepBlueDark = Color(0xFF1B3340);
+  static const Color deepBlue = Color(0xFF1C1C1E); // Swapped to iOS dark gray/black
+  static const Color deepBlueDark = Color(0xFF000000);
 
   // Background
   static const Color background = Color(0xFFF8F9FA);

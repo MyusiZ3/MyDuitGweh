@@ -55,7 +55,7 @@ class PdfService {
     required DateTime endDate,
   }) async {
     List<List<dynamic>> rows = [];
-
+    
     // Header
     rows.add(['Tanggal', 'Kategori', 'Catatan', 'Tipe', 'Jumlah']);
 
@@ -72,15 +72,13 @@ class PdfService {
 
     String csvData = const ListToCsvConverter().convert(rows);
     final directory = await getTemporaryDirectory();
-    final path =
-        '${directory.path}/Laporan_Keuangan_${DateFormat('yyyyMMdd').format(startDate)}.csv';
+    final path = '${directory.path}/Laporan_Keuangan_${DateFormat('yyyyMMdd').format(startDate)}.csv';
     final file = File(path);
     await file.writeAsString(csvData);
 
     await Printing.sharePdf(
       bytes: await file.readAsBytes(),
-      filename:
-          'Laporan_Keuangan_${DateFormat('yyyyMMdd').format(startDate)}.csv',
+      filename: 'Laporan_Keuangan_${DateFormat('yyyyMMdd').format(startDate)}.csv',
     );
   }
 
@@ -97,8 +95,7 @@ class PdfService {
         pw.SizedBox(height: 12),
         pw.Divider(thickness: 2, color: PdfColors.blueGrey),
         pw.SizedBox(height: 12),
-        pw.Text(
-            'Periode: ${dateFormat.format(start)} - ${dateFormat.format(end)}',
+        pw.Text('Periode: ${dateFormat.format(start)} - ${dateFormat.format(end)}',
             style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
       ],
     );
@@ -122,16 +119,14 @@ class PdfService {
     );
   }
 
-  static pw.Widget _buildSummaryItem(
-      String label, double amount, PdfColor color) {
+  static pw.Widget _buildSummaryItem(String label, double amount, PdfColor color) {
     return pw.Column(
       children: [
         pw.Text(label, style: const pw.TextStyle(fontSize: 10)),
         pw.SizedBox(height: 4),
         pw.Text(
           CurrencyFormatter.formatCurrency(amount),
-          style: pw.TextStyle(
-              fontSize: 14, fontWeight: pw.FontWeight.bold, color: color),
+          style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: color),
         ),
       ],
     );
@@ -139,19 +134,16 @@ class PdfService {
 
   static pw.Widget _buildTransactionTable(List<TransactionModel> txns) {
     final headers = ['Tanggal', 'Kategori', 'Catatan', 'Jumlah'];
-
+    
     return pw.TableHelper.fromTextArray(
       headers: headers,
-      data: txns
-          .map((t) => [
-                DateFormat('dd/MM/yy').format(t.date),
-                t.category,
-                t.note.isEmpty ? '-' : t.note,
-                '${t.isIncome ? '+' : '-'}${CurrencyFormatter.formatCurrency(t.amount)}',
-              ])
-          .toList(),
-      headerStyle:
-          pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.white),
+      data: txns.map((t) => [
+        DateFormat('dd/MM/yy').format(t.date),
+        t.category,
+        t.note.isEmpty ? '-' : t.note,
+        '${t.isIncome ? '+' : '-'}${CurrencyFormatter.formatCurrency(t.amount)}',
+      ]).toList(),
+      headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.white),
       headerDecoration: const pw.BoxDecoration(color: PdfColors.blueGrey700),
       cellHeight: 30,
       cellAlignments: {
@@ -162,8 +154,7 @@ class PdfService {
       },
       cellStyle: const pw.TextStyle(fontSize: 10),
       rowDecoration: const pw.BoxDecoration(
-        border: pw.Border(
-            bottom: pw.BorderSide(color: PdfColors.grey200, width: 0.5)),
+        border: pw.Border(bottom: pw.BorderSide(color: PdfColors.grey200, width: 0.5)),
       ),
     );
   }

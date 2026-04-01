@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../models/wallet_model.dart';
 import '../models/transaction_model.dart';
@@ -176,12 +177,36 @@ class FirestoreService {
     final userQuery = await _firestore.collection('users').where('email', isEqualTo: email).limit(1).get();
     if (userQuery.docs.isEmpty) return false;
     final memberUid = userQuery.docs.first.id;
-    await _firestore.collection('wallets').doc(walletId).update({'members': FieldValue.arrayUnion([memberUid])});
+    
+    // Jangan langsung di-add ke members, kita kirimkan NOTIFIKASI UNDANGAN:
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final senderName = currentUser?.displayName ?? 'Seseorang';
+    
+    final walletDoc = await _firestore.collection('wallets').doc(walletId).get();
+    final walletName = walletDoc.data() != null ? (walletDoc.data()!['walletName'] ?? 'Dompet Kolaborasi') : 'Dompet Kolaborasi';
+
+    await _firestore.collection('users').doc(memberUid).collection('notifications').add({
+      'type': 'invite',
+      'title': 'Undangan Kolaborasi',
+      'message': '$senderName mengundangmu untuk bergabung ke dompet "$walletName"',
+      'status': 'pending', 
+      'walletId': walletId,
+      'isRead': false,
+      'senderUid': currentUser?.uid,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+
     return true;
   }
 
   Future<Map<String, dynamic>?> getUserInfo(String uid) async {
     final doc = await _firestore.collection('users').doc(uid).get();
     return doc.data();
+  }
+
+  Future<void> leaveWallet(String walletId, String uid) async {
+    await _firestore.collection('wallets').doc(walletId).update({
+      'members': FieldValue.arrayRemove([uid])
+    });
   }
 }

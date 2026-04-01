@@ -329,18 +329,158 @@ class _ReportScreenState extends State<ReportScreen> {
     );
   }
 
-  void _showExportDialog() {
-    // Basic implementation for now
+  void _showExportDialog() async {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Export Laporan'),
-        content: const Text('Fitur export ke PDF akan segera hadir!'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context), child: const Text('OK'))
-        ],
-      ),
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
     );
+
+    try {
+      final wallets = await _firestoreService.getWalletsStream(_uid).first;
+      final walletIds = wallets.map((w) => w.id).toList();
+      final txns = await _firestoreService.getFilteredTransactionsStream(
+        walletIds: walletIds, 
+        startDate: selectedDateRange.start, 
+        endDate: selectedDateRange.end
+      ).first;
+
+      if (!context.mounted) return;
+      Navigator.pop(context); // Tutup loading
+
+      if (txns.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tidak ada data transaksi di periode ini untuk diekspor.'))
+        );
+        return;
+      }
+
+      final availableCategories = txns.map((t) => t.category).toSet().toList();
+      availableCategories.sort();
+      List<String> selectedCategories = List.from(availableCategories);
+
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+        builder: (ctx) => StatefulBuilder(
+          builder: (context, setSheetState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 20, bottom: 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('Pilih Kategori Ekspor', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    CheckboxListTile(
+                      title: const Text('Semua Kategori', style: TextStyle(fontWeight: FontWeight.bold)),
+                      value: selectedCategories.length == availableCategories.length,
+                      activeColor: AppColors.primary,
+                      onChanged: (val) {
+                        setSheetState(() {
+                          if (val == true) {
+                            selectedCategories = List.from(availableCategories);
+                          } else {
+                            selectedCategories.clear();
+                          }
+                        });
+                      },
+                    ),
+                    const Divider(),
+                    Flexible(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: availableCategories.map((cat) {
+                            return CheckboxListTile(
+                              title: Text(cat),
+                              secondary: Icon(TransactionCategory.getIconForCategory(cat), color: AppColors.primary),
+                              value: selectedCategories.contains(cat),
+                              activeColor: AppColors.primary,
+                              onChanged: (val) {
+                                setSheetState(() {
+                                  if (val == true) {
+                                    selectedCategories.add(cat);
+                                  } else {
+                                    selectedCategories.remove(cat);
+                                  }
+                                });
+                              },
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: selectedCategories.isEmpty ? null : () {
+                                _processExport(ctx, txns, selectedCategories, true);
+                              },
+                              icon: const Icon(Icons.picture_as_pdf_rounded),
+                              label: const Text('Export PDF'),
+                              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: selectedCategories.isEmpty ? null : () {
+                                _processExport(ctx, txns, selectedCategories, false);
+                              },
+                              icon: const Icon(Icons.table_view_rounded),
+                              label: const Text('Export CSV'),
+                              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal menyiapkan data: $e')));
+    }
+  }
+
+  void _processExport(BuildContext ctx, List<TransactionModel> allTxns, List<String> selectedCategories, bool isPdf) {
+    Navigator.pop(ctx);
+    
+    final filteredTxns = allTxns.where((t) => selectedCategories.contains(t.category)).toList();
+    
+    double totalIncome = 0;
+    double totalExpense = 0;
+    for (var txn in filteredTxns) {
+      if (txn.isIncome) totalIncome += txn.amount;
+      else totalExpense += txn.amount;
+    }
+
+    if (isPdf) {
+      PdfService.generateAndPrintReport(
+        transactions: filteredTxns,
+        startDate: selectedDateRange.start,
+        endDate: selectedDateRange.end,
+        selectedCategories: selectedCategories, 
+        totalIncome: totalIncome,
+        totalExpense: totalExpense,
+      );
+    } else {
+      PdfService.generateAndExportCSV(
+        transactions: filteredTxns,
+        startDate: selectedDateRange.start,
+        endDate: selectedDateRange.end,
+      );
+    }
   }
 }
