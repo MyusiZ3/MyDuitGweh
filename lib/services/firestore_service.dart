@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -243,6 +244,134 @@ class FirestoreService {
       'senderName': senderName,
       'message': message,
       'timestamp': FieldValue.serverTimestamp(),
+      'isEdited': false,
+      'isDeleted': false,
     });
+  }
+
+  /// Edit a chat message (mark as edited, update text)
+  Future<void> editMessage({
+    required String walletId,
+    required String messageId,
+    required String newMessage,
+  }) async {
+    await _firestore
+        .collection('wallets')
+        .doc(walletId)
+        .collection('messages')
+        .doc(messageId)
+        .update({
+      'message': newMessage,
+      'isEdited': true,
+    });
+  }
+
+  /// Unsend / delete a chat message (mark as deleted)
+  Future<void> deleteMessage({
+    required String walletId,
+    required String messageId,
+  }) async {
+    await _firestore
+        .collection('wallets')
+        .doc(walletId)
+        .collection('messages')
+        .doc(messageId)
+        .update({
+      'message': 'Pesan ini telah dihapus',
+      'isDeleted': true,
+    });
+  }
+
+  /// Mark chat as read by storing user's last-read timestamp.
+  /// Only updates if the new timestamp is newer or not provided.
+  Future<void> markChatAsRead(String walletId, String uid, {DateTime? until}) async {
+    try {
+      final docRef = _firestore
+          .collection('wallets')
+          .doc(walletId)
+          .collection('readReceipts')
+          .doc(uid);
+
+      if (until != null) {
+        final doc = await docRef.get();
+        if (doc.exists) {
+          final currentRead = (doc.data()?['lastRead'] as Timestamp?)?.toDate();
+          if (currentRead != null && currentRead.isAfter(until)) {
+            // Already read past this point
+            return;
+          }
+        }
+      }
+
+      await docRef.set({
+        'lastRead': until != null ? Timestamp.fromDate(until) : FieldValue.serverTimestamp()
+      });
+    } catch (e) {
+      debugPrint('markChatAsRead failed: $e');
+    }
+  }
+
+  /// Stream of unread message count for a specific wallet
+  /// This listener triggers whenever EITHER a new message arrives OR a user marks messages as read.
+  Stream<int> getUnreadCountStream(String walletId, String uid) {
+    late StreamController<int> controller;
+    StreamSubscription? receiptSub;
+    StreamSubscription? messagesSub;
+
+    void updateMessagesListener(Timestamp? lastRead) {
+      messagesSub?.cancel();
+      
+      // Default to now if never opened. Prevents downloading ALL historical messages as unread.
+      final filterTime = lastRead ?? Timestamp.now();
+
+      messagesSub = _firestore
+          .collection('wallets')
+          .doc(walletId)
+          .collection('messages')
+          .where('timestamp', isGreaterThan: filterTime)
+          .snapshots()
+          .listen((msgSnap) {
+            try {
+              final count = msgSnap.docs.where((doc) {
+                final data = doc.data();
+                return data['senderUid'] != uid;
+              }).length;
+              
+              if (!controller.isClosed) {
+                controller.add(count);
+              }
+            } catch (e) {
+              debugPrint('Error counting unread: $e');
+            }
+          });
+    }
+
+    controller = StreamController<int>(
+      onListen: () {
+        receiptSub = _firestore
+            .collection('wallets')
+            .doc(walletId)
+            .collection('readReceipts')
+            .doc(uid)
+            .snapshots()
+            .listen((receiptSnap) {
+              try {
+                Timestamp? lastRead;
+                if (receiptSnap.exists) {
+                  lastRead = receiptSnap.data()?['lastRead'] as Timestamp?;
+                }
+                updateMessagesListener(lastRead);
+              } catch (e) {
+                debugPrint('Error updating receipt listener: $e');
+              }
+            });
+      },
+      onCancel: () {
+        receiptSub?.cancel();
+        messagesSub?.cancel();
+      },
+    );
+
+    return controller.stream;
   }
 }

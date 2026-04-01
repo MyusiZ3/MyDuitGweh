@@ -161,6 +161,26 @@ class _ReportScreenState extends State<ReportScreen> {
       initialDateRange: selectedDateRange,
       firstDate: DateTime(2020),
       lastDate: DateTime.now().add(const Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: AppColors.primary,
+              onPrimary: Colors.white,
+              onSurface: AppColors.textPrimary,
+              secondaryContainer: const Color.fromARGB(255, 144, 142, 180)
+                  .withOpacity(
+                      0.12), // Warna blok rentang (sekarang dipaksa biru muda)
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.primary,
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
     if (range != null) setState(() => selectedDateRange = range);
   }
@@ -185,14 +205,20 @@ class _ReportScreenState extends State<ReportScreen> {
       ),
       child: Column(
         children: [
-          const Text(
-            'TOTAL SALDO BERSIH', 
-            style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.5)
-          ),
+          const Text('TOTAL SALDO BERSIH',
+              style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.5)),
           const SizedBox(height: 8),
           Text(
             CurrencyFormatter.formatCurrency(balance),
-            style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+            style: const TextStyle(
+                color: Colors.white,
+                fontSize: 32,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.5),
           ),
           const SizedBox(height: 32),
           Container(
@@ -204,9 +230,11 @@ class _ReportScreenState extends State<ReportScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildMiniStat('Pemasukan', income, Icons.arrow_downward_rounded, Colors.white),
+                _buildMiniStat('Pemasukan', income,
+                    Icons.arrow_downward_rounded, Colors.white),
                 Container(width: 1, height: 24, color: Colors.white24),
-                _buildMiniStat('Pengeluaran', expense, Icons.arrow_upward_rounded, Colors.white),
+                _buildMiniStat('Pengeluaran', expense,
+                    Icons.arrow_upward_rounded, Colors.white),
               ],
             ),
           ),
@@ -339,19 +367,20 @@ class _ReportScreenState extends State<ReportScreen> {
     try {
       final wallets = await _firestoreService.getWalletsStream(_uid).first;
       final walletIds = wallets.map((w) => w.id).toList();
-      final txns = await _firestoreService.getFilteredTransactionsStream(
-        walletIds: walletIds, 
-        startDate: selectedDateRange.start, 
-        endDate: selectedDateRange.end
-      ).first;
+      final txns = await _firestoreService
+          .getFilteredTransactionsStream(
+              walletIds: walletIds,
+              startDate: selectedDateRange.start,
+              endDate: selectedDateRange.end)
+          .first;
 
       if (!context.mounted) return;
       Navigator.pop(context); // Tutup loading
 
       if (txns.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Tidak ada data transaksi di periode ini untuk diekspor.'))
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text(
+                'Tidak ada data transaksi di periode ini untuk diekspor.')));
         return;
       }
 
@@ -363,131 +392,167 @@ class _ReportScreenState extends State<ReportScreen> {
         context: context,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
-        builder: (ctx) => StatefulBuilder(
-          builder: (context, setSheetState) {
-            return Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-              ),
-              padding: EdgeInsets.only(top: 12, left: 24, right: 24, bottom: MediaQuery.of(context).padding.bottom + 24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40, height: 4,
-                      margin: const EdgeInsets.only(bottom: 24),
-                      decoration: BoxDecoration(color: AppColors.textHint.withOpacity(0.3), borderRadius: BorderRadius.circular(2)),
-                    ),
+        builder: (ctx) => StatefulBuilder(builder: (context, setSheetState) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+            ),
+            padding: EdgeInsets.only(
+                top: 12,
+                left: 24,
+                right: 24,
+                bottom: MediaQuery.of(context).padding.bottom + 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 24),
+                    decoration: BoxDecoration(
+                        color: AppColors.textHint.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(2)),
                   ),
-                  const Text('Pilih Kategori', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
-                  const SizedBox(height: 8),
-                  Text('Tentukan kategori yang ingin kamu masukkan ke dalam laporan.', style: TextStyle(color: AppColors.textHint, fontSize: 13)),
-                  const SizedBox(height: 24),
-                  
-                  // Selection Actions
-                  Row(
-                    children: [
-                      _buildQuickAction('Semua', selectedCategories.length == availableCategories.length, () {
-                        setSheetState(() => selectedCategories = List.from(availableCategories));
-                      }),
-                      const SizedBox(width: 8),
-                      _buildQuickAction('Kosongkan', selectedCategories.isEmpty, () {
-                        setSheetState(() => selectedCategories.clear());
-                      }),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
+                ),
+                const Text('Pilih Kategori',
+                    style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5)),
+                const SizedBox(height: 8),
+                Text(
+                    'Tentukan kategori yang ingin kamu masukkan ke dalam laporan.',
+                    style: TextStyle(color: AppColors.textHint, fontSize: 13)),
+                const SizedBox(height: 24),
 
-                  // Modern Chip List
-                  ConstrainedBox(
-                    constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4),
-                    child: SingleChildScrollView(
-                      child: Wrap(
-                        spacing: 8,
-                        runSpacing: 10,
-                        children: availableCategories.map((cat) {
-                          final isSelected = selectedCategories.contains(cat);
-                          return InkWell(
-                            onTap: () {
-                              setSheetState(() {
-                                if (isSelected) selectedCategories.remove(cat);
-                                else selectedCategories.add(cat);
-                              });
-                            },
-                            borderRadius: BorderRadius.circular(12),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                              decoration: BoxDecoration(
-                                color: isSelected ? AppColors.primary.withOpacity(0.1) : AppColors.background,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: isSelected ? AppColors.primary : Colors.transparent,
-                                  width: 1.5,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    TransactionCategory.getIconForCategory(cat),
-                                    size: 16,
-                                    color: isSelected ? AppColors.primary : AppColors.textHint,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    cat,
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                      color: isSelected ? AppColors.primary : AppColors.textPrimary,
-                                    ),
-                                  ),
-                                ],
+                // Selection Actions
+                Row(
+                  children: [
+                    _buildQuickAction('Semua',
+                        selectedCategories.length == availableCategories.length,
+                        () {
+                      setSheetState(() =>
+                          selectedCategories = List.from(availableCategories));
+                    }),
+                    const SizedBox(width: 8),
+                    _buildQuickAction('Kosongkan', selectedCategories.isEmpty,
+                        () {
+                      setSheetState(() => selectedCategories.clear());
+                    }),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Modern Chip List
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                      maxHeight: MediaQuery.of(context).size.height * 0.4),
+                  child: SingleChildScrollView(
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 10,
+                      children: availableCategories.map((cat) {
+                        final isSelected = selectedCategories.contains(cat);
+                        return InkWell(
+                          onTap: () {
+                            setSheetState(() {
+                              if (isSelected)
+                                selectedCategories.remove(cat);
+                              else
+                                selectedCategories.add(cat);
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(12),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? AppColors.primary.withOpacity(0.1)
+                                  : AppColors.background,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isSelected
+                                    ? AppColors.primary
+                                    : Colors.transparent,
+                                width: 1.5,
                               ),
                             ),
-                          );
-                        }).toList(),
-                      ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  TransactionCategory.getIconForCategory(cat),
+                                  size: 16,
+                                  color: isSelected
+                                      ? AppColors.primary
+                                      : AppColors.textHint,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  cat,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: isSelected
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                    color: isSelected
+                                        ? AppColors.primary
+                                        : AppColors.textPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
                     ),
                   ),
-                  const SizedBox(height: 32),
-                  
-                  // Bottom Actions (Ramping & Modern)
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildExportButton(
-                          label: 'PDF',
-                          icon: Icons.picture_as_pdf_rounded,
-                          color: Colors.red,
-                          onPressed: selectedCategories.isEmpty ? null : () => _processExport(ctx, txns, selectedCategories, true),
-                        ),
+                ),
+                const SizedBox(height: 32),
+
+                // Bottom Actions (Ramping & Modern)
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildExportButton(
+                        label: 'PDF',
+                        icon: Icons.picture_as_pdf_rounded,
+                        color: Colors.red,
+                        onPressed: selectedCategories.isEmpty
+                            ? null
+                            : () => _processExport(
+                                ctx, txns, selectedCategories, true),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildExportButton(
-                          label: 'CSV',
-                          icon: Icons.table_view_rounded,
-                          color: Colors.green,
-                          onPressed: selectedCategories.isEmpty ? null : () => _processExport(ctx, txns, selectedCategories, false),
-                        ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildExportButton(
+                        label: 'CSV',
+                        icon: Icons.table_view_rounded,
+                        color: Colors.green,
+                        onPressed: selectedCategories.isEmpty
+                            ? null
+                            : () => _processExport(
+                                ctx, txns, selectedCategories, false),
                       ),
-                    ],
-                  ),
-                ],
-              ),
-            );
-          }
-        ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        }),
       );
     } catch (e) {
       if (!context.mounted) return;
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal menyiapkan data: $e')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Gagal menyiapkan data: $e')));
     }
   }
 
@@ -500,7 +565,10 @@ class _ReportScreenState extends State<ReportScreen> {
         decoration: BoxDecoration(
           color: isActive ? AppColors.primary : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: isActive ? AppColors.primary : AppColors.textHint.withOpacity(0.3)),
+          border: Border.all(
+              color: isActive
+                  ? AppColors.primary
+                  : AppColors.textHint.withOpacity(0.3)),
         ),
         child: Text(
           label,
@@ -514,7 +582,11 @@ class _ReportScreenState extends State<ReportScreen> {
     );
   }
 
-  Widget _buildExportButton({required String label, required IconData icon, required Color color, VoidCallback? onPressed}) {
+  Widget _buildExportButton(
+      {required String label,
+      required IconData icon,
+      required Color color,
+      VoidCallback? onPressed}) {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
@@ -528,22 +600,27 @@ class _ReportScreenState extends State<ReportScreen> {
       child: Center(
         child: Text(
           label,
-          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: 1.2),
+          style: const TextStyle(
+              fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: 1.2),
         ),
       ),
     );
   }
 
-  void _processExport(BuildContext ctx, List<TransactionModel> allTxns, List<String> selectedCategories, bool isPdf) {
+  void _processExport(BuildContext ctx, List<TransactionModel> allTxns,
+      List<String> selectedCategories, bool isPdf) {
     Navigator.pop(ctx);
-    
-    final filteredTxns = allTxns.where((t) => selectedCategories.contains(t.category)).toList();
-    
+
+    final filteredTxns =
+        allTxns.where((t) => selectedCategories.contains(t.category)).toList();
+
     double totalIncome = 0;
     double totalExpense = 0;
     for (var txn in filteredTxns) {
-      if (txn.isIncome) totalIncome += txn.amount;
-      else totalExpense += txn.amount;
+      if (txn.isIncome)
+        totalIncome += txn.amount;
+      else
+        totalExpense += txn.amount;
     }
 
     if (isPdf) {
@@ -551,7 +628,7 @@ class _ReportScreenState extends State<ReportScreen> {
         transactions: filteredTxns,
         startDate: selectedDateRange.start,
         endDate: selectedDateRange.end,
-        selectedCategories: selectedCategories, 
+        selectedCategories: selectedCategories,
         totalIncome: totalIncome,
         totalExpense: totalExpense,
       );

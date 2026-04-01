@@ -19,32 +19,217 @@ class WalletChatScreen extends StatefulWidget {
   State<WalletChatScreen> createState() => _WalletChatScreenState();
 }
 
-class _WalletChatScreenState extends State<WalletChatScreen> {
+class _WalletChatScreenState extends State<WalletChatScreen> with WidgetsBindingObserver {
   final FirestoreService _firestoreService = FirestoreService();
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final User _currentUser = FirebaseAuth.instance.currentUser!;
 
-  void _sendMessage() {
-    final text = _messageController.text.trim();
-    if (text.isEmpty) return;
+  // Edit mode state
+  bool _isEditing = false;
+  String? _editingMessageId;
+  late Stream<List<ChatMessage>> _messagesStream;
 
-    _firestoreService.sendMessage(
-      walletId: widget.walletId,
-      senderUid: _currentUser.uid,
-      senderName: _currentUser.displayName ?? 'Anonim',
-      message: text,
-    );
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _messagesStream = _firestoreService.getMessagesStream(widget.walletId);
+    // Mark as read when entering the chat
+    _firestoreService.markChatAsRead(widget.walletId, _currentUser.uid);
+  }
 
-    _messageController.clear();
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _firestoreService.markChatAsRead(widget.walletId, _currentUser.uid);
+    }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    // Mark as read when leaving the chat
+    _firestoreService.markChatAsRead(widget.walletId, _currentUser.uid);
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
+
+  void _sendMessage() {
+    final text = _messageController.text.trim();
+    if (text.isEmpty) return;
+
+    if (_isEditing && _editingMessageId != null) {
+      _firestoreService.editMessage(
+        walletId: widget.walletId,
+        messageId: _editingMessageId!,
+        newMessage: text,
+      );
+      setState(() {
+        _isEditing = false;
+        _editingMessageId = null;
+      });
+    } else {
+      _firestoreService.sendMessage(
+        walletId: widget.walletId,
+        senderUid: _currentUser.uid,
+        senderName: _currentUser.displayName ?? 'Anonim',
+        message: text,
+      );
+    }
+
+    _messageController.clear();
+  }
+
+  void _startEditing(ChatMessage msg) {
+    setState(() {
+      _isEditing = true;
+      _editingMessageId = msg.id;
+      _messageController.text = msg.message;
+    });
+  }
+
+  void _cancelEditing() {
+    setState(() {
+      _isEditing = false;
+      _editingMessageId = null;
+      _messageController.clear();
+    });
+  }
+
+  void _showMessageActions(ChatMessage msg) {
+    final isMe = msg.senderUid == _currentUser.uid;
+    if (!isMe || msg.isDeleted) return;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: EdgeInsets.only(
+          top: 8, left: 16, right: 16,
+          bottom: MediaQuery.of(ctx).padding.bottom + 16,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Drag handle
+            Container(
+              width: 40, height: 4,
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: AppColors.textHint.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            // Preview bubble
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.06),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Text(
+                msg.message,
+                style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            // Edit option
+            ListTile(
+              onTap: () {
+                Navigator.pop(ctx);
+                _startEditing(msg);
+              },
+              leading: Container(
+                width: 40, height: 40,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.edit_rounded, color: AppColors.primary, size: 20),
+              ),
+              title: const Text('Edit Pesan', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+              subtitle: const Text('Ubah isi pesan ini', style: TextStyle(fontSize: 12, color: AppColors.textHint)),
+            ),
+            // Unsend option (only if within 5 minutes)
+            if (msg.canUnsend)
+              ListTile(
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _confirmUnsend(msg);
+                },
+                leading: Container(
+                  width: 40, height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.expense.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.delete_outline_rounded, color: AppColors.expense, size: 20),
+                ),
+                title: const Text('Hapus Pesan', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: AppColors.expense)),
+                subtitle: Text(
+                  'Bisa dihapus dalam ${5 - DateTime.now().difference(msg.timestamp).inMinutes} menit lagi',
+                  style: const TextStyle(fontSize: 12, color: AppColors.textHint),
+                ),
+              ),
+            if (!msg.canUnsend)
+              ListTile(
+                enabled: false,
+                leading: Container(
+                  width: 40, height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.textHint.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.timer_off_rounded, color: AppColors.textHint.withOpacity(0.5), size: 20),
+                ),
+                title: Text('Hapus Pesan', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: AppColors.textHint.withOpacity(0.5))),
+                subtitle: const Text('Batas waktu 5 menit sudah lewat', style: TextStyle(fontSize: 12, color: AppColors.textHint)),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _confirmUnsend(ChatMessage msg) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Hapus Pesan?'),
+        content: const Text('Pesan ini akan dihapus untuk semua orang. Tindakan ini tidak dapat dibatalkan.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _firestoreService.deleteMessage(
+                walletId: widget.walletId,
+                messageId: msg.id,
+              );
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.expense),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Track the most recent message ID to avoid redundant read-receipt writes
+  String? _lastSeenMsgId;
 
   @override
   Widget build(BuildContext context) {
@@ -92,8 +277,20 @@ class _WalletChatScreenState extends State<WalletChatScreen> {
           // Chat Messages
           Expanded(
             child: StreamBuilder<List<ChatMessage>>(
-              stream: _firestoreService.getMessagesStream(widget.walletId),
+              stream: _messagesStream,
               builder: (context, snapshot) {
+                // If new messages found, update our read-receipt
+                if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                  final latestMsg = snapshot.data!.first;
+                  if (latestMsg.id != _lastSeenMsgId) {
+                    _lastSeenMsgId = latestMsg.id;
+                    // Trigger markAsRead without blocking current build
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      _firestoreService.markChatAsRead(widget.walletId, _currentUser.uid, until: latestMsg.timestamp);
+                    });
+                  }
+                }
+
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
@@ -131,16 +328,51 @@ class _WalletChatScreenState extends State<WalletChatScreen> {
                     final msg = messages[index];
                     final isMe = msg.senderUid == _currentUser.uid;
                     
-                    // Cek apakah pesan sebelumnya dari pengirim yang sama
                     final showAvatar = index == messages.length - 1 ||
                         messages[index + 1].senderUid != msg.senderUid;
 
-                    return _buildMessageBubble(msg, isMe, showAvatar);
+                    return GestureDetector(
+                      onLongPress: () => _showMessageActions(msg),
+                      child: _buildMessageBubble(msg, isMe, showAvatar),
+                    );
                   },
                 );
               },
             ),
           ),
+
+          // Edit mode banner
+          if (_isEditing)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              color: AppColors.primary.withOpacity(0.06),
+              child: Row(
+                children: [
+                  Container(width: 3, height: 28, decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(2))),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Mengedit pesan', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary)),
+                        Text('Tekan untuk membatalkan', style: TextStyle(fontSize: 11, color: AppColors.textHint)),
+                      ],
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: _cancelEditing,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: AppColors.textHint.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Icon(Icons.close_rounded, size: 16, color: AppColors.textSecondary),
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
           // Input Bar
           _buildInputBar(),
@@ -160,7 +392,7 @@ class _WalletChatScreenState extends State<WalletChatScreen> {
         mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          // Avatar (hanya untuk pesan orang lain)
+          // Avatar (only for others)
           if (!isMe && showAvatar)
             Container(
               width: 32, height: 32,
@@ -195,7 +427,9 @@ class _WalletChatScreenState extends State<WalletChatScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
-                    color: isMe ? AppColors.primary : Colors.white,
+                    color: msg.isDeleted
+                        ? (isMe ? AppColors.primary.withOpacity(0.3) : Colors.white.withOpacity(0.6))
+                        : (isMe ? AppColors.primary : Colors.white),
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(18),
                       topRight: const Radius.circular(18),
@@ -213,21 +447,54 @@ class _WalletChatScreenState extends State<WalletChatScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(
-                        msg.message,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: isMe ? Colors.white : AppColors.textPrimary,
-                          height: 1.4,
+                      // Message text (italic if deleted)
+                      if (msg.isDeleted)
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.block_rounded, size: 14, color: isMe ? Colors.white.withOpacity(0.7) : AppColors.textHint),
+                            const SizedBox(width: 6),
+                            Text(
+                              msg.message,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontStyle: FontStyle.italic,
+                                color: isMe ? Colors.white.withOpacity(0.7) : AppColors.textHint,
+                              ),
+                            ),
+                          ],
+                        )
+                      else
+                        Text(
+                          msg.message,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: isMe ? Colors.white : AppColors.textPrimary,
+                            height: 1.4,
+                          ),
                         ),
-                      ),
                       const SizedBox(height: 4),
-                      Text(
-                        DateFormat('HH:mm').format(msg.timestamp),
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: isMe ? Colors.white.withOpacity(0.6) : AppColors.textHint,
-                        ),
+                      // Timestamp + edited label
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (msg.isEdited && !msg.isDeleted)
+                            Text(
+                              'diedit  ',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontStyle: FontStyle.italic,
+                                color: isMe ? Colors.white.withOpacity(0.5) : AppColors.textHint,
+                              ),
+                            ),
+                          Text(
+                            DateFormat('HH:mm').format(msg.timestamp),
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: isMe ? Colors.white.withOpacity(0.6) : AppColors.textHint,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -270,11 +537,11 @@ class _WalletChatScreenState extends State<WalletChatScreen> {
                 maxLines: 4,
                 minLines: 1,
                 style: const TextStyle(fontSize: 14),
-                decoration: const InputDecoration(
-                  hintText: 'Tulis pesan...',
-                  hintStyle: TextStyle(color: AppColors.textHint, fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: _isEditing ? 'Edit pesan...' : 'Tulis pesan...',
+                  hintStyle: const TextStyle(color: AppColors.textHint, fontSize: 14),
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   isDense: true,
                 ),
                 onSubmitted: (_) => _sendMessage(),
@@ -287,10 +554,13 @@ class _WalletChatScreenState extends State<WalletChatScreen> {
             child: Container(
               width: 44, height: 44,
               decoration: BoxDecoration(
-                color: AppColors.primary,
+                color: _isEditing ? AppColors.income : AppColors.primary,
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+              child: Icon(
+                _isEditing ? Icons.check_rounded : Icons.send_rounded,
+                color: Colors.white, size: 20,
+              ),
             ),
           ),
         ],

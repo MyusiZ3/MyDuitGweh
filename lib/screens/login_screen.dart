@@ -20,20 +20,30 @@ class _LoginScreenState extends State<LoginScreen> {
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   final _nameController = TextEditingController();
+
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   void _submit() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
     final name = _nameController.text.trim();
 
-    if (email.isEmpty || password.isEmpty || (!_isLogin && name.isEmpty)) {
+    if (email.isEmpty || password.isEmpty || (!_isLogin && (name.isEmpty || confirmPassword.isEmpty))) {
       UIHelper.showErrorSnackBar(context, ToneManager.t('snack_login_err'));
       return;
     }
 
     if (password.length < 6) {
       UIHelper.showErrorSnackBar(context, 'Password minimal 6 karakter! 🛡️');
+      return;
+    }
+
+    if (!_isLogin && password != confirmPassword) {
+      UIHelper.showErrorSnackBar(context, 'Password gak cocok bro! 🧐');
       return;
     }
 
@@ -99,7 +109,16 @@ class _LoginScreenState extends State<LoginScreen> {
               }
             ),
           ),
-          if (_isLoading) const Center(child: LoadingWidget()),
+          if (_isLoading) 
+            Positioned.fill(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                child: Container(
+                  color: Colors.white.withOpacity(0.6),
+                  child: const Center(child: LoadingWidget()),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -189,7 +208,26 @@ class _LoginScreenState extends State<LoginScreen> {
                 _buildInput(_emailController, 'Alamat Email Aktif', Icons.email_outlined, false),
                 const SizedBox(height: 16),
                 
-                _buildInput(_passwordController, 'Kata Sandi Unik', Icons.lock_outline_rounded, true),
+                _buildInput(
+                  _passwordController, 
+                  'Kata Sandi Unik', 
+                  Icons.lock_outline_rounded, 
+                  true,
+                  obscureText: _obscurePassword,
+                  onToggleVisibility: () => setState(() => _obscurePassword = !_obscurePassword)
+                ),
+                
+                if (!_isLogin) ...[
+                  const SizedBox(height: 16),
+                  _buildInput(
+                    _confirmPasswordController, 
+                    'Ulangi Kata Sandi', 
+                    Icons.lock_reset_rounded, 
+                    true,
+                    obscureText: _obscureConfirmPassword,
+                    onToggleVisibility: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword)
+                  ),
+                ],
                 
                 AnimatedCrossFade(
                   duration: const Duration(milliseconds: 300),
@@ -204,7 +242,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-                  secondChild: const SizedBox(height: 8, width: double.infinity),
+                  secondChild: const SizedBox(height: 16, width: double.infinity),
                 ),
                 
                 const SizedBox(height: 24),
@@ -233,7 +271,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildInput(TextEditingController controller, String hint, IconData icon, bool hide) {
+  Widget _buildInput(TextEditingController controller, String hint, IconData icon, bool isPassword, {bool? obscureText, VoidCallback? onToggleVisibility}) {
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFFF2F2F7), // iOS native grouped background
@@ -242,14 +280,26 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       child: TextField(
         controller: controller,
-        obscureText: hide,
+        obscureText: obscureText ?? false,
         style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 16, color: Color(0xFF1C1C1E)),
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: const TextStyle(color: Color(0xFF8E8E93), fontSize: 16, fontWeight: FontWeight.w500),
           prefixIcon: Icon(icon, color: const Color(0xFF8E8E93), size: 22),
+          suffixIcon: isPassword 
+              ? IconButton(
+                  icon: Icon(
+                    obscureText! ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                    color: const Color(0xFF8E8E93),
+                    size: 20,
+                  ),
+                  onPressed: onToggleVisibility,
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
+                )
+              : null,
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: isPassword ? 14 : 16),
         ),
       ),
     );

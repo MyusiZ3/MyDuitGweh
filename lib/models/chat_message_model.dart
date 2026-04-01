@@ -6,6 +6,8 @@ class ChatMessage {
   final String senderName;
   final String message;
   final DateTime timestamp;
+  final bool isEdited;
+  final bool isDeleted;
 
   ChatMessage({
     required this.id,
@@ -13,6 +15,8 @@ class ChatMessage {
     required this.senderName,
     required this.message,
     required this.timestamp,
+    this.isEdited = false,
+    this.isDeleted = false,
   });
 
   factory ChatMessage.fromJson(Map<String, dynamic> json, {String? docId}) {
@@ -22,6 +26,8 @@ class ChatMessage {
       senderName: json['senderName'] ?? 'Anonim',
       message: json['message'] ?? '',
       timestamp: (json['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      isEdited: json['isEdited'] ?? false,
+      isDeleted: json['isDeleted'] ?? false,
     );
   }
 
@@ -31,6 +37,14 @@ class ChatMessage {
       'senderName': senderName,
       'message': message,
       'timestamp': FieldValue.serverTimestamp(),
+      'isEdited': isEdited,
+      'isDeleted': isDeleted,
     };
+  }
+
+  /// Check if message can be unsent (within 5 minutes)
+  bool get canUnsend {
+    final diff = DateTime.now().difference(timestamp);
+    return diff.inMinutes < 5;
   }
 }

@@ -22,6 +22,17 @@ class WalletScreen extends StatefulWidget {
 class _WalletScreenState extends State<WalletScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   final String _uid = FirebaseAuth.instance.currentUser!.uid;
+  
+  // Search State
+  bool _isSearching = false;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = "";
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +41,22 @@ class _WalletScreenState extends State<WalletScreen> {
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
-          title: const Text('Dompet Saya'),
+          title: _isSearching 
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                decoration: const InputDecoration(
+                  hintText: 'Cari nama dompet...',
+                  border: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
+                  hintStyle: TextStyle(color: AppColors.textHint, fontWeight: FontWeight.w400),
+                ),
+                onChanged: (val) => setState(() => _searchQuery = val.toLowerCase()),
+              )
+            : const Text('Dompet Saya'),
           backgroundColor: AppColors.background,
           elevation: 0,
           bottom: const TabBar(
@@ -45,70 +71,88 @@ class _WalletScreenState extends State<WalletScreen> {
           ),
           actions: [
             IconButton(
+              onPressed: () {
+                setState(() {
+                  _isSearching = !_isSearching;
+                  if (!_isSearching) {
+                    _searchController.clear();
+                    _searchQuery = "";
+                  }
+                });
+              },
+              icon: Icon(_isSearching ? Icons.close_rounded : Icons.search_rounded, color: AppColors.primary),
+            ),
+            IconButton(
               onPressed: _showCreateWalletDialog,
               icon: const Icon(Icons.add_circle_outline_rounded, color: AppColors.primary),
             ),
           ],
         ),
-      body: StreamBuilder<List<WalletModel>>(
-        stream: _firestoreService.getWalletsStream(_uid),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting)
-            return const Center(child: CircularProgressIndicator());
+        body: StreamBuilder<List<WalletModel>>(
+          stream: _firestoreService.getWalletsStream(_uid),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting)
+              return const Center(child: CircularProgressIndicator());
 
-          final wallets = snapshot.data ?? [];
-          final personalWallets = wallets.where((w) => w.isPersonal).toList();
-          final colabWallets = wallets.where((w) => w.isColab).toList();
-          final debtWallets = wallets.where((w) => w.isDebt).toList();
+            final wallets = snapshot.data ?? [];
+            
+            // Filter wallets by search query
+            final filteredWallets = wallets.where((w) {
+              return w.walletName.toLowerCase().contains(_searchQuery);
+            }).toList();
 
-          return TabBarView(
-            physics: const BouncingScrollPhysics(),
-            children: [
-              // Tab 1: Pribadi
-              personalWallets.isEmpty 
-                ? _buildEmptyState()
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                    physics: const BouncingScrollPhysics(),
-                    itemCount: personalWallets.length,
-                    itemBuilder: (context, index) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _WalletCard(wallet: personalWallets[index], onTap: () => _showWalletDetails(personalWallets[index]))
-                    ),
-                  ),
-              
-              // Tab 2: Bersama
-              colabWallets.isEmpty
-                ? _buildEmptyState()
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                    physics: const BouncingScrollPhysics(),
-                    itemCount: colabWallets.length,
-                    itemBuilder: (context, index) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _WalletCard(wallet: colabWallets[index], onTap: () => _showWalletDetails(colabWallets[index]))
-                    ),
-                  ),
+            final personalWallets = filteredWallets.where((w) => w.isPersonal).toList();
+            final colabWallets = filteredWallets.where((w) => w.isColab).toList();
+            final debtWallets = filteredWallets.where((w) => w.isDebt).toList();
 
-              // Tab 3: Hutang
-              debtWallets.isEmpty
-                ? _buildEmptyState()
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                    physics: const BouncingScrollPhysics(),
-                    itemCount: debtWallets.length,
-                    itemBuilder: (context, index) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _WalletCard(wallet: debtWallets[index], onTap: () => _showWalletDetails(debtWallets[index]))
+            return TabBarView(
+              physics: const BouncingScrollPhysics(),
+              children: [
+                // Tab 1: Pribadi
+                personalWallets.isEmpty 
+                  ? _buildEmptyState()
+                  : ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: personalWallets.length,
+                      itemBuilder: (context, index) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _WalletCard(wallet: personalWallets[index], onTap: () => _showWalletDetails(personalWallets[index]))
+                      ),
                     ),
-                  ),
-            ],
-          );
-        },
+                
+                // Tab 2: Bersama
+                colabWallets.isEmpty
+                  ? _buildEmptyState()
+                  : ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: colabWallets.length,
+                      itemBuilder: (context, index) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _WalletCard(wallet: colabWallets[index], onTap: () => _showWalletDetails(colabWallets[index]))
+                      ),
+                    ),
+
+                // Tab 3: Hutang
+                debtWallets.isEmpty
+                  ? _buildEmptyState()
+                  : ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: debtWallets.length,
+                      itemBuilder: (context, index) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _WalletCard(wallet: debtWallets[index], onTap: () => _showWalletDetails(debtWallets[index]))
+                      ),
+                    ),
+              ],
+            );
+          },
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   void _showCreateWalletDialog() {
     final nameController = TextEditingController();

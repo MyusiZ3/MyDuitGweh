@@ -49,6 +49,7 @@ class _ColabScreenState extends State<ColabScreen> {
             itemBuilder: (context, index) {
               final wallet = snapshot.data![index];
               return _ColabWalletCard(
+                key: ValueKey(wallet.id),
                 wallet: wallet,
                 firestoreService: _firestoreService,
                 currentUid: _uid,
@@ -98,6 +99,7 @@ class _ColabWalletCard extends StatefulWidget {
   final String currentUid;
 
   const _ColabWalletCard({
+    super.key,
     required this.wallet,
     required this.firestoreService,
     required this.currentUid,
@@ -109,6 +111,34 @@ class _ColabWalletCard extends StatefulWidget {
 
 class _ColabWalletCardState extends State<_ColabWalletCard> {
   bool _expanded = false;
+  final Map<String, String> _memberNames = {};
+  late Stream<int> _unreadStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMembers();
+    _unreadStream = widget.firestoreService.getUnreadCountStream(widget.wallet.id, widget.currentUid);
+  }
+
+  Future<void> _loadMembers() async {
+    for (final uid in widget.wallet.members) {
+      try {
+        final info = await widget.firestoreService.getUserInfo(uid);
+        if (mounted) {
+          setState(() {
+            _memberNames[uid] = info?['displayName'] ?? info?['name'] ?? 'Pengguna';
+          });
+        }
+      } catch (_) {
+        if (mounted) {
+          setState(() {
+            _memberNames[uid] = 'Pengguna';
+          });
+        }
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -135,17 +165,48 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
               padding: const EdgeInsets.all(20),
               child: Row(
                 children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: AppColors.deepBlue.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Icon(
-                      Icons.group_rounded,
-                      color: AppColors.deepBlue,
-                    ),
+                  StreamBuilder<int>(
+                    stream: _unreadStream,
+                    builder: (context, unreadSnap) {
+                      final unreadCount = unreadSnap.data ?? 0;
+                      return Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: AppColors.deepBlue.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: const Icon(
+                              Icons.group_rounded,
+                              color: AppColors.deepBlue,
+                            ),
+                          ),
+                          if (unreadCount > 0)
+                            Positioned(
+                              top: -4,
+                              right: -4,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppColors.expense,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: Colors.white, width: 2),
+                                ),
+                                constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+                                child: Center(
+                                  child: Text(
+                                    unreadCount > 99 ? '99+' : '$unreadCount',
+                                    style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800),
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      );
+                    },
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -316,50 +377,36 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
       spacing: 8,
       runSpacing: 8,
       children: widget.wallet.members.map((uid) {
-        return FutureBuilder<Map<String, dynamic>?>(
-          future: widget.firestoreService.getUserInfo(uid),
-          builder: (context, snapshot) {
-            String name = 'Loading...';
-            if (snapshot.connectionState == ConnectionState.done) {
-              if (snapshot.hasData) {
-                // Mencari dari 'displayName' (default Firebase) atau 'name' sebagai fallback
-                name = snapshot.data?['displayName'] ?? snapshot.data?['name'] ?? 'Pengguna';
-              } else {
-                name = 'Tidak diketahui';
-              }
-            }
+        final name = _memberNames[uid] ?? 'Memuat...';
+        final isOwner = uid == widget.wallet.owner;
 
-            final isOwner = uid == widget.wallet.owner;
-
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: isOwner ? AppColors.primary.withOpacity(0.1) : AppColors.surfaceVariant,
-                borderRadius: BorderRadius.circular(20),
-                border: isOwner ? Border.all(color: AppColors.primary.withOpacity(0.3)) : null,
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: isOwner ? AppColors.primary.withOpacity(0.1) : AppColors.surfaceVariant,
+            borderRadius: BorderRadius.circular(20),
+            border: isOwner ? Border.all(color: AppColors.primary.withOpacity(0.3)) : null,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (isOwner) ...[
+                const Icon(Icons.star_rounded,
+                    size: 14, color: AppColors.primary),
+                const SizedBox(width: 4),
+              ],
+              Text(
+                name,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: isOwner
+                      ? AppColors.primary
+                      : AppColors.textSecondary,
+                ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (isOwner) ...[
-                    const Icon(Icons.star_rounded,
-                        size: 14, color: AppColors.primary),
-                    const SizedBox(width: 4),
-                  ],
-                  Text(
-                    name,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: isOwner
-                          ? AppColors.primary
-                          : AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
+            ],
+          ),
         );
       }).toList(),
     );
