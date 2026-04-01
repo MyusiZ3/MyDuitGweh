@@ -3,6 +3,7 @@ import 'dart:ui';
 import '../services/auth_service.dart';
 import '../utils/app_theme.dart';
 import '../utils/ui_helper.dart';
+import '../utils/tone_dictionary.dart';
 import '../widgets/loading_widget.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -27,7 +28,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final name = _nameController.text.trim();
 
     if (email.isEmpty || password.isEmpty || (!_isLogin && name.isEmpty)) {
-      UIHelper.showErrorSnackBar(context, 'Harap isi semua kolom! ⚠️');
+      UIHelper.showErrorSnackBar(context, ToneManager.t('snack_login_err'));
       return;
     }
 
@@ -79,16 +80,17 @@ class _LoginScreenState extends State<LoginScreen> {
               builder: (context, constraints) {
                 return SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(32, 20, 32, 24),
+                  padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(minHeight: constraints.maxHeight - 44),
+                    constraints: BoxConstraints(minHeight: constraints.maxHeight - 48),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         _buildHeader(),
-                        const SizedBox(height: 48),
+                        const SizedBox(height: 36),
                         _buildGlassCard(),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 36),
                         _buildFooter(),
                       ],
                     ),
@@ -130,35 +132,27 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildHeader() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start, // Left-Aligned Modern Approach
       children: [
-        Container(
-          width: 86,
-          height: 86,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withOpacity(0.1),
-                blurRadius: 30,
-                offset: const Offset(0, 10),
-              )
-            ],
-          ),
-          child: const Center(
-            child: Icon(Icons.account_balance_wallet_rounded, size: 42, color: AppColors.primary),
-          ),
-        ),
-        const SizedBox(height: 28),
         Text(
-          _isLogin ? 'Selamat Datang' : 'Buat Akun',
-          style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -1),
+          _isLogin ? 'Welcome Back!' : 'Gas Bikin Akun',
+          style: const TextStyle(
+            fontSize: 38, 
+            fontWeight: FontWeight.w800, 
+            color: Color(0xFF1C1C1E), 
+            letterSpacing: -1.5,
+            height: 1.1,
+          ), 
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         Text(
-          _isLogin ? 'Senang melihat kamu kembali!' : 'Mulai perjalanan finansialmu sekarang!',
-          textAlign: TextAlign.center,
-          style: const TextStyle(color: Color(0xFF64748B), fontSize: 15, fontWeight: FontWeight.w500),
+          _isLogin ? 'Udah siap nyatet duit lu hari ini? 💸' : 'Biar dompet lu ga boncos di akhir bulan. 📉',
+          style: const TextStyle(
+            color: Color(0xFF8E8E93), 
+            fontSize: 16, 
+            fontWeight: FontWeight.w500, 
+            letterSpacing: -0.2
+          ),
         ),
       ],
     );
@@ -166,63 +160,73 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildGlassCard() {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(32),
+      borderRadius: BorderRadius.circular(24),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18), // Heavy iOS frost
         child: Container(
-          padding: const EdgeInsets.all(28),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.8),
-            borderRadius: BorderRadius.circular(32),
-            border: Border.all(color: Colors.white, width: 1.5),
+            color: Colors.white.withOpacity(0.75),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.5),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.03),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 24,
+                offset: const Offset(0, 12),
               )
             ],
           ),
-          child: Column(
-            children: [
-              if (!_isLogin) 
-                _buildInput(_nameController, 'Nama Lengkap', Icons.person_outline_rounded, false),
-              if (!_isLogin) const SizedBox(height: 16),
-              
-              _buildInput(_emailController, 'Alamat Email', Icons.email_outlined, false),
-              const SizedBox(height: 16),
-              
-              _buildInput(_passwordController, 'Kata Sandi', Icons.lock_outline_rounded, true),
-              
-              if (_isLogin) 
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: _showForgotPass,
-                    child: const Text('Lupa Sandi?', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 13)),
+          child: AnimatedSize(
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.fastOutSlowIn,
+            child: Column(
+              children: [
+                if (!_isLogin) 
+                  _buildInput(_nameController, 'Nama Lengkap (Bebas cuy)', Icons.person_outline_rounded, false),
+                if (!_isLogin) const SizedBox(height: 16),
+                
+                _buildInput(_emailController, 'Alamat Email Aktif', Icons.email_outlined, false),
+                const SizedBox(height: 16),
+                
+                _buildInput(_passwordController, 'Kata Sandi Unik', Icons.lock_outline_rounded, true),
+                
+                AnimatedCrossFade(
+                  duration: const Duration(milliseconds: 300),
+                  crossFadeState: _isLogin ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+                  firstChild: Align(
+                    alignment: Alignment.centerRight,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: TextButton(
+                        onPressed: _showForgotPass,
+                        child: const Text('Lupa Sandi?', style: TextStyle(color: Color(0xFF007AFF), fontWeight: FontWeight.w600, fontSize: 14)),
+                      ),
+                    ),
+                  ),
+                  secondChild: const SizedBox(height: 8, width: double.infinity),
+                ),
+                
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF007AFF), // iOS default tint
+                      foregroundColor: Colors.white,
+                      elevation: 0, // Flat iOS style
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    child: Text(
+                      _isLogin ? 'Login Sekarang 🚀' : 'Gas Daftar! 🔥',
+                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, letterSpacing: -0.4),
+                    ),
                   ),
                 ),
-              
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    elevation: 8,
-                    shadowColor: AppColors.primary.withOpacity(0.4),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  ),
-                  child: Text(
-                    _isLogin ? 'Masuk Sekarang' : 'Daftar Yuk!',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
-                  ),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -232,19 +236,20 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildInput(TextEditingController controller, String hint, IconData icon, bool hide) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
-        borderRadius: BorderRadius.circular(16),
+        color: const Color(0xFFF2F2F7), // iOS native grouped background
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white, width: 2), 
       ),
       child: TextField(
         controller: controller,
         obscureText: hide,
-        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+        style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 16, color: Color(0xFF1C1C1E)),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14, fontWeight: FontWeight.w500),
-          prefixIcon: Icon(icon, color: const Color(0xFF64748B), size: 22),
+          hintStyle: const TextStyle(color: Color(0xFF8E8E93), fontSize: 16, fontWeight: FontWeight.w500),
+          prefixIcon: Icon(icon, color: const Color(0xFF8E8E93), size: 22),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
       ),
     );
@@ -256,12 +261,12 @@ class _LoginScreenState extends State<LoginScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(_isLogin ? 'Belum member?' : 'Sudah member?', style: const TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w600)),
+            Text(_isLogin ? 'Belum punya circlenya?' : 'Udah punya akun brok?', style: const TextStyle(color: Color(0xFF8E8E93), fontSize: 15, fontWeight: FontWeight.w500)),
             TextButton(
               onPressed: () => setState(() => _isLogin = !_isLogin),
               child: Text(
-                _isLogin ? 'Daftar' : 'Masuk',
-                style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w900),
+                _isLogin ? 'Daftar Sini' : 'Login Aja',
+                style: const TextStyle(color: Color(0xFF007AFF), fontSize: 15, fontWeight: FontWeight.w700),
               ),
             ),
           ],
@@ -269,27 +274,28 @@ class _LoginScreenState extends State<LoginScreen> {
         const SizedBox(height: 8),
         const Row(
           children: [
-            Expanded(child: Divider(color: Color(0xFFE2E8F0))),
-            Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text('atau', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12))),
-            Expanded(child: Divider(color: Color(0xFFE2E8F0))),
+            Expanded(child: Divider(color: Color(0xFFE5E5EA))),
+            Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text('atau', style: TextStyle(color: Color(0xFF8E8E93), fontSize: 14))),
+            Expanded(child: Divider(color: Color(0xFFE5E5EA))),
           ],
         ),
         const SizedBox(height: 24),
         SizedBox(
           width: double.infinity,
-          height: 56,
+          height: 52,
           child: OutlinedButton.icon(
             onPressed: _isLoading ? null : _handleGoogleSignIn,
             icon: Image.network('https://www.google.com/favicon.ico', height: 18),
-            label: const Text('Lanjut dengan Google', style: TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.w700)),
+            label: const Text('Gaskeun Pake Google 😎', style: TextStyle(color: Color(0xFF1C1C1E), fontSize: 16, fontWeight: FontWeight.w700, letterSpacing: -0.3)),
             style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.5),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              side: const BorderSide(color: Color(0xFFC7C7CC), width: 1.5), // iOS pale border
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               backgroundColor: Colors.white,
+              elevation: 0,
             ),
           ),
         ),
-        SizedBox(height: MediaQuery.of(context).padding.bottom + 8), // Perfect Safe Area
+        SizedBox(height: MediaQuery.of(context).padding.bottom + 8), 
       ],
     );
   }

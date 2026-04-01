@@ -11,6 +11,8 @@ class AuthService {
   Future<UserCredential?> signInWithGoogle() async {
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      
+      // Jika bernilai null = Pengguna pencet tombol kembali / Batal
       if (googleUser == null) return null;
 
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
@@ -33,7 +35,8 @@ class AuthService {
 
       return userCredential;
     } catch (e) {
-      return null;
+      // 2. Beri peringatan nyaring jika terjadi error (bukannya diam saja me-return null)
+      throw Exception('Gagal masuk dengan Google: $e');
     }
   }
 

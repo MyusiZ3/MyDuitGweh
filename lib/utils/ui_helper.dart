@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
 import '../utils/app_theme.dart';
+import '../utils/tone_dictionary.dart';
 
 class UIHelper {
   static void showSuccessSnackBar(BuildContext context, String message) {
@@ -75,8 +76,8 @@ class UIHelper {
     required BuildContext context,
     required String title,
     required String message,
-    String confirmText = 'Ya, Hapus',
-    String cancelText = 'Batal',
+    String? confirmText,
+    String? cancelText,
     bool isDangerous = true,
   }) {
     return showDialog<bool>(
@@ -124,8 +125,11 @@ class UIHelper {
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16)),
                       ),
-                      child: Text(cancelText,
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(cancelText ?? ToneManager.t('dialog_no'),
+                            style: const TextStyle(fontWeight: FontWeight.bold)),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -141,8 +145,11 @@ class UIHelper {
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16)),
                       ),
-                      child: Text(confirmText,
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(confirmText ?? ToneManager.t('dialog_yes'),
+                            style: const TextStyle(fontWeight: FontWeight.bold)),
+                      ),
                     ),
                   ),
                 ],

@@ -3,9 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'firebase_options.dart';
 import 'utils/app_theme.dart';
+import 'utils/tone_dictionary.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/main_nav.dart';
@@ -24,6 +24,9 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  // VITAL: Tarik memori kepribadian sebelum layar pertama di-render!
+  await ToneManager.loadTone();
+
   runApp(const MyDuitGwehApp());
 }
 
@@ -32,11 +35,17 @@ class MyDuitGwehApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'My Duit Gweh',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      home: const AuthGate(),
+    // Keajaiban terjadi di sini: Jika Tone berubah, SELURUH App ikut berubah otomatis!
+    return ValueListenableBuilder<AppTone>(
+      valueListenable: ToneManager.notifier,
+      builder: (context, activeTone, child) {
+        return MaterialApp(
+          title: 'My Duit Gweh',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          home: const AuthGate(),
+        );
+      },
     );
   }
 }
