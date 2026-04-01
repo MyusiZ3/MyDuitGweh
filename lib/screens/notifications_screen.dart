@@ -40,6 +40,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   @override
+  void dispose() {
+    _markAllAsRead(uid);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -50,10 +56,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 20),
-          onPressed: () {
-            _markAllAsRead(uid);
-            Navigator.pop(context);
-          },
+          onPressed: () => Navigator.pop(context),
         ),
       ),
       body: StreamBuilder<List<Map<String, dynamic>>>(
