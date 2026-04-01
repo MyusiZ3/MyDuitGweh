@@ -9,6 +9,9 @@ import 'utils/tone_dictionary.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/main_nav.dart';
+import 'screens/maintenance_gate_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'services/auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -100,8 +103,8 @@ class _AuthGateState extends State<AuthGate> {
             }
 
             if (user != null) {
-              debugPrint('--- NAVIGATING TO MAIN NAV ---');
-              return const MainNav();
+              debugPrint('--- NAVIGATING TO MAINTENANCE WRAPPER ---');
+              return MaintenanceGateWrapper(user: user);
             } else {
               debugPrint('--- NAVIGATING TO LOGIN SCREEN ---');
               return const LoginScreen();
@@ -115,6 +118,55 @@ class _AuthGateState extends State<AuthGate> {
   Future<bool> _checkOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool('onboarding_completed') ?? false;
+  }
+}
+
+class MaintenanceGateWrapper extends StatelessWidget {
+  final User user;
+  const MaintenanceGateWrapper({super.key, required this.user});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance.collection('app_config').doc('global').snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SplashView();
+        }
+
+        if (!snapshot.hasData || !snapshot.data!.exists) {
+          return const MainNav();
+        }
+
+        final data = snapshot.data!.data() as Map<String, dynamic>;
+        final isMaintenance = data['isMaintenance'] ?? false;
+        final maintenanceMsg = data['maintenanceMessage'] ?? 'Aplikasi sedang dalam pemeliharaan rutin.';
+
+        if (!isMaintenance) {
+          return const MainNav();
+        }
+
+        // Jika maintenance aktif, cek apakah user adalah admin/superadmin
+        return FutureBuilder<bool>(
+          future: AuthService().isAdmin(uid: user.uid),
+          builder: (context, adminSnapshot) {
+            if (adminSnapshot.connectionState == ConnectionState.waiting) {
+              return const SplashView();
+            }
+
+            final isAdmin = adminSnapshot.data ?? false;
+
+            if (isAdmin) {
+              // Admin bisa tembus/bypass maintenance
+              return const MainNav();
+            } else {
+              // User biasa terhadang
+              return MaintenanceGateScreen(message: maintenanceMsg);
+            }
+          },
+        );
+      },
+    );
   }
 }
 
