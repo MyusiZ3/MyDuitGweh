@@ -50,19 +50,34 @@ class MyDuitGwehApp extends StatelessWidget {
   }
 }
 
-class AuthGate extends StatelessWidget {
+class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
+
+  @override
+  State<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  late Stream<User?> _authStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _authStream = FirebaseAuth.instance.authStateChanges();
+  }
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
+      stream: _authStream,
+      // CRITICAL: Provide initialData so hot reload doesn't lose current state
+      initialData: FirebaseAuth.instance.currentUser,
       builder: (context, snapshot) {
         // DEBUG LOG
         debugPrint('--- AUTH GATE STATE: ${snapshot.connectionState} ---');
         debugPrint('--- HAS USER: ${snapshot.hasData} | UID: ${snapshot.data?.uid} ---');
 
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        if (snapshot.connectionState == ConnectionState.waiting && snapshot.data == null) {
           return const SplashView();
         }
 

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
 import '../utils/app_theme.dart';
-import '../utils/tone_dictionary.dart';
 
 class UIHelper {
   static void showSuccessSnackBar(BuildContext context, String message) {
@@ -80,83 +79,115 @@ class UIHelper {
     String? cancelText,
     bool isDangerous = true,
   }) {
-    return showDialog<bool>(
+    return showGeneralDialog<bool>(
       context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: (isDangerous ? AppColors.expense : AppColors.primary)
-                      .withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  isDangerous
-                      ? Icons.delete_forever_rounded
-                      : Icons.info_outline_rounded,
-                  color: isDangerous ? AppColors.expense : AppColors.primary,
-                  size: 32,
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(title,
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.w900)),
-              const SizedBox(height: 12),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textHint, height: 1.5),
-              ),
-              const SizedBox(height: 32),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16)),
-                      ),
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(cancelText ?? ToneManager.t('dialog_no'),
-                            style: const TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            isDangerous ? AppColors.expense : AppColors.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16)),
-                      ),
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(confirmText ?? ToneManager.t('dialog_yes'),
-                            style: const TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+      barrierDismissible: true,
+      barrierLabel: '',
+      barrierColor: Colors.black.withOpacity(0.5),
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, anim1, anim2) => Center(
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 40),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(32),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 30, offset: const Offset(0, 10)),
             ],
           ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(32),
+            child: BackdropFilter(
+              filter: ui.ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+              child: Container(
+                padding: const EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(32),
+                  border: Border.all(color: Colors.white.withOpacity(0.5), width: 1),
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: (isDangerous ? AppColors.expense : AppColors.primary).withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          isDangerous ? Icons.delete_outline_rounded : Icons.info_outline_rounded,
+                          color: isDangerous ? AppColors.expense : AppColors.primary,
+                          size: 32,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Text(title, 
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.5)
+                      ),
+                      const SizedBox(height: 12),
+                      Text(message,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.grey[600], fontSize: 14, height: 1.5)
+                      ),
+                      const SizedBox(height: 32),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: InkWell(
+                              onTap: () => Navigator.pop(context, false),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                                ),
+                                child: Center(
+                                  child: Text(cancelText ?? 'Batal', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: InkWell(
+                              onTap: () => Navigator.pop(context, true),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                decoration: BoxDecoration(
+                                  color: isDangerous ? Colors.black : AppColors.primary,
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: (isDangerous ? Colors.black : AppColors.primary).withOpacity(0.25),
+                                      blurRadius: 15,
+                                      offset: const Offset(0, 5)
+                                    ),
+                                  ],
+                                ),
+                                child: Center(
+                                  child: Text(confirmText ?? 'Ya, Hapus', 
+                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13)
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
+      ),
+      transitionBuilder: (context, anim1, anim2, child) => ScaleTransition(
+        scale: CurvedAnimation(parent: anim1, curve: Curves.easeOutBack),
+        child: FadeTransition(opacity: anim1, child: child),
       ),
     );
   }

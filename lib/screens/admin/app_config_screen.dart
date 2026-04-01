@@ -14,6 +14,9 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
   final _firestore = FirebaseFirestore.instance;
   bool _maintenanceMode = false;
   final TextEditingController _minVersionController = TextEditingController();
+  final TextEditingController _maintenanceMsgController = TextEditingController();
+  DateTime? _startTime;
+  DateTime? _endTime;
   bool _isSaving = false;
 
   @override
@@ -26,13 +29,50 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
     try {
       final doc = await _firestore.collection('app_config').doc('global').get();
       if (doc.exists) {
+        final data = doc.data()!;
         setState(() {
-          _maintenanceMode = doc.data()?['maintenanceMode'] ?? false;
-          _minVersionController.text = doc.data()?['minVersion'] ?? '1.0.0';
+          _maintenanceMode = data['isMaintenance'] ?? false;
+          _minVersionController.text = data['minVersion'] ?? '1.0.0';
+          _maintenanceMsgController.text = data['maintenanceMessage'] ?? 'Aplikasi sedang dalam pemeliharaan rutin.';
+          _startTime = (data['maintenanceStartTime'] as Timestamp?)?.toDate();
+          _endTime = (data['maintenanceEndTime'] as Timestamp?)?.toDate();
         });
       }
     } catch (e) {
       debugPrint("Gagal load config: $e");
+    }
+  }
+
+  Future<void> _selectDateTime(bool isStart) async {
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now().subtract(const Duration(days: 1)),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+
+    if (pickedDate != null) {
+      final TimeOfDay? pickedTime = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.now(),
+      );
+
+      if (pickedTime != null) {
+        setState(() {
+          final dt = DateTime(
+            pickedDate.year,
+            pickedDate.month,
+            pickedDate.day,
+            pickedTime.hour,
+            pickedTime.minute,
+          );
+          if (isStart) {
+            _startTime = dt;
+          } else {
+            _endTime = dt;
+          }
+        });
+      }
     }
   }
 
@@ -43,16 +83,20 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
     final configRef = _firestore.collection('app_config').doc('global');
     final historyRef = configRef.collection('history').doc();
 
-    batch.set(configRef, {
-      'maintenanceMode': _maintenanceMode,
+    final Map<String, dynamic> configData = {
+      'isMaintenance': _maintenanceMode,
       'minVersion': _minVersionController.text,
+      'maintenanceMessage': _maintenanceMsgController.text,
+      'maintenanceStartTime': _startTime != null ? Timestamp.fromDate(_startTime!) : null,
+      'maintenanceEndTime': _endTime != null ? Timestamp.fromDate(_endTime!) : null,
       'lastUpdated': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    };
+
+    batch.set(configRef, configData, SetOptions(merge: true));
 
     batch.set(historyRef, {
+      ...configData,
       'updatedAt': FieldValue.serverTimestamp(),
-      'maintenanceMode': _maintenanceMode,
-      'minVersion': _minVersionController.text,
       'type': 'CONFIG_UPDATE'
     });
 
@@ -141,18 +185,102 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
           Row(
             children: [
               const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Maintenance Mode', style: TextStyle(fontWeight: FontWeight.bold)),
-                Text('User gak bisa masuk app jika aktif.', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                Text('Status Maintenance', style: TextStyle(fontWeight: FontWeight.bold)),
+                Text('Aktifkan manual atau biarkan jadwal berjalan.', style: TextStyle(fontSize: 10, color: Colors.grey)),
               ])),
-              Switch.adaptive(value: _maintenanceMode, onChanged: (v) => setState(() => _maintenanceMode = v)),
+              Switch.adaptive(value: _maintenanceMode, activeColor: Colors.redAccent, onChanged: (v) => setState(() => _maintenanceMode = v)),
+            ],
+          ),
+          const Divider(height: 32),
+          TextField(
+            controller: _maintenanceMsgController,
+            maxLines: 2,
+            decoration: const InputDecoration(
+              labelText: 'Pesan Maintenance',
+              hintText: 'Misal: Maaf ya, lagi benerin pipa bocor...',
+              prefixIcon: Icon(Icons.message_rounded),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildTimePicker(
+                  label: 'Start Schedule',
+                  value: _startTime,
+                  onTap: () => _selectDateTime(true),
+                  onClear: () => setState(() => _startTime = null),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildTimePicker(
+                  label: 'End Schedule',
+                  value: _endTime,
+                  onTap: () => _selectDateTime(false),
+                  onClear: () => setState(() => _endTime = null),
+                ),
+              ),
             ],
           ),
           const Divider(height: 32),
           TextField(
             controller: _minVersionController,
-            decoration: const InputDecoration(labelText: 'Min Version', hintText: '1.0.0', prefixIcon: Icon(Icons.verified_rounded)),
+            decoration: const InputDecoration(
+              labelText: 'Update Paksa vMin',
+              hintText: '1.0.0',
+              prefixIcon: Icon(Icons.verified_rounded),
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTimePicker({
+    required String label,
+    DateTime? value,
+    required VoidCallback onTap,
+    required VoidCallback onClear,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.black.withOpacity(0.05)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.grey)),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Icon(Icons.access_time_rounded, size: 14, color: value != null ? AppColors.primary : Colors.grey),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    value != null ? DateFormat('dd MMM, HH:mm').format(value) : '--:--',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: value != null ? Colors.black : Colors.grey,
+                    ),
+                  ),
+                ),
+                if (value != null)
+                  GestureDetector(
+                    onTap: onClear,
+                    child: const Icon(Icons.close_rounded, size: 14, color: Colors.redAccent),
+                  ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -170,10 +298,75 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
             final doc = snapshot.data!.docs[index];
             final data = doc.data() as Map<String, dynamic>;
             final DateTime date = (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now();
-            return ListTile(
-              leading: const Icon(Icons.history_rounded, size: 20),
-              title: Text('v${data['minVersion']} | Maintenance: ${data['maintenanceMode']}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-              subtitle: Text(DateFormat('dd MMM HH:mm').format(date), style: const TextStyle(fontSize: 11)),
+            final start = (data['maintenanceStartTime'] as Timestamp?)?.toDate();
+            final end = (data['maintenanceEndTime'] as Timestamp?)?.toDate();
+            final maintenanceEnabled = data['isMaintenance'] ?? false;
+            
+            String status = 'INACTIVE';
+            Color statusColor = Colors.grey;
+            
+            if (maintenanceEnabled) {
+              final now = DateTime.now();
+              if (start != null && end != null) {
+                if (now.isBefore(start)) {
+                  status = 'PENDING';
+                  statusColor = Colors.orange;
+                } else if (now.isAfter(end)) {
+                  status = 'END';
+                  statusColor = Colors.red;
+                } else {
+                  status = 'ONGOING';
+                  statusColor = Colors.green;
+                }
+              } else if (start != null) {
+                 if (now.isBefore(start)) {
+                  status = 'PENDING';
+                  statusColor = Colors.orange;
+                } else {
+                  status = 'ONGOING';
+                  statusColor = Colors.green;
+                }
+              } else {
+                status = 'ONGOING';
+                statusColor = Colors.green;
+              }
+            }
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceVariant.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.black.withOpacity(0.05)),
+              ),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(color: statusColor.withOpacity(0.1), shape: BoxShape.circle),
+                  child: Icon(Icons.settings_backup_restore_rounded, size: 20, color: statusColor),
+                ),
+                title: Row(
+                  children: [
+                    Text('v${data['minVersion']}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(color: statusColor.withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
+                      child: Text(status, style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: statusColor)),
+                    ),
+                  ],
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 4),
+                    Text(data['maintenanceMessage'] ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11)),
+                    const SizedBox(height: 2),
+                    Text(DateFormat('dd MMM HH:mm').format(date), style: TextStyle(fontSize: 10, color: Colors.grey[500])),
+                  ],
+                ),
+              ),
             );
           },
         );

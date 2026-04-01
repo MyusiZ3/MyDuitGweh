@@ -6,6 +6,11 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  
+  // Getter for auth instance
+  FirebaseAuth get auth => _auth;
+  
+  String? _cachedRole; // Cache for current session role
 
   // GOOGLE SIGN IN
   Future<UserCredential?> signInWithGoogle() async {
@@ -24,14 +29,27 @@ class AuthService {
       final UserCredential userCredential = await _auth.signInWithCredential(credential);
       
       if (userCredential.user != null) {
-        await _firestore.collection('users').doc(userCredential.user!.uid).set({
-          'uid': userCredential.user!.uid,
-          'email': userCredential.user!.email,
-          'displayName': userCredential.user!.displayName,
-          'photoURL': userCredential.user!.photoURL,
-          'role': 'user', // Default role for new Google users
-          'lastSeen': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+        final userDoc = await _firestore.collection('users').doc(userCredential.user!.uid).get();
+        
+        if (!userDoc.exists) {
+          // Hanya buat User baru (Initial Role)
+          await _firestore.collection('users').doc(userCredential.user!.uid).set({
+            'uid': userCredential.user!.uid,
+            'email': userCredential.user!.email,
+            'displayName': userCredential.user!.displayName,
+            'photoURL': userCredential.user!.photoURL,
+            'role': 'user', 
+            'createdAt': FieldValue.serverTimestamp(),
+            'lastSeen': FieldValue.serverTimestamp(),
+          });
+        } else {
+          // User lama, update data profil saja tanpa menyentuh Role
+          await _firestore.collection('users').doc(userCredential.user!.uid).update({
+            'displayName': userCredential.user!.displayName,
+            'photoURL': userCredential.user!.photoURL,
+            'lastSeen': FieldValue.serverTimestamp(),
+          });
+        }
       }
 
       return userCredential;
@@ -116,12 +134,39 @@ class AuthService {
 
   Stream<User?> get userStream => _auth.authStateChanges();
 
-  // CHECK IF ADMIN
-  Future<bool> isAdmin() async {
-    final user = _auth.currentUser;
-    if (user == null) return false;
+  // GET USER ROLE
+  Future<String> getUserRole({String? uid, bool forceRefresh = false}) async {
+    final currentUid = uid ?? _auth.currentUser?.uid;
+    if (currentUid == null) return 'user';
     
-    final doc = await _firestore.collection('users').doc(user.uid).get();
-    return doc.exists && doc.data()?['role'] == 'admin';
+    // Return cache if it's the current user's role and not forced
+    if (uid == null && _cachedRole != null && !forceRefresh) return _cachedRole!;
+    
+    try {
+      final doc = await _firestore.collection('users').doc(currentUid).get();
+      final role = doc.data()?['role'] ?? 'user';
+      
+      // Update cache
+      if (uid == null) _cachedRole = role;
+      
+      return role;
+    } catch (e) {
+      return 'user';
+    }
+  }
+
+  // Clear cache on sign out
+  void clearCache() => _cachedRole = null;
+
+  // CHECK I'M ADMIN (Admin or Super Admin)
+  Future<bool> isAdmin({String? uid, bool forceRefresh = false}) async {
+    final role = await getUserRole(uid: uid, forceRefresh: forceRefresh);
+    return role == 'admin' || role == 'superadmin';
+  }
+
+  // CHECK I'M SUPER ADMIN / OWNER
+  Future<bool> isSuperAdmin({String? uid, bool forceRefresh = false}) async {
+    final role = await getUserRole(uid: uid, forceRefresh: forceRefresh);
+    return role == 'superadmin';
   }
 }

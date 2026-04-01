@@ -834,9 +834,12 @@ class _WalletCard extends StatelessWidget {
                 ],
               ),
             ),
-            Text(
-              CurrencyFormatter.formatCurrency(wallet.balance),
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                CurrencyFormatter.formatCurrency(wallet.balance),
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+              ),
             ),
           ],
         ),

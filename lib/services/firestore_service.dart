@@ -357,16 +357,16 @@ class FirestoreService {
             .doc(uid)
             .snapshots()
             .listen((receiptSnap) {
-              try {
-                Timestamp? lastRead;
-                if (receiptSnap.exists) {
-                  lastRead = receiptSnap.data()?['lastRead'] as Timestamp?;
-                }
-                updateMessagesListener(lastRead);
-              } catch (e) {
-                debugPrint('Error updating receipt listener: $e');
-              }
-            });
+          try {
+            Timestamp? lastRead;
+            if (receiptSnap.exists) {
+              lastRead = receiptSnap.data()?['lastRead'] as Timestamp?;
+            }
+            updateMessagesListener(lastRead);
+          } catch (e) {
+            debugPrint('Error updating receipt listener: $e');
+          }
+        });
       },
       onCancel: () {
         receiptSub?.cancel();
@@ -376,4 +376,88 @@ class FirestoreService {
 
     return controller.stream;
   }
+
+  // ══════════════════════════════════════════════════
+  // ADMIN TOOLS: MAINTENANCE & BROADCAST
+  // ══════════════════════════════════════════════════
+
+  Stream<DocumentSnapshot> getMaintenanceConfigStream() {
+    return _firestore.collection('app_config').doc('global').snapshots();
+  }
+
+  Future<void> updateMaintenanceConfig({
+    required bool isEnabled,
+    DateTime? startTime,
+    DateTime? endTime,
+  }) async {
+    final data = {
+      'isMaintenance': isEnabled,
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+
+    if (startTime != null) data['maintenanceStartTime'] = Timestamp.fromDate(startTime);
+    if (endTime != null) data['maintenanceEndTime'] = Timestamp.fromDate(endTime);
+
+    await _firestore.collection('app_config').doc('global').set(data, SetOptions(merge: true));
+
+    // Log history
+    await _firestore.collection('app_config').doc('global').collection('history').add({
+      'type': 'MAINTENANCE_TOGGLE',
+      'value': isEnabled,
+      'startTime': startTime != null ? Timestamp.fromDate(startTime) : null,
+      'endTime': endTime != null ? Timestamp.fromDate(endTime) : null,
+      'updatedBy': FirebaseAuth.instance.currentUser?.uid,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> sendGlobalBroadcast({
+    required String title,
+    required String message,
+    required String type, // info, urgent, news
+    DateTime? scheduledTime,
+  }) async {
+    await _firestore.collection('broadcasts').add({
+      'title': title,
+      'message': message,
+      'type': type,
+      'timestamp': FieldValue.serverTimestamp(),
+      'scheduledTime': scheduledTime != null ? Timestamp.fromDate(scheduledTime) : null,
+      'senderName': FirebaseAuth.instance.currentUser?.displayName ?? 'Admin',
+    });
+  }
+
+  Stream<List<Map<String, dynamic>>> getBroadcastsStream({bool includePast = false}) {
+    Query query = _firestore
+        .collection('broadcasts')
+        .orderBy('timestamp', descending: true);
+    
+    if (!includePast) {
+      query = query.limit(5); // Only show few for banner
+    } else {
+      query = query.limit(50); // Show more for history
+    }
+
+    return query.snapshots().map((snap) {
+      final now = DateTime.now();
+      return snap.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        data['id'] = doc.id;
+        
+        // Status logic
+        final scheduled = (data['scheduledTime'] as Timestamp?)?.toDate();
+        if (scheduled != null && scheduled.isAfter(now)) {
+          data['status'] = 'pending';
+        } else {
+          data['status'] = 'ongoing';
+        }
+        return data;
+      }).toList();
+    });
+  }
+
+  Future<void> deleteBroadcast(String id) async {
+    await _firestore.collection('broadcasts').doc(id).delete();
+  }
 }
+

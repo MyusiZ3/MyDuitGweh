@@ -1,15 +1,56 @@
 import 'package:flutter/material.dart';
 import '../../utils/app_theme.dart';
+import '../../services/auth_service.dart';
 import 'user_management_screen.dart';
 import 'global_insights_screen.dart';
 import 'broadcast_center_screen.dart';
 import 'app_config_screen.dart';
 
-class AdminDashboardScreen extends StatelessWidget {
+class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
 
   @override
+  State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
+}
+
+class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+  final AuthService _authService = AuthService();
+  bool _isSuper = false;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkRole();
+  }
+
+  Future<void> _checkRole() async {
+    try {
+      bool isSuper = await _authService.isSuperAdmin(forceRefresh: true);
+      
+      // Retry once if false (Firestore sync delay)
+      if (!isSuper) {
+        await Future.delayed(const Duration(milliseconds: 1500));
+        isSuper = await _authService.isSuperAdmin(forceRefresh: true);
+      }
+
+      if (mounted) {
+        setState(() {
+          _isSuper = isSuper;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: CustomScrollView(
@@ -29,15 +70,19 @@ class AdminDashboardScreen extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.1),
+                          color: (_isSuper ? Colors.amber : AppColors.primary).withOpacity(0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.shield_rounded, color: AppColors.primary, size: 20),
+                        child: Icon(
+                          _isSuper ? Icons.stars_rounded : Icons.shield_rounded, 
+                          color: _isSuper ? Colors.amber[900] : AppColors.primary, 
+                          size: 20
+                        ),
                       ),
                     ],
                   ),
-                  const Text('Kelola ekosistem MyDuitGweh di satu tempat.', 
-                    style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500)),
+                  Text(_isSuper ? 'Selamat datang kembali, Owner.' : 'Akses dashboard administrator.', 
+                    style: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500)),
                   const SizedBox(height: 32),
                   
                   // GRID MENU
@@ -52,7 +97,7 @@ class AdminDashboardScreen extends StatelessWidget {
                       _buildMenuCard(
                         context,
                         title: 'User Control',
-                        subtitle: 'Kelola peran & status akun.',
+                        subtitle: _isSuper ? 'Kelola peran & status akun.' : 'Lihat daftar pengguna.',
                         icon: Icons.manage_accounts_rounded,
                         color: Colors.indigoAccent,
                         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const UserManagementScreen())),
@@ -76,13 +121,14 @@ class AdminDashboardScreen extends StatelessWidget {
                       _buildMenuCard(
                         context,
                         title: 'App Config',
-                        subtitle: 'Ganti maintenance & versi app.',
+                        subtitle: _isSuper ? 'Ganti maintenance & versi app.' : 'Lihat konfigurasi app.',
                         icon: Icons.dns_rounded,
                         color: Colors.purpleAccent,
                         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AppConfigScreen())),
                       ),
                     ],
                   ),
+                  const SizedBox(height: 24),
                   const Text('System Health', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
                   const SizedBox(height: 16),
                   _buildStatusTile('Database Engine', 'Operational', Icons.storage_rounded, Colors.green),
@@ -107,7 +153,7 @@ class AdminDashboardScreen extends StatelessWidget {
       elevation: 0,
       scrolledUnderElevation: 0,
       backgroundColor: Colors.white,
-      foregroundColor: AppColors.textPrimary,
+      foregroundColor: Colors.white,
       flexibleSpace: FlexibleSpaceBar(
         background: Stack(
           fit: StackFit.expand,
@@ -117,7 +163,10 @@ class AdminDashboardScreen extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [
+                  colors: _isSuper ? [
+                    const Color(0xFFB8860B), // Dark Goldenrod
+                    const Color(0xFF000000), // Black for premium look
+                  ] : [
                     AppColors.primary,
                     AppColors.primaryDark.withOpacity(0.9),
                   ],
@@ -129,17 +178,23 @@ class AdminDashboardScreen extends StatelessWidget {
               bottom: -40,
               child: Opacity(
                 opacity: 0.1,
-                child: Icon(Icons.dashboard_customize_rounded, size: 240, color: Colors.white),
+                child: Icon(
+                  _isSuper ? Icons.stars_rounded : Icons.dashboard_customize_rounded, 
+                  size: 240, 
+                  color: Colors.white
+                ),
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.all(32.0),
+            Padding(
+              padding: const EdgeInsets.all(32.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.end,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Level: SuperAdmin', style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.bold)),
-                  Text('COMMAND HUB', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
+                  Text('Level: ${_isSuper ? 'OWNER / SUPER ADMIN' : 'ADMINISTRATOR'}', 
+                    style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.bold)),
+                  const Text('COMMAND HUB', 
+                    style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
                 ],
               ),
             ),

@@ -1,11 +1,15 @@
 import 'dart:ui';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
+
 import '../services/firestore_service.dart';
 import '../services/auth_service.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/security_service.dart';
+import '../services/notification_service.dart';
 import '../models/transaction_model.dart';
 import '../models/wallet_model.dart';
 import '../widgets/shimmer_loading.dart';
@@ -14,16 +18,13 @@ import '../utils/app_theme.dart';
 import '../utils/currency_formatter.dart';
 import '../utils/ui_helper.dart';
 import '../utils/tone_dictionary.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:intl/intl.dart';
-import '../services/notification_service.dart';
 import 'main_nav.dart';
 import 'edit_profile_screen.dart';
 import 'help_screen.dart';
 import 'about_screen.dart';
 import 'login_screen.dart';
 import 'notifications_screen.dart';
-import 'admin/admin_dashboard_screen.dart';
+import 'admin/admin_tools_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -42,10 +43,17 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isBiometricEnabled = false;
   bool _isNotificationEnabled = false;
   bool _isBalanceVisible = true;
+  final Set<String> _dismissedBroadcasts = {};
+  final Set<String> _seenBroadcasts = {};
   double _monthlyBudget = 0.0;
   TimeOfDay _reminderTime = const TimeOfDay(hour: 20, minute: 0);
   StreamSubscription? _notifListener;
-  bool _isAdmin = false; // Add state for admin role
+  bool _isAdmin = false;
+  bool _isSuperAdmin = false;
+  late Stream<List<WalletModel>> _walletsStream;
+  StreamSubscription? _broadcastSub;
+  int _unreadBroadcasts = 0;
+  List<Map<String, dynamic>> _currentActiveBroadcasts = [];
 
   @override
   void initState() {
@@ -53,10 +61,12 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadSettings();
     _checkAppLock();
     _initNotificationListener();
-    _checkAdminRole(); // Initial check for admin role
+    _checkAdminRole();
+    _walletsStream = _firestoreService.getWalletsStream(_uid);
   }
 
   void _initNotificationListener() {
+    // 1. Listen for standard user notifications (Personal / Wallet)
     _notifListener = FirebaseFirestore.instance
         .collection('users')
         .doc(_uid)
@@ -64,6 +74,7 @@ class _HomeScreenState extends State<HomeScreen> {
         .where('isRead', isEqualTo: false)
         .snapshots()
         .listen((snapshot) {
+      if (!mounted) return;
       for (var change in snapshot.docChanges) {
         if (change.type == DocumentChangeType.added) {
           final data = change.doc.data() as Map<String, dynamic>;
@@ -72,17 +83,48 @@ class _HomeScreenState extends State<HomeScreen> {
           final title = data['title'] ?? '📢 Kabar Baru!';
           final message = data['message'] ?? '';
 
-          // 1. Tampilkan System Notification (Agar muncul di HP luar aplikasi)
+          // Show Instant Notification (System/Tray)
           _notificationService.showInstant(
             id: docId.hashCode,
             title: title,
-            body: message.replaceAll('*', '').replaceAll('_', ''), // Bersihkan tag untuk sistem
+            body: message.replaceAll('*', '').replaceAll('_', ''),
           );
 
-          // 2. Tampilkan Premium In-App Alert (Maksimal 2x tampil)
+          // Premium In-App Dialog
           if (displayCount < 2) {
             _showPremiumBroadcast(docId, title, message, displayCount);
           }
+        }
+      }
+    });
+
+    // 2. Listen for GLOBAL announcements (Systemwide)
+    _broadcastSub = _firestoreService.getBroadcastsStream(includePast: false).listen((broadcasts) async {
+      if (!mounted) return;
+      final prefs = await SharedPreferences.getInstance();
+      final lastNotifiedId = prefs.getString('last_notified_broadcast_id') ?? '';
+      
+      // Track active broadcasts for marking as seen later
+      final activeBroadcasts = broadcasts.where((b) => b['status'] == 'ongoing').toList();
+      _currentActiveBroadcasts = activeBroadcasts;
+      
+      // Unread = active + not yet SEEN by user (not dismissed)
+      final unseenCount = activeBroadcasts.where((b) => !_seenBroadcasts.contains(b['id'])).length;
+      
+      setState(() => _unreadBroadcasts = unseenCount);
+
+      if (activeBroadcasts.isNotEmpty) {
+        final latest = activeBroadcasts.first;
+        final latestId = latest['id'] as String;
+        
+        // Show System Notification IF we haven't notified for this specific ID before
+        if (latestId != lastNotifiedId) {
+          _notificationService.showInstant(
+            id: latestId.hashCode,
+            title: '📣 PENGUMUMAN BARU',
+            body: latest['title'] ?? '',
+          );
+          await prefs.setString('last_notified_broadcast_id', latestId);
         }
       }
     });
@@ -226,6 +268,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _notifListener?.cancel();
+    _broadcastSub?.cancel();
     super.dispose();
   }
 
@@ -237,6 +280,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -244,6 +288,12 @@ class _HomeScreenState extends State<HomeScreen> {
       _isNotificationEnabled = prefs.getBool('use_notifications') ?? false;
       _isBalanceVisible = prefs.getBool('show_balance') ?? true;
       _monthlyBudget = prefs.getDouble('monthly_budget') ?? 0.0;
+      final dismissedList = prefs.getStringList('dismissed_broadcasts') ?? [];
+      _dismissedBroadcasts.clear();
+      _dismissedBroadcasts.addAll(dismissedList);
+      final seenList = prefs.getStringList('seen_broadcasts') ?? [];
+      _seenBroadcasts.clear();
+      _seenBroadcasts.addAll(seenList);
 
       final savedHour = prefs.getInt('reminder_hour') ?? 20;
       final savedMinute = prefs.getInt('reminder_minute') ?? 0;
@@ -251,10 +301,30 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  Future<void> _saveDismissedBroadcast(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() => _dismissedBroadcasts.add(id));
+    await prefs.setStringList('dismissed_broadcasts', _dismissedBroadcasts.toList());
+  }
+
   Future<void> _checkAdminRole() async {
-    final isAdmin = await _authService.isAdmin();
+    // Pengecekan pertama (Langsung & Force Refresh)
+    bool isAdmin = await _authService.isAdmin(uid: _uid, forceRefresh: true);
+    bool isSuper = await _authService.isSuperAdmin(uid: _uid, forceRefresh: true);
+    
+    // Jika gagal, coba lagi sekali setelah 1.5 detik 
+    // (Beri napas buat Firestore sinkron data session/role)
+    if (!isAdmin) {
+      await Future.delayed(const Duration(milliseconds: 1500));
+      isAdmin = await _authService.isAdmin(uid: _uid, forceRefresh: true);
+      isSuper = await _authService.isSuperAdmin(uid: _uid, forceRefresh: true);
+    }
+
     if (mounted) {
-      setState(() => _isAdmin = isAdmin);
+      setState(() {
+        _isAdmin = isAdmin;
+        _isSuperAdmin = isSuper;
+      });
     }
   }
 
@@ -286,7 +356,7 @@ class _HomeScreenState extends State<HomeScreen> {
         return Scaffold(
           backgroundColor: AppColors.background,
           body: StreamBuilder<List<WalletModel>>(
-            stream: _firestoreService.getWalletsStream(_uid),
+            stream: _walletsStream,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const ShimmerHomeScreen();
@@ -343,29 +413,28 @@ class _HomeScreenState extends State<HomeScreen> {
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 10, vertical: 2),
                                       decoration: BoxDecoration(
-                                        gradient: const LinearGradient(
-                                          colors: [
-                                            Color(0xFFFFD700),
-                                            Color(0xFFFFA500)
-                                          ],
+                                        gradient: LinearGradient(
+                                          colors: _isSuperAdmin 
+                                            ? [const Color(0xFFFFD700), const Color(0xFFFFA500)]
+                                            : [const Color(0xFF2196F3), const Color(0xFF1976D2)],
                                         ),
                                         borderRadius: BorderRadius.circular(12),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: const Color(0xFFFFD700)
+                                            color: (_isSuperAdmin ? const Color(0xFFFFD700) : Colors.blue)
                                                 .withOpacity(0.3),
                                             blurRadius: 8,
                                             offset: const Offset(0, 2),
                                           ),
                                         ],
                                       ),
-                                      child: const Row(
+                                      child: Row(
                                         children: [
-                                          Icon(Icons.workspace_premium_rounded,
+                                          Icon(_isSuperAdmin ? Icons.workspace_premium_rounded : Icons.shield_rounded,
                                               color: Colors.white, size: 10),
-                                          SizedBox(width: 4),
-                                          Text('OWNER',
-                                              style: TextStyle(
+                                          const SizedBox(width: 4),
+                                          Text(_isSuperAdmin ? 'OWNER' : 'ADMIN',
+                                              style: const TextStyle(
                                                   color: Colors.white,
                                                   fontSize: 8,
                                                   fontWeight: FontWeight.w900,
@@ -387,18 +456,31 @@ class _HomeScreenState extends State<HomeScreen> {
                                 .where('isRead', isEqualTo: false)
                                 .snapshots(),
                             builder: (context, snapshot) {
-                              final unreadCount = snapshot.hasData
+                              final unreadCount = (snapshot.hasData
                                   ? snapshot.data!.docs.length
-                                  : 0;
+                                  : 0) + _unreadBroadcasts;
                               return Stack(
                                 clipBehavior: Clip.none,
                                 children: [
                                   IconButton(
-                                    onPressed: () => Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (_) =>
-                                                const NotificationsScreen())),
+                                    onPressed: () async {
+                                      // Mark all current broadcasts as SEEN
+                                      final prefs = await SharedPreferences.getInstance();
+                                      for (var b in _currentActiveBroadcasts) {
+                                        _seenBroadcasts.add(b['id'] as String);
+                                      }
+                                      await prefs.setStringList('seen_broadcasts', _seenBroadcasts.toList());
+                                      setState(() => _unreadBroadcasts = 0);
+                                      
+                                      if (!mounted) return;
+                                      await Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const NotificationsScreen()));
+                                      // Reload dismissed list (user might have swiped some)
+                                      _loadSettings();
+                                    },
                                     icon: const Icon(
                                         Icons.notifications_none_rounded,
                                         color: AppColors.textPrimary,
@@ -482,6 +564,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                     ),
+                    // 1. BROADCAST & MAINTENANCE BANNERS
+                    SliverToBoxAdapter(child: _buildBroadcastAndMaintenanceBanners()),
 
                     // 2. MAIN BALANCE CARD
                     SliverToBoxAdapter(
@@ -522,13 +606,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                           fontSize: 13,
                                           fontWeight: FontWeight.w500)),
                                   GestureDetector(
-                                    onTap: () async {
-                                      final prefs =
-                                          await SharedPreferences.getInstance();
+                                    onTap: () {
                                       setState(() {
                                         _isBalanceVisible = !_isBalanceVisible;
-                                        prefs.setBool(
-                                            'show_balance', _isBalanceVisible);
+                                      });
+                                      // Simpan ke background biar gak ganggu UI thread
+                                      SharedPreferences.getInstance().then((prefs) {
+                                        prefs.setBool('show_balance', _isBalanceVisible);
                                       });
                                     },
                                     child: Icon(
@@ -798,15 +882,28 @@ class _HomeScreenState extends State<HomeScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                  'Sisa: ${CurrencyFormatter.formatCurrency(_monthlyBudget - expense)}',
-                  style: const TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textHint,
-                      fontWeight: FontWeight.w600)),
-              Text('Dari ${CurrencyFormatter.formatCurrency(_monthlyBudget)}',
-                  style:
-                      const TextStyle(fontSize: 11, color: AppColors.textHint)),
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                      'Sisa: ${CurrencyFormatter.formatCurrency(_monthlyBudget - expense)}',
+                      style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textHint,
+                          fontWeight: FontWeight.w600)),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Text('Dari ${CurrencyFormatter.formatCurrency(_monthlyBudget)}',
+                      style:
+                          const TextStyle(fontSize: 11, color: AppColors.textHint)),
+                ),
+              ),
             ],
           ),
         ],
@@ -908,14 +1005,21 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                       ),
-                      Text(
-                          '${isIncome ? '+' : '-'}${CurrencyFormatter.formatCurrency(t.amount)}',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w900,
-                              color: isIncome
-                                  ? AppColors.income
-                                  : AppColors.expense,
-                              fontSize: 15)),
+                      const SizedBox(width: 8),
+                      ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.35),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                              '${isIncome ? '+' : '-'}${CurrencyFormatter.formatCurrency(t.amount)}',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  color: isIncome
+                                      ? AppColors.income
+                                      : AppColors.expense,
+                                  fontSize: 15)),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -962,20 +1066,65 @@ class _HomeScreenState extends State<HomeScreen> {
                     : null,
               ),
               const SizedBox(height: 16),
-              Text(user?.displayName ?? 'User',
-                  style: const TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.bold)),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Flexible(
+                    child: Text(user?.displayName ?? 'User',
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold)),
+                  ),
+                  if (_isAdmin) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: _isSuperAdmin ? Colors.amber.withOpacity(0.15) : AppColors.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: _isSuperAdmin ? Colors.amber : AppColors.primary,
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _isSuperAdmin ? Icons.stars_rounded : Icons.verified_user_rounded,
+                            size: 10,
+                            color: _isSuperAdmin ? Colors.amber[900] : AppColors.primary,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            _isSuperAdmin ? 'OWNER' : 'ADMIN',
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w900,
+                              color: _isSuperAdmin ? Colors.amber[900] : AppColors.primary,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
               const SizedBox(height: 16),
-              if (_isAdmin) // Special menu for Admin/Owner
+              if (_isAdmin)
+                const SizedBox(height: 12),
+              if (_isAdmin)
                 _buildProfileMenuItem(
-                  icon: Icons.dashboard_customize_rounded,
-                  label: 'Owner Dashboard',
+                  icon: Icons.auto_fix_high_rounded,
+                  label: 'Admin Control Tools',
+                  subtitle: 'Maintenance & Broadcast',
                   onTap: () {
                     Navigator.pop(context);
                     Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (_) => const AdminDashboardScreen()));
+                            builder: (_) => const AdminToolsScreen()));
                   },
                   trailing: const Icon(Icons.arrow_forward_ios_rounded,
                       size: 16, color: AppColors.primary),
@@ -1163,6 +1312,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+
+
   void _showToneSelector() {
     showModalBottomSheet(
       context: context,
@@ -1254,20 +1405,288 @@ class _HomeScreenState extends State<HomeScreen> {
     required String label,
     String? subtitle,
     required VoidCallback onTap,
-    Color iconColor = Colors.black87,
+    Color iconColor = AppColors.primary,
     Color textColor = Colors.black87,
     Widget? trailing,
   }) {
     return ListTile(
-      leading: Icon(icon, color: iconColor),
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: iconColor.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, color: iconColor, size: 20),
+      ),
       title: Text(label,
-          style: TextStyle(color: textColor, fontWeight: FontWeight.w600)),
+          style: TextStyle(
+              fontWeight: FontWeight.bold, fontSize: 14, color: textColor)),
       subtitle: subtitle != null
           ? Text(subtitle,
-              style: const TextStyle(fontSize: 12, color: AppColors.textHint))
+              style: const TextStyle(fontSize: 11, color: AppColors.textHint))
           : null,
-      trailing: trailing ?? const Icon(Icons.chevron_right),
+      trailing: trailing ?? const Icon(Icons.chevron_right, size: 16),
       onTap: onTap,
+    );
+  }
+
+  Widget _buildBroadcastAndMaintenanceBanners() {
+    return Column(
+      children: [
+        // 1. Maintenance Stream
+        StreamBuilder<DocumentSnapshot>(
+          stream: _firestoreService.getMaintenanceConfigStream(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData || !snapshot.data!.exists) return const SizedBox();
+            final config = snapshot.data!.data() as Map<String, dynamic>? ?? {};
+            final isMaintenance = config['isMaintenance'] ?? false;
+            final startTime = (config['maintenanceStartTime'] as Timestamp?)?.toDate();
+            final msg = config['message'] ?? 'Maintenance mode aktif.';
+
+            final now = DateTime.now();
+            final isRelevant = isMaintenance || (startTime != null && startTime.difference(now).inHours < 24);
+            
+            if (!isRelevant) return const SizedBox();
+
+            return Container(
+              margin: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: isMaintenance ? Colors.red[50] : Colors.orange[50],
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: (isMaintenance ? Colors.red[100] : Colors.orange[100])!),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: (isMaintenance ? Colors.red : Colors.orange).withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      isMaintenance ? Icons.construction_rounded : Icons.pending_actions_rounded, 
+                      color: isMaintenance ? Colors.red : Colors.orange,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isMaintenance ? 'SISTEM SEDANG DIPERBAIKI' : 'JADWAL PEMELIHARAAN', 
+                          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: isMaintenance ? Colors.red[900] : Colors.orange[900]),
+                        ),
+                        Text(msg, style: TextStyle(fontSize: 10, color: isMaintenance ? Colors.red[700] : Colors.orange[700], height: 1.3)),
+                        if (!isMaintenance && startTime != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text('Direncanakan: ${DateFormat('HH:mm, dd MMM').format(startTime)}', 
+                              style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.orange[800])),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+
+        // 2. Broadcast Stream
+        StreamBuilder<List<Map<String, dynamic>>>(
+          stream: _firestoreService.getBroadcastsStream(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData || snapshot.data!.isEmpty) return const SizedBox();
+            
+            // Filter: Ongoing broadcasts only, and not dismissed yet
+            final activeBroadcasts = snapshot.data!.where((b) {
+              final id = b['id'] as String;
+              final String status = b['status'] ?? 'ONGOING';
+              return status == 'ONGOING' && !_dismissedBroadcasts.contains(id);
+            }).toList();
+
+            if (activeBroadcasts.isEmpty) return const SizedBox();
+
+            final latest = activeBroadcasts.first;
+            final id = latest['id'] as String;
+            final type = latest['type'] ?? 'info';
+            final title = latest['title'] ?? '📢 Kabar Baru!';
+            final message = latest['message'] ?? '';
+            
+            // PRIORITY: Urgent/Alert/News/Reminder trigger PREMIUM POPUP
+            if (type == 'urgent' || type == 'alert' || type == 'news' || type == 'reminder') {
+              Future.delayed(const Duration(milliseconds: 800), () {
+                if (mounted && !_dismissedBroadcasts.contains(id)) {
+                  _showPremiumBroadcastPopup(latest);
+                }
+              });
+              return const SizedBox(); // Hide banner if it's a popup type
+            }
+
+            // DEFAULT: Info shows as banner
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.blue[50],
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: Colors.blue[100]!),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_rounded, color: Colors.blue, size: 24),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
+                          const SizedBox(height: 2),
+                          Text(message, style: TextStyle(color: Colors.grey[700], fontSize: 11)),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => _saveDismissedBroadcast(id),
+                      icon: const Icon(Icons.close_rounded, size: 16),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  void _showPremiumBroadcastPopup(Map<String, dynamic> broadcast) {
+    if (!mounted) return;
+    final id = broadcast['id'] as String;
+    final type = broadcast['type'] ?? 'info';
+    IconData displayIcon = Icons.notifications_active_rounded;
+    Color displayColor = Colors.blue;
+
+    if (type == 'urgent') {
+      displayIcon = Icons.warning_rounded;
+      displayColor = Colors.red;
+    } else if (type == 'news') {
+      displayIcon = Icons.auto_awesome_rounded;
+      displayColor = Colors.purple;
+    } else if (type == 'reminder') {
+      displayIcon = Icons.alarm_on_rounded;
+      displayColor = Colors.teal;
+    }
+
+    final title = broadcast['title'] ?? 'Broadcast';
+    final message = broadcast['message'] ?? '';
+    final isUrgent = type == 'urgent' || type == 'alert';
+
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierLabel: '',
+      barrierColor: Colors.black.withOpacity(0.6),
+      transitionDuration: const Duration(milliseconds: 500),
+      pageBuilder: (ctx, anim1, anim2) => Center(
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 32),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(32),
+            boxShadow: [
+              BoxShadow(color: (isUrgent ? Colors.red : AppColors.primary).withOpacity(0.2), blurRadius: 40, offset: const Offset(0, 20)),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(32),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+              child: Container(
+                padding: const EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(32),
+                  border: Border.all(color: Colors.white.withOpacity(0.5), width: 1.5),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: displayColor.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        displayIcon,
+                        color: displayColor,
+                        size: 36,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(type.toUpperCase().replaceAll('_', ' '), 
+                      style: TextStyle(
+                        fontSize: 10, 
+                        fontWeight: FontWeight.w900, 
+                        letterSpacing: 2,
+                        color: displayColor,
+                        decoration: TextDecoration.none
+                      )
+                    ),
+                    const SizedBox(height: 12),
+                    Text(title, 
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.black, decoration: TextDecoration.none, letterSpacing: -0.5)
+                    ),
+                    const SizedBox(height: 16),
+                    Text(message, 
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 14, color: Colors.grey[800], height: 1.6, fontWeight: FontWeight.normal, decoration: TextDecoration.none)
+                    ),
+                    const SizedBox(height: 32),
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          _saveDismissedBroadcast(id);
+                          Navigator.pop(ctx);
+                        },
+                        borderRadius: BorderRadius.circular(18),
+                        child: Container(
+                          width: double.infinity,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            color: Colors.black,
+                            borderRadius: BorderRadius.circular(18),
+                            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 4))],
+                          ),
+                          child: const Center(
+                            child: Text('UNDERSTOOD', 
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 1, fontSize: 13)
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+      transitionBuilder: (ctx, anim1, anim2, child) => FadeTransition(
+        opacity: anim1,
+        child: ScaleTransition(
+          scale: Tween<double>(begin: 0.9, end: 1.0).animate(CurvedAnimation(parent: anim1, curve: Curves.easeOutBack)),
+          child: child,
+        ),
+      ),
     );
   }
 }

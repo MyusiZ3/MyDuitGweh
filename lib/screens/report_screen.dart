@@ -212,13 +212,16 @@ class _ReportScreenState extends State<ReportScreen> {
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.5)),
           const SizedBox(height: 8),
-          Text(
-            CurrencyFormatter.formatCurrency(balance),
-            style: const TextStyle(
-                color: Colors.white,
-                fontSize: 32,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 0.5),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              CurrencyFormatter.formatCurrency(balance),
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 32,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.5),
+            ),
           ),
           const SizedBox(height: 32),
           Container(
@@ -230,11 +233,15 @@ class _ReportScreenState extends State<ReportScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildMiniStat('Pemasukan', income,
-                    Icons.arrow_downward_rounded, Colors.white),
+                Expanded(
+                  child: _buildMiniStat('Pemasukan', income,
+                      Icons.arrow_downward_rounded, Colors.white),
+                ),
                 Container(width: 1, height: 24, color: Colors.white24),
-                _buildMiniStat('Pengeluaran', expense,
-                    Icons.arrow_upward_rounded, Colors.white),
+                Expanded(
+                  child: _buildMiniStat('Pengeluaran', expense,
+                      Icons.arrow_upward_rounded, Colors.white),
+                ),
               ],
             ),
           ),
@@ -256,9 +263,12 @@ class _ReportScreenState extends State<ReportScreen> {
           ],
         ),
         const SizedBox(height: 4),
-        Text(CurrencyFormatter.formatCurrency(amount),
-            style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold)),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(CurrencyFormatter.formatCurrency(amount),
+              style: const TextStyle(
+                  color: Colors.white, fontWeight: FontWeight.bold)),
+        ),
       ],
     );
   }
@@ -330,9 +340,12 @@ class _ReportScreenState extends State<ReportScreen> {
                   ],
                 ),
               ),
-              const SizedBox(width: 16),
-              Text(CurrencyFormatter.formatCurrency(e.value),
-                  style: const TextStyle(fontWeight: FontWeight.w900)),
+              const SizedBox(width: 12),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(CurrencyFormatter.formatCurrency(e.value),
+                    style: const TextStyle(fontWeight: FontWeight.w900)),
+              ),
             ],
           ),
         );
