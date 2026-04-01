@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'login_screen.dart';
 import '../utils/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -16,130 +17,55 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<OnboardingData> _pages = [
     OnboardingData(
-      title: 'Solusi Cerdas\nAtur Keuanganmu',
-      subtitle: 'Semua transaksi harian tercatat otomatis\ndan rapi dalam satu genggaman.',
-      icon: Icons.account_balance_wallet_rounded,
+      title: 'Solusi Cerdas\nAtur Keuangan',
+      subtitle: 'Semua transaksi harian tercatat otomatis dan rapi dalam satu genggaman.',
+      icon: CupertinoIcons.chart_pie_fill,
       iconColor: AppColors.primary,
+      backgroundColor: const Color(0xFFD6E4FF), // Soft Blue
     ),
     OnboardingData(
-      title: 'Pantau Bersama\ndengan Kolaborasi',
-      subtitle: 'Bikin dompet bareng teman atau pasangan,\nbiar makin transparan dan seru!',
-      icon: Icons.groups_rounded,
-      iconColor: Colors.orangeAccent,
+      title: 'Pantau Bersama\nDgn Sahabat',
+      subtitle: 'Bikin dompet bareng teman atau pasangan, biar makin transparan dan seru!',
+      icon: CupertinoIcons.person_3_fill,
+      iconColor: Colors.deepOrange,
+      backgroundColor: const Color(0xFFFFE0B2), // Soft Orange
     ),
     OnboardingData(
-      title: 'Export Laporan\nSecepat Kilat',
-      subtitle: 'Download laporan bulanan dalam format PDF\nyang rapi, siap untuk dicetak kapan saja.',
-      icon: Icons.picture_as_pdf_rounded,
-      iconColor: Colors.redAccent,
+      title: 'Laporan Praktis\nSecepat Kilat',
+      subtitle: 'Download laporan bulanan dalam format PDF yang rapi, siap untuk dicetak kapan saja.',
+      icon: CupertinoIcons.doc_chart_fill,
+      iconColor: Colors.pink,
+      backgroundColor: const Color(0xFFFFD1DC), // Soft Pink
     ),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFF), // Soft background like Gojek
-      body: Column(
-        children: [
-          // Onboarding Content
-          Expanded(
-            child: PageView.builder(
-              controller: _pageController,
-              onPageChanged: (index) {
-                setState(() => _currentPage = index);
-              },
-              itemCount: _pages.length,
-              itemBuilder: (context, index) {
-                return _buildPage(_pages[index]);
-              },
-            ),
-          ),
-          
-          // Bottom area - Actions
-          SafeArea(
-            top: false,
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
-              color: Colors.white,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Minimalist Dots Indicator
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      _pages.length,
-                      (index) => AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        height: 6,
-                        width: _currentPage == index ? 24 : 6,
-                        decoration: BoxDecoration(
-                          color: _currentPage == index 
-                            ? AppColors.primary 
-                            : AppColors.primary.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  
-                  // Gojek Style Login/Start Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        if (_currentPage < _pages.length - 1) {
-                          _pageController.nextPage(
-                            duration: const Duration(milliseconds: 600),
-                            curve: Curves.fastOutSlowIn,
-                          );
-                        } else {
-                          _navigateToLogin();
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(28), // Very rounded like Gopay
-                        ),
-                      ),
-                      child: Text(
-                        _currentPage == _pages.length - 1 ? 'Mulai Sekarang' : 'Lanjut',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-                  
-                  // Skip / Login link
-                  const SizedBox(height: 16),
-                  GestureDetector(
-                    onTap: _navigateToLogin,
-                    child: RichText(
-                      text: TextSpan(
-                        text: 'Tiba-tiba sudah punya akun? ',
-                        style: const TextStyle(color: AppColors.textHint, fontSize: 13),
-                        children: [
-                          const TextSpan(
-                            text: 'Masuk',
-                            style: TextStyle(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+      body: AnimatedContainer(
+        duration: const Duration(milliseconds: 500),
+        color: _pages[_currentPage].backgroundColor,
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(),
+              Expanded(
+                child: PageView.builder(
+                  controller: _pageController,
+                  physics: const BouncingScrollPhysics(),
+                  onPageChanged: (index) {
+                    setState(() => _currentPage = index);
+                  },
+                  itemCount: _pages.length,
+                  itemBuilder: (context, index) {
+                    return _buildPage(_pages[index]);
+                  },
+                ),
               ),
-            ),
+              _buildFooter(),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -152,6 +78,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       Navigator.pushReplacement(
         context,
         PageRouteBuilder(
+          transitionDuration: const Duration(milliseconds: 600),
           pageBuilder: (context, anim, secondAnim) => const LoginScreen(),
           transitionsBuilder: (context, anim, secondAnim, child) {
             return FadeTransition(opacity: anim, child: child);
@@ -161,67 +88,186 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
   }
 
-  Widget _buildPage(OnboardingData data) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(24, 80, 24, 24),
-      child: Column(
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Illustration Box ala Gojek
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(
+                  color: AppColors.textPrimary,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(CupertinoIcons.creditcard_fill, color: Colors.white, size: 16),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'MyDuitGweh',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.textPrimary,
+                  fontSize: 16,
+                  letterSpacing: -0.5,
+                ),
+              ),
+            ],
+          ),
+          TextButton(
+            onPressed: _navigateToLogin,
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.textPrimary,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            ),
+            child: const Text(
+              'Skip',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPage(OnboardingData data) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 32.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           Expanded(
             flex: 6,
+            child: Center(
+              child: Container(
+                width: 220,
+                height: 220,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.4),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: data.iconColor.withOpacity(0.05),
+                      blurRadius: 40,
+                      spreadRadius: 20,
+                    )
+                  ],
+                ),
+                child: Center(
+                  child: Icon(data.icon, size: 100, color: data.iconColor),
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 4,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  data.title,
+                  style: const TextStyle(
+                    fontSize: 36,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.textPrimary,
+                    height: 1.1,
+                    letterSpacing: -1.5,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  data.subtitle,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textPrimary.withOpacity(0.7),
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFooter() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(32, 0, 32, 32),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          // Indicator
+          Row(
+            children: List.generate(
+              _pages.length,
+              (index) => AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                margin: const EdgeInsets.only(right: 6),
+                height: 6,
+                width: _currentPage == index ? 24 : 6,
+                decoration: BoxDecoration(
+                  color: _currentPage == index 
+                    ? AppColors.textPrimary 
+                    : AppColors.textPrimary.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+            ),
+          ),
+          
+          // Next Button
+          GestureDetector(
+            onTap: () {
+              if (_currentPage < _pages.length - 1) {
+                _pageController.nextPage(
+                  duration: const Duration(milliseconds: 600),
+                  curve: Curves.fastOutSlowIn,
+                );
+              } else {
+                _navigateToLogin();
+              }
+            },
             child: Container(
-              width: double.infinity,
+              width: 72,
+              height: 72,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(40),
+                borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withOpacity(0.08),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
                 ],
               ),
-              padding: const EdgeInsets.all(40),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                   Container(
-                    width: 140,
-                    height: 140,
-                    decoration: BoxDecoration(
-                      color: data.iconColor.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(data.icon, size: 80, color: data.iconColor),
+              child: Center(
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.grey[200]!, width: 2),
                   ),
-                  const SizedBox(height: 48),
-                  Text(
-                    data.title,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w900,
+                  child: const Center(
+                    child: Icon(
+                      Icons.arrow_forward_ios_rounded,
                       color: AppColors.textPrimary,
-                      height: 1.2,
-                      letterSpacing: -1,
+                      size: 18,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    data.subtitle,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      color: AppColors.textSecondary,
-                      height: 1.5,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
-          const Spacer(flex: 1),
         ],
       ),
     );
@@ -233,11 +279,14 @@ class OnboardingData {
   final String subtitle;
   final IconData icon;
   final Color iconColor;
+  final Color backgroundColor;
 
   OnboardingData({
     required this.title, 
     required this.subtitle, 
     required this.icon,
     required this.iconColor,
+    required this.backgroundColor,
   });
 }
+
