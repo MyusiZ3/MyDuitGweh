@@ -25,6 +25,9 @@ class _ReportScreenState extends State<ReportScreen> {
     end: DateTime.now(),
   );
 
+  int _touchedPieIndex = -1;
+  bool _isCategoryMode = true; // true for Pie/Donut, false for Bar Trend
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -128,20 +131,19 @@ class _ReportScreenState extends State<ReportScreen> {
                         _buildSummaryCard(totalIncome - totalExpense,
                             totalIncome, totalExpense),
                         const SizedBox(height: 24),
-                        if (totalExpense > 0) ...[
-                          const Text('Analisa Pengeluaran',
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 16),
-                          _buildChart(categoryTotals, totalExpense),
-                          const SizedBox(height: 24),
+                        const SizedBox(height: 24),
+                        _buildInsightToggle(),
+                        const SizedBox(height: 24),
+                        if (_isCategoryMode)
+                          if (totalExpense > 0)
+                            _buildInteractivePieChart(categoryTotals, totalExpense)
+                          else
+                            const Center(child: Text('Belum ada pengeluaran'))
+                        else
+                          _buildWeeklyTrendChart(transactions),
+                        const SizedBox(height: 24),
+                        if (_isCategoryMode && totalExpense > 0)
                           _buildCategoryList(categoryTotals, totalExpense),
-                        ] else
-                          const Center(
-                              child: Padding(
-                                  padding: EdgeInsets.all(40),
-                                  child: Text(
-                                      'Belum ada pengeluaran untuk dianalisa'))),
                         const SizedBox(height: 40),
                       ],
                     );
@@ -273,35 +275,229 @@ class _ReportScreenState extends State<ReportScreen> {
     );
   }
 
-  Widget _buildChart(Map<String, double> categoryTotals, double total) {
+  Widget _buildInsightToggle() {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceVariant.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _toggleItem('Kategori', _isCategoryMode, () {
+              setState(() => _isCategoryMode = true);
+            }),
+          ),
+          Expanded(
+            child: _toggleItem('Tren Mingguan', !_isCategoryMode, () {
+              setState(() => _isCategoryMode = false);
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _toggleItem(String label, bool isActive, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: isActive ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: isActive
+              ? [
+                  BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2))
+                ]
+              : [],
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: isActive ? FontWeight.w800 : FontWeight.w500,
+              color: isActive ? AppColors.primary : AppColors.textHint,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInteractivePieChart(
+      Map<String, double> categoryTotals, double total) {
     List<PieChartSectionData> sections = [];
     int i = 0;
     final colors = [
       AppColors.primary,
-      AppColors.deepBlue,
+      const Color(0xFF5856D6), // iOS Purple
       AppColors.income,
-      Colors.orange,
-      Colors.purple,
-      Colors.teal
+      const Color(0xFFFF9500), // iOS Orange
+      const Color(0xFFFF2D55), // iOS Red
+      const Color(0xFF8E8E93), // iOS Gray
     ];
 
     categoryTotals.forEach((cat, amount) {
-      final percentage = (amount / total) * 100;
+      final isTouched = i == _touchedPieIndex;
+      final radius = isTouched ? 65.0 : 55.0;
+      final fontSize = isTouched ? 16.0 : 12.0;
+
       sections.add(PieChartSectionData(
         color: colors[i % colors.length],
         value: amount,
-        title: '${percentage.toStringAsFixed(0)}%',
-        radius: 50,
-        titleStyle: const TextStyle(
-            fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+        title: isTouched ? cat : '${((amount / total) * 100).toStringAsFixed(0)}%',
+        radius: radius,
+        titleStyle: TextStyle(
+          fontSize: fontSize,
+          fontWeight: FontWeight.w900,
+          color: Colors.white,
+          shadows: const [Shadow(color: Colors.black26, blurRadius: 2)],
+        ),
       ));
       i++;
     });
 
     return SizedBox(
-      height: 200,
-      child: PieChart(PieChartData(
-          sections: sections, centerSpaceRadius: 40, sectionsSpace: 2)),
+      height: 240,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          PieChart(PieChartData(
+            pieTouchData: PieTouchData(
+              touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                setState(() {
+                  if (!event.isInterestedForInteractions ||
+                      pieTouchResponse == null ||
+                      pieTouchResponse.touchedSection == null) {
+                    _touchedPieIndex = -1;
+                    return;
+                  }
+                  _touchedPieIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
+                });
+              },
+            ),
+            sections: sections,
+            centerSpaceRadius: 60,
+            sectionsSpace: 3,
+            startDegreeOffset: 270,
+          )),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Total',
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textHint),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                CurrencyFormatter.formatCurrency(total),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWeeklyTrendChart(List<TransactionModel> transactions) {
+    // Group by day for the last 7 days
+    Map<String, double> incomeByDay = {};
+    Map<String, double> expenseByDay = {};
+    
+    // Sort to get chronological order
+    final now = DateTime.now();
+    final days = List.generate(7, (index) => now.subtract(Duration(days: 6 - index)));
+    
+    for (var day in days) {
+      final key = DateFormat('dd/MM').format(day);
+      incomeByDay[key] = 0;
+      expenseByDay[key] = 0;
+    }
+
+    for (var txn in transactions) {
+      final dayKey = DateFormat('dd/MM').format(txn.date);
+      if (incomeByDay.containsKey(dayKey)) {
+        if (txn.isIncome) incomeByDay[dayKey] = (incomeByDay[dayKey] ?? 0) + txn.amount;
+        else expenseByDay[dayKey] = (expenseByDay[dayKey] ?? 0) + txn.amount;
+      }
+    }
+
+    List<BarChartGroupData> groups = [];
+    int i = 0;
+    incomeByDay.forEach((day, income) {
+      final expense = expenseByDay[day] ?? 0;
+      groups.add(BarChartGroupData(
+        x: i,
+        barRods: [
+          BarChartRodData(
+            toY: income,
+            color: AppColors.income,
+            width: 8,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          BarChartRodData(
+            toY: expense,
+            color: AppColors.expense,
+            width: 8,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ],
+        showingTooltipIndicators: [],
+      ));
+      i++;
+    });
+
+    return Container(
+      height: 240,
+      padding: const EdgeInsets.only(top: 20, right: 10, left: 10),
+      child: BarChart(BarChartData(
+        barGroups: groups,
+        gridData: const FlGridData(show: false),
+        borderData: FlBorderData(show: false),
+        titlesData: FlTitlesData(
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              getTitlesWidget: (value, meta) {
+                final day = incomeByDay.keys.elementAt(value.toInt());
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(day, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textHint)),
+                );
+              },
+            ),
+          ),
+        ),
+        barTouchData: BarTouchData(
+          touchTooltipData: BarTouchTooltipData(
+            getTooltipItem: (group, groupIndex, rod, rodIndex) {
+              final type = rodIndex == 0 ? 'Pemasukan' : 'Pengeluaran';
+              return BarTooltipItem(
+                '$type\n${CurrencyFormatter.formatCurrency(rod.toY)}',
+                const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+              );
+            },
+          ),
+        ),
+      )),
     );
   }
 
