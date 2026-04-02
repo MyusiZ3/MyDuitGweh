@@ -18,8 +18,8 @@ class NotificationService {
     }
 
     if (Platform.isAndroid) {
-      final androidPlugin = _notificationsPlugin
-          .resolvePlatformSpecificImplementation<
+      final androidPlugin =
+          _notificationsPlugin.resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>();
 
       // Minta izin notifikasi (Android 13+)
@@ -41,7 +41,8 @@ class NotificationService {
 
       await androidPlugin?.createNotificationChannel(channel);
 
-      const AndroidNotificationChannel broadcastChannel = AndroidNotificationChannel(
+      const AndroidNotificationChannel broadcastChannel =
+          AndroidNotificationChannel(
         'broadcast_channel',
         'Pesan Broadcast',
         description: 'Notifikasi pesan penting dari admin',
@@ -116,7 +117,8 @@ class NotificationService {
       );
 
       // Tampilkan notifikasi konfirmasi langsung (opsional)
-      final String jamStr = '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+      final String jamStr =
+          '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
       await _notificationsPlugin.show(
         100,
         'Pengingat Aktif! 🔔',
@@ -163,7 +165,8 @@ class NotificationService {
   }
 
   /// Tampilkan notifikasi instan (untuk Broadcast)
-  Future<void> showInstant({int id = 0, required String title, required String body}) async {
+  Future<void> showInstant(
+      {int id = 0, required String title, required String body}) async {
     try {
       const androidDetails = AndroidNotificationDetails(
         'broadcast_channel',
@@ -174,7 +177,7 @@ class NotificationService {
         showWhen: true,
         playSound: true,
       );
-      
+
       const iosDetails = DarwinNotificationDetails(
         presentAlert: true,
         presentBadge: true,

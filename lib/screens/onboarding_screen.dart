@@ -18,21 +18,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final List<OnboardingData> _pages = [
     OnboardingData(
       title: 'Solusi Cerdas\nAtur Keuangan',
-      subtitle: 'Semua transaksi harian tercatat otomatis dan rapi dalam satu genggaman.',
+      subtitle:
+          'Semua transaksi harian tercatat otomatis dan rapi dalam satu genggaman.',
       icon: CupertinoIcons.chart_pie_fill,
       iconColor: AppColors.primary,
       backgroundColor: const Color(0xFFD6E4FF), // Soft Blue
     ),
     OnboardingData(
       title: 'Pantau Bersama\nDgn Sahabat',
-      subtitle: 'Bikin dompet bareng teman atau pasangan, biar makin transparan dan seru!',
+      subtitle:
+          'Bikin dompet bareng teman atau pasangan, biar makin transparan dan seru!',
       icon: CupertinoIcons.person_3_fill,
       iconColor: Colors.deepOrange,
       backgroundColor: const Color(0xFFFFE0B2), // Soft Orange
     ),
     OnboardingData(
       title: 'Laporan Praktis\nSecepat Kilat',
-      subtitle: 'Download laporan bulanan dalam format PDF yang rapi, siap untuk dicetak kapan saja.',
+      subtitle:
+          'Download laporan bulanan dalam format PDF yang rapi, siap untuk dicetak kapan saja.',
       icon: CupertinoIcons.doc_chart_fill,
       iconColor: Colors.pink,
       backgroundColor: const Color(0xFFFFD1DC), // Soft Pink
@@ -73,7 +76,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _navigateToLogin() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('onboarding_completed', true);
-    
+
     if (mounted) {
       Navigator.pushReplacement(
         context,
@@ -102,7 +105,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   color: AppColors.textPrimary,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(CupertinoIcons.creditcard_fill, color: Colors.white, size: 16),
+                child: const Icon(CupertinoIcons.creditcard_fill,
+                    color: Colors.white, size: 16),
               ),
               const SizedBox(width: 10),
               const Text(
@@ -214,15 +218,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 height: 6,
                 width: _currentPage == index ? 24 : 6,
                 decoration: BoxDecoration(
-                  color: _currentPage == index 
-                    ? AppColors.textPrimary 
-                    : AppColors.textPrimary.withOpacity(0.2),
+                  color: _currentPage == index
+                      ? AppColors.textPrimary
+                      : AppColors.textPrimary.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(3),
                 ),
               ),
             ),
           ),
-          
+
           // Next Button
           GestureDetector(
             onTap: () {
@@ -282,11 +286,10 @@ class OnboardingData {
   final Color backgroundColor;
 
   OnboardingData({
-    required this.title, 
-    required this.subtitle, 
+    required this.title,
+    required this.subtitle,
     required this.icon,
     required this.iconColor,
     required this.backgroundColor,
   });
 }
-

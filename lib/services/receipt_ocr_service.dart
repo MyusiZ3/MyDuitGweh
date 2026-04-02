@@ -13,10 +13,12 @@ class ReceiptData {
 }
 
 class ReceiptOCRService {
-  final TextRecognizer _textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
+  final TextRecognizer _textRecognizer =
+      TextRecognizer(script: TextRecognitionScript.latin);
   final ImagePicker _picker = ImagePicker();
 
-  Future<ReceiptData?> scanReceipt({ImageSource source = ImageSource.camera}) async {
+  Future<ReceiptData?> scanReceipt(
+      {ImageSource source = ImageSource.camera}) async {
     debugPrint('OCR: Checking permissions...');
 
     if (source == ImageSource.camera) {
@@ -69,9 +71,10 @@ class ReceiptOCRService {
     try {
       debugPrint('OCR: Processing image from file: ${image.path}');
       final inputImage = InputImage.fromFilePath(image.path);
-      
+
       debugPrint('OCR: Initializing text recognizer...');
-      final RecognizedText recognizedText = await _textRecognizer.processImage(inputImage);
+      final RecognizedText recognizedText =
+          await _textRecognizer.processImage(inputImage);
       debugPrint('OCR: Recognition finished.');
 
       final result = _parseReceipt(recognizedText);
@@ -120,7 +123,7 @@ class ReceiptOCRService {
 
     // --- 2. Advanced Spatial Amount Detection ---
     debugPrint('OCR: Starting Spatial Analysis for Amount...');
-    
+
     // Priority Map: Higher value = Higher confidence
     final Map<String, int> keywordPriority = {
       'TOTAL': 10,
@@ -134,18 +137,32 @@ class ReceiptOCRService {
       'SUBTOTAL': 3, // Lower priority
     };
 
-    final List<String> skipKeywords = ['KEMBALI', 'CHANGE', 'TUNAI', 'CASH', 'POIN', 'POINT', 'ITEMS', 'PCS', 'DISKON', 'DISCOUNT', 'TAX', 'PAJAK', 'PPN'];
+    final List<String> skipKeywords = [
+      'KEMBALI',
+      'CHANGE',
+      'TUNAI',
+      'CASH',
+      'POIN',
+      'POINT',
+      'ITEMS',
+      'PCS',
+      'DISKON',
+      'DISCOUNT',
+      'TAX',
+      'PAJAK',
+      'PPN'
+    ];
 
     List<({double amount, int priority, double y})> candidates = [];
 
     for (TextBlock block in recognizedText.blocks) {
       for (TextLine line in block.lines) {
         String lineText = line.text.toUpperCase();
-        
+
         // Find if this line contains any of our priority keywords
         int currentPriority = 0;
         String? matchedKeyword;
-        
+
         for (var entry in keywordPriority.entries) {
           if (lineText.contains(entry.key)) {
             if (entry.value > currentPriority) {
@@ -154,7 +171,7 @@ class ReceiptOCRService {
             }
           }
         }
-        
+
         if (matchedKeyword != null) {
           // Check for negative/skip keywords in the same line
           bool shouldSkipLine = false;
@@ -166,27 +183,32 @@ class ReceiptOCRService {
           }
           if (shouldSkipLine) continue;
 
-          debugPrint('OCR: Found Keyword "$matchedKeyword" on line: "${line.text}"');
+          debugPrint(
+              'OCR: Found Keyword "$matchedKeyword" on line: "${line.text}"');
 
           // Search for numbers in THIS block or OTHER blocks on the same Y level
           // Total is usually to the right of the keyword or below it
           for (TextBlock b2 in recognizedText.blocks) {
             for (TextLine l2 in b2.lines) {
-              double yDiff = (l2.boundingBox.center.dy - line.boundingBox.center.dy).abs();
-              
-              // Only consider lines that are horizontally aligned (yDiff < 30) 
+              double yDiff =
+                  (l2.boundingBox.center.dy - line.boundingBox.center.dy).abs();
+
+              // Only consider lines that are horizontally aligned (yDiff < 30)
               // AND either the same line or to the right (x > keyword_line_center_x - buffer)
               if (yDiff < 30) {
                 final matches = RegExp(r'([\d\.,]{4,})').allMatches(l2.text);
                 for (var m in matches) {
                   String val = m.group(0)!;
-                  
+
                   // Smart strip: if it ends with .00 or ,00, it's likely decimal
                   double? parsedAmount;
                   if (RegExp(r'[.,]\d{2}$').hasMatch(val)) {
                     // It's a decimal, strip the last 3 chars and separators
-                    String mainPart = val.substring(0, val.length - 3).replaceAll(RegExp(r'[^0-9]'), '');
-                    if (mainPart.isNotEmpty) parsedAmount = double.tryParse(mainPart);
+                    String mainPart = val
+                        .substring(0, val.length - 3)
+                        .replaceAll(RegExp(r'[^0-9]'), '');
+                    if (mainPart.isNotEmpty)
+                      parsedAmount = double.tryParse(mainPart);
                   } else {
                     // Regular number, just strip all non-digits
                     String clean = val.replaceAll(RegExp(r'[^0-9]'), '');
@@ -195,11 +217,18 @@ class ReceiptOCRService {
 
                   if (parsedAmount != null) {
                     // Receipt amount sanity check: between 1k and 10m, not a date (e.g., 20241010)
-                    if (parsedAmount >= 1000 && parsedAmount < 10000000 && val.length <= 11) {
+                    if (parsedAmount >= 1000 &&
+                        parsedAmount < 10000000 &&
+                        val.length <= 11) {
                       // Reject if it looks like a year (e.g., 2024, 2025)
-                      if (parsedAmount == 2024 || parsedAmount == 2025) continue;
-                      
-                      candidates.add((amount: parsedAmount, priority: currentPriority, y: l2.boundingBox.center.dy));
+                      if (parsedAmount == 2024 || parsedAmount == 2025)
+                        continue;
+
+                      candidates.add((
+                        amount: parsedAmount,
+                        priority: currentPriority,
+                        y: l2.boundingBox.center.dy
+                      ));
                     }
                   }
                 }
@@ -216,9 +245,10 @@ class ReceiptOCRService {
         if (a.priority != b.priority) return b.priority.compareTo(a.priority);
         return b.y.compareTo(a.y);
       });
-      
+
       amount = candidates.first.amount;
-      debugPrint('OCR: Best candidate chosen: $amount (Priority: ${candidates.first.priority})');
+      debugPrint(
+          'OCR: Best candidate chosen: $amount (Priority: ${candidates.first.priority})');
     }
 
     // Fallback: If no keyword-based match, look for any large number in the bottom half
@@ -226,18 +256,22 @@ class ReceiptOCRService {
       debugPrint('OCR: Fallback to largest number in bottom region...');
       double maxY = 0;
       for (TextBlock block in recognizedText.blocks) {
-        if (block.boundingBox.center.dy > maxY) maxY = block.boundingBox.center.dy;
+        if (block.boundingBox.center.dy > maxY)
+          maxY = block.boundingBox.center.dy;
       }
 
       List<({double amount, double y})> fallbackCandidates = [];
       for (TextBlock block in recognizedText.blocks) {
-        if (block.boundingBox.center.dy > maxY * 0.5) { // Bottom 50%
+        if (block.boundingBox.center.dy > maxY * 0.5) {
+          // Bottom 50%
           final matches = RegExp(r'([\d\.,]{4,})').allMatches(block.text);
           for (var m in matches) {
             String val = m.group(0)!;
             double? d;
             if (RegExp(r'[.,]\d{2}$').hasMatch(val)) {
-              String mainPart = val.substring(0, val.length - 3).replaceAll(RegExp(r'[^0-9]'), '');
+              String mainPart = val
+                  .substring(0, val.length - 3)
+                  .replaceAll(RegExp(r'[^0-9]'), '');
               if (mainPart.isNotEmpty) d = double.tryParse(mainPart);
             } else {
               String clean = val.replaceAll(RegExp(r'[^0-9]'), '');
@@ -246,12 +280,13 @@ class ReceiptOCRService {
 
             if (d != null && d >= 1000 && d < 5000000) {
               if (d == 2024 || d == 2025) continue;
-              fallbackCandidates.add((amount: d, y: block.boundingBox.center.dy));
+              fallbackCandidates
+                  .add((amount: d, y: block.boundingBox.center.dy));
             }
           }
         }
       }
-      
+
       if (fallbackCandidates.isNotEmpty) {
         // Sort by largest amount, then by Y desc
         fallbackCandidates.sort((a, b) => b.amount.compareTo(a.amount));

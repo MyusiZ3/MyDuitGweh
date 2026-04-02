@@ -46,14 +46,16 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       _amountController.text = widget.initialAmount!.toInt().toString();
     }
     if (widget.initialNote != null) _noteController.text = widget.initialNote!;
-    
+
     // Safer category pre-fill: only set if it exists in the available list for the selected type
     if (widget.initialType != null) _selectedType = widget.initialType!;
-    final availableCategories = TransactionCategory.getCategoriesForType(_selectedType);
-    if (widget.initialCategory != null && availableCategories.contains(widget.initialCategory)) {
+    final availableCategories =
+        TransactionCategory.getCategoriesForType(_selectedType);
+    if (widget.initialCategory != null &&
+        availableCategories.contains(widget.initialCategory)) {
       _selectedCategory = widget.initialCategory;
     }
-    
+
     _loadWallets();
   }
 
@@ -79,13 +81,16 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
   Future<void> _saveTransaction() async {
     final amountText = _amountController.text.replaceAll(RegExp(r'[^0-9]'), '');
-    if (amountText.isEmpty || _selectedCategory == null || _selectedWalletId == null) {
+    if (amountText.isEmpty ||
+        _selectedCategory == null ||
+        _selectedWalletId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Lengkapi semua field ya!'),
           backgroundColor: AppColors.expense,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
       return;
@@ -102,7 +107,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         category: _selectedCategory!,
         note: _noteController.text.trim(),
         createdBy: _uid,
-        createdByName: FirebaseAuth.instance.currentUser?.displayName ?? 'Anonim',
+        createdByName:
+            FirebaseAuth.instance.currentUser?.displayName ?? 'Anonim',
         date: DateTime.now(),
       );
 
@@ -110,7 +116,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
       if (mounted) {
         Navigator.pop(context);
-        UIHelper.showSuccessSnackBar(context, ToneManager.t('snack_tx_success'));
+        UIHelper.showSuccessSnackBar(
+            context, ToneManager.t('snack_tx_success'));
       }
     } catch (e) {
       if (mounted) {
@@ -119,7 +126,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
             content: Text('Gagal: ${e.toString()}'),
             backgroundColor: AppColors.expense,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
         );
       }
@@ -134,8 +142,12 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
     return Container(
       padding: EdgeInsets.only(
-        left: 24, right: 24, top: 24,
-        bottom: MediaQuery.of(context).viewInsets.bottom + MediaQuery.of(context).padding.bottom + 24,
+        left: 24,
+        right: 24,
+        top: 24,
+        bottom: MediaQuery.of(context).viewInsets.bottom +
+            MediaQuery.of(context).padding.bottom +
+            24,
       ),
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -149,7 +161,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
             // Handle bar
             Center(
               child: Container(
-                width: 40, height: 4,
+                width: 40,
+                height: 4,
                 decoration: BoxDecoration(
                   color: AppColors.textHint.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(2),
@@ -158,7 +171,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
             ),
             const SizedBox(height: 24),
 
-            Text('Tambah Transaksi', style: Theme.of(context).textTheme.headlineMedium),
+            Text('Tambah Transaksi',
+                style: Theme.of(context).textTheme.headlineMedium),
             const SizedBox(height: 24),
 
             // Type toggle
@@ -174,7 +188,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
               decoration: const InputDecoration(
                 hintText: '0',
                 prefixText: 'Rp ',
-                prefixStyle: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                prefixStyle: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary),
               ),
             ),
             const SizedBox(height: 16),
@@ -184,7 +201,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
               value: _selectedCategory,
               hint: 'Pilih Kategori',
               icon: Icons.category_outlined,
-              items: categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+              items: categories
+                  .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                  .toList(),
               onChanged: (val) => setState(() => _selectedCategory = val),
             ),
             const SizedBox(height: 12),
@@ -194,7 +213,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
               value: _selectedWalletId,
               hint: 'Pilih Dompet',
               icon: Icons.account_balance_wallet_outlined,
-              items: _wallets.map((w) => DropdownMenuItem(value: w.id, child: Text(w.walletName))).toList(),
+              items: _wallets
+                  .map((w) =>
+                      DropdownMenuItem(value: w.id, child: Text(w.walletName)))
+                  .toList(),
               onChanged: (val) => setState(() => _selectedWalletId = val),
             ),
             const SizedBox(height: 12),
@@ -204,19 +226,27 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
               controller: _noteController,
               decoration: const InputDecoration(
                 hintText: 'Catatan (opsional)',
-                prefixIcon: Icon(Icons.note_outlined, color: AppColors.textHint),
+                prefixIcon:
+                    Icon(Icons.note_outlined, color: AppColors.textHint),
               ),
             ),
             const SizedBox(height: 24),
 
             // Save button
             SizedBox(
-              width: double.infinity, height: 56,
+              width: double.infinity,
+              height: 56,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _saveTransaction,
                 child: _isLoading
-                    ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
-                    : const Text('Simpan Transaksi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2.5, color: Colors.white))
+                    : const Text('Simpan Transaksi',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600)),
               ),
             ),
             const SizedBox(height: 8),
@@ -229,47 +259,75 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   Widget _buildTypeToggle() {
     return Row(
       children: [
-        Expanded(child: _buildTypeButton('expense', 'Pengeluaran', Icons.arrow_downward_rounded, AppColors.expense)),
+        Expanded(
+            child: _buildTypeButton('expense', 'Pengeluaran',
+                Icons.arrow_downward_rounded, AppColors.expense)),
         const SizedBox(width: 12),
-        Expanded(child: _buildTypeButton('income', 'Pemasukan', Icons.arrow_upward_rounded, AppColors.income)),
+        Expanded(
+            child: _buildTypeButton('income', 'Pemasukan',
+                Icons.arrow_upward_rounded, AppColors.income)),
       ],
     );
   }
 
-  Widget _buildTypeButton(String type, String label, IconData icon, Color color) {
+  Widget _buildTypeButton(
+      String type, String label, IconData icon, Color color) {
     final isSelected = _selectedType == type;
     return GestureDetector(
-      onTap: () => setState(() { _selectedType = type; _selectedCategory = null; }),
+      onTap: () => setState(() {
+        _selectedType = type;
+        _selectedCategory = null;
+      }),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
           color: isSelected ? color.withOpacity(0.1) : AppColors.surfaceVariant,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: isSelected ? color : Colors.transparent, width: 1.5),
+          border: Border.all(
+              color: isSelected ? color : Colors.transparent, width: 1.5),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: isSelected ? color : AppColors.textHint, size: 20),
+            Icon(icon,
+                color: isSelected ? color : AppColors.textHint, size: 20),
             const SizedBox(width: 8),
-            Text(label, style: TextStyle(fontWeight: FontWeight.w600, color: isSelected ? color : AppColors.textSecondary, fontSize: 14)),
+            Text(label,
+                style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: isSelected ? color : AppColors.textSecondary,
+                    fontSize: 14)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildDropdown<T>({T? value, required String hint, required IconData icon, required List<DropdownMenuItem<T>> items, required ValueChanged<T?> onChanged}) {
+  Widget _buildDropdown<T>(
+      {T? value,
+      required String hint,
+      required IconData icon,
+      required List<DropdownMenuItem<T>> items,
+      required ValueChanged<T?> onChanged}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(color: AppColors.surfaceVariant, borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(
+          color: AppColors.surfaceVariant,
+          borderRadius: BorderRadius.circular(16)),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<T>(
-          value: value, isExpanded: true,
-          hint: Row(children: [Icon(icon, color: AppColors.textHint, size: 20), const SizedBox(width: 12), Text(hint, style: const TextStyle(color: AppColors.textHint))]),
-          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textHint),
-          items: items, onChanged: onChanged,
+          value: value,
+          isExpanded: true,
+          hint: Row(children: [
+            Icon(icon, color: AppColors.textHint, size: 20),
+            const SizedBox(width: 12),
+            Text(hint, style: const TextStyle(color: AppColors.textHint))
+          ]),
+          icon: const Icon(Icons.keyboard_arrow_down_rounded,
+              color: AppColors.textHint),
+          items: items,
+          onChanged: onChanged,
           borderRadius: BorderRadius.circular(16),
           dropdownColor: Colors.white,
         ),

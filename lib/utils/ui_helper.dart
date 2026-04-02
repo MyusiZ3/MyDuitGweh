@@ -91,7 +91,10 @@ class UIHelper {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(32),
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 30, offset: const Offset(0, 10)),
+              BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 30,
+                  offset: const Offset(0, 10)),
             ],
           ),
           child: ClipRRect(
@@ -103,7 +106,8 @@ class UIHelper {
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.9),
                   borderRadius: BorderRadius.circular(32),
-                  border: Border.all(color: Colors.white.withOpacity(0.5), width: 1),
+                  border: Border.all(
+                      color: Colors.white.withOpacity(0.5), width: 1),
                 ),
                 child: Material(
                   color: Colors.transparent,
@@ -113,25 +117,36 @@ class UIHelper {
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: (isDangerous ? AppColors.expense : AppColors.primary).withOpacity(0.1),
+                          color: (isDangerous
+                                  ? AppColors.expense
+                                  : AppColors.primary)
+                              .withOpacity(0.1),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
-                          isDangerous ? Icons.delete_outline_rounded : Icons.info_outline_rounded,
-                          color: isDangerous ? AppColors.expense : AppColors.primary,
+                          isDangerous
+                              ? Icons.delete_outline_rounded
+                              : Icons.info_outline_rounded,
+                          color: isDangerous
+                              ? AppColors.expense
+                              : AppColors.primary,
                           size: 32,
                         ),
                       ),
                       const SizedBox(height: 24),
-                      Text(title, 
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.5)
-                      ),
+                      Text(title,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -0.5)),
                       const SizedBox(height: 12),
                       Text(message,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.grey[600], fontSize: 14, height: 1.5)
-                      ),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 14,
+                              height: 1.5)),
                       const SizedBox(height: 32),
                       Row(
                         children: [
@@ -139,13 +154,18 @@ class UIHelper {
                             child: InkWell(
                               onTap: () => Navigator.pop(context, false),
                               child: Container(
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                                  border: Border.all(
+                                      color: Colors.grey.withOpacity(0.2)),
                                 ),
                                 child: Center(
-                                  child: Text(cancelText ?? 'Batal', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                  child: Text(cancelText ?? 'Batal',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13)),
                                 ),
                               ),
                             ),
@@ -155,22 +175,29 @@ class UIHelper {
                             child: InkWell(
                               onTap: () => Navigator.pop(context, true),
                               child: Container(
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
                                 decoration: BoxDecoration(
-                                  color: isDangerous ? Colors.black : AppColors.primary,
+                                  color: isDangerous
+                                      ? Colors.black
+                                      : AppColors.primary,
                                   borderRadius: BorderRadius.circular(16),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: (isDangerous ? Colors.black : AppColors.primary).withOpacity(0.25),
-                                      blurRadius: 15,
-                                      offset: const Offset(0, 5)
-                                    ),
+                                        color: (isDangerous
+                                                ? Colors.black
+                                                : AppColors.primary)
+                                            .withOpacity(0.25),
+                                        blurRadius: 15,
+                                        offset: const Offset(0, 5)),
                                   ],
                                 ),
                                 child: Center(
-                                  child: Text(confirmText ?? 'Ya, Hapus', 
-                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13)
-                                  ),
+                                  child: Text(confirmText ?? 'Ya, Hapus',
+                                      style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: 13)),
                                 ),
                               ),
                             ),
@@ -191,6 +218,7 @@ class UIHelper {
       ),
     );
   }
+
   static Future<T?> showPremiumDialog<T>({
     required BuildContext context,
     required Widget child,
@@ -223,8 +251,8 @@ class UIHelper {
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.92),
                   borderRadius: BorderRadius.circular(32),
-                  border:
-                      Border.all(color: Colors.white.withOpacity(0.5), width: 1),
+                  border: Border.all(
+                      color: Colors.white.withOpacity(0.5), width: 1),
                 ),
                 child: Material(
                   color: Colors.transparent,

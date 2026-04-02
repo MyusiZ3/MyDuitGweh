@@ -24,7 +24,8 @@ class TransactionModel {
     required this.date,
   });
 
-  factory TransactionModel.fromJson(Map<String, dynamic> json, {String? docId}) {
+  factory TransactionModel.fromJson(Map<String, dynamic> json,
+      {String? docId}) {
     return TransactionModel(
       id: docId ?? json['id'] as String,
       walletId: json['walletId'] as String,

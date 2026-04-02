@@ -27,7 +27,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Future<void> _checkRole() async {
     try {
       bool isSuper = await _authService.isSuperAdmin(forceRefresh: true);
-      
+
       // Retry once if false (Firestore sync delay)
       if (!isSuper) {
         await Future.delayed(const Duration(milliseconds: 1500));
@@ -58,33 +58,47 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           _buildAppBar(context),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                   Row(
+                  Row(
                     children: [
-                      const Text('Admin Console', 
-                        style: TextStyle(fontWeight: FontWeight.w900, fontSize: 28, letterSpacing: -1.2)),
+                      const Text('Admin Console',
+                          style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 28,
+                              letterSpacing: -1.2)),
                       const Spacer(),
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: (_isSuper ? Colors.amber : AppColors.primary).withOpacity(0.1),
+                          color: (_isSuper ? Colors.amber : AppColors.primary)
+                              .withOpacity(0.1),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
-                          _isSuper ? Icons.stars_rounded : Icons.shield_rounded, 
-                          color: _isSuper ? Colors.amber[900] : AppColors.primary, 
-                          size: 20
-                        ),
+                            _isSuper
+                                ? Icons.stars_rounded
+                                : Icons.shield_rounded,
+                            color: _isSuper
+                                ? Colors.amber[900]
+                                : AppColors.primary,
+                            size: 20),
                       ),
                     ],
                   ),
-                  Text(_isSuper ? 'Selamat datang kembali, Owner.' : 'Akses dashboard administrator.', 
-                    style: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500)),
+                  Text(
+                      _isSuper
+                          ? 'Selamat datang kembali, Owner.'
+                          : 'Akses dashboard administrator.',
+                      style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500)),
                   const SizedBox(height: 32),
-                  
+
                   // GRID MENU
                   GridView.count(
                     shrinkWrap: true,
@@ -97,10 +111,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       _buildMenuCard(
                         context,
                         title: 'User Control',
-                        subtitle: _isSuper ? 'Kelola peran & status akun.' : 'Lihat daftar pengguna.',
+                        subtitle: _isSuper
+                            ? 'Kelola peran & status akun.'
+                            : 'Lihat daftar pengguna.',
                         icon: Icons.manage_accounts_rounded,
                         color: Colors.indigoAccent,
-                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const UserManagementScreen())),
+                        onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const UserManagementScreen())),
                       ),
                       _buildMenuCard(
                         context,
@@ -108,7 +127,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         subtitle: 'Analisis kesehatan ekonomi app.',
                         icon: Icons.query_stats_rounded,
                         color: Colors.deepOrangeAccent,
-                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => GlobalInsightsScreen())),
+                        onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => GlobalInsightsScreen())),
                       ),
                       _buildMenuCard(
                         context,
@@ -116,30 +138,46 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         subtitle: 'Kirim pengumuman massal.',
                         icon: Icons.campaign_rounded,
                         color: Colors.tealAccent[700]!,
-                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BroadcastCenterScreen())),
+                        onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const BroadcastCenterScreen())),
                       ),
                       _buildMenuCard(
                         context,
                         title: 'App Config',
-                        subtitle: _isSuper ? 'Ganti maintenance & versi app.' : 'Lihat konfigurasi app.',
+                        subtitle: _isSuper
+                            ? 'Ganti maintenance & versi app.'
+                            : 'Lihat konfigurasi app.',
                         icon: Icons.dns_rounded,
                         color: Colors.purpleAccent,
-                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AppConfigScreen())),
+                        onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const AppConfigScreen())),
                       ),
                     ],
                   ),
                   const SizedBox(height: 24),
-                  const Text('System Health', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
+                  const Text('System Health',
+                      style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.5)),
                   const SizedBox(height: 16),
-                  _buildStatusTile('Database Engine', 'Operational', Icons.storage_rounded, Colors.green),
-                  _buildStatusTile('Notification Node', 'Active', Icons.notifications_active_rounded, Colors.green),
-                  _buildStatusTile('Auth Service', 'Healthy', Icons.security_rounded, Colors.green),
+                  _buildStatusTile('Database Engine', 'Operational',
+                      Icons.storage_rounded, Colors.green),
+                  _buildStatusTile('Notification Node', 'Active',
+                      Icons.notifications_active_rounded, Colors.green),
+                  _buildStatusTile('Auth Service', 'Healthy',
+                      Icons.security_rounded, Colors.green),
                 ],
               ),
             ),
           ),
           SliverPadding(
-            padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 40),
+            padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).padding.bottom + 40),
           ),
         ],
       ),
@@ -163,13 +201,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: _isSuper ? [
-                    const Color(0xFFB8860B), // Dark Goldenrod
-                    const Color(0xFF000000), // Black for premium look
-                  ] : [
-                    AppColors.primary,
-                    AppColors.primaryDark.withOpacity(0.9),
-                  ],
+                  colors: _isSuper
+                      ? [
+                          const Color(0xFFB8860B), // Dark Goldenrod
+                          const Color(0xFF000000), // Black for premium look
+                        ]
+                      : [
+                          AppColors.primary,
+                          AppColors.primaryDark.withOpacity(0.9),
+                        ],
                 ),
               ),
             ),
@@ -179,10 +219,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               child: Opacity(
                 opacity: 0.1,
                 child: Icon(
-                  _isSuper ? Icons.stars_rounded : Icons.dashboard_customize_rounded, 
-                  size: 240, 
-                  color: Colors.white
-                ),
+                    _isSuper
+                        ? Icons.stars_rounded
+                        : Icons.dashboard_customize_rounded,
+                    size: 240,
+                    color: Colors.white),
               ),
             ),
             Padding(
@@ -191,10 +232,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Level: ${_isSuper ? 'OWNER / SUPER ADMIN' : 'ADMINISTRATOR'}', 
-                    style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.bold)),
-                  const Text('COMMAND HUB', 
-                    style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
+                  Text(
+                      'Level: ${_isSuper ? 'OWNER / SUPER ADMIN' : 'ADMINISTRATOR'}',
+                      style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold)),
+                  const Text('COMMAND HUB',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900)),
                 ],
               ),
             ),
@@ -204,7 +252,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  Widget _buildStatusTile(String label, String status, IconData icon, Color color) {
+  Widget _buildStatusTile(
+      String label, String status, IconData icon, Color color) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -216,15 +265,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         children: [
           Icon(icon, color: color, size: 20),
           const SizedBox(width: 12),
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+          Text(label,
+              style:
+                  const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
           const Spacer(),
-          Text(status, style: TextStyle(fontWeight: FontWeight.w900, color: color, fontSize: 12)),
+          Text(status,
+              style: TextStyle(
+                  fontWeight: FontWeight.w900, color: color, fontSize: 12)),
         ],
       ),
     );
   }
 
-  Widget _buildMenuCard(BuildContext context, {required String title, required String subtitle, required IconData icon, required Color color, required VoidCallback onTap}) {
+  Widget _buildMenuCard(BuildContext context,
+      {required String title,
+      required String subtitle,
+      required IconData icon,
+      required Color color,
+      required VoidCallback onTap}) {
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(36),
@@ -234,11 +292,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         child: Container(
           padding: const EdgeInsets.all(24.0),
           decoration: BoxDecoration(
-             borderRadius: BorderRadius.circular(36),
-             border: Border.all(color: AppColors.surfaceVariant),
-             boxShadow: [
-               BoxShadow(color: color.withOpacity(0.08), blurRadius: 20, offset: const Offset(0, 10)),
-             ],
+            borderRadius: BorderRadius.circular(36),
+            border: Border.all(color: AppColors.surfaceVariant),
+            boxShadow: [
+              BoxShadow(
+                  color: color.withOpacity(0.08),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10)),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -252,9 +313,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 child: Icon(icon, color: color, size: 28),
               ),
               const Spacer(),
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: -0.5)),
+              Text(title,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 15,
+                      letterSpacing: -0.5)),
               const SizedBox(height: 4),
-              Text(subtitle, style: const TextStyle(fontSize: 9, color: Colors.grey, fontWeight: FontWeight.w500)),
+              Text(subtitle,
+                  style: const TextStyle(
+                      fontSize: 9,
+                      color: Colors.grey,
+                      fontWeight: FontWeight.w500)),
             ],
           ),
         ),

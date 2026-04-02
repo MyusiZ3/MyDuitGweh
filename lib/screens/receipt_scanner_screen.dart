@@ -218,17 +218,16 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
         // Pulsing Lens Effect around the cutout area
         Center(
           child: Transform.translate(
-            offset: const Offset(0, -40), // Shift up to avoid bottom UI
+            offset: const Offset(0, -70), // ALIGNED with -70 offset
             child: ScaleTransition(
               scale: _pulseAnimation,
               child: Container(
-                width: MediaQuery.of(context).size.width * 0.78,
-                height: MediaQuery.of(context).size.height *
-                    0.62, // Slightly shorter
+                width: MediaQuery.of(context).size.width * 0.72,
+                height: MediaQuery.of(context).size.height * 0.42,
                 decoration: BoxDecoration(
                   border: Border.all(
-                      color: AppColors.primary.withOpacity(0.05), width: 15),
-                  borderRadius: BorderRadius.circular(32),
+                      color: AppColors.primary.withOpacity(0.08), width: 10),
+                  borderRadius: BorderRadius.circular(24),
                 ),
               ),
             ),
@@ -237,7 +236,7 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
 
         // Dark mask with cutout
         CustomPaint(
-          painter: ScannerMaskPainter(offsetY: -40),
+          painter: ScannerMaskPainter(),
           size: Size.infinite,
         ),
 
@@ -247,10 +246,9 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
           builder: (context, child) {
             final size = MediaQuery.of(context).size;
             final rectWidth = size.width * 0.72;
-            final rectHeight = size.height * 0.45; // Must match!
+            final rectHeight = size.height * 0.42;
             final rectLeft = (size.width - rectWidth) / 2;
-            final rectTop =
-                (size.height - rectHeight) / 2 - 70; // MUST match mask (-70)
+            final rectTop = (size.height - rectHeight) / 2 - 70;
 
             return Positioned(
               top: rectTop + (rectHeight * _scanLineAnimation.value),
@@ -343,8 +341,8 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
         // Hint Text
         Positioned(
           top: (MediaQuery.of(context).size.height / 2) +
-              (MediaQuery.of(context).size.height * 0.48 / 2) -
-              40, // Adjusted from -10 to -40 for -70 offset
+              (MediaQuery.of(context).size.height * 0.42 / 2) -
+              40, // Recalculated for shorter border
           left: 0,
           right: 0,
           child: Center(
@@ -386,11 +384,10 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
 
   Widget _buildHUDelements(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final rectWidth = size.width * 0.75;
-    final rectHeight = size.height * 0.48;
+    final rectWidth = size.width * 0.72;
+    final rectHeight = size.height * 0.42;
     final rectLeft = (size.width - rectWidth) / 2;
-    final rectTop =
-        (size.height - rectHeight) / 2 - 70; // More offset for "Nambah Naik"
+    final rectTop = (size.height - rectHeight) / 2 - 70;
 
     return Stack(
       children: [
@@ -499,9 +496,9 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
               ),
             ),
 
-            // Gallery (Right Side)
+            // Gallery (Bottom Right Corner as requested)
             Positioned(
-              right: 40,
+              right: 32,
               child: _buildCircleAction(
                 icon: Icons.photo_library_rounded,
                 onTap: _pickFromGallery,
@@ -550,12 +547,10 @@ class ScannerMaskPainter extends CustomPainter {
     final paint = Paint()..color = Colors.black.withOpacity(0.7);
 
     // 1. Calculate the scanning rectangle
-    final rectWidth = size.width * 0.71;
-    final rectHeight = size.height * 0.46; // Match with HUD height
+    final rectWidth = size.width * 0.72;
+    final rectHeight = size.height * 0.42;
     final rectLeft = (size.width - rectWidth) / 2;
-    final rectTop = (size.height - rectHeight) / 1.7 +
-        offsetY -
-        70; // Match with HUD offset (-70)
+    final rectTop = (size.height - rectHeight) / 2 - 70;
 
     final scanRect = RRect.fromRectAndRadius(
       Rect.fromLTWH(rectLeft, rectTop, rectWidth, rectHeight),

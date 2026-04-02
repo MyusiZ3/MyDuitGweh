@@ -19,7 +19,8 @@ class WalletChatScreen extends StatefulWidget {
   State<WalletChatScreen> createState() => _WalletChatScreenState();
 }
 
-class _WalletChatScreenState extends State<WalletChatScreen> with WidgetsBindingObserver {
+class _WalletChatScreenState extends State<WalletChatScreen>
+    with WidgetsBindingObserver {
   final FirestoreService _firestoreService = FirestoreService();
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -111,7 +112,9 @@ class _WalletChatScreenState extends State<WalletChatScreen> with WidgetsBinding
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         padding: EdgeInsets.only(
-          top: 8, left: 16, right: 16,
+          top: 8,
+          left: 16,
+          right: 16,
           bottom: MediaQuery.of(ctx).padding.bottom + 16,
         ),
         child: Column(
@@ -119,7 +122,8 @@ class _WalletChatScreenState extends State<WalletChatScreen> with WidgetsBinding
           children: [
             // Drag handle
             Container(
-              width: 40, height: 4,
+              width: 40,
+              height: 4,
               margin: const EdgeInsets.only(bottom: 20),
               decoration: BoxDecoration(
                 color: AppColors.textHint.withOpacity(0.3),
@@ -137,7 +141,8 @@ class _WalletChatScreenState extends State<WalletChatScreen> with WidgetsBinding
               ),
               child: Text(
                 msg.message,
-                style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                style: const TextStyle(
+                    fontSize: 13, color: AppColors.textSecondary),
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -149,15 +154,19 @@ class _WalletChatScreenState extends State<WalletChatScreen> with WidgetsBinding
                 _startEditing(msg);
               },
               leading: Container(
-                width: 40, height: 40,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
                   color: AppColors.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.edit_rounded, color: AppColors.primary, size: 20),
+                child: const Icon(Icons.edit_rounded,
+                    color: AppColors.primary, size: 20),
               ),
-              title: const Text('Edit Pesan', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-              subtitle: const Text('Ubah isi pesan ini', style: TextStyle(fontSize: 12, color: AppColors.textHint)),
+              title: const Text('Edit Pesan',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+              subtitle: const Text('Ubah isi pesan ini',
+                  style: TextStyle(fontSize: 12, color: AppColors.textHint)),
             ),
             // Unsend option (only if within 5 minutes)
             if (msg.canUnsend)
@@ -167,32 +176,46 @@ class _WalletChatScreenState extends State<WalletChatScreen> with WidgetsBinding
                   _confirmUnsend(msg);
                 },
                 leading: Container(
-                  width: 40, height: 40,
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
                     color: AppColors.expense.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.delete_outline_rounded, color: AppColors.expense, size: 20),
+                  child: const Icon(Icons.delete_outline_rounded,
+                      color: AppColors.expense, size: 20),
                 ),
-                title: const Text('Hapus Pesan', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: AppColors.expense)),
+                title: const Text('Hapus Pesan',
+                    style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        color: AppColors.expense)),
                 subtitle: Text(
                   'Bisa dihapus dalam ${5 - DateTime.now().difference(msg.timestamp).inMinutes} menit lagi',
-                  style: const TextStyle(fontSize: 12, color: AppColors.textHint),
+                  style:
+                      const TextStyle(fontSize: 12, color: AppColors.textHint),
                 ),
               ),
             if (!msg.canUnsend)
               ListTile(
                 enabled: false,
                 leading: Container(
-                  width: 40, height: 40,
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
                     color: AppColors.textHint.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(Icons.timer_off_rounded, color: AppColors.textHint.withOpacity(0.5), size: 20),
+                  child: Icon(Icons.timer_off_rounded,
+                      color: AppColors.textHint.withOpacity(0.5), size: 20),
                 ),
-                title: Text('Hapus Pesan', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: AppColors.textHint.withOpacity(0.5))),
-                subtitle: const Text('Batas waktu 5 menit sudah lewat', style: TextStyle(fontSize: 12, color: AppColors.textHint)),
+                title: Text('Hapus Pesan',
+                    style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        color: AppColors.textHint.withOpacity(0.5))),
+                subtitle: const Text('Batas waktu 5 menit sudah lewat',
+                    style: TextStyle(fontSize: 12, color: AppColors.textHint)),
               ),
           ],
         ),
@@ -206,7 +229,8 @@ class _WalletChatScreenState extends State<WalletChatScreen> with WidgetsBinding
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Hapus Pesan?'),
-        content: const Text('Pesan ini akan dihapus untuk semua orang. Tindakan ini tidak dapat dibatalkan.'),
+        content: const Text(
+            'Pesan ini akan dihapus untuk semua orang. Tindakan ini tidak dapat dibatalkan.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -239,18 +263,21 @@ class _WalletChatScreenState extends State<WalletChatScreen> with WidgetsBinding
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: AppColors.textPrimary),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded,
+              size: 20, color: AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Row(
           children: [
             Container(
-              width: 36, height: 36,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
                 color: AppColors.primary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.group_rounded, color: AppColors.primary, size: 18),
+              child: const Icon(Icons.group_rounded,
+                  color: AppColors.primary, size: 18),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -259,12 +286,18 @@ class _WalletChatScreenState extends State<WalletChatScreen> with WidgetsBinding
                 children: [
                   Text(
                     widget.walletName,
-                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                    style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary),
                     overflow: TextOverflow.ellipsis,
                   ),
                   const Text(
                     'Chat Grup',
-                    style: TextStyle(fontSize: 11, color: AppColors.textHint, fontWeight: FontWeight.w400),
+                    style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textHint,
+                        fontWeight: FontWeight.w400),
                   ),
                 ],
               ),
@@ -286,7 +319,9 @@ class _WalletChatScreenState extends State<WalletChatScreen> with WidgetsBinding
                     _lastSeenMsgId = latestMsg.id;
                     // Trigger markAsRead without blocking current build
                     WidgetsBinding.instance.addPostFrameCallback((_) {
-                      _firestoreService.markChatAsRead(widget.walletId, _currentUser.uid, until: latestMsg.timestamp);
+                      _firestoreService.markChatAsRead(
+                          widget.walletId, _currentUser.uid,
+                          until: latestMsg.timestamp);
                     });
                   }
                 }
@@ -308,12 +343,22 @@ class _WalletChatScreenState extends State<WalletChatScreen> with WidgetsBinding
                             color: AppColors.primary.withOpacity(0.05),
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(Icons.chat_bubble_outline_rounded, size: 48, color: AppColors.primary.withOpacity(0.4)),
+                          child: Icon(Icons.chat_bubble_outline_rounded,
+                              size: 48,
+                              color: AppColors.primary.withOpacity(0.4)),
                         ),
                         const SizedBox(height: 20),
-                        const Text('Belum ada pesan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+                        const Text('Belum ada pesan',
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textSecondary)),
                         const SizedBox(height: 8),
-                        const Text('Mulai obrolan dengan anggota\ndompet kolaborasi ini!', textAlign: TextAlign.center, style: TextStyle(color: AppColors.textHint, fontSize: 13)),
+                        const Text(
+                            'Mulai obrolan dengan anggota\ndompet kolaborasi ini!',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                color: AppColors.textHint, fontSize: 13)),
                       ],
                     ),
                   );
@@ -322,12 +367,13 @@ class _WalletChatScreenState extends State<WalletChatScreen> with WidgetsBinding
                 return ListView.builder(
                   controller: _scrollController,
                   reverse: true,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
                     final msg = messages[index];
                     final isMe = msg.senderUid == _currentUser.uid;
-                    
+
                     final showAvatar = index == messages.length - 1 ||
                         messages[index + 1].senderUid != msg.senderUid;
 
@@ -348,14 +394,25 @@ class _WalletChatScreenState extends State<WalletChatScreen> with WidgetsBinding
               color: AppColors.primary.withOpacity(0.06),
               child: Row(
                 children: [
-                  Container(width: 3, height: 28, decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(2))),
+                  Container(
+                      width: 3,
+                      height: 28,
+                      decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(2))),
                   const SizedBox(width: 12),
                   const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Mengedit pesan', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary)),
-                        Text('Tekan untuk membatalkan', style: TextStyle(fontSize: 11, color: AppColors.textHint)),
+                        Text('Mengedit pesan',
+                            style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primary)),
+                        Text('Tekan untuk membatalkan',
+                            style: TextStyle(
+                                fontSize: 11, color: AppColors.textHint)),
                       ],
                     ),
                   ),
@@ -367,7 +424,8 @@ class _WalletChatScreenState extends State<WalletChatScreen> with WidgetsBinding
                         color: AppColors.textHint.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: const Icon(Icons.close_rounded, size: 16, color: AppColors.textSecondary),
+                      child: const Icon(Icons.close_rounded,
+                          size: 16, color: AppColors.textSecondary),
                     ),
                   ),
                 ],
@@ -389,13 +447,15 @@ class _WalletChatScreenState extends State<WalletChatScreen> with WidgetsBinding
         right: isMe ? 0 : 48,
       ),
       child: Row(
-        mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment:
+            isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           // Avatar (only for others)
           if (!isMe && showAvatar)
             Container(
-              width: 32, height: 32,
+              width: 32,
+              height: 32,
               margin: const EdgeInsets.only(right: 8),
               decoration: BoxDecoration(
                 color: _getAvatarColor(msg.senderName),
@@ -403,8 +463,13 @@ class _WalletChatScreenState extends State<WalletChatScreen> with WidgetsBinding
               ),
               child: Center(
                 child: Text(
-                  msg.senderName.isNotEmpty ? msg.senderName[0].toUpperCase() : '?',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                  msg.senderName.isNotEmpty
+                      ? msg.senderName[0].toUpperCase()
+                      : '?',
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14),
                 ),
               ),
             )
@@ -414,27 +479,36 @@ class _WalletChatScreenState extends State<WalletChatScreen> with WidgetsBinding
           // Bubble
           Flexible(
             child: Column(
-              crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              crossAxisAlignment:
+                  isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
               children: [
                 if (!isMe && showAvatar)
                   Padding(
                     padding: const EdgeInsets.only(left: 4, bottom: 4),
                     child: Text(
                       msg.senderName,
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _getAvatarColor(msg.senderName)),
+                      style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: _getAvatarColor(msg.senderName)),
                     ),
                   ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
                     color: msg.isDeleted
-                        ? (isMe ? AppColors.primary.withOpacity(0.3) : Colors.white.withOpacity(0.6))
+                        ? (isMe
+                            ? AppColors.primary.withOpacity(0.3)
+                            : Colors.white.withOpacity(0.6))
                         : (isMe ? AppColors.primary : Colors.white),
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(18),
                       topRight: const Radius.circular(18),
-                      bottomLeft: Radius.circular(isMe ? 18 : (showAvatar ? 4 : 18)),
-                      bottomRight: Radius.circular(isMe ? (showAvatar ? 4 : 18) : 18),
+                      bottomLeft:
+                          Radius.circular(isMe ? 18 : (showAvatar ? 4 : 18)),
+                      bottomRight:
+                          Radius.circular(isMe ? (showAvatar ? 4 : 18) : 18),
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -452,14 +526,20 @@ class _WalletChatScreenState extends State<WalletChatScreen> with WidgetsBinding
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.block_rounded, size: 14, color: isMe ? Colors.white.withOpacity(0.7) : AppColors.textHint),
+                            Icon(Icons.block_rounded,
+                                size: 14,
+                                color: isMe
+                                    ? Colors.white.withOpacity(0.7)
+                                    : AppColors.textHint),
                             const SizedBox(width: 6),
                             Text(
                               msg.message,
                               style: TextStyle(
                                 fontSize: 13,
                                 fontStyle: FontStyle.italic,
-                                color: isMe ? Colors.white.withOpacity(0.7) : AppColors.textHint,
+                                color: isMe
+                                    ? Colors.white.withOpacity(0.7)
+                                    : AppColors.textHint,
                               ),
                             ),
                           ],
@@ -484,14 +564,18 @@ class _WalletChatScreenState extends State<WalletChatScreen> with WidgetsBinding
                               style: TextStyle(
                                 fontSize: 10,
                                 fontStyle: FontStyle.italic,
-                                color: isMe ? Colors.white.withOpacity(0.5) : AppColors.textHint,
+                                color: isMe
+                                    ? Colors.white.withOpacity(0.5)
+                                    : AppColors.textHint,
                               ),
                             ),
                           Text(
                             DateFormat('HH:mm').format(msg.timestamp),
                             style: TextStyle(
                               fontSize: 10,
-                              color: isMe ? Colors.white.withOpacity(0.6) : AppColors.textHint,
+                              color: isMe
+                                  ? Colors.white.withOpacity(0.6)
+                                  : AppColors.textHint,
                             ),
                           ),
                         ],
@@ -510,7 +594,9 @@ class _WalletChatScreenState extends State<WalletChatScreen> with WidgetsBinding
   Widget _buildInputBar() {
     return Container(
       padding: EdgeInsets.only(
-        left: 16, right: 8, top: 12,
+        left: 16,
+        right: 8,
+        top: 12,
         bottom: MediaQuery.of(context).padding.bottom + 12,
       ),
       decoration: BoxDecoration(
@@ -539,9 +625,11 @@ class _WalletChatScreenState extends State<WalletChatScreen> with WidgetsBinding
                 style: const TextStyle(fontSize: 14),
                 decoration: InputDecoration(
                   hintText: _isEditing ? 'Edit pesan...' : 'Tulis pesan...',
-                  hintStyle: const TextStyle(color: AppColors.textHint, fontSize: 14),
+                  hintStyle:
+                      const TextStyle(color: AppColors.textHint, fontSize: 14),
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   isDense: true,
                 ),
                 onSubmitted: (_) => _sendMessage(),
@@ -552,14 +640,16 @@ class _WalletChatScreenState extends State<WalletChatScreen> with WidgetsBinding
           GestureDetector(
             onTap: _sendMessage,
             child: Container(
-              width: 44, height: 44,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
                 color: _isEditing ? AppColors.income : AppColors.primary,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(
                 _isEditing ? Icons.check_rounded : Icons.send_rounded,
-                color: Colors.white, size: 20,
+                color: Colors.white,
+                size: 20,
               ),
             ),
           ),

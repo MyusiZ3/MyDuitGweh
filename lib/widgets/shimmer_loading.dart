@@ -51,7 +51,10 @@ class ShimmerTransactionList extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(height: 16, width: double.infinity, color: Colors.white),
+                      Container(
+                          height: 16,
+                          width: double.infinity,
+                          color: Colors.white),
                       const SizedBox(height: 8),
                       Container(height: 12, width: 100, color: Colors.white),
                     ],
@@ -97,7 +100,8 @@ class ShimmerHomeScreen extends StatelessWidget {
           const SizedBox(height: 32),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: List.generate(4, (index) => _circle(height: 60, width: 60, borderRadius: 16)),
+            children: List.generate(
+                4, (index) => _circle(height: 60, width: 60, borderRadius: 16)),
           ),
           const SizedBox(height: 32),
           _circle(height: 20, width: 120),
@@ -108,7 +112,11 @@ class ShimmerHomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _circle({required double height, required double width, double? borderRadius, BoxShape shape = BoxShape.rectangle}) {
+  Widget _circle(
+      {required double height,
+      required double width,
+      double? borderRadius,
+      BoxShape shape = BoxShape.rectangle}) {
     return Shimmer.fromColors(
       baseColor: Colors.grey[300]!,
       highlightColor: Colors.grey[100]!,
@@ -117,11 +125,12 @@ class ShimmerHomeScreen extends StatelessWidget {
         width: width,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: shape == BoxShape.rectangle ? BorderRadius.circular(borderRadius ?? 8) : null,
+          borderRadius: shape == BoxShape.rectangle
+              ? BorderRadius.circular(borderRadius ?? 8)
+              : null,
           shape: shape,
         ),
       ),
     );
   }
 }
-

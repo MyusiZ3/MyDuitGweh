@@ -108,7 +108,7 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
             index: _currentIndex,
             children: _screens,
           ),
-          
+
           // Action Buttons (Speed Dial Overlay)
           if (_isExpanded) ...[
             _buildSpeedDialBackdrop(),
@@ -271,7 +271,8 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.95),
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.white.withOpacity(0.5), width: 1.5),
+                border: Border.all(
+                    color: Colors.white.withOpacity(0.5), width: 1.5),
                 boxShadow: [
                   BoxShadow(
                     color: color.withOpacity(0.2),
@@ -365,7 +366,7 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
 
     // Show a loading dialog/overlay while processing
     if (!mounted) return;
-    
+
     // We can reuse the AddTransactionScreen logic or call OCR here
     // Let's show a loading state
     showDialog(
@@ -384,7 +385,7 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
     try {
       final ocrService = ReceiptOCRService();
       final data = await ocrService.scanReceiptFromFile(imageFile);
-      
+
       if (!mounted) return;
       Navigator.pop(context); // close loader
 

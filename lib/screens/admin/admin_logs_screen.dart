@@ -15,14 +15,26 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   String _searchQuery = "";
   String _selectedCategory = "ALL";
-  
+
   final List<Map<String, dynamic>> _categories = [
     {'id': 'ALL', 'label': 'Semua', 'icon': Icons.grid_view_rounded},
     {'id': 'BROADCAST', 'label': 'Broadcast', 'icon': Icons.campaign_rounded},
-    {'id': 'MAINTENANCE_TOGGLE', 'label': 'Maintenance', 'icon': Icons.construction_rounded},
-    {'id': 'ROLE_CHANGE', 'label': 'Akses', 'icon': Icons.manage_accounts_rounded},
+    {
+      'id': 'MAINTENANCE_TOGGLE',
+      'label': 'Maintenance',
+      'icon': Icons.construction_rounded
+    },
+    {
+      'id': 'ROLE_CHANGE',
+      'label': 'Akses',
+      'icon': Icons.manage_accounts_rounded
+    },
     {'id': 'CONFIG_UPDATE', 'label': 'Config', 'icon': Icons.settings_rounded},
-    {'id': 'DELETE_USER', 'label': 'Hapus User', 'icon': Icons.person_remove_rounded},
+    {
+      'id': 'DELETE_USER',
+      'label': 'Hapus User',
+      'icon': Icons.person_remove_rounded
+    },
   ];
 
   @override
@@ -145,7 +157,9 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
                         color: isSelected ? AppColors.primary : Colors.white,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: isSelected ? AppColors.primary : Colors.black.withOpacity(0.05),
+                          color: isSelected
+                              ? AppColors.primary
+                              : Colors.black.withOpacity(0.05),
                         ),
                       ),
                       child: Row(
@@ -153,15 +167,21 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
                           Icon(
                             cat['icon'],
                             size: 14,
-                            color: isSelected ? Colors.white : AppColors.textSecondary,
+                            color: isSelected
+                                ? Colors.white
+                                : AppColors.textSecondary,
                           ),
                           const SizedBox(width: 6),
                           Text(
                             cat['label'],
                             style: TextStyle(
-                              color: isSelected ? Colors.white : AppColors.textSecondary,
+                              color: isSelected
+                                  ? Colors.white
+                                  : AppColors.textSecondary,
                               fontSize: 12,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.w500,
                             ),
                           ),
                         ],
@@ -199,9 +219,11 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
           decoration: InputDecoration(
             hintText: 'Cari aksi atau ID admin...',
             hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
-            prefixIcon: Icon(Icons.search_rounded, color: AppColors.primary.withOpacity(0.4), size: 18),
+            prefixIcon: Icon(Icons.search_rounded,
+                color: AppColors.primary.withOpacity(0.4), size: 18),
             border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
         ),
       ),
@@ -209,14 +231,15 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
   }
 
   Widget _buildLogsList() {
-    Query query = _firestore.collection('app_config').doc('global').collection('history');
-    
+    Query query =
+        _firestore.collection('app_config').doc('global').collection('history');
+
     // PERINGATAN: Filter kategori membutuhkan Index di Firestore.
     // Jika belum ada index, Firestore akan melempar error di console dengan link untuk membuat index otomatis.
     if (_selectedCategory != 'ALL') {
       query = query.where('action', isEqualTo: _selectedCategory);
     }
-    
+
     query = query.orderBy('updatedAt', descending: true);
 
     return StreamBuilder<QuerySnapshot>(
@@ -225,7 +248,8 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
         if (snapshot.hasError) {
           final errorMsg = snapshot.error.toString();
           // Jika terjadi error Index, tampilkan info cara perbaiki
-          if (errorMsg.contains('index') || errorMsg.contains('FAILED_PRECONDITION')) {
+          if (errorMsg.contains('index') ||
+              errorMsg.contains('FAILED_PRECONDITION')) {
             return SliverFillRemaining(
               hasScrollBody: false,
               child: Padding(
@@ -240,25 +264,29 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
                           color: Colors.orange.withOpacity(0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.auto_fix_high_rounded, size: 40, color: Colors.orange),
+                        child: const Icon(Icons.auto_fix_high_rounded,
+                            size: 40, color: Colors.orange),
                       ),
                       const SizedBox(height: 24),
                       const Text(
                         'Konfigurasi Indeks Diperlukan',
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+                        style: TextStyle(
+                            fontWeight: FontWeight.w900, fontSize: 18),
                       ),
                       const SizedBox(height: 12),
                       Text(
                         'Filter "${_categories.firstWhere((c) => c['id'] == _selectedCategory)['label']}" memerlukan indeks komposit di Firestore agar dapat diurutkan berdasarkan waktu.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 13, color: Colors.grey[600], height: 1.5),
+                        style: TextStyle(
+                            fontSize: 13, color: Colors.grey[600], height: 1.5),
                       ),
                       const SizedBox(height: 32),
                       _buildActionButton(
                         label: 'KEMBALI KE SEMUA',
                         icon: Icons.grid_view_rounded,
-                        onPressed: () => setState(() => _selectedCategory = 'ALL'),
+                        onPressed: () =>
+                            setState(() => _selectedCategory = 'ALL'),
                         isPrimary: true,
                       ),
                       const SizedBox(height: 12),
@@ -267,9 +295,9 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
                         icon: Icons.code_rounded,
                         onPressed: () {
                           // Info for user that link is in terminal
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Cek terminal VS Code / Log untuk link pembuatan indeks otomatis.'))
-                          );
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                              content: Text(
+                                  'Cek terminal VS Code / Log untuk link pembuatan indeks otomatis.')));
                         },
                         isPrimary: false,
                       ),
@@ -283,7 +311,9 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
             child: Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
-                child: Text('Error: ${snapshot.error}', textAlign: TextAlign.center, style: const TextStyle(fontSize: 12)),
+                child: Text('Error: ${snapshot.error}',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 12)),
               ),
             ),
           );
@@ -303,7 +333,9 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
           final action = (data['action'] ?? '').toString().toLowerCase();
           final admin = (data['updatedBy'] ?? '').toString().toLowerCase();
           final title = (data['title'] ?? '').toString().toLowerCase();
-          return action.contains(_searchQuery) || admin.contains(_searchQuery) || title.contains(_searchQuery);
+          return action.contains(_searchQuery) ||
+              admin.contains(_searchQuery) ||
+              title.contains(_searchQuery);
         }).toList();
 
         if (docs.isEmpty) {
@@ -320,12 +352,16 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
                       color: Colors.grey[100],
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.history_toggle_off_rounded, size: 40, color: Colors.grey[300]),
+                    child: Icon(Icons.history_toggle_off_rounded,
+                        size: 40, color: Colors.grey[300]),
                   ),
                   const SizedBox(height: 20),
                   Text(
                     'Tidak ada aktivitas ditemukan',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 15, fontWeight: FontWeight.w700),
+                    style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -356,12 +392,12 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
     final action = data['action'] ?? data['type'] ?? 'ACTIVITY';
     final time = (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now();
     final admin = data['updatedBy'] ?? 'System';
-    
+
     IconData icon = Icons.info_outline_rounded;
     Color color = Colors.grey;
     String title = 'Admin Action';
     String subtitle = 'Pembaruan sistem terdeteksi.';
-    
+
     if (action == 'BROADCAST') {
       icon = Icons.campaign_rounded;
       color = AppColors.primary;
@@ -431,13 +467,17 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
                           Expanded(
                             child: Text(
                               title,
-                              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w800, fontSize: 13),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           Text(
                             DateFormat('HH:mm').format(time),
-                            style: TextStyle(color: Colors.grey[400], fontSize: 10, fontWeight: FontWeight.w600),
+                            style: TextStyle(
+                                color: Colors.grey[400],
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600),
                           ),
                         ],
                       ),
@@ -452,18 +492,25 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               color: AppColors.background,
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.person_rounded, size: 8, color: Colors.grey),
+                                const Icon(Icons.person_rounded,
+                                    size: 8, color: Colors.grey),
                                 const SizedBox(width: 4),
                                 Text(
-                                  admin.toString().length > 8 ? admin.toString().substring(0, 8) : admin,
-                                  style: TextStyle(color: Colors.grey[600], fontSize: 9, fontWeight: FontWeight.bold),
+                                  admin.toString().length > 8
+                                      ? admin.toString().substring(0, 8)
+                                      : admin,
+                                  style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold),
                                 ),
                               ],
                             ),
@@ -471,7 +518,10 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
                           const Spacer(),
                           Text(
                             DateFormat('dd/MM/yy').format(time),
-                            style: TextStyle(color: Colors.grey[300], fontSize: 9, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                                color: Colors.grey[300],
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
@@ -486,13 +536,15 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
     );
   }
 
-  void _showLogDetail(Map<String, dynamic> data, String title, IconData icon, Color color) {
+  void _showLogDetail(
+      Map<String, dynamic> data, String title, IconData icon, Color color) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (ctx) => Container(
-        padding: EdgeInsets.fromLTRB(24, 32, 24, MediaQuery.of(context).padding.bottom + 24),
+        padding: EdgeInsets.fromLTRB(
+            24, 32, 24, MediaQuery.of(context).padding.bottom + 24),
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
@@ -505,7 +557,9 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
               child: Container(
                 width: 40,
                 height: 4,
-                decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(2)),
+                decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(2)),
               ),
             ),
             const SizedBox(height: 24),
@@ -513,7 +567,9 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
               children: [
                 Container(
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
+                  decoration: BoxDecoration(
+                      color: color.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(16)),
                   child: Icon(icon, color: color),
                 ),
                 const SizedBox(width: 16),
@@ -521,8 +577,14 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
-                      Text('System Audit Detail', style: TextStyle(color: Colors.grey[500], fontSize: 13, fontWeight: FontWeight.w500)),
+                      Text(title,
+                          style: const TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.w900)),
+                      Text('System Audit Detail',
+                          style: TextStyle(
+                              color: Colors.grey[500],
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500)),
                     ],
                   ),
                 ),
@@ -531,7 +593,12 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
             const SizedBox(height: 32),
             _buildDetailGrid(data),
             const Divider(height: 32),
-            const Text('INTERNAL DATA', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1)),
+            const Text('INTERNAL DATA',
+                style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.grey,
+                    letterSpacing: 1)),
             const SizedBox(height: 12),
             Container(
               width: double.infinity,
@@ -543,10 +610,15 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
               ),
               child: SelectableText(
                 data.entries
-                    .where((e) => !['updatedAt', 'updatedBy', 'action', 'type'].contains(e.key))
+                    .where((e) => !['updatedAt', 'updatedBy', 'action', 'type']
+                        .contains(e.key))
                     .map((e) => '${e.key}: ${e.value}')
                     .join('\n'),
-                style: const TextStyle(fontFamily: 'monospace', fontSize: 12, color: Colors.blueGrey, height: 1.5),
+                style: const TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 12,
+                    color: Colors.blueGrey,
+                    height: 1.5),
               ),
             ),
           ],
@@ -561,15 +633,19 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
       children: [
         Row(
           children: [
-            Expanded(child: _buildDetailItem('ADMIN ID', data['updatedBy'] ?? 'System')),
-            Expanded(child: _buildDetailItem('KATÉGORI', data['action'] ?? 'General')),
+            Expanded(
+                child: _buildDetailItem(
+                    'ADMIN ID', data['updatedBy'] ?? 'System')),
+            Expanded(
+                child:
+                    _buildDetailItem('KATÉGORI', data['action'] ?? 'General')),
           ],
         ),
         const SizedBox(height: 16),
         _buildDetailItem(
-          'WAKTU', 
-          DateFormat('EEEE, dd MMMM yyyy - HH:mm').format((data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now())
-        ),
+            'WAKTU',
+            DateFormat('EEEE, dd MMMM yyyy - HH:mm').format(
+                (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now())),
       ],
     );
   }
@@ -580,9 +656,18 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 0.5)),
+          Text(label,
+              style: const TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.grey,
+                  letterSpacing: 0.5)),
           const SizedBox(height: 4),
-          Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+          Text(value,
+              style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary)),
         ],
       ),
     );
@@ -605,7 +690,9 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: isPrimary ? BorderSide.none : BorderSide(color: Colors.grey[200]!),
+            side: isPrimary
+                ? BorderSide.none
+                : BorderSide(color: Colors.grey[200]!),
           ),
         ),
         child: Row(
@@ -615,7 +702,10 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
             const SizedBox(width: 10),
             Text(
               label,
-              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, letterSpacing: 0.5),
+              style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13,
+                  letterSpacing: 0.5),
             ),
           ],
         ),
@@ -638,7 +728,8 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
         ),
       ),
       child: Padding(
-        padding: EdgeInsets.fromLTRB(24, 20, 24, MediaQuery.of(context).padding.bottom + 16),
+        padding: EdgeInsets.fromLTRB(
+            24, 20, 24, MediaQuery.of(context).padding.bottom + 16),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(22),
           child: BackdropFilter(
@@ -657,7 +748,11 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
                 ],
               ),
               child: StreamBuilder<QuerySnapshot>(
-                stream: _firestore.collection('app_config').doc('global').collection('history').snapshots(),
+                stream: _firestore
+                    .collection('app_config')
+                    .doc('global')
+                    .collection('history')
+                    .snapshots(),
                 builder: (context, snapshot) {
                   final count = snapshot.data?.docs.length ?? 0;
                   return Row(
@@ -694,7 +789,8 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
                           color: Colors.white.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(Icons.analytics_rounded, color: Colors.white, size: 22),
+                        child: const Icon(Icons.analytics_rounded,
+                            color: Colors.white, size: 22),
                       ),
                     ],
                   );
@@ -706,5 +802,4 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
       ),
     );
   }
-
 }

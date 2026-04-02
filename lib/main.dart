@@ -18,7 +18,7 @@ import 'services/auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // FIX: Force Camera2 implementation to avoid CameraX "Unsupported value" crash on some devices (like Xiaomi)
   if (defaultTargetPlatform == TargetPlatform.android) {
     CameraPlatform.instance = AndroidCamera();
@@ -86,9 +86,11 @@ class _AuthGateState extends State<AuthGate> {
       builder: (context, snapshot) {
         // DEBUG LOG
         debugPrint('--- AUTH GATE STATE: ${snapshot.connectionState} ---');
-        debugPrint('--- HAS USER: ${snapshot.hasData} | UID: ${snapshot.data?.uid} ---');
+        debugPrint(
+            '--- HAS USER: ${snapshot.hasData} | UID: ${snapshot.data?.uid} ---');
 
-        if (snapshot.connectionState == ConnectionState.waiting && snapshot.data == null) {
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            snapshot.data == null) {
           return const SplashView();
         }
 
@@ -156,7 +158,8 @@ class _MaintenanceGateWrapperState extends State<MaintenanceGateWrapper> {
     return StreamBuilder<DocumentSnapshot>(
       stream: _configStream,
       builder: (context, snapshot) {
-        debugPrint('--- MAINTENANCE GATE: connState=${snapshot.connectionState}, hasData=${snapshot.hasData}, hasError=${snapshot.hasError} ---');
+        debugPrint(
+            '--- MAINTENANCE GATE: connState=${snapshot.connectionState}, hasData=${snapshot.hasData}, hasError=${snapshot.hasError} ---');
 
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const SplashView();
@@ -164,13 +167,15 @@ class _MaintenanceGateWrapperState extends State<MaintenanceGateWrapper> {
 
         // Jika error atau dokumen tidak ada, langsung masuk
         if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
-          debugPrint('--- MAINTENANCE GATE: No config doc or error, going to MainNav ---');
+          debugPrint(
+              '--- MAINTENANCE GATE: No config doc or error, going to MainNav ---');
           return const MainNav();
         }
 
         final data = snapshot.data!.data() as Map<String, dynamic>;
         final isMaintenance = data['isMaintenance'] ?? false;
-        final maintenanceMsg = data['maintenanceMessage'] ?? 'Aplikasi sedang dalam pemeliharaan rutin.';
+        final maintenanceMsg = data['maintenanceMessage'] ??
+            'Aplikasi sedang dalam pemeliharaan rutin.';
 
         if (!isMaintenance) {
           return const MainNav();
@@ -216,7 +221,8 @@ class SplashView extends StatelessWidget {
                 color: AppColors.primary,
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Icon(Icons.account_balance_wallet_rounded, size: 40, color: Colors.white),
+              child: const Icon(Icons.account_balance_wallet_rounded,
+                  size: 40, color: Colors.white),
             ),
             const SizedBox(height: 24),
             const CircularProgressIndicator(color: AppColors.primary),

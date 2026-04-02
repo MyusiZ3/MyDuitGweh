@@ -9,7 +9,8 @@ class LoadingWidget extends StatefulWidget {
   State<LoadingWidget> createState() => _LoadingWidgetState();
 }
 
-class _LoadingWidgetState extends State<LoadingWidget> with TickerProviderStateMixin {
+class _LoadingWidgetState extends State<LoadingWidget>
+    with TickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
@@ -40,8 +41,8 @@ class _LoadingWidgetState extends State<LoadingWidget> with TickerProviderStateM
               color: AppColors.primary.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.account_balance_wallet_rounded, 
-              size: 50, color: AppColors.primary),
+            child: const Icon(Icons.account_balance_wallet_rounded,
+                size: 50, color: AppColors.primary),
           ),
           const SizedBox(height: 24),
           const Text(
@@ -76,7 +77,8 @@ class _Dot extends StatelessWidget {
   final double delay;
   final Color color;
 
-  const _Dot({required this.controller, required this.delay, required this.color});
+  const _Dot(
+      {required this.controller, required this.delay, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -88,7 +90,8 @@ class _Dot extends StatelessWidget {
           height: 8,
           width: 8,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.3 + (0.7 * (1.0 - (controller.value - delay).abs().clamp(0, 1)))),
+            color: color.withOpacity(0.3 +
+                (0.7 * (1.0 - (controller.value - delay).abs().clamp(0, 1)))),
             shape: BoxShape.circle,
           ),
         );
