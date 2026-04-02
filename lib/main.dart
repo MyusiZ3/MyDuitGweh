@@ -15,6 +15,7 @@ import 'screens/main_nav.dart';
 import 'screens/maintenance_gate_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'services/auth_service.dart';
+import 'services/update_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -176,8 +177,12 @@ class _MaintenanceGateWrapperState extends State<MaintenanceGateWrapper> {
         final isMaintenance = data['isMaintenance'] ?? false;
         final maintenanceMsg = data['maintenanceMessage'] ??
             'Aplikasi sedang dalam pemeliharaan rutin.';
-
+            
         if (!isMaintenance) {
+          // Check for updates if not in maintenance
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            UpdateService.checkAndShowUpdateDialog(context);
+          });
           return const MainNav();
         }
 

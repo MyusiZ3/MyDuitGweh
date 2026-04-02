@@ -18,6 +18,8 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
   bool _isSuperAdmin = false;
   bool _maintenanceMode = false;
   final TextEditingController _minVersionController = TextEditingController();
+  final TextEditingController _latestVersionController = TextEditingController();
+  final TextEditingController _downloadUrlController = TextEditingController();
   final TextEditingController _maintenanceMsgController =
       TextEditingController();
   DateTime? _startTime;
@@ -48,6 +50,8 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
         setState(() {
           _maintenanceMode = data['isMaintenance'] ?? false;
           _minVersionController.text = data['minVersion'] ?? '1.0.0';
+          _latestVersionController.text = data['latestVersion'] ?? '1.0.0';
+          _downloadUrlController.text = data['downloadUrl'] ?? '';
           _maintenanceMsgController.text = data['maintenanceMessage'] ??
               'Aplikasi sedang dalam pemeliharaan rutin.';
           _startTime = (data['maintenanceStartTime'] as Timestamp?)?.toDate();
@@ -102,6 +106,8 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
     final Map<String, dynamic> configData = {
       'isMaintenance': _maintenanceMode,
       'minVersion': _minVersionController.text,
+      'latestVersion': _latestVersionController.text,
+      'downloadUrl': _downloadUrlController.text,
       'maintenanceMessage': _maintenanceMsgController.text,
       'maintenanceStartTime':
           _startTime != null ? Timestamp.fromDate(_startTime!) : null,
@@ -112,16 +118,10 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
 
     batch.set(configRef, configData, SetOptions(merge: true));
 
-    // Determine log action based on what changed
-    String logAction = 'CONFIG_UPDATE';
-    if (_maintenanceMode) {
-      logAction = 'MAINTENANCE_TOGGLE';
-    }
-
     batch.set(historyRef, {
       ...configData,
       'updatedAt': FieldValue.serverTimestamp(),
-      'action': logAction,
+      'action': 'CONFIG_UPDATE',
       'updatedBy': _authService.auth.currentUser?.uid ?? 'system',
     });
 
@@ -357,6 +357,24 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
               prefixIcon: Icon(Icons.verified_rounded),
             ),
           ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _latestVersionController,
+            decoration: const InputDecoration(
+              labelText: 'Versi Terbaru (Latest)',
+              hintText: '1.0.1',
+              prefixIcon: Icon(Icons.new_releases_rounded),
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _downloadUrlController,
+            decoration: const InputDecoration(
+              labelText: 'Download URL (Direct APK Link)',
+              hintText: 'https://github.com/.../release.apk',
+              prefixIcon: Icon(Icons.link_rounded),
+            ),
+          ),
         ],
       ),
     );
@@ -435,7 +453,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
         final configDocs = snapshot.data!.docs.where((doc) {
           final d = doc.data() as Map<String, dynamic>;
           final action = d['action'] ?? d['type'] ?? '';
-          return action == 'CONFIG_UPDATE' || action == 'MAINTENANCE_TOGGLE';
+          return action == 'CONFIG_UPDATE';
         }).toList();
 
         if (configDocs.isEmpty) {
