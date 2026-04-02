@@ -34,9 +34,12 @@ dependencies:
   shimmer: ^3.0.0
   connectivity_plus: ^7.1.0
   http: ^1.6.0
+  google_generative_ai: ^0.4.7
   local_auth_android: ^1.0.51
   local_auth_ios: ^1.1.7
-
+  flutter_markdown: ^0.7.3
+  uuid: ^4.3.3
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter
