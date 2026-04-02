@@ -151,7 +151,9 @@ class _ReportScreenState extends State<ReportScreen> {
               stream: _walletStream,
               builder: (context, walletSnapshot) {
                 if (walletSnapshot.connectionState == ConnectionState.waiting)
-                  return const Padding(padding: EdgeInsets.symmetric(horizontal: 24), child: ShimmerTransactionList());
+                  return const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 24),
+                      child: ShimmerTransactionList());
 
                 final wallets = walletSnapshot.data ?? [];
                 if (wallets.isEmpty)
@@ -168,7 +170,9 @@ class _ReportScreenState extends State<ReportScreen> {
                   ),
                   builder: (context, txnSnapshot) {
                     if (txnSnapshot.connectionState == ConnectionState.waiting)
-                      return const Padding(padding: EdgeInsets.symmetric(horizontal: 24), child: ShimmerTransactionList());
+                      return const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 24),
+                          child: ShimmerTransactionList());
 
                     final transactions = txnSnapshot.data ?? [];
                     if (transactions.isEmpty)
@@ -200,7 +204,8 @@ class _ReportScreenState extends State<ReportScreen> {
                         const SizedBox(height: 24),
                         if (_isCategoryMode)
                           if (totalExpense > 0)
-                            _buildInteractivePieChart(categoryTotals, totalExpense)
+                            _buildInteractivePieChart(
+                                categoryTotals, totalExpense)
                           else
                             const Center(child: Text('Belum ada pengeluaran'))
                         else
@@ -208,7 +213,7 @@ class _ReportScreenState extends State<ReportScreen> {
                         const SizedBox(height: 24),
                         if (_isCategoryMode && totalExpense > 0)
                           _buildCategoryList(categoryTotals, totalExpense),
-                        const SizedBox(height: 40),
+                        const SizedBox(height: 80),
                       ],
                     );
                   },
@@ -513,11 +518,12 @@ class _ReportScreenState extends State<ReportScreen> {
     // Group by day for the last 7 days
     Map<String, double> incomeByDay = {};
     Map<String, double> expenseByDay = {};
-    
+
     // Sort to get chronological order
     final now = DateTime.now();
-    final days = List.generate(7, (index) => now.subtract(Duration(days: 6 - index)));
-    
+    final days =
+        List.generate(7, (index) => now.subtract(Duration(days: 6 - index)));
+
     for (var day in days) {
       final key = DateFormat('dd/MM').format(day);
       incomeByDay[key] = 0;
@@ -527,8 +533,10 @@ class _ReportScreenState extends State<ReportScreen> {
     for (var txn in transactions) {
       final dayKey = DateFormat('dd/MM').format(txn.date);
       if (incomeByDay.containsKey(dayKey)) {
-        if (txn.isIncome) incomeByDay[dayKey] = (incomeByDay[dayKey] ?? 0) + txn.amount;
-        else expenseByDay[dayKey] = (expenseByDay[dayKey] ?? 0) + txn.amount;
+        if (txn.isIncome)
+          incomeByDay[dayKey] = (incomeByDay[dayKey] ?? 0) + txn.amount;
+        else
+          expenseByDay[dayKey] = (expenseByDay[dayKey] ?? 0) + txn.amount;
       }
     }
 
@@ -565,9 +573,12 @@ class _ReportScreenState extends State<ReportScreen> {
         gridData: const FlGridData(show: false),
         borderData: FlBorderData(show: false),
         titlesData: FlTitlesData(
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
@@ -575,7 +586,11 @@ class _ReportScreenState extends State<ReportScreen> {
                 final day = incomeByDay.keys.elementAt(value.toInt());
                 return Padding(
                   padding: const EdgeInsets.only(top: 8.0),
-                  child: Text(day, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textHint)),
+                  child: Text(day,
+                      style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textHint)),
                 );
               },
             ),
@@ -587,7 +602,10 @@ class _ReportScreenState extends State<ReportScreen> {
               final type = rodIndex == 0 ? 'Pemasukan' : 'Pengeluaran';
               return BarTooltipItem(
                 '$type\n${CurrencyFormatter.formatCurrency(rod.toY)}',
-                const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12),
               );
             },
           ),
@@ -910,6 +928,7 @@ class _ReportScreenState extends State<ReportScreen> {
       ),
     );
   }
+
   void _processExport(BuildContext ctx, List<TransactionModel> allTxns,
       List<String> selectedCategories, bool isPdf) {
     Navigator.pop(ctx);
@@ -981,7 +1000,8 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
   List<Map<String, dynamic>> _allSessions = []; // List of session metadata
   final ScrollController _scrollController = ScrollController();
   final _uuid = const Uuid();
-  final Map<String, bool?> _apiStatus = {}; // key -> isWorking (null=unknown, true=ok, false=limit)
+  final Map<String, bool?> _apiStatus =
+      {}; // key -> isWorking (null=unknown, true=ok, false=limit)
 
   @override
   void initState() {
@@ -1032,13 +1052,18 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
   Future<void> _saveCurrentSession() async {
     if (_currentSessionId == null) return;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('ai_chat_history_$_currentSessionId', jsonEncode(_messages));
-    
-    final sessionIndex = _allSessions.indexWhere((s) => s['id'] == _currentSessionId);
-    final firstUserMsg = _messages.firstWhere((m) => !m['isAI'], orElse: () => {'text': 'Chat Baru'})['text'];
+    await prefs.setString(
+        'ai_chat_history_$_currentSessionId', jsonEncode(_messages));
+
+    final sessionIndex =
+        _allSessions.indexWhere((s) => s['id'] == _currentSessionId);
+    final firstUserMsg = _messages.firstWhere((m) => !m['isAI'],
+        orElse: () => {'text': 'Chat Baru'})['text'];
     final sessionMeta = {
       'id': _currentSessionId,
-      'title': firstUserMsg.toString().length > 30 ? '${firstUserMsg.toString().substring(0, 30)}...' : firstUserMsg,
+      'title': firstUserMsg.toString().length > 30
+          ? '${firstUserMsg.toString().substring(0, 30)}...'
+          : firstUserMsg,
       'lastUpdate': DateTime.now().toIso8601String(),
     };
 
@@ -1105,25 +1130,43 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
             const SizedBox(height: 12),
             TextField(
               controller: controller,
+              style: const TextStyle(fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'Paste Gemini API Key...',
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.add_circle_rounded,
-                      color: AppColors.primary),
-                  onPressed: () async {
-                    if (controller.text.trim().isNotEmpty) {
-                      await widget.onSaveKey(controller.text);
-                      setDialogState(() {
-                        _localApiKey = controller.text.trim();
-                        controller.clear();
-                      });
-                      setState(() {
-                         _localApiKey = _localApiKey;
-                      });
-                      UIHelper.showSuccessSnackBar(
-                          context, ToneManager.t('snack_api_saved'));
-                    }
-                  },
+                hintStyle: TextStyle(color: AppColors.textHint.withOpacity(0.5)),
+                filled: true,
+                fillColor: AppColors.surfaceVariant.withOpacity(0.3),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+                prefixIcon: const Icon(Icons.vpn_key_outlined, size: 20, color: AppColors.textHint),
+                suffixIcon: Container(
+                  margin: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: IconButton(
+                    padding: EdgeInsets.zero,
+                    icon: const Icon(Icons.add_rounded, color: Colors.white, size: 24),
+                    onPressed: () async {
+                      if (controller.text.trim().isNotEmpty) {
+                        await widget.onSaveKey(controller.text);
+                        setDialogState(() {
+                          _localApiKey = controller.text.trim();
+                          _localAllApiKeys = List.from(widget.allApiKeys);
+                          controller.clear();
+                        });
+                        setState(() {
+                          _localApiKey = _localApiKey;
+                        });
+                        UIHelper.showSuccessSnackBar(
+                            context, ToneManager.t('snack_api_saved'));
+                      }
+                    },
+                  ),
                 ),
               ),
             ),
@@ -1144,61 +1187,89 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                     children: _localAllApiKeys.map((key) {
                       final isActive = _localApiKey == key;
                       return Container(
-                        margin: const EdgeInsets.only(bottom: 8),
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         decoration: BoxDecoration(
                           color: isActive
-                              ? AppColors.primary.withOpacity(0.05)
-                              : AppColors.surfaceVariant.withOpacity(0.5),
-                          borderRadius: BorderRadius.circular(16),
+                              ? AppColors.primary.withOpacity(0.08)
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                               color: isActive
                                   ? AppColors.primary.withOpacity(0.2)
-                                  : Colors.transparent),
+                                  : AppColors.surfaceVariant,
+                              width: 1.5),
+                          boxShadow: isActive ? [
+                            BoxShadow(
+                              color: AppColors.primary.withOpacity(0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4)
+                            )
+                          ] : [],
                         ),
-                        child: ListTile(
+                        child: InkWell(
                           onTap: () {
                             widget.onSaveKey(key);
                             setDialogState(() => _localApiKey = key);
                             setState(() => _localApiKey = key);
                           },
-                          dense: true,
-                          title: Text(
-                            '${key.substring(0, 8)}...${key.substring(key.length - 4)}',
-                            style: TextStyle(
-                                fontWeight: isActive
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                                fontSize: 13),
-                          ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
+                          borderRadius: BorderRadius.circular(16),
+                          child: Row(
                             children: [
-                              _buildStatusIndicator(key, setDialogState),
-                              const SizedBox(width: 4),
-                              if (isActive)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                      color: AppColors.primary,
-                                      borderRadius: BorderRadius.circular(8)),
-                                  child: Text(ToneManager.t('dialog_api_active'),
-                                      style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.bold)),
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: isActive ? AppColors.primary : AppColors.surfaceVariant.withOpacity(0.5),
+                                  shape: BoxShape.circle,
                                 ),
+                                child: Icon(
+                                  isActive ? Icons.check_rounded : Icons.lock_outline_rounded,
+                                  size: 14,
+                                  color: isActive ? Colors.white : AppColors.textHint,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '${key.substring(0, 8)}...${key.substring(key.length - 4)}',
+                                      style: TextStyle(
+                                          fontWeight: isActive
+                                              ? FontWeight.w900
+                                              : FontWeight.w600,
+                                          fontSize: 13,
+                                          color: isActive ? AppColors.primary : AppColors.textPrimary),
+                                    ),
+                                    if (isActive)
+                                      Text(ToneManager.t('dialog_api_active'),
+                                          style: const TextStyle(
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.primary,
+                                              letterSpacing: 0.5)),
+                                  ],
+                                ),
+                              ),
+                              _buildStatusIndicator(key, setDialogState),
+                              const SizedBox(width: 8),
                               IconButton(
-                                icon: const Icon(Icons.delete_outline_rounded,
-                                    size: 18, color: Colors.grey),
+                                icon: const Icon(Icons.delete_sweep_rounded,
+                                    size: 20, color: Colors.grey),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
                                 onPressed: () async {
                                   await widget.onDeleteKey(key);
                                   setDialogState(() {
-                                    if (_localApiKey == key) _localApiKey = null;
+                                    if (_localApiKey == key)
+                                      _localApiKey = null;
                                     _apiStatus.remove(key);
+                                    _localAllApiKeys = List.from(widget.allApiKeys);
                                   });
                                   setState(() {
-                                    if (_localApiKey == key) _localApiKey = null;
+                                    if (_localApiKey == key)
+                                      _localApiKey = null;
                                   });
                                   UIHelper.showErrorSnackBar(context,
                                       ToneManager.t('snack_api_deleted'));
@@ -1213,6 +1284,18 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                 ),
               ),
             ],
+            const SizedBox(height: 16),
+            Center(
+              child: TextButton.icon(
+                onPressed: () {
+                  Navigator.pop(context); // Close dialog first
+                  _showAPITutorial();
+                },
+                icon: const Icon(Icons.help_outline_rounded, size: 14, color: AppColors.textHint),
+                label: const Text('Bingung cara dapetin API Key-nya?',
+                    style: TextStyle(fontSize: 11, color: AppColors.textHint, decoration: TextDecoration.underline)),
+              ),
+            ),
           ],
         );
       }),
@@ -1221,35 +1304,40 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
 
   Widget _buildStatusIndicator(String key, StateSetter setDialogState) {
     final status = _apiStatus[key];
-    if (status == null) {
-      return TextButton(
-        style: TextButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            minimumSize: Size.zero,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap),
-        onPressed: () async {
-          // No need to set null, it's already null
-          final isOk = await _aiService.checkQuota(key);
-          setDialogState(() {
-            _apiStatus[key] = isOk;
-          });
-        },
-        child: Text(ToneManager.t('dialog_api_check'),
-            style: const TextStyle(fontSize: 10, color: AppColors.primary, fontWeight: FontWeight.bold)),
-      );
-    }
     return Container(
-      width: 10,
-      height: 10,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: status ? Colors.green : Colors.red,
-        boxShadow: [
-          BoxShadow(
-              color: (status ? Colors.green : Colors.red).withOpacity(0.4),
-              blurRadius: 4)
-        ],
-      ),
+      width: 50, // Fixed width to prevent shifting when status changes
+      alignment: Alignment.centerRight,
+      child: status == null
+          ? TextButton(
+              style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+              onPressed: () async {
+                final isOk = await _aiService.checkQuota(key);
+                setDialogState(() {
+                  _apiStatus[key] = isOk;
+                });
+              },
+              child: Text(ToneManager.t('dialog_api_check'),
+                  style: const TextStyle(
+                      fontSize: 10,
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.bold)),
+            )
+          : Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: status ? Colors.green : Colors.red,
+                boxShadow: [
+                  BoxShadow(
+                      color: (status ? Colors.green : Colors.red).withOpacity(0.4),
+                      blurRadius: 4)
+                ],
+              ),
+            ),
     );
   }
 
@@ -1264,7 +1352,8 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
       ),
       child: SafeArea(
-        top: false,
+        top: true,
+        bottom: true,
         child: Padding(
           padding: EdgeInsets.only(bottom: bottomInset),
           child: Column(
@@ -1283,25 +1372,81 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                   children: [
                     if (_localApiKey != null && _currentSessionId != null)
                       IconButton(
-                        onPressed: () => setState(() => _currentSessionId = null),
-                        icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+                        onPressed: () =>
+                            setState(() => _currentSessionId = null),
+                        icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                            size: 20),
                         tooltip: 'Pilih Chat',
                       ),
-                    const Icon(Icons.auto_awesome_rounded, color: AppColors.primary),
+                    const Icon(Icons.auto_awesome_rounded,
+                        color: AppColors.primary),
                     const SizedBox(width: 12),
                     Text(_currentSessionId == null ? 'AI Advisor' : 'Chat',
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                        style: const TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold)),
                     const Spacer(),
+                    // Personality Switcher
+                    ValueListenableBuilder<AppTone>(
+                        valueListenable: ToneManager.notifier,
+                        builder: (context, tone, child) {
+                          return PopupMenuButton<AppTone>(
+                            initialValue: tone,
+                            tooltip: 'Pilih Gaya Bicara AI',
+                            offset: const Offset(0, 40),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16)),
+                            onSelected: (AppTone newTone) {
+                              ToneManager.setTone(newTone);
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                    color: AppColors.primary.withOpacity(0.3)),
+                                color: AppColors.primary.withOpacity(0.05),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    tone == AppTone.genZ
+                                        ? '🤘'
+                                        : tone == AppTone.boomer
+                                            ? '👴'
+                                            : tone == AppTone.milenial
+                                                ? '☕'
+                                                : '🤵',
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Icon(Icons.keyboard_arrow_down_rounded,
+                                      size: 14, color: AppColors.primary),
+                                ],
+                              ),
+                            ),
+                            itemBuilder: (context) => [
+                              _buildPopupItem(AppTone.genZ, 'Gen Z', '🤘'),
+                              _buildPopupItem(
+                                  AppTone.milenial, 'Milenial', '☕'),
+                              _buildPopupItem(AppTone.boomer, 'Boomer', '👴'),
+                              _buildPopupItem(AppTone.normal, 'Normal', '🤵'),
+                            ],
+                          );
+                        }),
+                    const SizedBox(width: 8),
                     if (_localApiKey != null) ...[
                       IconButton(
                         onPressed: () {
                           widget.onRemoveKey(); // Clear from prefs
                           setState(() {
-                             _localApiKey = null;
-                             _currentSessionId = null;
+                            _localApiKey = null;
+                            _currentSessionId = null;
                           });
                         },
-                        icon: const Icon(Icons.settings_suggest_rounded, color: AppColors.textHint),
+                        icon: const Icon(Icons.settings_suggest_rounded,
+                            color: AppColors.textHint),
                         tooltip: 'Ganti Mode AI',
                       ),
                     ],
@@ -1313,7 +1458,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
               ),
               const Divider(),
               if (_localApiKey == null)
-                Expanded(child: SingleChildScrollView(child: _buildKeySetup()))
+                Expanded(child: _buildKeySetup())
               else if (_currentSessionId == null)
                 Expanded(child: _buildSessionsList())
               else
@@ -1325,22 +1470,198 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
     );
   }
 
+  void _showAPITutorial() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.7,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(32),
+            topRight: Radius.circular(32),
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2)),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              child: Row(
+                children: [
+                  const Icon(Icons.lightbulb_rounded, color: Colors.amber),
+                  const SizedBox(width: 12),
+                  const Text('Tutorial Dapatkan API Key',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Spacer(),
+                  IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close_rounded)),
+                ],
+              ),
+            ),
+            const Divider(),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(24),
+                children: [
+                  _buildStepItem(
+                    step: '1',
+                    title: 'Buka Google AI Studio',
+                    desc: 'Cari atau kunjungi: aistudio.google.com',
+                  ),
+                  _buildStepItem(
+                    step: '2',
+                    title: 'Login Akun Google',
+                    desc: 'Masuk pakai akun Gmail atau Google Workspace kamu.',
+                  ),
+                  _buildStepItem(
+                    step: '3',
+                    title: 'Klik "Get API Key"',
+                    desc: 'Pilih tombol menu di samping kiri (ikon kunci).',
+                  ),
+                  _buildStepItem(
+                    step: '4',
+                    title: 'Buat API Key Baru',
+                    desc: 'Klik "Create API key in new project".',
+                  ),
+                  _buildStepItem(
+                    step: '5',
+                    title: 'Salin ke MyDuitGweh',
+                    desc: 'Copy kode kuncinya, lalu pilih "Tambah API Key" di sini.',
+                    isLast: true,
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.blue.withOpacity(0.1)),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.info_outline_rounded,
+                            color: Colors.blue, size: 20),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Text(
+                            'API Key Gemini (Free Tier) gratis untuk penggunaan personal.',
+                            style: TextStyle(fontSize: 12, color: Colors.blue),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+  Widget _buildStepItem({
+    required String step,
+    required String title,
+    required String desc,
+    bool isLast = false,
+  }) {
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Column(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: const BoxDecoration(
+                    color: AppColors.primary, shape: BoxShape.circle),
+                alignment: Alignment.center,
+                child: Text(step,
+                    style: const TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.bold)),
+              ),
+              if (!isLast)
+                Expanded(
+                  child: Container(
+                    width: 2,
+                    color: AppColors.primary.withOpacity(0.2),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 16)),
+                  const SizedBox(height: 4),
+                  Text(desc,
+                      style: const TextStyle(
+                          color: AppColors.textSecondary, fontSize: 13)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  PopupMenuItem<AppTone> _buildPopupItem(
+      AppTone tone, String label, String emoji) {
+    return PopupMenuItem(
+      value: tone,
+      child: Row(
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 16)),
+          const SizedBox(width: 12),
+          Text(label,
+              style:
+                  const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+        ],
+      ),
+    );
+  }
+
   Widget _buildKeySetup() {
     return Padding(
-      padding: const EdgeInsets.all(32.0),
+      padding: const EdgeInsets.all(24.0),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.auto_awesome_rounded, size: 64, color: AppColors.primary),
-          const SizedBox(height: 16),
+          const Icon(Icons.auto_awesome_rounded,
+              size: 48, color: AppColors.primary),
+          const SizedBox(height: 12),
           const Text('Pilih Mode AI Advisor',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22)),
-          const SizedBox(height: 8),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+          const SizedBox(height: 4),
           const Text(
               'Gunakan asisten keuangan pintar untuk menganalisis data Anda secara instan.',
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.textSecondary)),
-          const SizedBox(height: 32),
-          
+          const SizedBox(height: 20),
+
           // Opsi Integrated
           _buildOptionCard(
             title: 'AI Bawaan (Terintegrasi)',
@@ -1352,10 +1673,14 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
               widget.onSaveKey(""); // Save to prefs
             },
           ),
-          const SizedBox(height: 16),
-          const Text('ATAU', style: TextStyle(fontSize: 12, color: AppColors.textHint, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-          
+          const SizedBox(height: 8),
+          const Text('ATAU',
+              style: TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textHint,
+                  fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+
           // Opsi Sendiri
           _buildOptionCard(
             title: 'API Key Sendiri',
@@ -1363,6 +1688,13 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
             icon: Icons.key_rounded,
             color: Colors.blueGrey,
             onTap: _showManageAPIDialog,
+          ),
+          const SizedBox(height: 4),
+          TextButton.icon(
+            onPressed: _showAPITutorial,
+            icon: const Icon(Icons.help_outline_rounded, size: 16),
+            label: const Text('Cara dapetin API Key gratis?',
+                style: TextStyle(fontSize: 13, decoration: TextDecoration.underline)),
           ),
         ],
       ),
@@ -1390,7 +1722,8 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
           children: [
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(16)),
+              decoration: BoxDecoration(
+                  color: color, borderRadius: BorderRadius.circular(16)),
               child: Icon(icon, color: Colors.white),
             ),
             const SizedBox(width: 16),
@@ -1398,8 +1731,12 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  Text(subtitle, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                  Text(title,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 16)),
+                  Text(subtitle,
+                      style: TextStyle(
+                          fontSize: 12, color: AppColors.textSecondary)),
                 ],
               ),
             ),
@@ -1427,11 +1764,14 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
               const SizedBox(height: 24),
               Row(
                 children: [
-                   const Text('RIWAYAT PERCAKAPAN', 
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textHint)),
+                  const Text('RIWAYAT PERCAKAPAN',
+                      style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textHint)),
                   const Spacer(),
                   if (_allSessions.isNotEmpty)
-                      TextButton(
+                    TextButton(
                         onPressed: () async {
                           final confirm = await UIHelper.showConfirmDialog(
                             context: context,
@@ -1441,7 +1781,8 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                           if (confirm == true) {
                             final prefs = await SharedPreferences.getInstance();
                             for (var session in _allSessions) {
-                              await prefs.remove('ai_chat_history_${session['id']}');
+                              await prefs
+                                  .remove('ai_chat_history_${session['id']}');
                             }
                             setState(() {
                               _allSessions.clear();
@@ -1462,7 +1803,9 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
         ),
         Expanded(
           child: _allSessions.isEmpty
-              ? const Center(child: Text('Belum ada riwayat', style: TextStyle(color: AppColors.textHint)))
+              ? const Center(
+                  child: Text('Belum ada riwayat',
+                      style: TextStyle(color: AppColors.textHint)))
               : ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   itemCount: _allSessions.length,
@@ -1478,10 +1821,15 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                         onTap: () => _loadSession(session['id']),
                         leading: const CircleAvatar(
                           backgroundColor: Colors.blueGrey,
-                          child: Icon(Icons.chat_bubble_outline_rounded, size: 18, color: Colors.white),
+                          child: Icon(Icons.chat_bubble_outline_rounded,
+                              size: 18, color: Colors.white),
                         ),
-                        title: Text(session['title'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                        subtitle: Text(DateFormat('dd MMM, HH:mm').format(DateTime.parse(session['lastUpdate'])), 
+                        title: Text(session['title'],
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 14)),
+                        subtitle: Text(
+                            DateFormat('dd MMM, HH:mm')
+                                .format(DateTime.parse(session['lastUpdate'])),
                             style: const TextStyle(fontSize: 10)),
                         trailing: IconButton(
                           icon: const Icon(Icons.delete_outline_rounded,
@@ -1525,8 +1873,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                         isAI: m['isAI'],
                       )),
                 ],
-                if (_isLoading)
-                  _buildLoadingBubble(),
+                if (_isLoading) _buildLoadingBubble(),
               ],
             ),
           ),
@@ -1571,19 +1918,17 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
       alignment: isAI ? Alignment.centerLeft : Alignment.centerRight,
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         constraints: BoxConstraints(
           maxWidth: MediaQuery.of(context).size.width * 0.75,
         ),
         decoration: BoxDecoration(
-          color: isAI
-              ? AppColors.surfaceVariant
-              : AppColors.primary,
+          color: isAI ? AppColors.surfaceVariant : AppColors.primary,
           borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(16),
-            topRight: const Radius.circular(16),
-            bottomLeft: Radius.circular(isAI ? 0 : 16),
-            bottomRight: Radius.circular(isAI ? 16 : 0),
+            topLeft: const Radius.circular(20),
+            topRight: const Radius.circular(20),
+            bottomLeft: Radius.circular(isAI ? 0 : 20),
+            bottomRight: Radius.circular(isAI ? 20 : 0),
           ),
         ),
         child: Column(
@@ -1599,14 +1944,15 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
               MarkdownBody(
                 data: text,
                 styleSheet: MarkdownStyleSheet(
-                  p: const TextStyle(fontSize: 14, height: 1.5, color: Colors.black87),
-                  listBullet: const TextStyle(fontSize: 14, color: AppColors.primary),
+                  p: const TextStyle(
+                      fontSize: 14, height: 1.5, color: Colors.black87),
+                  listBullet:
+                      const TextStyle(fontSize: 14, color: AppColors.primary),
                 ),
               )
             else
               Text(text,
-                  style: const TextStyle(
-                      height: 1.4, color: Colors.white)),
+                  style: const TextStyle(height: 1.4, color: Colors.white)),
           ],
         ),
       ),
@@ -1648,10 +1994,9 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
         children: [
           Expanded(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
                 color: AppColors.background,
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(28),
               ),
               child: TextField(
                 controller: _queryController,
@@ -1659,7 +2004,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                     hintText: 'Tanyakan sesuatu...',
                     border: InputBorder.none,
                     filled: false,
-                    contentPadding: EdgeInsets.symmetric(vertical: 12)),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16)),
                 onSubmitted: _handleQuery,
               ),
             ),
@@ -1672,7 +2017,8 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
             ),
             child: IconButton(
               onPressed: () => _handleQuery(_queryController.text),
-              icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+              icon:
+                  const Icon(Icons.send_rounded, color: Colors.white, size: 20),
             ),
           ),
         ],
@@ -1682,7 +2028,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
 
   Future<void> _handleQuery(String query) async {
     if (query.trim().isEmpty) return;
-    
+
     setState(() {
       if (!_messages.any((m) => m['text'] == query && m['isAI'] == false)) {
         _messages.add({'text': query, 'isAI': false});
@@ -1695,11 +2041,12 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
 
     bool success = false;
     int retryCount = 0;
-    while (!success && retryCount < (widget.allApiKeys.isEmpty ? 1 : widget.allApiKeys.length)) {
+    while (!success &&
+        retryCount <
+            (widget.allApiKeys.isEmpty ? 1 : widget.allApiKeys.length)) {
       try {
-        final wallets = await widget.firestoreService
-            .getWalletsStream(widget.uid)
-            .first;
+        final wallets =
+            await widget.firestoreService.getWalletsStream(widget.uid).first;
         final walletIds = wallets.map((w) => w.id).toList();
         final txns = await widget.firestoreService
             .getFilteredTransactionsStream(
@@ -1721,6 +2068,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
             transactions: txns,
             userQuery: query,
             dateRange: widget.selectedDateRange,
+            tone: ToneManager.notifier.value,
             history: history);
 
         setState(() {
@@ -1735,7 +2083,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
           if (_localApiKey != null) {
             _apiStatus[_localApiKey!] = false;
           }
-          
+
           // Find next available key
           String? nextKey;
           for (var k in widget.allApiKeys) {
@@ -1749,7 +2097,8 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
             debugPrint('--- SWITCHING API KEY TO: $nextKey ---');
             _localApiKey = nextKey;
             retryCount++;
-            UIHelper.showErrorSnackBar(context, "Key ini limit! Otomatis nyobain key cadangan ya...");
+            UIHelper.showErrorSnackBar(
+                context, "Key ini limit! Otomatis nyobain key cadangan ya...");
             continue; // RETRY with new key
           }
 
@@ -1762,7 +2111,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
           });
           break;
         }
-        
+
         setState(() {
           _messages.add({
             'text': 'Waduh error: $e',

@@ -1,6 +1,7 @@
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter/material.dart';
 import '../models/transaction_model.dart';
+import '../utils/tone_dictionary.dart';
 import 'package:intl/intl.dart';
 
 class AIService {
@@ -28,6 +29,7 @@ class AIService {
     required List<TransactionModel> transactions,
     required String userQuery,
     required DateTimeRange dateRange,
+    AppTone tone = AppTone.normal,
     List<Content>? history,
   }) async {
     final effectiveApiKey = (apiKey == null || apiKey.trim().isEmpty) 
@@ -35,9 +37,28 @@ class AIService {
         : apiKey.trim();
         
     final summary = _generateDataSummary(transactions, dateRange);
+
+    String toneInstruction = "";
+    switch (tone) {
+      case AppTone.genZ:
+        toneInstruction = "Pake gaya bahasa Gen-Z yang asik, banyak slang (Luh, Gue, Cuan, Boncos, Spill), sering pake emoji, dan agak frontal tapi jujur.";
+        break;
+      case AppTone.milenial:
+        toneInstruction = "Pake gaya bahasa Milenial yang santai, campur dikit bahasa Inggris (lifestyle, cashflow, struggle), fokus ke keseimbangan hidup dan 'healing' keuangan.";
+        break;
+      case AppTone.boomer:
+        toneInstruction = "Pake gaya bahasa orang tua yang bijak dan sangat sopan. Panggil pengguna 'Nak' atau 'Ananda', sering ucapkan 'Alhamdulillah' atau 'MasyaAllah', dan fokus ke penghematan demi masa depan.";
+        break;
+      default:
+        toneInstruction = "Pake bahasa Indonesia yang formal tapi ramah dan profesional.";
+    }
+
     final systemPrompt = '''
 Kamu adalah "MyDuitGweh AI", asisten keuangan pintar yang profesional, ramah, dan solutif.
 Tugasmu adalah menganalisis data keuangan pengguna dan memberikan saran yang sangat spesifik.
+
+KEPRIBADIAN KAMU:
+$toneInstruction
 
 KONTEKS DATA PENGGUNA SAAT INI:
 Periode: ${DateFormat('dd MMM yyyy').format(dateRange.start)} - ${DateFormat('dd MMM yyyy').format(dateRange.end)}

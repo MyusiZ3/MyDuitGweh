@@ -13,7 +13,7 @@ class AboutScreen extends StatelessWidget {
         title: const Text(
           'About App',
           style: TextStyle(
-            fontWeight: FontWeight.w700, 
+            fontWeight: FontWeight.w700,
             letterSpacing: -0.5,
             color: Color(0xFF1C1C1E),
           ),
@@ -35,95 +35,97 @@ class AboutScreen extends StatelessWidget {
             IntrinsicHeight(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  flex: 5,
-                  child: _buildBentoCard(
-                    color: AppColors.primary,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(16),
+                children: [
+                  Expanded(
+                    flex: 5,
+                    child: _buildBentoCard(
+                      color: AppColors.primary,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: const Icon(CupertinoIcons.creditcard_fill,
+                                color: Colors.white, size: 32),
                           ),
-                          child: const Icon(CupertinoIcons.creditcard_fill, color: Colors.white, size: 32),
-                        ),
-                        const SizedBox(height: 24),
-                        const FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            'MyDuitGweh',
-                            style: TextStyle(
-                              fontSize: 24, 
-                              fontWeight: FontWeight.w800, 
-                              color: Colors.white,
-                              letterSpacing: -0.5,
+                          const SizedBox(height: 24),
+                          const FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              'MyDuitGweh',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                letterSpacing: -0.5,
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Smart Tracker',
-                          style: TextStyle(
-                            fontSize: 13, 
-                            fontWeight: FontWeight.w500, 
-                            color: Colors.white70,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  flex: 4,
-                  child: _buildBentoCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: AppColors.expense.withOpacity(0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(CupertinoIcons.rocket_fill, color: AppColors.expense, size: 28),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Version',
-                          style: TextStyle(
-                            fontSize: 13, 
-                            fontWeight: FontWeight.w600, 
-                            color: AppColors.textHint,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        const FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            '1.0.0',
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Smart Tracker',
                             style: TextStyle(
-                              fontSize: 22, 
-                              fontWeight: FontWeight.w800, 
-                              color: Color(0xFF1C1C1E),
-                              letterSpacing: -0.5,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white70,
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 4,
+                    child: _buildBentoCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppColors.expense.withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(CupertinoIcons.rocket_fill,
+                                color: AppColors.expense, size: 28),
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Version',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textHint,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          const FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              '1.0.0',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF1C1C1E),
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-            
+            const SizedBox(height: 16),
+
             // MIDDLE ROW: Description / Mission
             _buildBentoCard(
               child: const Column(
@@ -131,13 +133,14 @@ class AboutScreen extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Icon(CupertinoIcons.sparkles, color: Colors.amber, size: 20),
+                      Icon(CupertinoIcons.sparkles,
+                          color: Colors.amber, size: 20),
                       SizedBox(width: 8),
                       Text(
                         'Misi Kami',
                         style: TextStyle(
-                          fontSize: 15, 
-                          fontWeight: FontWeight.w700, 
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
                           color: Color(0xFF1C1C1E),
                         ),
                       ),
@@ -145,10 +148,10 @@ class AboutScreen extends StatelessWidget {
                   ),
                   SizedBox(height: 12),
                   Text(
-                    'Solusi pencatatan keuangan modern yang membantu Anda mengelola pemasukan, pengeluaran, dan dompet kolaborasi bersama teman atau keluarga dengan super mudah dan transparan.',
+                    'Jujur gatau orang gua cuma gabut doang :3',
                     style: TextStyle(
-                      fontSize: 15, 
-                      height: 1.5, 
+                      fontSize: 15,
+                      height: 1.5,
                       fontWeight: FontWeight.w400,
                       color: Color(0xFF3A3A3C),
                     ),
@@ -162,86 +165,89 @@ class AboutScreen extends StatelessWidget {
             IntrinsicHeight(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: _buildBentoCard(
-                    child: const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(CupertinoIcons.person_2_fill, color: Color(0xFF007AFF), size: 28),
-                        SizedBox(height: 20),
-                        Text(
-                          'Dev / Owner',
-                          style: TextStyle(
-                            fontSize: 12, 
-                            fontWeight: FontWeight.w500, 
-                            color: AppColors.textHint,
-                          ),
-                        ),
-                        SizedBox(height: 2),
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            'Muhamad Sidik',
+                children: [
+                  Expanded(
+                    child: _buildBentoCard(
+                      child: const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(CupertinoIcons.person_2_fill,
+                              color: Color(0xFF007AFF), size: 28),
+                          SizedBox(height: 20),
+                          Text(
+                            'Dev / Owner',
                             style: TextStyle(
-                              fontSize: 15, 
-                              fontWeight: FontWeight.w700, 
-                              color: Color(0xFF1C1C1E),
-                              letterSpacing: -0.3,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textHint,
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildBentoCard(
-                    child: const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(CupertinoIcons.device_phone_portrait, color: Colors.teal, size: 28),
-                        SizedBox(height: 20),
-                        Text(
-                          'Ditenagai oleh',
-                          style: TextStyle(
-                            fontSize: 12, 
-                            fontWeight: FontWeight.w500, 
-                            color: AppColors.textHint,
-                          ),
-                        ),
-                        SizedBox(height: 2),
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            'Flutter & Firebase',
-                            style: TextStyle(
-                              fontSize: 15, 
-                              fontWeight: FontWeight.w700, 
-                              color: Color(0xFF1C1C1E),
-                              letterSpacing: -0.3,
+                          SizedBox(height: 2),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              'Muhamad Sidik',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF1C1C1E),
+                                letterSpacing: -0.3,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildBentoCard(
+                      child: const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(CupertinoIcons.device_phone_portrait,
+                              color: Colors.teal, size: 28),
+                          SizedBox(height: 20),
+                          Text(
+                            'Ditenagai oleh',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textHint,
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              'Flutter & Firebase',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF1C1C1E),
+                                letterSpacing: -0.3,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 32),
-          const Row(
+            const SizedBox(height: 32),
+            const Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(CupertinoIcons.heart_fill, color: Colors.redAccent, size: 16),
+                Icon(CupertinoIcons.heart_fill,
+                    color: Colors.redAccent, size: 16),
                 SizedBox(width: 6),
                 Text(
-                  'Made with Love in 2026',
+                  'Vibo Codingo 2026',
                   style: TextStyle(
-                    fontSize: 13, 
-                    fontWeight: FontWeight.w600, 
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
                     color: AppColors.textHint,
                   ),
                 ),
@@ -262,7 +268,8 @@ class AboutScreen extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: color ?? Colors.white,
-        borderRadius: BorderRadius.circular(28), // iOS style large border radius
+        borderRadius:
+            BorderRadius.circular(28), // iOS style large border radius
         border: Border.all(color: Colors.black.withOpacity(0.02), width: 1.5),
         boxShadow: [
           BoxShadow(
