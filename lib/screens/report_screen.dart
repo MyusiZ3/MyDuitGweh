@@ -1622,9 +1622,9 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                     const Icon(Icons.auto_awesome_rounded,
                         color: AppColors.primary),
                     const SizedBox(width: 12),
-                    Text(_currentSessionId == null ? 'AI Advisor' : 'Chat',
+                    Text(_currentSessionId == null ? 'AI Dashboard' : 'Chat',
                         style: const TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold)),
+                            fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
                     const Spacer(),
                     const SizedBox(width: 8),
                     if (_localApiKey != null) ...[
@@ -1810,7 +1810,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
               if (_localApiKey == null)
                 Expanded(child: _buildKeySetup())
               else if (_currentSessionId == null)
-                Expanded(child: _buildSessionsList())
+                Expanded(child: _buildDashboard())
               else
                 Expanded(child: _buildChatInterface()),
             ],
@@ -1992,13 +1992,13 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
               size: 48, color: AppColors.primary),
           const SizedBox(height: 12),
           const Text('Pilih Mode AI Advisor',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
-          const SizedBox(height: 4),
+              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, letterSpacing: -0.5)),
+          const SizedBox(height: 8),
           const Text(
               'Gunakan asisten keuangan pintar untuk menganalisis data Anda secara instan.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textSecondary)),
-          const SizedBox(height: 20),
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+          const SizedBox(height: 32),
 
           // Opsi Integrated
           _buildOptionCard(
@@ -2011,13 +2011,14 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
               widget.onSaveKey(""); // Save to prefs
             },
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           const Text('ATAU',
               style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 10,
                   color: AppColors.textHint,
-                  fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 2)),
+          const SizedBox(height: 12),
 
           // Opsi Sendiri
           _buildOptionCard(
@@ -2027,17 +2028,303 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
             color: Colors.blueGrey,
             onTap: _showManageAPIDialog,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 16),
           TextButton.icon(
             onPressed: _showAPITutorial,
-            icon: const Icon(Icons.help_outline_rounded, size: 16),
+            icon: const Icon(Icons.help_outline_rounded, size: 14),
             label: const Text('Cara dapetin API Key gratis?',
                 style: TextStyle(
-                    fontSize: 13, decoration: TextDecoration.underline)),
+                    fontSize: 12, decoration: TextDecoration.underline, color: AppColors.textHint)),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildDashboard() {
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      children: [
+        _buildHealthScoreCard(),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(child: _buildQuotaPreviewCard()),
+            const SizedBox(width: 12),
+            Expanded(child: _buildNewChatQuickCard()),
+          ],
+        ),
+        const SizedBox(height: 24),
+        Row(
+          children: [
+            Text('RIWAYAT PERCAKAPAN',
+                style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.2,
+                    color: AppColors.textHint.withOpacity(0.8))),
+            const Spacer(),
+            if (_allSessions.isNotEmpty)
+              TextButton(
+                  onPressed: _showClearAllConfirm,
+                  child: const Text('Hapus Semua',
+                      style: TextStyle(fontSize: 11, color: Colors.redAccent, fontWeight: FontWeight.bold))),
+          ],
+        ),
+        const SizedBox(height: 8),
+        _allSessions.isEmpty
+            ? _buildEmptySessions()
+            : Column(
+                children: _allSessions.map((session) => _buildSessionItem(session)).toList(),
+              ),
+        const SizedBox(height: 32),
+      ],
+    );
+  }
+
+  Widget _buildHealthScoreCard() {
+    // Dummy logic for now, should be connected to AI analysis result
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF6A11CB).withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.security_rounded, color: Colors.white, size: 14),
+                    SizedBox(width: 6),
+                    Text('AI Health Diagnose',
+                        style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
+              const Text('Update: Tadi',
+                  style: TextStyle(color: Colors.white70, fontSize: 10)),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('85',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 48,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -2)),
+                  Text('Sangat Sehat',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold)),
+                ],
+              ),
+              const Spacer(),
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white24, width: 8),
+                ),
+                child: const Center(
+                  child: Icon(Icons.favorite_rounded, color: Colors.white, size: 32),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'Analisis Archen: Pengeluaranmu bulan ini sangat terkontrol. Pertahankan tabungan minimal 20% ya!',
+            style: TextStyle(color: Colors.white, fontSize: 12, height: 1.4),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuotaPreviewCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.grey.shade100),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.bolt_rounded, color: Colors.orange, size: 20),
+          const SizedBox(height: 12),
+          const Text('AI Quota',
+              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12)),
+          const SizedBox(height: 4),
+          const Text('8 / 10 limit',
+              style: TextStyle(color: AppColors.textHint, fontSize: 10)),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: 0.8,
+              backgroundColor: Colors.orange.withOpacity(0.1),
+              valueColor: const AlwaysStoppedAnimation<Color>(Colors.orange),
+              minHeight: 4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNewChatQuickCard() {
+    return InkWell(
+      onTap: _createNewChat,
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.primary,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withOpacity(0.2),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.add_comment_rounded, color: Colors.white, size: 20),
+            const SizedBox(height: 12),
+            const Text('Tanya Archen',
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: Colors.white)),
+            const SizedBox(height: 4),
+            const Text('Mulai chat baru',
+                style: TextStyle(color: Colors.white70, fontSize: 10)),
+            const SizedBox(height: 12),
+            Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 14),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptySessions() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 40),
+      alignment: Alignment.center,
+      child: Column(
+        children: [
+          Icon(Icons.chat_bubble_outline_rounded, size: 48, color: Colors.grey.shade200),
+          const SizedBox(height: 16),
+          Text('Belum ada riwayat percakapan', 
+              style: TextStyle(color: AppColors.textHint, fontSize: 12)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSessionItem(Map<String, dynamic> session) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade50),
+      ),
+      child: ListTile(
+        onTap: () => _loadSession(session['id']),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        leading: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.chat_rounded, size: 18, color: AppColors.primary),
+        ),
+        title: Text(session['title'],
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+        subtitle: Text(
+            DateFormat('dd MMM, HH:mm')
+                .format(DateTime.parse(session['lastUpdate'])),
+            style: const TextStyle(fontSize: 10, color: AppColors.textHint)),
+        trailing: IconButton(
+          icon: const Icon(Icons.delete_outline_rounded, size: 20, color: Colors.grey),
+          onPressed: () => _showDeleteConfirm(session['id']),
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteConfirm(String sessionId) async {
+    final confirm = await UIHelper.showConfirmDialog(
+      context: context,
+      title: ToneManager.t('dialog_del_chat_title'),
+      message: ToneManager.t('dialog_del_chat_msg'),
+    );
+    if (confirm == true) {
+      _deleteSession(sessionId);
+    }
+  }
+
+  void _showClearAllConfirm() async {
+    final confirm = await UIHelper.showConfirmDialog(
+      context: context,
+      title: ToneManager.t('dialog_del_all_chat_title'),
+      message: ToneManager.t('dialog_del_all_chat_msg'),
+    );
+    if (confirm == true) {
+      final prefs = await SharedPreferences.getInstance();
+      for (var session in _allSessions) {
+        await prefs.remove('ai_chat_history_${session['id']}');
+      }
+      setState(() {
+        _allSessions.clear();
+        if (_currentSessionId != null) {
+          _currentSessionId = null;
+          _messages = [];
+        }
+      });
+      _saveSessionsList();
+    }
   }
 
   Widget _buildOptionCard({
@@ -2055,7 +2342,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
         decoration: BoxDecoration(
           color: color.withOpacity(0.08),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: color.withOpacity(0.2)),
+          border: Border.all(color: color.withOpacity(0.1)),
         ),
         child: Row(
           children: [
@@ -2063,7 +2350,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                   color: color, borderRadius: BorderRadius.circular(16)),
-              child: Icon(icon, color: Colors.white),
+              child: Icon(icon, color: Colors.white, size: 20),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -2072,124 +2359,17 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                 children: [
                   Text(title,
                       style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 16)),
+                          fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: -0.5)),
                   Text(subtitle,
                       style: TextStyle(
-                          fontSize: 12, color: AppColors.textSecondary)),
+                          fontSize: 11, color: AppColors.textSecondary)),
                 ],
               ),
             ),
-            Icon(Icons.chevron_right_rounded, color: color),
+            Icon(Icons.chevron_right_rounded, color: color.withOpacity(0.5)),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildSessionsList() {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            children: [
-              _buildOptionCard(
-                title: 'Percakapan Baru',
-                subtitle: 'Mulai analisis keuangan baru.',
-                icon: Icons.add_comment_rounded,
-                color: AppColors.primary,
-                onTap: _createNewChat,
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  const Text('RIWAYAT PERCAKAPAN',
-                      style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textHint)),
-                  const Spacer(),
-                  if (_allSessions.isNotEmpty)
-                    TextButton(
-                        onPressed: () async {
-                          final confirm = await UIHelper.showConfirmDialog(
-                            context: context,
-                            title: ToneManager.t('dialog_del_all_chat_title'),
-                            message: ToneManager.t('dialog_del_all_chat_msg'),
-                          );
-                          if (confirm == true) {
-                            final prefs = await SharedPreferences.getInstance();
-                            for (var session in _allSessions) {
-                              await prefs
-                                  .remove('ai_chat_history_${session['id']}');
-                            }
-                            setState(() {
-                              _allSessions.clear();
-                              if (_currentSessionId != null) {
-                                _currentSessionId = null;
-                                _messages = [];
-                              }
-                            });
-                            _saveSessionsList();
-                          }
-                        },
-                        child: const Text('Hapus Semua',
-                            style: TextStyle(fontSize: 12, color: Colors.red))),
-                ],
-              ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: _allSessions.isEmpty
-              ? const Center(
-                  child: Text('Belum ada riwayat',
-                      style: TextStyle(color: AppColors.textHint)))
-              : ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  itemCount: _allSessions.length,
-                  itemBuilder: (ctx, i) {
-                    final session = _allSessions[i];
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceVariant.withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: ListTile(
-                        onTap: () => _loadSession(session['id']),
-                        leading: const CircleAvatar(
-                          backgroundColor: Colors.blueGrey,
-                          child: Icon(Icons.chat_bubble_outline_rounded,
-                              size: 18, color: Colors.white),
-                        ),
-                        title: Text(session['title'],
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 14)),
-                        subtitle: Text(
-                            DateFormat('dd MMM, HH:mm')
-                                .format(DateTime.parse(session['lastUpdate'])),
-                            style: const TextStyle(fontSize: 10)),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete_outline_rounded,
-                              size: 20, color: Colors.grey),
-                          onPressed: () async {
-                            final confirm = await UIHelper.showConfirmDialog(
-                              context: context,
-                              title: ToneManager.t('dialog_del_chat_title'),
-                              message: ToneManager.t('dialog_del_chat_msg'),
-                            );
-                            if (confirm == true) {
-                              _deleteSession(session['id']);
-                            }
-                          },
-                        ),
-                      ),
-                    );
-                  },
-                ),
-        ),
-      ],
     );
   }
 

@@ -17,11 +17,16 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
   final _authService = AuthService();
   bool _isSuperAdmin = false;
   bool _maintenanceMode = false;
+  bool _advisorEnabled = true;
+  String _advisorProvider = 'gemini';
   final TextEditingController _minVersionController = TextEditingController();
   final TextEditingController _latestVersionController = TextEditingController();
   final TextEditingController _downloadUrlController = TextEditingController();
   final TextEditingController _maintenanceMsgController =
       TextEditingController();
+  final TextEditingController _advisorApiKeyController = TextEditingController();
+  final TextEditingController _advisorMinTransController = TextEditingController();
+  final TextEditingController _advisorCooldownController = TextEditingController();
   DateTime? _startTime;
   DateTime? _endTime;
   bool _isSaving = false;
@@ -31,6 +36,18 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
     super.initState();
     _loadConfig();
     _checkSuperAdmin();
+  }
+
+  @override
+  void dispose() {
+    _minVersionController.dispose();
+    _latestVersionController.dispose();
+    _downloadUrlController.dispose();
+    _maintenanceMsgController.dispose();
+    _advisorApiKeyController.dispose();
+    _advisorMinTransController.dispose();
+    _advisorCooldownController.dispose();
+    super.dispose();
   }
 
   Future<void> _checkSuperAdmin() async {
@@ -52,6 +69,15 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
           _minVersionController.text = data['minVersion'] ?? '1.0.0';
           _latestVersionController.text = data['latestVersion'] ?? '1.0.0';
           _downloadUrlController.text = data['downloadUrl'] ?? '';
+
+          // AI Advisor Config
+          _advisorEnabled = data['is_advisor_enabled'] ?? true;
+          _advisorProvider = data['advisor_provider'] ?? 'gemini';
+          _advisorApiKeyController.text = data['advisor_api_key'] ?? '';
+          _advisorMinTransController.text =
+              (data['advisor_min_transactions'] ?? 5).toString();
+          _advisorCooldownController.text =
+              (data['advisor_cooldown_hours'] ?? 24).toString();
           _maintenanceMsgController.text = data['maintenanceMessage'] ??
               'Aplikasi sedang dalam pemeliharaan rutin.';
           _startTime = (data['maintenanceStartTime'] as Timestamp?)?.toDate();
@@ -113,6 +139,14 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
           _startTime != null ? Timestamp.fromDate(_startTime!) : null,
       'maintenanceEndTime':
           _endTime != null ? Timestamp.fromDate(_endTime!) : null,
+      // Advisor Config
+      'is_advisor_enabled': _advisorEnabled,
+      'advisor_provider': _advisorProvider,
+      'advisor_api_key': _advisorApiKeyController.text,
+      'advisor_min_transactions':
+          int.tryParse(_advisorMinTransController.text) ?? 5,
+      'advisor_cooldown_hours':
+          int.tryParse(_advisorCooldownController.text) ?? 24,
       'lastUpdated': FieldValue.serverTimestamp(),
     };
 
@@ -389,8 +423,11 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: const Text('App Configuration'),
+        title: const Text('Global Settings'),
         centerTitle: true,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        foregroundColor: Colors.black,
         actions: [
           IconButton(
             onPressed: _showTutorialDialog,
@@ -400,178 +437,263 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(
-            24, 24, 24, MediaQuery.of(context).padding.bottom + 100),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('System Parameters',
-                style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -1)),
-            const SizedBox(height: 24),
-            _buildConfigTile(),
-            const SizedBox(height: 32),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Change History',
-                    style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.5)),
-                if (_isSuperAdmin)
-                  TextButton.icon(
-                    onPressed: () => _clearHistory(),
-                    icon: const Icon(Icons.delete_sweep_rounded,
-                        size: 16, color: Colors.redAccent),
-                    label: const Text('Clear All',
-                        style: TextStyle(
-                            color: Colors.redAccent,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold)),
+            _buildSectionHeader(
+                'System & Utility', Icons.settings_suggest_rounded, Colors.orange),
+            _buildPremiumCard(
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      const Expanded(
+                          child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                            Text('Status Maintenance',
+                                style: TextStyle(fontWeight: FontWeight.bold)),
+                            Text('Mode perbaikan sistem global.',
+                                style: TextStyle(
+                                    fontSize: 10, color: Colors.grey)),
+                          ])),
+                      Switch.adaptive(
+                          value: _maintenanceMode,
+                          activeColor: Colors.orange,
+                          onChanged: (v) =>
+                              setState(() => _maintenanceMode = v)),
+                    ],
                   ),
-              ],
+                  const Divider(height: 32),
+                  TextField(
+                    controller: _maintenanceMsgController,
+                    maxLines: 2,
+                    decoration: const InputDecoration(
+                      labelText: 'Pesan Maintenance',
+                      prefixIcon:
+                          Icon(Icons.message_rounded, color: Colors.orange),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildTimePicker(
+                          label: 'Mulai',
+                          value: _startTime,
+                          onTap: () => _selectDateTime(true),
+                          onClear: () => setState(() => _startTime = null),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _buildTimePicker(
+                          label: 'Selesai',
+                          value: _endTime,
+                          onTap: () => _selectDateTime(false),
+                          onClear: () => setState(() => _endTime = null),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
+            const SizedBox(height: 32),
+            _buildSectionHeader(
+                'Versioning & Update', Icons.system_update_rounded, Colors.blue),
+            _buildPremiumCard(
+              child: Column(
+                children: [
+                  TextField(
+                    controller: _minVersionController,
+                    decoration: const InputDecoration(
+                      labelText: 'Force Update vMin',
+                      prefixIcon:
+                          Icon(Icons.verified_rounded, color: Colors.blue),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _latestVersionController,
+                    decoration: const InputDecoration(
+                      labelText: 'Latest Version',
+                      prefixIcon:
+                          Icon(Icons.new_releases_rounded, color: Colors.blue),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _downloadUrlController,
+                    decoration: const InputDecoration(
+                      labelText: 'Download URL (Direct)',
+                      prefixIcon: Icon(Icons.link_rounded, color: Colors.blue),
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _downloadUrlController.text =
+                              'https://myduitgweh.web.app/app-release.apk';
+                        });
+                      },
+                      icon: const Icon(Icons.cloud_done_rounded, size: 14),
+                      label: const Text('Use Firebase Hosting URL',
+                          style: TextStyle(fontSize: 10)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+            _buildSectionHeader(
+                'AI Financial Advisor', Icons.psychology_outlined, Colors.purple),
+            _buildPremiumCard(
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text('Aktifkan Engine Advisor',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                      Switch.adaptive(
+                        value: _advisorEnabled,
+                        activeColor: Colors.purple,
+                        onChanged: (v) => setState(() => _advisorEnabled = v),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: _advisorProvider,
+                    decoration: const InputDecoration(
+                      labelText: 'Engine Provider',
+                      prefixIcon:
+                          Icon(Icons.hub_outlined, color: Colors.purple),
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                          value: 'gemini', child: Text('Google Gemini ♊')),
+                      DropdownMenuItem(
+                          value: 'groq', child: Text('Groq AI 🏎️')),
+                    ],
+                    onChanged: (v) => setState(() => _advisorProvider = v!),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _advisorApiKeyController,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Dedicated API Key',
+                      prefixIcon:
+                          Icon(Icons.vpn_key_outlined, color: Colors.purple),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _advisorMinTransController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: 'Trigger (Trans)',
+                            helperText: 'Min. transaksi baru',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextField(
+                          controller: _advisorCooldownController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: 'Cooldown (Jam)',
+                            helperText: 'Lama jeda analisa',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 40),
+            SizedBox(
+              width: double.infinity,
+              height: 55,
+              child: ElevatedButton.icon(
+                onPressed: _isSaving ? null : _saveConfig,
+                icon: _isSaving
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2))
+                    : const Icon(Icons.save_rounded),
+                label: Text(_isSaving ? 'Saving...' : 'Publish Configurations'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                  elevation: 5,
+                ),
+              ),
+            ),
+            const SizedBox(height: 32),
+            const Divider(),
+            const SizedBox(height: 16),
+            const Text('Change History',
+                style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.5)),
             const SizedBox(height: 16),
             _buildHistoryList(),
+            const SizedBox(height: 100),
           ],
-        ),
-      ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-          child: SizedBox(
-            height: 60,
-            child: ElevatedButton(
-              onPressed: _isSaving ? null : _saveConfig,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20)),
-              ),
-              child: _isSaving
-                  ? const SizedBox(
-                      height: 24,
-                      width: 24,
-                      child: CircularProgressIndicator(
-                          color: Colors.white, strokeWidth: 3))
-                  : const Text('SAVE CONFIG',
-                      style: TextStyle(
-                          fontWeight: FontWeight.w900, letterSpacing: 1)),
-            ),
-          ),
         ),
       ),
     );
   }
 
-  Widget _buildConfigTile() {
+  Widget _buildSectionHeader(String title, IconData icon, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 12),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(width: 8),
+          Text(title,
+              style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.5)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPremiumCard({required Widget child}) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-          color: AppColors.surfaceVariant.withOpacity(0.5),
-          borderRadius: BorderRadius.circular(24)),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              const Expanded(
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                    Text('Status Maintenance',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    Text('Aktifkan manual atau biarkan jadwal berjalan.',
-                        style: TextStyle(fontSize: 10, color: Colors.grey)),
-                  ])),
-              Switch.adaptive(
-                  value: _maintenanceMode,
-                  activeColor: Colors.redAccent,
-                  onChanged: (v) => setState(() => _maintenanceMode = v)),
-            ],
-          ),
-          const Divider(height: 32),
-          TextField(
-            controller: _maintenanceMsgController,
-            maxLines: 2,
-            decoration: const InputDecoration(
-              labelText: 'Pesan Maintenance',
-              hintText: 'Misal: Maaf ya, lagi benerin pipa bocor...',
-              prefixIcon: Icon(Icons.message_rounded),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildTimePicker(
-                  label: 'Start Schedule',
-                  value: _startTime,
-                  onTap: () => _selectDateTime(true),
-                  onClear: () => setState(() => _startTime = null),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildTimePicker(
-                  label: 'End Schedule',
-                  value: _endTime,
-                  onTap: () => _selectDateTime(false),
-                  onClear: () => setState(() => _endTime = null),
-                ),
-              ),
-            ],
-          ),
-          const Divider(height: 32),
-          TextField(
-            controller: _minVersionController,
-            decoration: const InputDecoration(
-              labelText: 'Update Paksa vMin',
-              hintText: '1.0.0',
-              prefixIcon: Icon(Icons.verified_rounded),
-            ),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _latestVersionController,
-            decoration: const InputDecoration(
-              labelText: 'Versi Terbaru (Latest)',
-              hintText: '1.0.1',
-              prefixIcon: Icon(Icons.new_releases_rounded),
-            ),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _downloadUrlController,
-            decoration: const InputDecoration(
-              labelText: 'Download URL (Direct APK Link)',
-              hintText: 'https://github.com/.../release.apk',
-              prefixIcon: Icon(Icons.link_rounded),
-            ),
-          ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              onPressed: () {
-                setState(() {
-                  _downloadUrlController.text =
-                      'https://myduitgweh.web.app/app-release.apk';
-                });
-              },
-              icon: const Icon(Icons.cloud_done_rounded, size: 14),
-              label: const Text('Gunakan Firebase Hosting URL',
-                  style: TextStyle(fontSize: 10)),
-              style: TextButton.styleFrom(
-                padding: EdgeInsets.zero,
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-            ),
-          ),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 15,
+              offset: const Offset(0, 8)),
         ],
+        border: Border.all(color: Colors.black.withOpacity(0.04)),
       ),
+      child: child,
     );
   }
 
@@ -585,47 +707,49 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: const Color(0xFFF8F9FA),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.black.withOpacity(0.05)),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey)),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                Icon(Icons.access_time_rounded,
-                    size: 14,
-                    color: value != null ? AppColors.primary : Colors.grey),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    value != null
-                        ? DateFormat('dd MMM, HH:mm').format(value)
-                        : '--:--',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: value != null ? Colors.black : Colors.grey,
-                    ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label,
+                      style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(Icons.access_time_rounded,
+                          size: 14,
+                          color:
+                              value != null ? AppColors.primary : Colors.grey),
+                      const SizedBox(width: 4),
+                      Text(
+                        value != null
+                            ? DateFormat('dd MMM, HH:mm').format(value)
+                            : '--:--',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: value != null ? Colors.black : Colors.grey,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                if (value != null)
-                  GestureDetector(
-                    onTap: onClear,
-                    child: const Icon(Icons.close_rounded,
-                        size: 14, color: Colors.redAccent),
-                  ),
-              ],
+                ],
+              ),
             ),
+            if (value != null)
+              GestureDetector(
+                onTap: onClear,
+                child: const Icon(Icons.close_rounded,
+                    size: 16, color: Colors.redAccent),
+              ),
           ],
         ),
       ),
