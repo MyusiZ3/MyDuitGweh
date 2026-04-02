@@ -5,7 +5,7 @@ import '../utils/tone_dictionary.dart';
 import 'package:intl/intl.dart';
 
 class AIService {
-  static const String _modelName = 'gemini-3-flash-preview';
+  static const String _modelName = 'gemini-1.5-flash-latest';
   static final List<String> _integratedApiKeys = [
     'AIzaSyANErZPMI1PezicLl5lwM8LRdsuSpOiKQY',
     'AIzaSyAOt1e72ijkbkaA73wefa_dCX9YqguxOvo',
@@ -14,16 +14,39 @@ class AIService {
 
   Future<bool> checkQuota(String apiKey) async {
     try {
-      final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey);
-      // Minimal request to check key
-      await model.generateContent([Content.text('hi')]);
-      return true; // Works
+      final model =
+          GenerativeModel(model: 'gemini-1.5-flash-latest', apiKey: apiKey);
+      // Minimal request to check key validity
+      await model.generateContent([Content.text('hi')],
+          generationConfig: GenerationConfig(maxOutputTokens: 1));
+      return true; // Works and valid
     } catch (e) {
       debugPrint('Quota check failed: $e');
-      if (e.toString().contains('quota') || e.toString().contains('429')) {
-        return false; // Limited
+      final errorStr = e.toString().toLowerCase();
+
+      // Case 1: Quota exceeded
+      if (errorStr.contains('quota') || errorStr.contains('429')) {
+        return false; // Key works but reached limit
       }
-      return true; // Other error, but keep as "not limited" for now
+
+      // Case 2: Specific Key issues (Invalid, Expired, Wrong Format)
+      if (errorStr.contains('invalid') ||
+          errorStr.contains('not valid') ||
+          errorStr.contains('expired') ||
+          errorStr.contains('forbidden')) {
+        return false; // Identity issue
+      }
+
+      // Case 3: Model Not Found
+      // If we get "Not Found", it usually means the key is valid (authenticated) 
+      // but the model ID is wrong. We allow this to pass validation because 
+      // the key itself exists.
+      if (errorStr.contains('not found')) {
+        return true;
+      }
+
+      // Default safety: if it's a connection error or unknown, fail validation
+      return false;
     }
   }
 
