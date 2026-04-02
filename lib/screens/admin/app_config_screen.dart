@@ -112,10 +112,16 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
 
     batch.set(configRef, configData, SetOptions(merge: true));
 
+    // Determine log action based on what changed
+    String logAction = 'CONFIG_UPDATE';
+    if (_maintenanceMode) {
+      logAction = 'MAINTENANCE_TOGGLE';
+    }
+
     batch.set(historyRef, {
       ...configData,
       'updatedAt': FieldValue.serverTimestamp(),
-      'action': 'CONFIG_UPDATE',
+      'action': logAction,
       'updatedBy': _authService.auth.currentUser?.uid ?? 'system',
     });
 
@@ -429,7 +435,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
         final configDocs = snapshot.data!.docs.where((doc) {
           final d = doc.data() as Map<String, dynamic>;
           final action = d['action'] ?? d['type'] ?? '';
-          return action == 'CONFIG_UPDATE';
+          return action == 'CONFIG_UPDATE' || action == 'MAINTENANCE_TOGGLE';
         }).toList();
 
         if (configDocs.isEmpty) {

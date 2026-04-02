@@ -27,6 +27,7 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
   bool _isConfigLoading = true;
   int _maxChatsPerHour = 10;
   int _resetDurationMinutes = 60;
+  bool _isAiEnabled = true;
 
   int _totalUsers = 0;
   int _totalWallets = 0;
@@ -51,6 +52,7 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
         setState(() {
           _maxChatsPerHour = data['max_chats_per_hour'] ?? 10;
           _resetDurationMinutes = data['reset_duration_minutes'] ?? 60;
+          _isAiEnabled = data['is_ai_enabled'] ?? true;
         });
       }
     } catch (e) {
@@ -215,26 +217,43 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
 
                             return Column(
                               children: [
-                                SizedBox(
-                                  height: 140,
-                                  width: double.infinity,
-                                  child: _buildCommandCard(
-                                    title: 'Maintenance Mode',
-                                    subtitle: isMaintenance
-                                        ? 'STATUS: AKTIF'
-                                        : (startTime != null
-                                            ? 'TERJADWAL: ${DateFormat('HH:mm').format(startTime)}'
-                                            : 'STATUS: NON-AKTIF'),
-                                    icon: Icons.construction_rounded,
-                                    color: isMaintenance
-                                        ? Colors.red
-                                        : Colors.grey,
-                                    onTap: () => _showMaintenanceControl(
-                                        isMaintenance,
-                                        startTime,
-                                        data['message'] ?? ''),
-                                    isRestricted: !_isSuperAdmin,
-                                  ),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildCommandCard(
+                                        title: 'Maintenance',
+                                        subtitle: isMaintenance
+                                            ? 'STATUS: AKTIF'
+                                            : (startTime != null
+                                                ? 'TERJADWAL: ${DateFormat('HH:mm').format(startTime)}'
+                                                : 'STATUS: NON-AKTIF'),
+                                        icon: Icons.construction_rounded,
+                                        color: isMaintenance
+                                            ? Colors.red
+                                            : Colors.grey,
+                                        onTap: () => _showMaintenanceControl(
+                                            isMaintenance,
+                                            startTime,
+                                            data['message'] ?? ''),
+                                        isRestricted: !_isSuperAdmin,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _buildCommandCard(
+                                        title: 'AI Service',
+                                        subtitle: _isAiEnabled
+                                            ? 'STATUS: AKTIF'
+                                            : 'STATUS: DISABLE',
+                                        icon: Icons.power_settings_new_rounded,
+                                        color: _isAiEnabled
+                                            ? const Color(0xFF8B5CF6)
+                                            : Colors.redAccent,
+                                        onTap: () => _toggleAiFeature(),
+                                        isRestricted: false,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                                 const SizedBox(height: 12),
                               ],
@@ -826,9 +845,44 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
     );
   }
 
+  Future<void> _toggleAiFeature() async {
+    final newStatus = !_isAiEnabled;
+    setState(() => _isAiEnabled = newStatus);
+
+    try {
+      final batch = FirebaseFirestore.instance.batch();
+      final configRef = FirebaseFirestore.instance.collection('app_settings').doc('ai_config');
+      final logRef = configRef.collection('history').doc();
+
+      batch.set(configRef, {'is_ai_enabled': newStatus}, SetOptions(merge: true));
+      batch.set(logRef, {
+        'action': 'AI_STATUS_CHANGED',
+        'prevStatus': !newStatus,
+        'newStatus': newStatus,
+        'updatedAt': FieldValue.serverTimestamp(),
+        'updatedBy': _authService.auth.currentUser?.uid,
+      });
+
+      await batch.commit();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('AI Feature ${newStatus ? 'ENABLED' : 'DISABLED'}'),
+            backgroundColor: newStatus ? Colors.green : Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error toggling AI: $e');
+    }
+  }
+
   void _showAIQuotaControl() {
     int tempMaxChats = _maxChatsPerHour;
     int tempInterval = _resetDurationMinutes;
+    bool tempAiEnabled = _isAiEnabled;
 
     showModalBottomSheet(
       context: context,
@@ -905,6 +959,59 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                 activeColor: const Color(0xFF8B5CF6),
                 onChanged: (v) => setModalState(() => tempInterval = v.round()),
               ),
+              const Divider(height: 48),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: tempAiEnabled ? Colors.green.withOpacity(0.05) : Colors.red.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: tempAiEnabled ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: tempAiEnabled ? Colors.green : Colors.red,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: (tempAiEnabled ? Colors.green : Colors.red).withOpacity(0.3),
+                            blurRadius: 8,
+                            spreadRadius: 1,
+                          )
+                        ],
+                      ),
+                      child: Icon(
+                        tempAiEnabled ? Icons.bolt_rounded : Icons.power_off_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            tempAiEnabled ? 'AI Service Active' : 'AI Service Disabled',
+                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+                          ),
+                          Text(
+                            tempAiEnabled ? 'Fitur AI Advisor saat ini aktif untuk semua pengguna.' : 'Akses AI Advisor akan ditutup sementara untuk publik.',
+                            style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch.adaptive(
+                      value: tempAiEnabled,
+                      activeColor: Colors.green,
+                      onChanged: (v) => setModalState(() => tempAiEnabled = v),
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: 40),
               SizedBox(
                 width: double.infinity,
@@ -918,6 +1025,7 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                           .set({
                         'max_chats_per_hour': tempMaxChats,
                         'reset_duration_minutes': tempInterval,
+                        'is_ai_enabled': tempAiEnabled,
                         'lastUpdated': FieldValue.serverTimestamp(),
                         'updatedBy':
                             _authService.auth.currentUser?.uid ?? 'system',
@@ -932,7 +1040,8 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                         'updatedBy':
                             _authService.auth.currentUser?.uid ?? 'system',
                         'updatedAt': FieldValue.serverTimestamp(),
-                        'action': 'AI_QUOTA_UPDATE',
+                        'action': tempAiEnabled != _isAiEnabled ? 'AI_STATUS_CHANGED' : 'AI_QUOTA_UPDATE',
+                        'status': tempAiEnabled,
                         'max_chats': tempMaxChats,
                         'interval': tempInterval,
                       });
@@ -940,6 +1049,7 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                       setState(() {
                         _maxChatsPerHour = tempMaxChats;
                         _resetDurationMinutes = tempInterval;
+                        _isAiEnabled = tempAiEnabled;
                       });
 
                       if (mounted) Navigator.pop(context);

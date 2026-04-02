@@ -21,7 +21,7 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
     {'id': 'BROADCAST', 'label': 'Broadcast', 'icon': Icons.campaign_rounded},
     {
       'id': 'MAINTENANCE_TOGGLE',
-      'label': 'Maintenance',
+      'label': 'App Status',
       'icon': Icons.construction_rounded
     },
     {
@@ -29,7 +29,12 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
       'label': 'Akses',
       'icon': Icons.manage_accounts_rounded
     },
-    {'id': 'CONFIG_UPDATE', 'label': 'Config', 'icon': Icons.settings_rounded},
+    {'id': 'CONFIG_UPDATE', 'label': 'Konfigurasi', 'icon': Icons.settings_rounded},
+    {
+      'id': 'AI_STATUS_CHANGED',
+      'label': 'AI Toggle',
+      'icon': Icons.power_settings_new_rounded
+    },
     {
       'id': 'DELETE_USER',
       'label': 'Hapus User',
