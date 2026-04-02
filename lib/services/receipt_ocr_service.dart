@@ -1,6 +1,7 @@
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter/foundation.dart';
 
 class ReceiptData {
   final double? amount;
@@ -15,68 +16,68 @@ class ReceiptOCRService {
   final TextRecognizer _textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
   final ImagePicker _picker = ImagePicker();
 
-  Future<ReceiptData?> scanReceipt() async {
-    print('OCR: Checking permissions...');
-    
-    // Check Camera Permission
-    var cameraStatus = await Permission.camera.status;
-    if (!cameraStatus.isGranted) {
-      print('OCR: Camera not granted, requesting...');
-      cameraStatus = await Permission.camera.request();
+  Future<ReceiptData?> scanReceipt({ImageSource source = ImageSource.camera}) async {
+    debugPrint('OCR: Checking permissions...');
+
+    if (source == ImageSource.camera) {
+      // Check Camera Permission
+      var cameraStatus = await Permission.camera.status;
+      if (!cameraStatus.isGranted) {
+        debugPrint('OCR: Camera not granted, requesting...');
+        cameraStatus = await Permission.camera.request();
+      }
+      if (!cameraStatus.isGranted) {
+        throw Exception('Izin kamera ditolak. Aktifkan di pengaturan ya!');
+      }
     }
-    
-    // Check Storage/Photos (Some devices need this for temporary files from camera)
+
+    // Check Storage/Photos (Some devices need this for temporary files from camera or for gallery)
     var storageStatus = await Permission.photos.status;
     if (!storageStatus.isGranted) {
       storageStatus = await Permission.storage.status;
     }
-    
+
     if (!storageStatus.isGranted) {
-      print('OCR: Storage not granted, requesting...');
+      debugPrint('OCR: Storage not granted, requesting...');
       await Permission.photos.request();
       await Permission.storage.request();
     }
 
-    if (!cameraStatus.isGranted) {
-      throw Exception('Izin kamera ditolak. Aktifkan di pengaturan ya!');
-    }
-
-    print('OCR: Picking image from camera...');
+    debugPrint('OCR: Picking image from $source...');
     try {
       final XFile? image = await _picker.pickImage(
-        source: ImageSource.camera,
+        source: source,
         maxWidth: 1200,
         maxHeight: 1200,
         imageQuality: 85,
       );
 
       if (image == null) {
-        print('OCR: User cancelled picking.');
+        debugPrint('OCR: User cancelled picking.');
         return null;
       }
-      print('OCR: Image picked: ${image.path}');
+      debugPrint('OCR: Image picked: ${image.path}');
 
-      final inputImage = InputImage.fromFilePath(image.path);
       return await scanReceiptFromFile(image);
     } catch (e) {
-      print('OCR: Error during pickImage: $e');
+      debugPrint('OCR: Error during pickImage: $e');
       rethrow;
     }
   }
 
   Future<ReceiptData?> scanReceiptFromFile(XFile image) async {
     try {
-      print('OCR: Processing image from file: ${image.path}');
+      debugPrint('OCR: Processing image from file: ${image.path}');
       final inputImage = InputImage.fromFilePath(image.path);
       
-      print('OCR: Initializing text recognizer...');
+      debugPrint('OCR: Initializing text recognizer...');
       final RecognizedText recognizedText = await _textRecognizer.processImage(inputImage);
-      print('OCR: Recognition finished.');
+      debugPrint('OCR: Recognition finished.');
 
       final result = _parseReceipt(recognizedText);
       return result;
     } catch (e) {
-      print('OCR: Error during file process: $e');
+      debugPrint('OCR: Error during file process: $e');
       rethrow;
     }
   }
@@ -118,7 +119,7 @@ class ReceiptOCRService {
     }
 
     // --- 2. Advanced Spatial Amount Detection ---
-    print('OCR: Starting Spatial Analysis for Amount...');
+    debugPrint('OCR: Starting Spatial Analysis for Amount...');
     
     // Priority Map: Higher value = Higher confidence
     final Map<String, int> keywordPriority = {
@@ -165,7 +166,7 @@ class ReceiptOCRService {
           }
           if (shouldSkipLine) continue;
 
-          print('OCR: Found Keyword "$matchedKeyword" on line: "${line.text}"');
+          debugPrint('OCR: Found Keyword "$matchedKeyword" on line: "${line.text}"');
 
           // Search for numbers in THIS block or OTHER blocks on the same Y level
           // Total is usually to the right of the keyword or below it
@@ -217,12 +218,12 @@ class ReceiptOCRService {
       });
       
       amount = candidates.first.amount;
-      print('OCR: Best candidate chosen: $amount (Priority: ${candidates.first.priority})');
+      debugPrint('OCR: Best candidate chosen: $amount (Priority: ${candidates.first.priority})');
     }
 
     // Fallback: If no keyword-based match, look for any large number in the bottom half
     if (amount == null) {
-      print('OCR: Fallback to largest number in bottom region...');
+      debugPrint('OCR: Fallback to largest number in bottom region...');
       double maxY = 0;
       for (TextBlock block in recognizedText.blocks) {
         if (block.boundingBox.center.dy > maxY) maxY = block.boundingBox.center.dy;
@@ -255,7 +256,7 @@ class ReceiptOCRService {
         // Sort by largest amount, then by Y desc
         fallbackCandidates.sort((a, b) => b.amount.compareTo(a.amount));
         amount = fallbackCandidates.first.amount;
-        print('OCR: Fallback match: $amount');
+        debugPrint('OCR: Fallback match: $amount');
       }
     }
 
