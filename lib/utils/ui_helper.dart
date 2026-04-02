@@ -191,4 +191,54 @@ class UIHelper {
       ),
     );
   }
+  static Future<T?> showPremiumDialog<T>({
+    required BuildContext context,
+    required Widget child,
+    bool barrierDismissible = true,
+  }) {
+    return showGeneralDialog<T>(
+      context: context,
+      barrierDismissible: barrierDismissible,
+      barrierLabel: '',
+      barrierColor: Colors.black.withOpacity(0.5),
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, anim1, anim2) => Center(
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 32),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(32),
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 30,
+                  offset: const Offset(0, 10)),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(32),
+            child: BackdropFilter(
+              filter: ui.ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+              child: Container(
+                padding: const EdgeInsets.all(28),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.92),
+                  borderRadius: BorderRadius.circular(32),
+                  border:
+                      Border.all(color: Colors.white.withOpacity(0.5), width: 1),
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: child,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+      transitionBuilder: (context, anim1, anim2, child) => ScaleTransition(
+        scale: CurvedAnimation(parent: anim1, curve: Curves.easeOutBack),
+        child: FadeTransition(opacity: anim1, child: child),
+      ),
+    );
+  }
 }
