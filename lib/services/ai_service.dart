@@ -6,7 +6,8 @@ import '../utils/tone_dictionary.dart';
 import 'package:intl/intl.dart';
 
 class AIService {
-  static const String _modelName = 'gemini-3-flash-preview';
+  static const String _modelName = 'gemini-2.5-flash';
+  //static const String _modelName = 'gemini-3-flash-preview'; ni pake kalau mau yang terbaru
   static final List<String> _integratedApiKeys = [
     'AIzaSyANErZPMI1PezicLl5lwM8LRdsuSpOiKQY',
     'AIzaSyAOt1e72ijkbkaA73wefa_dCX9YqguxOvo',
