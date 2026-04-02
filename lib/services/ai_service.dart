@@ -1,18 +1,92 @@
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/transaction_model.dart';
 import '../utils/tone_dictionary.dart';
 import 'package:intl/intl.dart';
 
 class AIService {
-  static const String _modelName = 'gemini-2.5-flash';
-  //static const String _modelName = 'gemini-3-flash-preview'; ni pake kalau mau yang terbaru
-  static final List<String> _integratedApiKeys = [
-    'AIzaSyANErZPMI1PezicLl5lwM8LRdsuSpOiKQY',
-    'AIzaSyAOt1e72ijkbkaA73wefa_dCX9YqguxOvo',
-    'AIzaSyDpnZI5UroCEK7K7BgzXGAeZHUQxyF01nM',
-  ];
+  static const String _modelName = 'gemini-3.1-pro-preview';
+  static final ValueNotifier<String> statusNotifier = ValueNotifier("ok");
+
+  static List<String> _integratedApiKeys = [];
+
+  static Future<Map<String, dynamic>> getAIConfig() async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('app_settings')
+          .doc('ai_config')
+          .get();
+      if (doc.exists) return doc.data()!;
+    } catch (e) {
+      debugPrint('Error getting AI config: $e');
+    }
+    return {
+      'max_chats_per_hour': 10,
+      'reset_duration_minutes': 60,
+    };
+  }
+
+  static Future<bool> _checkUserQuota(String uid) async {
+    try {
+      final config = await getAIConfig();
+      final maxChats = config['max_chats_per_hour'] ?? 10;
+      final resetMinutes = config['reset_duration_minutes'] ?? 60;
+
+      final userDoc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final data = userDoc.data() ?? {};
+
+      final int count = data['aiCount'] ?? 0;
+      final Timestamp? cycleStartTs = data['aiCycleStart'] as Timestamp?;
+      final DateTime now = DateTime.now();
+
+      if (cycleStartTs == null) {
+        // First time
+        await FirebaseFirestore.instance.collection('users').doc(uid).set({
+          'aiCycleStart': FieldValue.serverTimestamp(),
+          'aiCount': 0,
+        }, SetOptions(merge: true));
+        return true;
+      }
+
+      final cycleStart = cycleStartTs.toDate();
+      if (now.difference(cycleStart).inMinutes >= resetMinutes) {
+        // Cycle expired, reset
+        await FirebaseFirestore.instance.collection('users').doc(uid).update({
+          'aiCycleStart': FieldValue.serverTimestamp(),
+          'aiCount': 0,
+        });
+        return true;
+      }
+
+      return count < maxChats;
+    } catch (e) {
+      debugPrint('Quota check failed: $e');
+      return true; // Fail safe
+    }
+  }
+
+  static Future<void> _incrementUserQuota(String uid) async {
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(uid).update({
+        'aiCount': FieldValue.increment(1),
+      });
+    } catch (e) {
+      debugPrint('Increment quota failed: $e');
+    }
+  }
+
+  static Future<List<String>> getIntegratedApiKeysAsync() async {
+    try {
+      final data = await getAIConfig();
+      _integratedApiKeys = List<String>.from(data['gemini_keys'] ?? []);
+    } catch (e) {
+      debugPrint('Failed to fetch integrated keys: $e');
+    }
+    return _integratedApiKeys;
+  }
 
   // Common Indonesian female name patterns/prefixes (Sorted A-Z)
   static const List<String> _femaleNamePatterns = [
@@ -218,24 +292,36 @@ class AIService {
   Future<Map<String, dynamic>> checkKeyStatus(String apiKey) async {
     try {
       final model = GenerativeModel(model: _modelName, apiKey: apiKey);
-      // Minimal request to check key validity
-      await model.generateContent([Content.text('hi')],
-          generationConfig: GenerationConfig(maxOutputTokens: 1));
+      // Use a more standard prompt, 2.5-flash might reject 'hi' as low-entropy or test Junk
+      await model.generateContent(
+          [Content.text('Halo, tes koneksi API. Biarkan ini tetap singkat.')]);
       return {
         'isValid': true,
         'status': 'ok',
         'message': 'API Key bekerja dengan baik!'
       };
     } catch (e) {
-      debugPrint('Detailed Key Check failed: $e');
       final errorStr = e.toString().toLowerCase();
+      debugPrint('>>> API KEY CHECK ERROR DETAILS: $e');
 
-      if (errorStr.contains('quota') || errorStr.contains('429')) {
+      if (errorStr.contains('quota') ||
+          errorStr.contains('429') ||
+          errorStr.contains('exhausted') ||
+          errorStr.contains('limit:') ||
+          errorStr.contains('limit reached')) {
         return {
           'isValid': true,
           'status': 'limit',
           'message':
-              'API Key valid, tapi sedang mencapai limit (Quota Exceeded).'
+              'API Key valid, tapi sedang mencapai limit per detik/menit (Quota Exceeded).'
+        };
+      }
+
+      if (errorStr.contains('leaked')) {
+        return {
+          'isValid': false,
+          'status': 'error',
+          'message': 'API Key diblokir oleh Google krn terekspos (Leaked).'
         };
       }
 
@@ -250,25 +336,35 @@ class AIService {
         };
       }
 
-      if (errorStr.contains('not found')) {
+      if (errorStr.contains('not found') ||
+          errorStr.contains('unhandled format') ||
+          errorStr.contains('role: model') ||
+          errorStr.contains('content: {role: model}')) {
+        debugPrint(
+            '>>> SUCCESS BYPASS: Detected SDK format error but treating as OK (key works)');
         return {
           'isValid': true,
           'status': 'ok',
-          'message': 'API Key valid (Model mungkin berbeda).'
+          'message': 'API Key bekerja (melewati bug format SDK).'
         };
       }
 
       return {
         'isValid': false,
         'status': 'error',
-        'message': 'Terjadi kesalahan koneksi atau internal.'
+        'message': 'Gagal verifikasi: ${e.toString().split('\n').first}'
       };
     }
   }
 
+  Future<String> getDetailedStatus(String apiKey) async {
+    final status = await checkKeyStatus(apiKey);
+    return status['status'] as String? ?? 'error';
+  }
+
   Future<bool> checkQuota(String apiKey) async {
     final status = await checkKeyStatus(apiKey);
-    return status['status'] == 'ok';
+    return status['isValid'] == true;
   }
 
   // Helper to expose integrated keys status check
@@ -283,12 +379,36 @@ class AIService {
     List<Content>? history,
   }) async {
     final isCustomApi = apiKey != null && apiKey.trim().isNotEmpty;
-    final keysToUse = isCustomApi ? [apiKey.trim()] : _integratedApiKeys;
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final String? uid = currentUser?.uid;
+
+    if (!isCustomApi && uid != null) {
+      final hasQuota = await _checkUserQuota(uid);
+      if (!hasQuota) {
+        final config = await getAIConfig();
+        final maxChats = config['max_chats_per_hour'] ?? 10;
+        return 'Maaf, jatah chat gratis kamu hari ini sudah habis (Limit: $maxChats chat/jam). \n\nJatah ini akan reset otomatis setiap jamnya. Biar bisa chat SEPUASNYA tanpa antri, kamu bisa masukkan API Key pribadi kamu (Gratis dari Google) di menu Kelola API ya! 😊';
+      }
+    }
+
+    final integratedKeys = await getIntegratedApiKeysAsync();
+
+    // Logic: Use personal key first, then fallback to ALL integrated keys
+    final List<String> keysToUse = [];
+    if (isCustomApi) {
+      keysToUse.add(apiKey.trim());
+    }
+    keysToUse.addAll(integratedKeys);
+
+    // Remove duplicates while preserving order
+    final uniqueKeys = <String>[];
+    for (var k in keysToUse) {
+      if (!uniqueKeys.contains(k)) uniqueKeys.add(k);
+    }
 
     final summary = _generateDataSummary(transactions, dateRange);
 
     // Get user name and gender for pasangan mode
-    final currentUser = FirebaseAuth.instance.currentUser;
     final userName = currentUser?.displayName ?? 'Sayang';
     final userGender = _guessGender(userName);
     final aiRole = userGender == 'female'
@@ -303,7 +423,7 @@ class AIService {
     switch (tone) {
       case AppTone.genZ:
         toneInstruction =
-            "Pake gaya bahasa Gen-Z yang asik, banyak slang (Luh, Gue, Cuan, Boncos, Spill), sering pake emoji, dan agak frontal tapi jujur.";
+            "Pake gaya bahasa Gen-Z yang asik, banyak slang (Luh, Gue, Gweh, Cuan, Boncos, Spill, Nggoghey, yokyoii :3, noted, kids, miskir), sering pake emoji, dan agak frontal tapi jujur.";
         break;
       case AppTone.milenial:
         toneInstruction =
@@ -311,7 +431,7 @@ class AIService {
         break;
       case AppTone.boomer:
         toneInstruction =
-            "Pake gaya bahasa orang tua yang bijak dan sangat sopan. Panggil pengguna 'Nak' atau 'Ananda', sering ucapkan 'Alhamdulillah' atau 'MasyaAllah', dan fokus ke penghematan demi masa depan.";
+            "Pake gaya bahasa orang tua yang bijak dan sangat sopan. Panggil pengguna 'Nak', 'Adinda', atau 'Ananda', sering ucapkan 'Alhamdulillah' atau 'MasyaAllah', dan fokus ke penghematan demi masa depan.";
         break;
       case AppTone.pasangan:
         toneInstruction = """
@@ -362,37 +482,77 @@ INSTRUKSI:
       GenerateContentResponse? finalResponse;
       Exception? lastQuotaException;
 
-      for (String currentKey in keysToUse) {
-        try {
-          final model = GenerativeModel(
-            model: _modelName,
-            apiKey: currentKey,
-            systemInstruction: Content.system(systemPrompt),
-            generationConfig:
-                GenerationConfig(temperature: 0.8, maxOutputTokens: 2048),
-          );
-          final chat = model.startChat(history: limitedHistory ?? []);
-          finalResponse = await chat.sendMessage(Content.text(userQuery));
-          break; // success
-        } catch (e) {
-          lastQuotaException = e is Exception ? e : Exception(e.toString());
-          if (e.toString().contains('quota') || e.toString().contains('429')) {
-            continue; // Immediately try next key
-          }
-          // If not quota, try fallback model
+      for (String currentKey in uniqueKeys) {
+        final isLastKey = currentKey == uniqueKeys.last;
+        final isPersonalKey = isCustomApi && currentKey == uniqueKeys.first;
+
+        Future<bool> tryWithModel(String mName) async {
           try {
-            final model2 =
-                GenerativeModel(model: 'gemini-2.5-flash', apiKey: currentKey);
-            final chat2 = model2.startChat(history: limitedHistory ?? []);
-            final manualQuery =
-                "$systemPrompt\n\nPertanyaan Pengguna: $userQuery";
-            finalResponse = await chat2.sendMessage(Content.text(manualQuery));
-            break;
-          } catch (e2) {
-            lastQuotaException =
-                e2 is Exception ? e2 : Exception(e2.toString());
-            continue; // Try next key
+            final model = GenerativeModel(
+              model: mName,
+              apiKey: currentKey,
+              systemInstruction: Content.system(systemPrompt),
+              generationConfig:
+                  GenerationConfig(temperature: 0.8, maxOutputTokens: 2048),
+            );
+            final chat = model.startChat(history: limitedHistory ?? []);
+            finalResponse = await chat.sendMessage(Content.text(userQuery));
+            return true;
+          } catch (e) {
+            lastQuotaException = e is Exception ? e : Exception(e.toString());
+            return false;
           }
+        }
+
+        // 2026 ADVANCED ROTATION: Using the latest 3.1 ecosystem
+        // Priority: 3.1 Pro (15 RPM) -> 3.1 Flash Lite (15 RPM) -> 3 Flash -> 2.5 Flash
+        final models = [
+          _modelName, // gemini-3.1-pro-preview
+          'gemini-3.1-flash-lite-preview',
+          'gemini-3.1-pro',
+          'gemini-3.1-flash-lite',
+          'gemini-3-flash',
+          'gemini-3-pro',
+          'gemini-2.5-flash',
+          'gemini-2.5-pro',
+        ];
+
+        bool keySucceeded = false;
+        for (String m in models) {
+          if (await tryWithModel(m)) {
+            statusNotifier.value =
+                (m == _modelName && (!isCustomApi || isPersonalKey))
+                    ? 'ok'
+                    : 'limit';
+            keySucceeded = true;
+            break;
+          }
+
+          // If it's NOT a quota/429/exhausted error AND NOT a 404 Not Found, rotate key
+          final errStr = lastQuotaException.toString().toLowerCase();
+          bool isQuotaErr = errStr.contains('quota') ||
+              errStr.contains('429') ||
+              errStr.contains('exhausted') ||
+              errStr.contains('limit');
+          
+          bool isNotFound = errStr.contains('not found') || errStr.contains('404');
+          
+          // If it's not a quota issue AND not a 404, we assume fatal error and break model loop
+          if (!isQuotaErr && !isNotFound) break;
+
+          debugPrint(
+              '>>> FALLBACK on $currentKey: $m failed (${isNotFound ? "Not Found" : "Limit"}), trying next fallback model...');
+        }
+
+        if (keySucceeded) break;
+
+        // If all models failed for this key, rotate to next key
+        debugPrint(
+            '>>> ROTATION: API Key $currentKey exhausted for all models, switching to next key...');
+        if (isLastKey) {
+          statusNotifier.value = 'exhausted';
+        } else if (isPersonalKey) {
+          statusNotifier.value = 'limit';
         }
       }
 
@@ -420,7 +580,11 @@ INSTRUKSI:
         }
       }
 
-      return finalResponse.text ?? 'Maaf, jawaban kosong.';
+      if (!isCustomApi && uid != null) {
+        await _incrementUserQuota(uid);
+      }
+
+      return finalResponse?.text ?? 'Maaf, jawaban kosong.';
     } catch (e) {
       if (e.toString().contains('QUOTA_EXCEEDED')) throw e;
       if (e.toString().contains('Invalid API key'))

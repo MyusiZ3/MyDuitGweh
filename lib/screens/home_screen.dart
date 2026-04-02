@@ -1416,9 +1416,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         : Colors.grey,
                   ),
                   title: Text(
-                      t == AppTone.pasangan
-                          ? '❤️ GF / BF MODE'
-                          : t.name.toUpperCase(),
+                      t == AppTone.pasangan ? 'MY BINI' : t.name.toUpperCase(),
                       style: TextStyle(
                         fontWeight: ToneManager.notifier.value == t
                             ? FontWeight.bold
