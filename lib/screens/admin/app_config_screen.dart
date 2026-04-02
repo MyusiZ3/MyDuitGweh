@@ -115,7 +115,8 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
     batch.set(historyRef, {
       ...configData,
       'updatedAt': FieldValue.serverTimestamp(),
-      'type': 'CONFIG_UPDATE'
+      'action': 'CONFIG_UPDATE',
+      'updatedBy': _authService.auth.currentUser?.uid ?? 'system',
     });
 
     await batch.commit();
@@ -152,7 +153,11 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
               .get();
           final batch = _firestore.batch();
           for (var doc in snapshot.docs) {
-            batch.delete(doc.reference);
+            final docData = doc.data();
+            final action = docData['action'] ?? docData['type'] ?? '';
+            if (action == 'CONFIG_UPDATE') {
+              batch.delete(doc.reference);
+            }
           }
           await batch.commit();
           if (mounted) {
@@ -419,12 +424,30 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
           .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) return const SizedBox();
+
+        // Only show CONFIG_UPDATE entries in this screen's history
+        final configDocs = snapshot.data!.docs.where((doc) {
+          final d = doc.data() as Map<String, dynamic>;
+          final action = d['action'] ?? d['type'] ?? '';
+          return action == 'CONFIG_UPDATE';
+        }).toList();
+
+        if (configDocs.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 32),
+            child: Center(
+              child: Text('Belum ada perubahan config.',
+                  style: TextStyle(color: Colors.grey, fontSize: 12)),
+            ),
+          );
+        }
+
         return ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: snapshot.data!.docs.length,
+          itemCount: configDocs.length,
           itemBuilder: (context, index) {
-            final doc = snapshot.data!.docs[index];
+            final doc = configDocs[index];
             final data = doc.data() as Map<String, dynamic>;
             final DateTime date =
                 (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now();

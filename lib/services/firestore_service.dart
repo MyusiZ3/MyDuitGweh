@@ -488,6 +488,20 @@ class FirestoreService {
           scheduledTime != null ? Timestamp.fromDate(scheduledTime) : null,
       'senderName': FirebaseAuth.instance.currentUser?.displayName ?? 'Admin',
     });
+
+    // Log to Global Activity History
+    await _firestore
+        .collection('app_config')
+        .doc('global')
+        .collection('history')
+        .add({
+      'action': 'BROADCAST',
+      'title': title,
+      'message': message,
+      'broadcastType': type,
+      'updatedBy': FirebaseAuth.instance.currentUser?.uid ?? 'system',
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
   }
 
   Stream<List<Map<String, dynamic>>> getBroadcastsStream(
