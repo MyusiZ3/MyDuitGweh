@@ -35,6 +35,31 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
       'label': 'Hapus User',
       'icon': Icons.person_remove_rounded
     },
+    {
+      'id': 'AI_KEY_ADDED',
+      'label': 'API Key +',
+      'icon': Icons.vpn_key_rounded
+    },
+    {
+      'id': 'AI_KEY_REMOVED',
+      'label': 'API Key -',
+      'icon': Icons.key_off_rounded
+    },
+    {
+      'id': 'AI_QUOTA_UPDATE',
+      'label': 'AI Quota',
+      'icon': Icons.psychology_rounded
+    },
+    {
+      'id': 'GROQ_KEY_ADDED',
+      'label': 'Groq +',
+      'icon': Icons.bolt_rounded
+    },
+    {
+      'id': 'GROQ_KEY_REMOVED',
+      'label': 'Groq -',
+      'icon': Icons.bolt_rounded
+    },
   ];
 
   @override
@@ -423,6 +448,36 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
       color = Colors.teal;
       title = 'Config Sistem';
       subtitle = 'Parameter aplikasi diubah.';
+    } else if (action == 'AI_KEY_ADDED') {
+      icon = Icons.vpn_key_rounded;
+      color = Colors.green;
+      title = 'API Key Ditambahkan';
+      subtitle = 'Kunci AI baru ditambahkan ke rotasi.';
+    } else if (action == 'AI_KEY_REMOVED') {
+      icon = Icons.key_off_rounded;
+      color = Colors.red;
+      title = 'API Key Dihapus';
+      subtitle = 'Kunci AI dihapus dari rotasi.';
+    } else if (action == 'AI_QUOTA_UPDATE') {
+      icon = Icons.psychology_rounded;
+      color = const Color(0xFF8B5CF6);
+      title = 'AI Quota Diubah';
+      subtitle = 'Max: ${data['max_chats'] ?? '?'} chat, Interval: ${data['interval'] ?? '?'} menit';
+    } else if (action == 'MAINTENANCE_SCHEDULE') {
+      icon = Icons.schedule_rounded;
+      color = Colors.indigo;
+      title = 'Jadwal Maintenance';
+      subtitle = 'Waktu: ${data['time'] ?? 'N/A'}';
+    } else if (action == 'GROQ_KEY_ADDED') {
+      icon = Icons.bolt_rounded;
+      color = const Color(0xFFF55036);
+      title = 'Groq Key Ditambahkan';
+      subtitle = 'Kunci Groq AI baru ditambahkan ke rotasi.';
+    } else if (action == 'GROQ_KEY_REMOVED') {
+      icon = Icons.bolt_rounded;
+      color = Colors.red;
+      title = 'Groq Key Dihapus';
+      subtitle = 'Kunci Groq AI dihapus dari rotasi.';
     }
 
     return Container(
