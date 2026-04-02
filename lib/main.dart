@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:camera_android/camera_android.dart';
+import 'package:camera_platform_interface/camera_platform_interface.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -15,6 +18,11 @@ import 'services/auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // FIX: Force Camera2 implementation to avoid CameraX "Unsupported value" crash on some devices (like Xiaomi)
+  if (defaultTargetPlatform == TargetPlatform.android) {
+    CameraPlatform.instance = AndroidCamera();
+  }
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(

@@ -26,6 +26,7 @@ import 'login_screen.dart';
 import 'notifications_screen.dart';
 import 'admin/admin_tools_screen.dart';
 
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -650,19 +651,25 @@ class _HomeScreenState extends State<HomeScreen> {
                               Row(
                                 children: [
                                   Expanded(
-                                    child: _balanceAction(
-                                        Icons.account_balance_wallet_rounded,
-                                        ToneManager.t('nav_wallet'), () {
-                                      MainNav.of(context)?.setTab(1);
-                                    }),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: _balanceAction(
-                                        Icons.insights_rounded,
-                                        ToneManager.t('nav_report'), () {
-                                      MainNav.of(context)?.setTab(4);
-                                    }),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: _balanceAction(
+                                              Icons.account_balance_wallet_rounded,
+                                              ToneManager.t('nav_wallet'), () {
+                                            MainNav.of(context)?.setTab(1);
+                                          }),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: _balanceAction(
+                                              Icons.insights_rounded,
+                                              ToneManager.t('nav_report'), () {
+                                            MainNav.of(context)?.setTab(4);
+                                          }),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ],
                               ),
@@ -821,6 +828,7 @@ class _HomeScreenState extends State<HomeScreen> {
       },
     );
   }
+
 
   Widget _balanceAction(IconData icon, String label, VoidCallback onTap) {
     return GestureDetector(

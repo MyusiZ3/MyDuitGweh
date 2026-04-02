@@ -1,33 +1,195 @@
-﻿
-flutter : Support for 
-Android x86 targets will 
-be removed in the next 
-stable release after 
-3.27. See https://github.c
-om/flutter/flutter/issues/
-157543 for details.
-At line:1 char:1
-+ flutter build apk 
---debug 2>&1 | Out-File 
--FilePath build_log.txt 
--En ...
-+ ~~~~~~~~~~~~~~~~~~~~~~~~
-~~~~~~
+﻿> Task :gradle:compileJava NO-SOURCE
+> Task :gradle:compileGroovy
+> Task :gradle:pluginDescriptors UP-TO-DATE
+> Task :gradle:processResources
+> Task :gradle:classes
+> Task :gradle:jar
+
+> Configure project :shared_preferences_android
+.\gradlew.bat : Your 
+project is configured 
+with Android NDK 
+26.1.10909125, but the 
+following plugin(s) 
+depend on a different 
+Android NDK version:
+At line:1 char:23
++ Set-Location android; 
+.\gradlew.bat 
+assembleDebug 2>&1 | 
+Out-File -Fi ...
++                       ~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~
     + CategoryInfo        
-      : NotSpecified: (S  
-  upport for And...43 f   
- or details.:String) [    
+      : NotSpecified: (Y  
+  our project is...id N   
+ DK version::String) [    
 ], RemoteException
     + FullyQualifiedError 
    Id : NativeCommandErr  
   or
  
-Running Gradle task 'assembleDebug'...                          
-Note: Some input files 
-use or override a 
-deprecated API.
-Note: Recompile with 
--Xlint:deprecation for 
-details.
-Running Gradle task 'assembleDebug'...                            136.7s
-ΓêÜ Built build\app\outputs\flutter-apk\app-debug.apk
+- cloud_firestore 
+requires Android NDK 
+27.0.12077973
+- connectivity_plus 
+requires Android NDK 
+27.0.12077973
+- firebase_auth requires 
+Android NDK 27.0.12077973
+- firebase_core requires 
+Android NDK 27.0.12077973
+- flutter_contacts 
+requires Android NDK 
+27.0.12077973
+- flutter_local_notificati
+ons requires Android NDK 
+27.0.12077973
+- flutter_plugin_android_l
+ifecycle requires Android 
+NDK 27.0.12077973
+- flutter_timezone 
+requires Android NDK 
+27.0.12077973
+- google_sign_in_android 
+requires Android NDK 
+27.0.12077973
+- local_auth_android 
+requires Android NDK 
+27.0.12077973
+- path_provider_android 
+requires Android NDK 
+27.0.12077973
+- permission_handler_andro
+id requires Android NDK 
+27.0.12077973
+- printing requires 
+Android NDK 27.0.12077973
+- shared_preferences_andro
+id requires Android NDK 
+27.0.12077973
+Fix this issue by using 
+the highest Android NDK 
+version (they are 
+backward compatible).
+Add the following to C:\Us
+ers\muham\Documents\Github
+\MyDuitGweh\android\app\bu
+ild.gradle:
+
+    android {
+        ndkVersion = 
+"27.0.12077973"
+        ...
+    }
+
+
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:compileFlutterBuildDebug
+> Task :app:packJniLibsflutterBuildDebug
+> Task :cloud_firestore:preBuild UP-TO-DATE
+> Task :cloud_firestore:preDebugBuild UP-TO-DATE
+> Task :connectivity_plus:preBuild UP-TO-DATE
+> Task :connectivity_plus:preDebugBuild UP-TO-DATE
+> Task :cloud_firestore:writeDebugAarMetadata
+> Task :firebase_auth:preBuild UP-TO-DATE
+> Task :firebase_auth:preDebugBuild UP-TO-DATE
+> Task :connectivity_plus:writeDebugAarMetadata
+> Task :firebase_core:preBuild UP-TO-DATE
+> Task :firebase_core:preDebugBuild UP-TO-DATE
+> Task :firebase_auth:writeDebugAarMetadata
+> Task :flutter_contacts:preBuild UP-TO-DATE
+> Task :flutter_contacts:preDebugBuild UP-TO-DATE
+> Task :firebase_core:writeDebugAarMetadata
+> Task :flutter_local_notifications:preBuild UP-TO-DATE
+> Task :flutter_local_notifications:preDebugBuild UP-TO-DATE
+> Task :flutter_contacts:writeDebugAarMetadata
+> Task :flutter_plugin_android_lifecycle:preBuild UP-TO-DATE
+> Task :flutter_plugin_android_lifecycle:preDebugBuild UP-TO-DATE
+> Task :flutter_local_notifications:writeDebugAarMetadata
+> Task :flutter_timezone:preBuild UP-TO-DATE
+> Task :flutter_timezone:preDebugBuild UP-TO-DATE
+> Task :flutter_plugin_android_lifecycle:writeDebugAarMetadata
+> Task :google_sign_in_android:preBuild UP-TO-DATE
+> Task :google_sign_in_android:preDebugBuild UP-TO-DATE
+> Task :flutter_timezone:writeDebugAarMetadata
+> Task :local_auth_android:preBuild UP-TO-DATE
+> Task :local_auth_android:preDebugBuild UP-TO-DATE
+> Task :google_sign_in_android:writeDebugAarMetadata
+> Task :path_provider_android:preBuild UP-TO-DATE
+> Task :path_provider_android:preDebugBuild UP-TO-DATE
+> Task :local_auth_android:writeDebugAarMetadata
+> Task :permission_handler_android:preBuild UP-TO-DATE
+> Task :permission_handler_android:preDebugBuild UP-TO-DATE
+> Task :path_provider_android:writeDebugAarMetadata
+> Task :printing:preBuild UP-TO-DATE
+> Task :printing:preDebugBuild UP-TO-DATE
+> Task :permission_handler_android:writeDebugAarMetadata
+> Task :shared_preferences_android:preBuild UP-TO-DATE
+> Task :shared_preferences_android:preDebugBuild UP-TO-DATE
+> Task :printing:writeDebugAarMetadata
+> Task :app:cleanMergeDebugAssets UP-TO-DATE
+> Task :shared_preferences_android:writeDebugAarMetadata
+> Task :app:mergeDebugShaders
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :cloud_firestore:mergeDebugShaders
+> Task :cloud_firestore:compileDebugShaders NO-SOURCE
+> Task :cloud_firestore:generateDebugAssets UP-TO-DATE
+> Task :cloud_firestore:mergeDebugAssets
+> Task :app:checkDebugAarMetadata FAILED
+> Task :connectivity_plus:mergeDebugShaders
+[Incubating] Problems report is available at: file:///C:/Users/muham/Documents/Github/MyDuitGweh/build/reports/problems/problems-report.html
+
+FAILURE: Build failed 
+with an exception.
+
+* What went wrong:
+Execution failed for task 
+':app:checkDebugAarMetadat
+a'.
+> A failure occurred 
+while executing com.androi
+d.build.gradle.internal.ta
+sks.CheckAarMetadataWorkAc
+tion
+   > An issue was found 
+when checking AAR 
+metadata:
+     
+       1.  Dependency ':fl
+utter_local_notifications'
+ requires core library 
+desugaring to be enabled
+           for :app.
+     
+           See https://dev
+eloper.android.com/studio/
+write/java8-support.html 
+for more
+           details.
+
+* Try:
+> Run with --stacktrace 
+option to get the stack 
+trace.
+> Run with --info or 
+--debug option to get 
+more log output.
+> Run with --scan to get 
+full insights.
+> Get more help at 
+https://help.gradle.org.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.11.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 18s
+26 actionable tasks: 24 executed, 2 up-to-date

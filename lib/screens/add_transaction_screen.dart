@@ -9,7 +9,18 @@ import '../utils/ui_helper.dart';
 import '../utils/tone_dictionary.dart';
 
 class AddTransactionScreen extends StatefulWidget {
-  const AddTransactionScreen({super.key});
+  final double? initialAmount;
+  final String? initialNote;
+  final String? initialCategory;
+  final String? initialType;
+
+  const AddTransactionScreen({
+    super.key,
+    this.initialAmount,
+    this.initialNote,
+    this.initialCategory,
+    this.initialType,
+  });
 
   @override
   State<AddTransactionScreen> createState() => _AddTransactionScreenState();
@@ -30,6 +41,19 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   @override
   void initState() {
     super.initState();
+    // Pre-fill if values are passed
+    if (widget.initialAmount != null) {
+      _amountController.text = widget.initialAmount!.toInt().toString();
+    }
+    if (widget.initialNote != null) _noteController.text = widget.initialNote!;
+    
+    // Safer category pre-fill: only set if it exists in the available list for the selected type
+    if (widget.initialType != null) _selectedType = widget.initialType!;
+    final availableCategories = TransactionCategory.getCategoriesForType(_selectedType);
+    if (widget.initialCategory != null && availableCategories.contains(widget.initialCategory)) {
+      _selectedCategory = widget.initialCategory;
+    }
+    
     _loadWallets();
   }
 

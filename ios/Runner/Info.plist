@@ -47,5 +47,9 @@
 	<true/>
 	<key>NSContactsUsageDescription</key>
 	<string>Aplikasi ini sesekali butuh mengakses buku kontak agar kamu tidak direpotkan mengetik nama dan nomer teman yang ngutang atau dihutangin.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Aplikasi butuh akses kamera untuk scan struk belanja kamu secara otomatis.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Aplikasi butuh akses galeri untuk mengambil foto struk yang sudah kamu simpan sebelumnya.</string>
 </dict>
 </plist>
