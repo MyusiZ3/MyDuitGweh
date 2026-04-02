@@ -218,11 +218,187 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
     );
   }
 
+  void _showTutorialDialog() {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: '',
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, anim1, anim2) => Center(
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.9,
+          constraints: const BoxConstraints(maxHeight: 600),
+          margin: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10))
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.1),
+                          shape: BoxShape.circle),
+                      child: const Icon(Icons.rocket_launch_rounded,
+                          color: Colors.blue),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                        child: Text('Guide Update (A-Z)',
+                            style: TextStyle(
+                                fontSize: 20, fontWeight: FontWeight.bold))),
+                    IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close_rounded, size: 20)),
+                  ],
+                ),
+                const Divider(height: 32),
+                Flexible(
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: [
+                      _tutorialStep(1, "Login Firebase CLI",
+                          "Buka Terminal (Ctrl + J) lalu ketik 'firebase login'. Pastikan akun Google-mu terhubung."),
+                      _tutorialStep(2, "Build APK Rilis",
+                          "Ketik 'flutter build apk --release'. Tunggu sampai selesai (hasilnya ada di folder build/app/...)"),
+                      _tutorialStep(3, "Pindahkan APK",
+                          "Cari file 'app-release.apk' tadi, copy & paste ke dalam folder 'public/' di folder project utama kamu."),
+                      _tutorialStep(4, "Kirim ke Cloud",
+                          "Di terminal, ketik 'firebase deploy --only hosting'. Tunggu sampai muncul URL sukses."),
+                      _tutorialStep(5, "Update Firestore",
+                          "Masuk ke Admin Panel, ganti 'Latest Version' ke versi baru (cek pubspec.yaml) dan klik tombol 'Gunakan Firebase Hosting URL'."),
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                        ),
+                        child: const Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(Icons.info_outline_rounded,
+                                color: Colors.amber, size: 18),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text("Tentang vMin (Force Update):",
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                          color: Colors.brown)),
+                                  Text(
+                                      "Jika kamu isi vMin lebih tinggi dari versi yang dipakai user, user TIDAK BISA pakai aplikasi sebelum dia update (WAJIB UPDATE). Gunakan ini hanya untuk update kritikal!",
+                                      style: TextStyle(
+                                          fontSize: 10, color: Colors.brown)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
+                      elevation: 0,
+                    ),
+                    child: const Text('PAHAM, LANJUTKAN!',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _tutorialStep(int num, String title, String desc) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 24,
+            height: 24,
+            decoration: const BoxDecoration(
+                color: Colors.blue, shape: BoxShape.circle),
+            alignment: Alignment.center,
+            child: Text(num.toString(),
+                style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 14,
+                        letterSpacing: -0.5)),
+                const SizedBox(height: 4),
+                Text(desc,
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.black.withOpacity(0.6),
+                        height: 1.4)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(title: const Text('App Config'), centerTitle: true),
+      backgroundColor: const Color(0xFFF8F9FA),
+      appBar: AppBar(
+        title: const Text('App Configuration'),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            onPressed: _showTutorialDialog,
+            icon: const Icon(Icons.help_outline_rounded),
+            tooltip: 'Tutorial Update',
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         padding: EdgeInsets.fromLTRB(
             24, 24, 24, MediaQuery.of(context).padding.bottom + 100),
@@ -373,6 +549,25 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
               labelText: 'Download URL (Direct APK Link)',
               hintText: 'https://github.com/.../release.apk',
               prefixIcon: Icon(Icons.link_rounded),
+            ),
+          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: () {
+                setState(() {
+                  _downloadUrlController.text =
+                      'https://myduitgweh.web.app/app-release.apk';
+                });
+              },
+              icon: const Icon(Icons.cloud_done_rounded, size: 14),
+              label: const Text('Gunakan Firebase Hosting URL',
+                  style: TextStyle(fontSize: 10)),
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero,
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
             ),
           ),
         ],
