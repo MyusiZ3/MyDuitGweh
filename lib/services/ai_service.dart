@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:http/http.dart' as http;
 import '../models/transaction_model.dart';
 import '../utils/tone_dictionary.dart';
 import 'package:intl/intl.dart';
@@ -291,8 +293,11 @@ class AIService {
 
   Future<Map<String, dynamic>> checkKeyStatus(String apiKey) async {
     try {
-      final model = GenerativeModel(model: _modelName, apiKey: apiKey);
+      // 3. Fallback Gemini Models (Updated for 2026)
+      final fallbackModels = ['gemini-3.1-pro-preview', 'gemini-2.5-flash', 'gemini-2.0-flash'];
+      final model = GenerativeModel(model: fallbackModels.first, apiKey: apiKey);
       // Use a more standard prompt, 2.5-flash might reject 'hi' as low-entropy or test Junk
+      debugPrint('>>> Checking Gemini Key: ${apiKey.substring(0, 5)}...');
       await model.generateContent(
           [Content.text('Halo, tes koneksi API. Biarkan ini tetap singkat.')]);
       return {
@@ -370,6 +375,117 @@ class AIService {
   // Helper to expose integrated keys status check
   List<String> getIntegratedKeys() => _integratedApiKeys;
 
+  // === GROQ API SUPPORT ===
+  static Future<List<String>> getGroqApiKeysAsync() async {
+    try {
+      final data = await getAIConfig();
+      return List<String>.from(data['groq_keys'] ?? []);
+    } catch (e) {
+      debugPrint('Failed to fetch Groq keys: $e');
+      return [];
+    }
+  }
+
+  static Future<String?> _callGroqApi({
+    required String apiKey,
+    required String model,
+    required String systemPrompt,
+    required String userQuery,
+    List<Content>? history,
+  }) async {
+    final messages = <Map<String, String>>[];
+    messages.add({'role': 'system', 'content': systemPrompt});
+    if (history != null) {
+      for (var content in history) {
+        final role = content.role == 'model' ? 'assistant' : 'user';
+        final text =
+            content.parts.whereType<TextPart>().map((p) => p.text).join('\n');
+        if (text.isNotEmpty) {
+          messages.add({'role': role, 'content': text});
+        }
+      }
+    }
+    messages.add({'role': 'user', 'content': userQuery});
+
+    final response = await http.post(
+      Uri.parse('https://api.groq.com/openai/v1/chat/completions'),
+      headers: {
+        'Authorization': 'Bearer $apiKey',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'model': model,
+        'messages': messages,
+        'temperature': 0.8,
+        'max_tokens': 2048,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['choices']?[0]?['message']?['content'];
+    }
+    final errorBody = jsonDecode(response.body);
+    final errorMsg = errorBody['error']?['message'] ?? 'Unknown error';
+    if (response.statusCode == 429) {
+      throw Exception('GROQ_RATE_LIMIT: $errorMsg');
+    } else if (response.statusCode == 401) {
+      throw Exception('GROQ_INVALID_KEY: $errorMsg');
+    } else {
+      throw Exception('GROQ_ERROR: $errorMsg');
+    }
+  }
+
+  Future<Map<String, dynamic>> checkGroqKeyStatus(String apiKey) async {
+    try {
+      final response = await http.post(
+        Uri.parse('https://api.groq.com/openai/v1/chat/completions'),
+        headers: {
+          'Authorization': 'Bearer $apiKey',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'model': 'llama-3.3-70b-versatile',
+          'messages': [
+            {'role': 'user', 'content': 'Test. Reply OK.'}
+          ],
+          'max_tokens': 5,
+        }),
+      );
+      if (response.statusCode == 200) {
+        return {
+          'isValid': true,
+          'status': 'ok',
+          'message': 'Groq API Key bekerja!'
+        };
+      } else if (response.statusCode == 429) {
+        return {
+          'isValid': true,
+          'status': 'limit',
+          'message': 'Key valid, rate limit tercapai.'
+        };
+      } else if (response.statusCode == 401) {
+        return {
+          'isValid': false,
+          'status': 'invalid',
+          'message': 'API Key tidak valid.'
+        };
+      } else {
+        return {
+          'isValid': false,
+          'status': 'error',
+          'message': 'Error: HTTP ${response.statusCode}'
+        };
+      }
+    } catch (e) {
+      return {
+        'isValid': false,
+        'status': 'error',
+        'message': 'Gagal: ${e.toString().split('\n').first}'
+      };
+    }
+  }
+
   Future<String> getFinancialAdvice({
     required String? apiKey,
     required List<TransactionModel> transactions,
@@ -387,8 +503,12 @@ class AIService {
       if (!hasQuota) {
         final config = await getAIConfig();
         final maxChats = config['max_chats_per_hour'] ?? 10;
-        return 'Maaf, jatah chat gratis kamu hari ini sudah habis (Limit: $maxChats chat/jam). \n\nJatah ini akan reset otomatis setiap jamnya. Biar bisa chat SEPUASNYA tanpa antri, kamu bisa masukkan API Key pribadi kamu (Gratis dari Google) di menu Kelola API ya! 😊';
+        final resetMin = config['reset_duration_minutes'] ?? 60;
+        return 'Maaf, jatah chat gratis kamu sudah habis (Limit: $maxChats chat per $resetMin menit). \n\nJatah ini akan reset otomatis. Biar bisa chat SEPUASNYA tanpa antri, kamu bisa masukkan API Key pribadi kamu (Gratis dari Google) di menu Kelola API ya! 😊';
       }
+      // Increment quota IMMEDIATELY to prevent race condition
+      // (user sending multiple messages before first response completes)
+      await _incrementUserQuota(uid);
     }
 
     final integratedKeys = await getIntegratedApiKeysAsync();
@@ -488,6 +608,7 @@ INSTRUKSI:
 
         Future<bool> tryWithModel(String mName) async {
           try {
+            debugPrint('>>> CALLING GEMINI: $mName with key ${currentKey.substring(0, 10)}...');
             final model = GenerativeModel(
               model: mName,
               apiKey: currentKey,
@@ -534,9 +655,10 @@ INSTRUKSI:
               errStr.contains('429') ||
               errStr.contains('exhausted') ||
               errStr.contains('limit');
-          
-          bool isNotFound = errStr.contains('not found') || errStr.contains('404');
-          
+
+          bool isNotFound =
+              errStr.contains('not found') || errStr.contains('404');
+
           // If it's not a quota issue AND not a 404, we assume fatal error and break model loop
           if (!isQuotaErr && !isNotFound) break;
 
@@ -556,10 +678,48 @@ INSTRUKSI:
         }
       }
 
+      // === GROQ FALLBACK ===
+      if (finalResponse == null) {
+        final groqKeys = await getGroqApiKeysAsync();
+        if (groqKeys.isNotEmpty) {
+          debugPrint('>>> Gemini ALL LIMIT. FALLING BACK TO GROQ...');
+          final groqModels = [
+            'llama-3.3-70b-versatile',
+            'gemma2-9b-it',
+            'llama-3.1-8b-instant'
+          ];
+          for (String groqKey in groqKeys) {
+            for (String groqModel in groqModels) {
+              try {
+                debugPrint('>>> CALLING GROQ: $groqModel...');
+                final result = await _callGroqApi(
+                  apiKey: groqKey,
+                  model: groqModel,
+                  systemPrompt: systemPrompt,
+                  userQuery: userQuery,
+                  history: limitedHistory,
+                );
+                if (result != null && result.isNotEmpty) {
+                  statusNotifier.value = 'limit';
+                  return result;
+                }
+              } catch (e) {
+                final errStr = e.toString().toLowerCase();
+                if (errStr.contains('rate_limit') || errStr.contains('429')) {
+                  debugPrint('>>> GROQ: $groqModel rate limited, next...');
+                  continue;
+                }
+                debugPrint('>>> GROQ: $groqModel error: $e');
+                break;
+              }
+            }
+          }
+        }
+      }
+
       if (finalResponse == null) {
         if (lastQuotaException != null) {
-          debugPrint(
-              'All keys exhausted or failed. Last exception: $lastQuotaException');
+          debugPrint('All keys exhausted. Last: $lastQuotaException');
         }
         if (isCustomApi) {
           if (lastQuotaException != null &&
@@ -573,15 +733,10 @@ INSTRUKSI:
                       .contains('api key not valid'))) {
             return 'API Key tidak valid atau salah. Silakan periksa kembali di Pengaturan API.';
           }
-          // Throw so that the report screen can switch to another user custom key if available
           throw Exception('QUOTA_EXCEEDED');
         } else {
-          return 'Maaf, seluruh token AI bawaan sedang mencapai batas wajar (Limit). Agar tetap bisa berkonsultasi, kami sarankan masukkan API Key milik Anda sendiri (Gratis) di menu Kelola API.';
+          return 'Maaf, seluruh token AI (Gemini + Groq) sedang limit. Masukkan API Key pribadi di menu Kelola API.';
         }
-      }
-
-      if (!isCustomApi && uid != null) {
-        await _incrementUserQuota(uid);
       }
 
       return finalResponse?.text ?? 'Maaf, jawaban kosong.';
