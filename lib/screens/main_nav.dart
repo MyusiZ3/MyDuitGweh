@@ -388,8 +388,12 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
       if (!mounted) return;
       Navigator.pop(context); // close loader
 
-      if (data == null) {
-        UIHelper.showErrorSnackBar(context, 'Gagal mengenali struk. Coba foto lebih jelas ya!');
+      if (data == null || data.amount == null) {
+        UIHelper.showInfoDialog(
+          context,
+          'Struk Tidak Terdeteksi',
+          'Waduh, sistem gagal mendeteksi struk atau nominal harga pada foto ini. Pastikan foto struk terlihat jelas dan terang ya!',
+        );
         return;
       }
 
