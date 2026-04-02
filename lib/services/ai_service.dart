@@ -27,7 +27,17 @@ class AIService {
     return {
       'max_chats_per_hour': 10,
       'reset_duration_minutes': 60,
+      'is_ai_enabled': true,
     };
+  }
+
+  static Future<bool> isGlobalAiEnabled() async {
+    try {
+      final config = await getAIConfig();
+      return config['is_ai_enabled'] ?? true;
+    } catch (e) {
+      return true; // Fail safe
+    }
   }
 
   static Future<bool> _checkUserQuota(String uid) async {

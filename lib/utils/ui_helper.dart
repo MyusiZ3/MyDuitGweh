@@ -326,4 +326,70 @@ class UIHelper {
           ],
         ));
   }
+
+  static Future<void> showAiMaintenanceDialog(BuildContext context) {
+    return showPremiumDialog(
+        context: context,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: AppColors.expense.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const Icon(Icons.engineering_rounded,
+                    color: AppColors.expense, size: 40),
+              ],
+            ),
+            const SizedBox(height: 24),
+            const Text('AI Advisor Beristirahat',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -1)),
+            const SizedBox(height: 12),
+            Text(
+                'Layanan AI Advisor sedang dinonaktifkan sementara oleh admin untuk pemeliharaan rutin. Silakan coba beberapa saat lagi ya!',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    color: Colors.grey[700], 
+                    fontSize: 14, 
+                    height: 1.6,
+                    fontWeight: FontWeight.w500)),
+            const SizedBox(height: 32),
+            InkWell(
+              onTap: () => Navigator.pop(context),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  color: AppColors.expense,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                        color: AppColors.expense.withOpacity(0.3),
+                        blurRadius: 15,
+                        offset: const Offset(0, 5)),
+                  ],
+                ),
+                child: const Center(
+                  child: Text('Siap, Tunggu Kabar!',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 14)),
+                ),
+              ),
+            ),
+          ],
+        ));
+  }
 }

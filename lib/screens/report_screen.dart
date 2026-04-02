@@ -225,7 +225,16 @@ class _ReportScreenState extends State<ReportScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
+        onPressed: () async {
+          // Check if AI is globally enabled
+          final isEnabled = await AIService.isGlobalAiEnabled();
+          if (!context.mounted) return;
+
+          if (!isEnabled) {
+            UIHelper.showAiMaintenanceDialog(context);
+            return;
+          }
+
           showModalBottomSheet(
             context: context,
             isScrollControlled: true,

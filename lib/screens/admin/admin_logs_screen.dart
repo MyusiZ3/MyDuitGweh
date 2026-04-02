@@ -21,7 +21,7 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
     {'id': 'BROADCAST', 'label': 'Broadcast', 'icon': Icons.campaign_rounded},
     {
       'id': 'MAINTENANCE_TOGGLE',
-      'label': 'App Status',
+      'label': 'Maintenance',
       'icon': Icons.construction_rounded
     },
     {
@@ -32,7 +32,7 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
     {'id': 'CONFIG_UPDATE', 'label': 'Konfigurasi', 'icon': Icons.settings_rounded},
     {
       'id': 'AI_STATUS_CHANGED',
-      'label': 'AI Toggle',
+      'label': 'AI Status',
       'icon': Icons.power_settings_new_rounded
     },
     {

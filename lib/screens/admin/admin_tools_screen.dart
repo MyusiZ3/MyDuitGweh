@@ -217,43 +217,26 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
 
                             return Column(
                               children: [
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: _buildCommandCard(
-                                        title: 'Maintenance',
-                                        subtitle: isMaintenance
-                                            ? 'STATUS: AKTIF'
-                                            : (startTime != null
-                                                ? 'TERJADWAL: ${DateFormat('HH:mm').format(startTime)}'
-                                                : 'STATUS: NON-AKTIF'),
-                                        icon: Icons.construction_rounded,
-                                        color: isMaintenance
-                                            ? Colors.red
-                                            : Colors.grey,
-                                        onTap: () => _showMaintenanceControl(
-                                            isMaintenance,
-                                            startTime,
-                                            data['message'] ?? ''),
-                                        isRestricted: !_isSuperAdmin,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: _buildCommandCard(
-                                        title: 'AI Service',
-                                        subtitle: _isAiEnabled
-                                            ? 'STATUS: AKTIF'
-                                            : 'STATUS: DISABLE',
-                                        icon: Icons.power_settings_new_rounded,
-                                        color: _isAiEnabled
-                                            ? const Color(0xFF8B5CF6)
-                                            : Colors.redAccent,
-                                        onTap: () => _toggleAiFeature(),
-                                        isRestricted: false,
-                                      ),
-                                    ),
-                                  ],
+                                SizedBox(
+                                  height: 140,
+                                  width: double.infinity,
+                                  child: _buildCommandCard(
+                                    title: 'Maintenance Mode',
+                                    subtitle: isMaintenance
+                                        ? 'STATUS: AKTIF'
+                                        : (startTime != null
+                                            ? 'TERJADWAL: ${DateFormat('HH:mm').format(startTime)}'
+                                            : 'STATUS: NON-AKTIF'),
+                                    icon: Icons.construction_rounded,
+                                    color: isMaintenance
+                                        ? Colors.red
+                                        : Colors.grey,
+                                    onTap: () => _showMaintenanceControl(
+                                        isMaintenance,
+                                        startTime,
+                                        data['message'] ?? ''),
+                                    isRestricted: !_isSuperAdmin,
+                                  ),
                                 ),
                                 const SizedBox(height: 12),
                               ],
@@ -843,40 +826,6 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
         ),
       ),
     );
-  }
-
-  Future<void> _toggleAiFeature() async {
-    final newStatus = !_isAiEnabled;
-    setState(() => _isAiEnabled = newStatus);
-
-    try {
-      final batch = FirebaseFirestore.instance.batch();
-      final configRef = FirebaseFirestore.instance.collection('app_settings').doc('ai_config');
-      final logRef = configRef.collection('history').doc();
-
-      batch.set(configRef, {'is_ai_enabled': newStatus}, SetOptions(merge: true));
-      batch.set(logRef, {
-        'action': 'AI_STATUS_CHANGED',
-        'prevStatus': !newStatus,
-        'newStatus': newStatus,
-        'updatedAt': FieldValue.serverTimestamp(),
-        'updatedBy': _authService.auth.currentUser?.uid,
-      });
-
-      await batch.commit();
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('AI Feature ${newStatus ? 'ENABLED' : 'DISABLED'}'),
-            backgroundColor: newStatus ? Colors.green : Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } catch (e) {
-      debugPrint('Error toggling AI: $e');
-    }
   }
 
   void _showAIQuotaControl() {
