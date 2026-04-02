@@ -41,9 +41,9 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
 
   Future<void> _loadConfig() async {
     try {
-      final doc = await _firestore.collection('app_config').doc('global').get();
-      if (doc.exists) {
-        final data = doc.data()!;
+      final configDoc = await _firestore.collection('app_config').doc('global').get();
+      if (configDoc.exists) {
+        final data = configDoc.data()!;
         setState(() {
           _maintenanceMode = data['isMaintenance'] ?? false;
           _minVersionController.text = data['minVersion'] ?? '1.0.0';

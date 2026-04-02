@@ -164,7 +164,8 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (ctx) => Container(
-        padding: EdgeInsets.fromLTRB(40, 48, 40, MediaQuery.of(ctx).padding.bottom + 48),
+        padding: EdgeInsets.fromLTRB(
+            40, 48, 40, MediaQuery.of(ctx).padding.bottom + 48),
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(40)),
@@ -188,7 +189,8 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
                     fontWeight: FontWeight.w900,
                     letterSpacing: -1)),
             const SizedBox(height: 12),
-            const Text('Pesan kamu sudah masuk sistem histori dan akan meluncur otomatis.',
+            const Text(
+                'Pesan kamu sudah masuk sistem histori dan akan meluncur otomatis.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.grey, fontSize: 14)),
             const SizedBox(height: 48),
@@ -203,7 +205,8 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
                       borderRadius: BorderRadius.circular(20)),
                 ),
                 child: const Text('MANTAP',
-                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                    style:
+                        TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
               ),
             ),
           ],
@@ -263,10 +266,10 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
         centerTitle: true,
         actions: [
           IconButton(
-            onPressed:
-                (_titleController.text.isNotEmpty && _msgController.text.isNotEmpty)
-                    ? _showPreview
-                    : null,
+            onPressed: (_titleController.text.isNotEmpty &&
+                    _msgController.text.isNotEmpty)
+                ? _showPreview
+                : null,
             icon: const Icon(Icons.remove_red_eye_rounded),
             tooltip: 'Preview Tampilan',
           )
@@ -290,36 +293,51 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
                       'Gunakan fitur ini untuk mengirimkan pengumuman penting ke seluruh ekosistem MyDuitGweh.',
                       style: TextStyle(color: Colors.grey, fontSize: 13)),
                   const SizedBox(height: 32),
-                  
                   _buildInputLabel('TIPE BROADCAST'),
                   Row(
                     children: [
-                      _buildTypeButton('info', Icons.info_outline_rounded, Colors.blue),
+                      _buildTypeButton(
+                          'info', Icons.info_outline_rounded, Colors.blue),
                       const SizedBox(width: 8),
-                      _buildTypeButton('news', Icons.auto_awesome_rounded, Colors.purple),
+                      _buildTypeButton(
+                          'news', Icons.auto_awesome_rounded, Colors.purple),
                       const SizedBox(width: 8),
-                      _buildTypeButton('urgent', Icons.priority_high_rounded, Colors.orange),
+                      _buildTypeButton(
+                          'urgent', Icons.priority_high_rounded, Colors.orange),
                       const SizedBox(width: 8),
-                      _buildTypeButton('reminder', Icons.alarm_rounded, Colors.teal),
+                      _buildTypeButton(
+                          'reminder', Icons.alarm_rounded, Colors.teal),
                     ],
                   ),
                   const SizedBox(height: 24),
-
                   _buildInputLabel('QUICK TEMPLATES'),
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        _buildTemplateChip('📔 Jurnal Harian', 'Sudah catat pengeluaran hari ini?', 'Ayo disiplinkan keuanganmu dengan mencatat setiap transaksi sekarang!'),
+                        _buildTemplateChip(
+                            '📔 Jurnal Harian',
+                            'Sudah catat pengeluaran hari ini?',
+                            'Ayo disiplinkan keuanganmu dengan mencatat setiap transaksi sekarang!'),
                         const SizedBox(width: 8),
-                        _buildTemplateChip('🚀 Update Fitur', 'Fitur Baru Hadir!', 'Cek fitur terbaru MyDuitGweh yang bikin hidup kamu makin gampang!'),
+                        _buildTemplateChip(
+                            '🚀 Update Fitur',
+                            'Fitur Baru Hadir!',
+                            'Cek fitur terbaru MyDuitGweh yang bikin hidup kamu makin gampang!'),
                         const SizedBox(width: 8),
-                        _buildTemplateChip('⚠️ Maintenance', 'Sistem Diperbaiki', 'Kami sedang melakukan pemeliharaan rutin untuk kenyamanan Anda.'),
+                        _buildTemplateChip(
+                            '⚠️ Maintenance',
+                            'Sistem Diperbaiki',
+                            'Kami sedang melakukan pemeliharaan rutin untuk kenyamanan Anda.'),
+                        const SizedBox(width: 8),
+                         _buildTemplateChip(
+                            '🤖 AI Advisor Limit',
+                            '💡 Tips: AI Advisor Lancar Jaya!',
+                            'Wah, jatah chat AI global lagi rame nih! Biar chat kamu tetep lancar tanpa antri limit, yuk masukkan **API Key Pribadi** kamu di menu **Kelola AI**. Gratis & Unlimited lho! 🚀'),
                       ],
                     ),
                   ),
                   const SizedBox(height: 24),
-
                   _buildInputLabel('JUDUL PENGUMUMAN'),
                   TextField(
                     controller: _titleController,
@@ -328,7 +346,6 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
                         hintText: 'Misal: Fitur Baru Telah Hadir!'),
                   ),
                   const SizedBox(height: 24),
-                  
                   _buildInputLabel('ISI PESAN'),
                   TextField(
                     controller: _msgController,
@@ -341,13 +358,13 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-
                   _buildInputLabel('JADWAL KIRIM (OPSIONAL)'),
                   InkWell(
                     onTap: _selectDateTime,
                     borderRadius: BorderRadius.circular(16),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
                       decoration: BoxDecoration(
                         color: AppColors.surfaceVariant.withOpacity(0.5),
                         borderRadius: BorderRadius.circular(16),
@@ -355,25 +372,28 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.calendar_month_rounded, size: 20, color: AppColors.primary),
+                          const Icon(Icons.calendar_month_rounded,
+                              size: 20, color: AppColors.primary),
                           const SizedBox(width: 12),
                           Text(
-                            _scheduledTime == null 
-                              ? 'Kirim Sekarang' 
-                              : DateFormat('dd MMM, HH:mm').format(_scheduledTime!),
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                            _scheduledTime == null
+                                ? 'Kirim Sekarang'
+                                : DateFormat('dd MMM, HH:mm')
+                                    .format(_scheduledTime!),
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 13),
                           ),
                           const Spacer(),
                           if (_scheduledTime != null)
                             IconButton(
                               icon: const Icon(Icons.close_rounded, size: 18),
-                              onPressed: () => setState(() => _scheduledTime = null),
+                              onPressed: () =>
+                                  setState(() => _scheduledTime = null),
                             )
                         ],
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 40),
                   const Text('History & Logs',
                       style: TextStyle(
@@ -385,14 +405,15 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
               ),
             ),
           ),
-          
+
           // History Stream
           SliverToBoxAdapter(
             child: StreamBuilder<List<Map<String, dynamic>>>(
               stream: _firestoreService.getBroadcastsStream(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
-                  return const Center(child: Padding(
+                  return const Center(
+                      child: Padding(
                     padding: EdgeInsets.symmetric(vertical: 40),
                     child: CircularProgressIndicator(),
                   ));
@@ -401,7 +422,9 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
                 if (logs.isEmpty) {
                   return const Padding(
                     padding: EdgeInsets.symmetric(vertical: 40),
-                    child: Center(child: Text('Belum ada riwayat broadcast.', style: TextStyle(color: Colors.grey))),
+                    child: Center(
+                        child: Text('Belum ada riwayat broadcast.',
+                            style: TextStyle(color: Colors.grey))),
                   );
                 }
                 return Column(
@@ -410,7 +433,7 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
               },
             ),
           ),
-          
+
           const SliverPadding(padding: EdgeInsets.only(bottom: 120)),
         ],
       ),
@@ -436,7 +459,8 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
                     ? const SizedBox(
                         height: 24,
                         width: 24,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3))
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 3))
                     : const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -472,13 +496,11 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
             children: [
               Icon(icon, color: isSelected ? color : Colors.black38, size: 20),
               const SizedBox(height: 4),
-              Text(type.toUpperCase(), 
-                style: TextStyle(
-                  fontSize: 8, 
-                  fontWeight: FontWeight.bold, 
-                  color: isSelected ? color : Colors.black38
-                )
-              ),
+              Text(type.toUpperCase(),
+                  style: TextStyle(
+                      fontSize: 8,
+                      fontWeight: FontWeight.bold,
+                      color: isSelected ? color : Colors.black38)),
             ],
           ),
         ),
@@ -488,16 +510,16 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
 
   Widget _buildLogTile(Map<String, dynamic> b) {
     final type = b['type'] ?? 'info';
-    
+
     final String status = b['status'] ?? 'ONGOING';
     Color statusColor = Colors.blue;
-    
+
     if (status == 'PENDING') statusColor = Colors.amber;
     if (status == 'END') statusColor = Colors.grey;
     if (status == 'ONGOING') statusColor = Colors.green;
 
     final time = (b['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
-    
+
     Color typeColor = Colors.blue;
     if (type == 'urgent') typeColor = Colors.orange;
     if (type == 'news') typeColor = Colors.purple;
@@ -521,12 +543,11 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
                   color: statusColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(status, 
-                  style: TextStyle(
-                    fontSize: 8, 
-                    fontWeight: FontWeight.bold, 
-                    color: statusColor
-                  )),
+                child: Text(status,
+                    style: TextStyle(
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                        color: statusColor)),
               ),
               const SizedBox(width: 8),
               Container(
@@ -535,18 +556,24 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
                   color: typeColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(type.toUpperCase(), 
-                  style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: typeColor)),
+                child: Text(type.toUpperCase(),
+                    style: TextStyle(
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                        color: typeColor)),
               ),
               const Spacer(),
-              Text(DateFormat('dd MMM, HH:mm').format(time), style: const TextStyle(fontSize: 10, color: Colors.grey)),
+              Text(DateFormat('dd MMM, HH:mm').format(time),
+                  style: const TextStyle(fontSize: 10, color: Colors.grey)),
               IconButton(
-                icon: const Icon(Icons.delete_outline_rounded, size: 16, color: Colors.grey),
+                icon: const Icon(Icons.delete_outline_rounded,
+                    size: 16, color: Colors.grey),
                 onPressed: () async {
                   final confirm = await UIHelper.showConfirmDialog(
                     context: context,
                     title: 'Hapus Broadcast?',
-                    message: 'Ini akan menghapus broadcast dari riwayat pengguna.',
+                    message:
+                        'Ini akan menghapus broadcast dari riwayat pengguna.',
                     confirmText: 'Hapus',
                     isDangerous: true,
                   );
@@ -558,12 +585,12 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
             ],
           ),
           const SizedBox(height: 8),
-          Text(b['title'] ?? '', 
+          Text(b['title'] ?? '',
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
               overflow: TextOverflow.ellipsis),
-          Text(b['message'] ?? '', 
-              maxLines: 2, 
-              overflow: TextOverflow.ellipsis, 
+          Text(b['message'] ?? '',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 11, color: Colors.grey)),
         ],
       ),
@@ -593,9 +620,11 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
             if (label.contains('📔')) _selectedType = 'reminder';
             if (label.contains('🚀')) _selectedType = 'news';
             if (label.contains('⚠️')) _selectedType = 'urgent';
+            if (label.contains('🤖')) _selectedType = 'info';
           });
         },
-        label: Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+        label: Text(label,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         side: BorderSide(color: Colors.grey.shade200),
       ),
