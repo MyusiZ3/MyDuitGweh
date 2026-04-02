@@ -334,6 +334,30 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                                         icon = Icons.manage_accounts_rounded;
                                         color = Colors.purple;
                                         title = 'Role Permission Updated';
+                                      } else if (action == 'CONFIG_UPDATE') {
+                                        icon = Icons.settings_rounded;
+                                        color = Colors.teal;
+                                        title = 'Config Diubah';
+                                      } else if (action == 'DELETE_USER') {
+                                        icon = Icons.person_remove_rounded;
+                                        color = Colors.red;
+                                        title = 'User Dihapus';
+                                      } else if (action == 'AI_KEY_ADDED') {
+                                        icon = Icons.vpn_key_rounded;
+                                        color = Colors.green;
+                                        title = 'API Key Ditambahkan';
+                                      } else if (action == 'AI_KEY_REMOVED') {
+                                        icon = Icons.key_off_rounded;
+                                        color = Colors.red;
+                                        title = 'API Key Dihapus';
+                                      } else if (action == 'AI_QUOTA_UPDATE') {
+                                        icon = Icons.psychology_rounded;
+                                        color = const Color(0xFF8B5CF6);
+                                        title = 'AI Quota Diubah';
+                                      } else if (action == 'MAINTENANCE_SCHEDULE') {
+                                        icon = Icons.schedule_rounded;
+                                        color = Colors.indigo;
+                                        title = 'Jadwal Maintenance';
                                       }
 
                                       return Padding(
@@ -987,21 +1011,9 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                                   fontSize: 24,
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: -1)),
-                          Text('Integrated API Status Center',
+                          Text('Gemini + Groq API Status',
                               style: TextStyle(fontSize: 12, color: Colors.grey)),
                         ],
-                      ),
-                      IconButton(
-                        onPressed: () => _showAddIntegratedKeyDialog(setModalState),
-                        icon: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.black,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(Icons.add_rounded,
-                              color: Colors.white, size: 20),
-                        ),
                       ),
                     ],
                   ),
@@ -1014,188 +1026,145 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                         .snapshots(),
                     builder: (context, snapshot) {
                       if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-                      
                       final data = snapshot.data!.data() as Map<String, dynamic>? ?? {};
-                      final List<String> keys = List<String>.from(data['gemini_keys'] ?? []);
+                      final List<String> geminiKeys = List<String>.from(data['gemini_keys'] ?? []);
+                      final List<String> groqKeys = List<String>.from(data['groq_keys'] ?? []);
 
-                      if (keys.isEmpty) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.key_off_rounded, size: 64, color: Colors.grey[100]),
-                              const SizedBox(height: 16),
-                              const Text('No integrated keys found',
-                                  style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
-                            ],
-                          ),
+                      Widget buildKeyCard(String key, int index, String provider, List<String> allKeys) {
+                        final obscuredKey = key.length > 12 ? "${key.substring(0, 6)}...${key.substring(key.length - 4)}" : key;
+                        final isGroq = provider == 'groq';
+                        final keyField = isGroq ? 'groq_keys' : 'gemini_keys';
+                        final keyColor = isGroq ? const Color(0xFFF55036) : const Color(0xFF00C9FF);
+                        final keyIcon = isGroq ? Icons.bolt_rounded : Icons.vpn_key_rounded;
+                        return StatefulBuilder(
+                          builder: (context, setItemState) {
+                        String healthStatus = 'unknown';
+                        String healthMessage = 'Tap cek untuk verifikasi';
+                        
+                        return StatefulBuilder(
+                          builder: (context, setItemState) {
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(color: Colors.black.withOpacity(0.05)),
+                                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 20, offset: const Offset(0, 8))],
+                              ),
+                              child: Column(children: [
+                                ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                                  leading: Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(color: keyColor.withOpacity(0.1), shape: BoxShape.circle),
+                                    child: Icon(keyIcon, color: keyColor, size: 18),
+                                  ),
+                                  title: Text(obscuredKey, style: const TextStyle(fontFamily: 'Monospace', fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: -0.5)),
+                                  subtitle: Text('${isGroq ? "Groq" : "Gemini"} #${index + 1}', style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                                  trailing: IconButton(
+                                    icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
+                                    onPressed: () async {
+                                      final confirm = await UIHelper.showConfirmDialog(context: context, title: 'Hapus Key?', message: 'Yakin hapus API Key ini?', confirmText: 'Hapus');
+                                      if (confirm == true) {
+                                        allKeys.removeAt(index);
+                                        await FirebaseFirestore.instance.collection('app_settings').doc('ai_config').update({keyField: allKeys});
+                                        await FirebaseFirestore.instance.collection('app_config').doc('global').collection('history').add({
+                                          'updatedBy': FirebaseAuth.instance.currentUser?.uid ?? 'system',
+                                          'updatedAt': FieldValue.serverTimestamp(),
+                                          'action': isGroq ? 'GROQ_KEY_REMOVED' : 'AI_KEY_REMOVED',
+                                          'key_index': index,
+                                        });
+                                      }
+                                    },
+                                  ),
+                                ),
+                                const Divider(height: 1, indent: 20, endIndent: 20, color: Color(0xFFF0F0F0)),
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 14),
+                                  child: Row(children: [
+                                    Expanded(child: Row(children: [
+                                      Container(
+                                        width: 10, 
+                                        height: 10, 
+                                        decoration: BoxDecoration(
+                                          color: healthStatus == 'ok' ? Colors.green : (healthStatus == 'limit' ? Colors.orange : (healthStatus == 'invalid' ? Colors.red : (healthStatus == 'error' ? Colors.red : Colors.grey))),
+                                          shape: BoxShape.circle,
+                                          boxShadow: healthStatus == 'unknown' || healthStatus == 'checking' ? null : [
+                                            BoxShadow(
+                                              color: (healthStatus == 'ok' ? Colors.green : (healthStatus == 'limit' ? Colors.orange : Colors.red)).withOpacity(0.4),
+                                              blurRadius: 6,
+                                              spreadRadius: 1,
+                                            )
+                                          ]
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(child: Text(healthMessage, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: healthStatus == 'ok' ? Colors.green : (healthStatus == 'limit' ? Colors.orange : (healthStatus == 'invalid' ? Colors.red : (healthStatus == 'error' ? Colors.red : Colors.grey[600])))), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                                    ])),
+                                    TextButton(
+                                      onPressed: healthStatus == 'checking' ? null : () async {
+                                        setItemState(() { healthStatus = 'checking'; healthMessage = 'Verifikasi...'; });
+                                        try {
+                                          final statusMap = isGroq ? await AIService().checkGroqKeyStatus(key) : await AIService().checkKeyStatus(key);
+                                          setItemState(() { 
+                                            healthStatus = statusMap['status'] ?? 'error'; 
+                                            healthMessage = statusMap['message'] ?? 'Error'; 
+                                          });
+                                        } catch (e) {
+                                          setItemState(() { healthStatus = 'error'; healthMessage = 'Error: $e'; });
+                                        }
+                                      },
+                                      style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6), backgroundColor: Colors.black.withOpacity(0.03), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                                        if (healthStatus == 'checking') const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                                        else const Icon(Icons.refresh_rounded, size: 14, color: Colors.black),
+                                        const SizedBox(width: 6),
+                                        Text(healthStatus == 'checking' ? 'Cek...' : 'Cek Status', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.black)),
+                                      ]),
+                                    ),
+                                  ]),
+                                ),
+                              ]),
+                            );
+                          },
+                        );
+                          },
                         );
                       }
 
-                      return ListView.builder(
+                      Widget buildSectionHeader(String label, IconData icon, Color color, int count, VoidCallback onAdd) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Row(children: [
+                            Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)), child: Icon(icon, size: 14, color: color)),
+                            const SizedBox(width: 8),
+                            Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                            const Spacer(),
+                            Text('$count key', style: TextStyle(fontSize: 10, color: Colors.grey[500])),
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: onAdd,
+                              child: Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.add_rounded, color: Colors.white, size: 14)),
+                            ),
+                          ]),
+                        );
+                      }
+
+                      return SingleChildScrollView(
                         padding: const EdgeInsets.all(24),
-                        itemCount: keys.length,
-                        itemBuilder: (context, index) {
-                          final key = keys[index];
-                          final obscuredKey = key.length > 12 
-                              ? "${key.substring(0, 6)}...${key.substring(key.length - 4)}"
-                              : key;
-
-                          return StatefulBuilder(
-                            builder: (context, setItemState) {
-                              String healthStatus = 'unknown'; // 'unknown', 'checking', 'ok', 'limit', 'invalid'
-                              String healthMessage = 'Click to verify status';
-
-                              return Container(
-                                margin: const EdgeInsets.only(bottom: 16),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(28),
-                                  border: Border.all(color: Colors.black.withOpacity(0.05)),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.02),
-                                      blurRadius: 20,
-                                      offset: const Offset(0, 8),
-                                    ),
-                                  ],
-                                ),
-                                child: Column(
-                                  children: [
-                                    ListTile(
-                                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                                      leading: Container(
-                                        padding: const EdgeInsets.all(12),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFF00C9FF).withOpacity(0.1),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: const Icon(Icons.vpn_key_rounded,
-                                            color: Color(0xFF00C9FF), size: 20),
-                                      ),
-                                      title: Text(obscuredKey,
-                                          style: const TextStyle(
-                                              fontFamily: 'Monospace',
-                                              fontWeight: FontWeight.w900,
-                                              fontSize: 14,
-                                              letterSpacing: -0.5)),
-                                      subtitle: Text('Key #${index + 1}',
-                                          style: const TextStyle(fontSize: 10, color: Colors.grey)),
-                                      trailing: IconButton(
-                                        icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
-                                        onPressed: () async {
-                                          final confirm = await UIHelper.showConfirmDialog(
-                                            context: context,
-                                            title: 'Hapus Shared Key?',
-                                            message: 'Apakah kamu yakin ingin menghapus API Key ini dari daftar shared?',
-                                            confirmText: 'Hapus Sekarang',
-                                          );
-
-                                          if (confirm == true) {
-                                            keys.removeAt(index);
-                                            await FirebaseFirestore.instance
-                                                .collection('app_settings')
-                                                .doc('ai_config')
-                                                .update({'gemini_keys': keys});
-                                            
-                                            // Log activity
-                                            await FirebaseFirestore.instance
-                                                .collection('app_config')
-                                                .doc('global')
-                                                .collection('history')
-                                                .add({
-                                              'updatedBy': FirebaseAuth.instance.currentUser?.uid ?? 'system',
-                                              'updatedAt': FieldValue.serverTimestamp(),
-                                              'action': 'AI_KEY_REMOVED',
-                                              'key_index': index,
-                                            });
-                                          }
-                                        },
-                                      ),
-                                    ),
-                                    const Divider(height: 1, indent: 20, endIndent: 20, color: Color(0xFFF0F0F0)),
-                                    Padding(
-                                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            child: Row(
-                                              children: [
-                                                Container(
-                                                  width: 8,
-                                                  height: 8,
-                                                  decoration: BoxDecoration(
-                                                    color: healthStatus == 'ok' ? Colors.green : (healthStatus == 'limit' ? Colors.orange : (healthStatus == 'invalid' ? Colors.red : Colors.grey)),
-                                                    shape: BoxShape.circle,
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 8),
-                                                Expanded(
-                                                  child: Text(
-                                                    healthMessage,
-                                                    style: TextStyle(
-                                                      fontSize: 11,
-                                                      fontWeight: FontWeight.bold,
-                                                      color: healthStatus == 'ok' ? Colors.green : (healthStatus == 'limit' ? Colors.orange : (healthStatus == 'invalid' ? Colors.red : Colors.grey[600])),
-                                                    ),
-                                                    maxLines: 1,
-                                                    overflow: TextOverflow.ellipsis,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          TextButton(
-                                            onPressed: healthStatus == 'checking' ? null : () async {
-                                              setItemState(() {
-                                                healthStatus = 'checking';
-                                                healthMessage = 'Verifikasi ke Google...';
-                                              });
-
-                                              try {
-                                                final statusMap = await AIService().checkKeyStatus(key);
-                                                setItemState(() {
-                                                  healthStatus = statusMap['status'] ?? 'error';
-                                                  healthMessage = statusMap['message'] ?? 'Unknown Error';
-                                                });
-                                              } catch (e) {
-                                                setItemState(() {
-                                                  healthStatus = 'error';
-                                                  healthMessage = 'Error: ${e.toString()}';
-                                                });
-                                              }
-                                            },
-                                            style: TextButton.styleFrom(
-                                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                              backgroundColor: Colors.black.withOpacity(0.03),
-                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                            ),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                if (healthStatus == 'checking')
-                                                  const SizedBox(
-                                                    width: 12,
-                                                    height: 12,
-                                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
-                                                  )
-                                                else
-                                                  const Icon(Icons.refresh_rounded, size: 14, color: Colors.black),
-                                                const SizedBox(width: 6),
-                                                Text(healthStatus == 'checking' ? 'Mengecek...' : 'Cek Status',
-                                                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.black)),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          );
-                        },
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          buildSectionHeader('GEMINI', Icons.auto_awesome_rounded, const Color(0xFF00C9FF), geminiKeys.length, () => _showAddKeyDialog(setModalState, 'gemini')),
+                          if (geminiKeys.isEmpty)
+                            Container(padding: const EdgeInsets.all(20), margin: const EdgeInsets.only(bottom: 12), decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(16)), child: const Center(child: Text('Belum ada Gemini key', style: TextStyle(color: Colors.grey, fontSize: 12)))),
+                          ...geminiKeys.asMap().entries.map((e) => buildKeyCard(e.value, e.key, 'gemini', geminiKeys)),
+                          const SizedBox(height: 24),
+                          const Divider(),
+                          const SizedBox(height: 24),
+                          buildSectionHeader('GROQ', Icons.bolt_rounded, const Color(0xFFF55036), groqKeys.length, () => _showAddKeyDialog(setModalState, 'groq')),
+                          if (groqKeys.isEmpty)
+                            Container(padding: const EdgeInsets.all(20), margin: const EdgeInsets.only(bottom: 12), decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(16)), child: const Center(child: Text('Belum ada Groq key', style: TextStyle(color: Colors.grey, fontSize: 12)))),
+                          ...groqKeys.asMap().entries.map((e) => buildKeyCard(e.value, e.key, 'groq', groqKeys)),
+                        ]),
                       );
                     },
                   ),
@@ -1226,8 +1195,13 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
     );
   }
 
-  void _showAddIntegratedKeyDialog(Function setModalState) {
+  void _showAddKeyDialog(Function setModalState, String provider) {
     final TextEditingController keyController = TextEditingController();
+    final bool isGroq = provider == 'groq';
+    final String keyFieldName = isGroq ? 'groq_keys' : 'gemini_keys';
+    final Color providerColor = isGroq ? const Color(0xFFF55036) : AppColors.primary;
+    final String providerLabel = isGroq ? 'GROQ' : 'GEMINI';
+    final String hintText = isGroq ? 'Masukkan Groq Key (gsk_...)' : 'Masukkan API Key (AIzaSy...)';
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
@@ -1281,19 +1255,19 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.1),
+                            color: providerColor.withOpacity(0.1),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(
-                            Icons.vpn_key_rounded,
-                            color: AppColors.primary,
+                          child: Icon(
+                            isGroq ? Icons.bolt_rounded : Icons.vpn_key_rounded,
+                            color: providerColor,
                             size: 32,
                           ),
                         ),
                         const SizedBox(height: 24),
-                        const Text(
-                          'ADD INTEGRATED API',
-                          style: TextStyle(
+                        Text(
+                          'ADD $providerLabel API',
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w900,
                             letterSpacing: -0.5,
@@ -1314,7 +1288,7 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                           controller: keyController,
                           autofocus: true,
                           decoration: InputDecoration(
-                            hintText: 'Masukkan API Key (AIzaSy...)',
+                            hintText: hintText,
                             hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
                             filled: true,
                             fillColor: Colors.black.withOpacity(0.05),
@@ -1361,7 +1335,59 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                             Expanded(
                               child: InkWell(
                                 onTap: () async {
-                                  if (keyController.text.trim().isEmpty) return;
+                                  final keyText = keyController.text.trim();
+                                  if (keyText.isEmpty) return;
+
+                                  // Validate API Key format
+                                  if (isGroq) {
+                                    if (!keyText.startsWith('gsk_') || keyText.length < 20) {
+                                      if (context.mounted) {
+                                        UIHelper.showErrorSnackBar(context, 'Format Groq Key tidak valid. Key harus diawali "gsk_".');
+                                      }
+                                      return;
+                                    }
+                                  } else {
+                                    if (!keyText.startsWith('AIza') || keyText.length < 30) {
+                                      if (context.mounted) {
+                                        UIHelper.showErrorSnackBar(context, 'Format Gemini Key tidak valid. Key harus diawali "AIza".');
+                                      }
+                                      return;
+                                    }
+                                  }
+
+                                  // Verify API Key with Google
+                                  try {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Row(
+                                          children: [
+                                            SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
+                                            SizedBox(width: 12),
+                                            Text('Memverifikasi API Key ke Google...'),
+                                          ],
+                                        ),
+                                        duration: Duration(seconds: 15),
+                                      ),
+                                    );
+
+                                    final statusResult = isGroq
+                                        ? await AIService().checkGroqKeyStatus(keyText)
+                                        : await AIService().checkKeyStatus(keyText);
+                                    if (context.mounted) ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+                                    if (statusResult['isValid'] != true) {
+                                      if (context.mounted) {
+                                        UIHelper.showErrorSnackBar(context, '❌ ${statusResult['message']}');
+                                      }
+                                      return;
+                                    }
+                                  } catch (e) {
+                                    if (context.mounted) ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                                    if (context.mounted) {
+                                      UIHelper.showErrorSnackBar(context, 'Gagal verifikasi: $e');
+                                    }
+                                    return;
+                                  }
 
                                   try {
                                     final configRef = FirebaseFirestore.instance
@@ -1372,13 +1398,21 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                                     
                                     List<String> keys = [];
                                     if (config.exists) {
-                                      keys = List<String>.from(config.data()?['gemini_keys'] ?? []);
+                                      keys = List<String>.from(config.data()?[keyFieldName] ?? []);
                                     }
 
-                                    keys.add(keyController.text.trim());
+                                    // Check for duplicates
+                                    if (keys.contains(keyText)) {
+                                      if (context.mounted) {
+                                        UIHelper.showErrorSnackBar(context, 'API Key ini sudah ada di daftar!');
+                                      }
+                                      return;
+                                    }
+
+                                    keys.add(keyText);
 
                                     await configRef.set(
-                                      {'gemini_keys': keys},
+                                      {keyFieldName: keys},
                                       SetOptions(merge: true),
                                     );
 
@@ -1390,12 +1424,12 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                                         .add({
                                       'updatedBy': FirebaseAuth.instance.currentUser?.uid ?? 'system',
                                       'updatedAt': FieldValue.serverTimestamp(),
-                                      'action': 'AI_KEY_ADDED',
+                                      'action': isGroq ? 'GROQ_KEY_ADDED' : 'AI_KEY_ADDED',
                                     });
 
                                     if (ctx.mounted) Navigator.pop(ctx);
                                     if (context.mounted) {
-                                      UIHelper.showSuccessSnackBar(context, 'API Key berhasil ditambahkan!');
+                                      UIHelper.showSuccessSnackBar(context, '✅ $providerLabel Key valid dan berhasil ditambahkan!');
                                     }
                                   } catch (e) {
                                     if (context.mounted) {
