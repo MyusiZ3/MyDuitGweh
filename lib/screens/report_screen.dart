@@ -1318,6 +1318,99 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                               ),
                             ],
                           ),
+                          const SizedBox(height: 24),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('KUNCI BAWAAN (Shared)',
+                                  style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.textHint,
+                                      letterSpacing: 1.5)),
+                              TextButton.icon(
+                                onPressed: () async {
+                                  final sharedKeys =
+                                      _aiService.getIntegratedKeys();
+                                  for (var k in sharedKeys) {
+                                    setDialogState(() => _apiStatus[k] = null);
+                                    final isOk = await _aiService.checkQuota(k);
+                                    if (context.mounted) {
+                                      setDialogState(
+                                          () => _apiStatus[k] = isOk);
+                                    }
+                                  }
+                                  for (var k in _localAllApiKeys) {
+                                    setDialogState(() => _apiStatus[k] = null);
+                                    final isOk = await _aiService.checkQuota(k);
+                                    if (context.mounted) {
+                                      setDialogState(
+                                          () => _apiStatus[k] = isOk);
+                                    }
+                                  }
+                                },
+                                icon: const Icon(Icons.refresh_rounded,
+                                    size: 14, color: AppColors.primary),
+                                label: const Text('Cek Semua',
+                                    style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.primary)),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          // Section for Shared/Integrated Keys
+                          Column(
+                            children: _aiService.getIntegratedKeys().map((key) {
+                              final isActive =
+                                  _localApiKey == null || _localApiKey!.isEmpty;
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color:
+                                      AppColors.surfaceVariant.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                      color: isActive
+                                          ? AppColors.primary.withOpacity(0.3)
+                                          : Colors.transparent,
+                                      width: 1),
+                                ),
+                                child: InkWell(
+                                  onTap: () {
+                                    widget.onRemoveKey(); // Set null in prefs
+                                    setDialogState(() => _localApiKey = "");
+                                    setState(() => _localApiKey = "");
+                                  },
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                          isActive
+                                              ? Icons.radio_button_checked
+                                              : Icons.radio_button_off,
+                                          size: 16,
+                                          color: isActive
+                                              ? AppColors.primary
+                                              : Colors.grey),
+                                      const SizedBox(width: 12),
+                                      const Expanded(
+                                        child: Text('Integrated Key (Shared)',
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                                color: AppColors.textPrimary)),
+                                      ),
+                                      _buildStatusIndicator(
+                                          key, setDialogState),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
                           if (_localAllApiKeys.isNotEmpty) ...[
                             const SizedBox(height: 24),
                             const Text('SAVED KEYS',
@@ -2143,7 +2236,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
               return PopupMenuButton<AppTone>(
                 initialValue: tone,
                 tooltip: 'Pilih Gaya Bicara AI',
-                offset: const Offset(0, -200),
+                offset: const Offset(0, -250),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16)),
                 onSelected: (AppTone newTone) {
@@ -2153,7 +2246,9 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                   margin: const EdgeInsets.only(right: 8),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: tone == AppTone.pasangan
+                        ? const Color(0xFFFF2D55).withOpacity(0.15)
+                        : AppColors.primary.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Text(
@@ -2163,11 +2258,23 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                             ? '👴'
                             : tone == AppTone.milenial
                                 ? '☕'
-                                : '🤵',
+                                : tone == AppTone.pasangan
+                                    ? '❤️'
+                                    : '🤵',
                     style: const TextStyle(fontSize: 18),
                   ),
                 ),
                 itemBuilder: (context) => [
+                  PopupMenuItem(
+                      value: AppTone.pasangan,
+                      child: Row(children: const [
+                        Text('❤️', style: TextStyle(fontSize: 16)),
+                        SizedBox(width: 8),
+                        Text('GF / BF Mode',
+                            style: TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.w600))
+                      ])),
+                  const PopupMenuDivider(),
                   PopupMenuItem(
                       value: AppTone.genZ,
                       child: Row(children: const [
@@ -2306,8 +2413,8 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
             debugPrint('--- SWITCHING API KEY TO: $nextKey ---');
             _localApiKey = nextKey;
             retryCount++;
-            UIHelper.showErrorSnackBar(
-                context, "Key ini limit! Otomatis nyobain key cadangan ya...");
+            UIHelper.showErrorSnackBar(context,
+                "API ini mencapai limit! Kami nyobain API Key kamu yang lain ya...");
             continue; // RETRY with new key
           }
 
