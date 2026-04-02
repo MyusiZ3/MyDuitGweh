@@ -6,8 +6,11 @@ import 'package:intl/intl.dart';
 
 class AIService {
   static const String _modelName = 'gemini-3-flash-preview';
-  static const String _defaultApiKey = 'AIzaSyANErZPMI1PezicLl5lwM8LRdsuSpOiKQY';
-
+  static final List<String> _integratedApiKeys = [
+    'AIzaSyANErZPMI1PezicLl5lwM8LRdsuSpOiKQY',
+    'AIzaSyAOt1e72ijkbkaA73wefa_dCX9YqguxOvo',
+    'AIzaSyDpnZI5UroCEK7K7BgzXGAeZHUQxyF01nM',
+  ];
 
   Future<bool> checkQuota(String apiKey) async {
     try {
@@ -32,29 +35,32 @@ class AIService {
     AppTone tone = AppTone.normal,
     List<Content>? history,
   }) async {
-    final effectiveApiKey = (apiKey == null || apiKey.trim().isEmpty) 
-        ? _defaultApiKey 
-        : apiKey.trim();
-        
+    final isCustomApi = apiKey != null && apiKey.trim().isNotEmpty;
+    final keysToUse = isCustomApi ? [apiKey.trim()] : _integratedApiKeys;
+
     final summary = _generateDataSummary(transactions, dateRange);
 
     String toneInstruction = "";
     switch (tone) {
       case AppTone.genZ:
-        toneInstruction = "Pake gaya bahasa Gen-Z yang asik, banyak slang (Luh, Gue, Cuan, Boncos, Spill), sering pake emoji, dan agak frontal tapi jujur.";
+        toneInstruction =
+            "Pake gaya bahasa Gen-Z yang asik, banyak slang (Luh, Gue, Cuan, Boncos, Spill), sering pake emoji, dan agak frontal tapi jujur.";
         break;
       case AppTone.milenial:
-        toneInstruction = "Pake gaya bahasa Milenial yang santai, campur dikit bahasa Inggris (lifestyle, cashflow, struggle), fokus ke keseimbangan hidup dan 'healing' keuangan.";
+        toneInstruction =
+            "Pake gaya bahasa Milenial yang santai, campur dikit bahasa Inggris (lifestyle, cashflow, struggle), fokus ke keseimbangan hidup dan 'healing' keuangan.";
         break;
       case AppTone.boomer:
-        toneInstruction = "Pake gaya bahasa orang tua yang bijak dan sangat sopan. Panggil pengguna 'Nak' atau 'Ananda', sering ucapkan 'Alhamdulillah' atau 'MasyaAllah', dan fokus ke penghematan demi masa depan.";
+        toneInstruction =
+            "Pake gaya bahasa orang tua yang bijak dan sangat sopan. Panggil pengguna 'Nak' atau 'Ananda', sering ucapkan 'Alhamdulillah' atau 'MasyaAllah', dan fokus ke penghematan demi masa depan.";
         break;
       default:
-        toneInstruction = "Pake bahasa Indonesia yang formal tapi ramah dan profesional.";
+        toneInstruction =
+            "Pake bahasa Indonesia yang formal tapi ramah dan profesional.";
     }
 
     final systemPrompt = '''
-Kamu adalah "MyDuitGweh AI", asisten keuangan pintar yang profesional, ramah, dan solutif.
+Kamu adalah "Archen", asisten keuangan pintar yang profesional, ramah, dan solutif.
 Tugasmu adalah menganalisis data keuangan pengguna dan memberikan saran yang sangat spesifik.
 
 KEPRIBADIAN KAMU:
@@ -73,68 +79,108 @@ INSTRUKSI:
 ''';
 
     try {
-      final limitedHistory = (history != null && history.length > 6) 
+      final limitedHistory = (history != null && history.length > 6)
           ? history.sublist(history.length - 6)
           : history;
 
-      GenerateContentResponse response;
-      try {
-        final model = GenerativeModel(
-          model: _modelName,
-          apiKey: effectiveApiKey,
-          systemInstruction: Content.system(systemPrompt),
-          generationConfig: GenerationConfig(temperature: 0.8, maxOutputTokens: 2048),
-        );
-        final chat = model.startChat(history: limitedHistory ?? []);
-        response = await chat.sendMessage(Content.text(userQuery));
-      } catch (e) {
-        if (e.toString().contains('quota') || e.toString().contains('429')) {
-          if (apiKey != null && apiKey.isNotEmpty) {
-             throw Exception('QUOTA_EXCEEDED');
-          }
-        }
-        
-        // Fallbacks for internal errors/not found
+      GenerateContentResponse? finalResponse;
+      Exception? lastQuotaException;
+
+      for (String currentKey in keysToUse) {
         try {
-          final model2 = GenerativeModel(model: 'gemini-1.5-flash-latest', apiKey: effectiveApiKey);
-          final chat2 = model2.startChat(history: limitedHistory ?? []);
-          final manualQuery = "$systemPrompt\n\nPertanyaan Pengguna: $userQuery";
-          response = await chat2.sendMessage(Content.text(manualQuery));
-        } catch (e2) {
+          final model = GenerativeModel(
+            model: _modelName,
+            apiKey: currentKey,
+            systemInstruction: Content.system(systemPrompt),
+            generationConfig:
+                GenerationConfig(temperature: 0.8, maxOutputTokens: 2048),
+          );
+          final chat = model.startChat(history: limitedHistory ?? []);
+          finalResponse = await chat.sendMessage(Content.text(userQuery));
+          break; // success
+        } catch (e) {
+          lastQuotaException = e is Exception ? e : Exception(e.toString());
+          if (e.toString().contains('quota') || e.toString().contains('429')) {
+            continue; // Immediately try next key
+          }
+          // If not quota, try fallback models
           try {
-             final model3 = GenerativeModel(model: 'gemini-1.5-flash', apiKey: effectiveApiKey);
-             final chat3 = model3.startChat(history: limitedHistory ?? []);
-             final manualQuery = "$systemPrompt\n\nPertanyaan Pengguna: $userQuery";
-             response = await chat3.sendMessage(Content.text(manualQuery));
-          } catch (e3) {
-             if (e3.toString().contains('quota') || e3.toString().contains('429')) {
-                throw Exception('QUOTA_EXCEEDED');
-             }
-             return 'Maaf, layanan AI sedang sibuk. Silakan coba lagi.';
+            final model2 = GenerativeModel(
+                model: 'gemini-1.5-flash-latest', apiKey: currentKey);
+            final chat2 = model2.startChat(history: limitedHistory ?? []);
+            final manualQuery =
+                "$systemPrompt\n\nPertanyaan Pengguna: $userQuery";
+            finalResponse = await chat2.sendMessage(Content.text(manualQuery));
+            break;
+          } catch (e2) {
+            try {
+              final model3 = GenerativeModel(
+                  model: 'gemini-1.5-flash', apiKey: currentKey);
+              final chat3 = model3.startChat(history: limitedHistory ?? []);
+              final manualQuery =
+                  "$systemPrompt\n\nPertanyaan Pengguna: $userQuery";
+              finalResponse =
+                  await chat3.sendMessage(Content.text(manualQuery));
+              break;
+            } catch (e3) {
+              lastQuotaException =
+                  e3 is Exception ? e3 : Exception(e3.toString());
+              continue; // Try next key
+            }
           }
         }
       }
-      
-      return response.text ?? 'Maaf, jawaban kosong.';
+
+      if (finalResponse == null) {
+        if (lastQuotaException != null) {
+          debugPrint(
+              'All keys exhausted or failed. Last exception: $lastQuotaException');
+        }
+        if (isCustomApi) {
+          if (lastQuotaException.toString().toLowerCase().contains('invalid') ||
+              lastQuotaException
+                  .toString()
+                  .toLowerCase()
+                  .contains('api key not valid')) {
+            return 'API Key tidak valid.';
+          }
+          // Throw so that the report screen can switch to another user custom key if available
+          throw Exception('QUOTA_EXCEEDED');
+        } else {
+          if (lastQuotaException.toString().toLowerCase().contains('invalid') ||
+              lastQuotaException
+                  .toString()
+                  .toLowerCase()
+                  .contains('api key not valid')) {
+            return 'Terjadi masalah pada konfigurasi token bawaan aplikasi. Coba gunakan API Key milik Anda sendiri di halaman Kelola API.';
+          }
+          return 'Maaf, seluruh token AI bawaan sedang mencapai batas wajar (Limit). Silakan tunggu beberapa saat atau gunakan API Key milik Anda sendiri di halaman Kelola API.';
+        }
+      }
+
+      return finalResponse.text ?? 'Maaf, jawaban kosong.';
     } catch (e) {
       if (e.toString().contains('QUOTA_EXCEEDED')) throw e;
-      if (e.toString().contains('Invalid API key')) return 'API Key tidak valid.';
+      if (e.toString().contains('Invalid API key'))
+        return 'API Key tidak valid.';
       return 'Terjadi kesalahan: $e';
     }
   }
 
-  String _generateDataSummary(List<TransactionModel> transactions, DateTimeRange range) {
+  String _generateDataSummary(
+      List<TransactionModel> transactions, DateTimeRange range) {
     double totalIncome = 0;
     double totalExpense = 0;
     Map<String, double> categoryBreakdown = {};
-    
+
     // Group transactions
     for (var tx in transactions) {
       if (tx.isIncome) {
         totalIncome += tx.amount;
       } else {
         totalExpense += tx.amount;
-        categoryBreakdown[tx.category] = (categoryBreakdown[tx.category] ?? 0) + tx.amount;
+        categoryBreakdown[tx.category] =
+            (categoryBreakdown[tx.category] ?? 0) + tx.amount;
       }
     }
 

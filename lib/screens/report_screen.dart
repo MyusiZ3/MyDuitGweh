@@ -1102,201 +1102,299 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
     UIHelper.showPremiumDialog(
       context: context,
       child: StatefulBuilder(builder: (context, setDialogState) {
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.key_rounded, color: AppColors.primary),
-                const SizedBox(width: 12),
-                Text(ToneManager.t('dialog_api_title'),
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 18,
-                        letterSpacing: -0.5)),
-                const Spacer(),
-                IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close_rounded, size: 20)),
-              ],
-            ),
-            const SizedBox(height: 24),
-            Text(ToneManager.t('dialog_api_add'),
-                style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textHint)),
-            const SizedBox(height: 12),
-            TextField(
-              controller: controller,
-              style: const TextStyle(fontSize: 14),
-              decoration: InputDecoration(
-                hintText: 'Paste Gemini API Key...',
-                hintStyle: TextStyle(color: AppColors.textHint.withOpacity(0.5)),
-                filled: true,
-                fillColor: AppColors.surfaceVariant.withOpacity(0.3),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
-                prefixIcon: const Icon(Icons.vpn_key_outlined, size: 20, color: AppColors.textHint),
-                suffixIcon: Container(
-                  margin: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(12),
+        return SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.key_rounded, color: AppColors.primary),
+                  const SizedBox(width: 12),
+                  Text(ToneManager.t('dialog_api_title'),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 18,
+                          letterSpacing: -0.5)),
+                  const Spacer(),
+                  IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close_rounded, size: 20)),
+                ],
+              ),
+              const SizedBox(height: 24),
+              Text(ToneManager.t('dialog_api_add'),
+                  style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textHint)),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                style: const TextStyle(fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: 'Masukkan API Key...',
+                  hintStyle:
+                      TextStyle(color: AppColors.textHint.withOpacity(0.5)),
+                  filled: true,
+                  fillColor: AppColors.surfaceVariant.withOpacity(0.3),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
                   ),
-                  child: IconButton(
-                    padding: EdgeInsets.zero,
-                    icon: const Icon(Icons.add_rounded, color: Colors.white, size: 24),
-                    onPressed: () async {
-                      if (controller.text.trim().isNotEmpty) {
-                        await widget.onSaveKey(controller.text);
-                        setDialogState(() {
-                          _localApiKey = controller.text.trim();
-                          _localAllApiKeys = List.from(widget.allApiKeys);
-                          controller.clear();
-                        });
-                        setState(() {
-                          _localApiKey = _localApiKey;
-                        });
-                        UIHelper.showSuccessSnackBar(
-                            context, ToneManager.t('snack_api_saved'));
-                      }
-                    },
-                  ),
+                  prefixIcon: const Icon(Icons.vpn_key_outlined,
+                      size: 20, color: AppColors.textHint),
                 ),
               ),
-            ),
-            if (_localAllApiKeys.isNotEmpty) ...[
-              const SizedBox(height: 24),
-              const Text('SAVED KEYS',
-                  style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textHint,
-                      letterSpacing: 1.5)),
-              const SizedBox(height: 12),
-              ConstrainedBox(
-                constraints: BoxConstraints(
-                    maxHeight: MediaQuery.of(context).size.height * 0.3),
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: _localAllApiKeys.map((key) {
-                      final isActive = _localApiKey == key;
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: isActive
-                              ? AppColors.primary.withOpacity(0.08)
-                              : Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                              color: isActive
-                                  ? AppColors.primary.withOpacity(0.2)
-                                  : AppColors.surfaceVariant,
-                              width: 1.5),
-                          boxShadow: isActive ? [
-                            BoxShadow(
-                              color: AppColors.primary.withOpacity(0.1),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4)
-                            )
-                          ] : [],
-                        ),
-                        child: InkWell(
-                          onTap: () {
-                            widget.onSaveKey(key);
-                            setDialogState(() => _localApiKey = key);
-                            setState(() => _localApiKey = key);
-                          },
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        final clipboardData =
+                            await Clipboard.getData(Clipboard.kTextPlain);
+                        if (clipboardData != null &&
+                            clipboardData.text != null) {
+                          controller.text = clipboardData.text!;
+                        }
+                      },
+                      icon: const Icon(Icons.paste_rounded,
+                          size: 16, color: AppColors.primary),
+                      label: const Text('Paste',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary)),
+                      style: ElevatedButton.styleFrom(
+                        elevation: 0,
+                        backgroundColor: AppColors.primary.withOpacity(0.1),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: isActive ? AppColors.primary : AppColors.surfaceVariant.withOpacity(0.5),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  isActive ? Icons.check_rounded : Icons.lock_outline_rounded,
-                                  size: 14,
-                                  color: isActive ? Colors.white : AppColors.textHint,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      '${key.substring(0, 8)}...${key.substring(key.length - 4)}',
-                                      style: TextStyle(
-                                          fontWeight: isActive
-                                              ? FontWeight.w900
-                                              : FontWeight.w600,
-                                          fontSize: 13,
-                                          color: isActive ? AppColors.primary : AppColors.textPrimary),
-                                    ),
-                                    if (isActive)
-                                      Text(ToneManager.t('dialog_api_active'),
-                                          style: const TextStyle(
-                                              fontSize: 9,
-                                              fontWeight: FontWeight.bold,
-                                              color: AppColors.primary,
-                                              letterSpacing: 0.5)),
-                                  ],
-                                ),
-                              ),
-                              _buildStatusIndicator(key, setDialogState),
-                              const SizedBox(width: 8),
-                              IconButton(
-                                icon: const Icon(Icons.delete_sweep_rounded,
-                                    size: 20, color: Colors.grey),
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
-                                onPressed: () async {
-                                  await widget.onDeleteKey(key);
-                                  setDialogState(() {
-                                    if (_localApiKey == key)
-                                      _localApiKey = null;
-                                    _apiStatus.remove(key);
-                                    _localAllApiKeys = List.from(widget.allApiKeys);
-                                  });
-                                  setState(() {
-                                    if (_localApiKey == key)
-                                      _localApiKey = null;
-                                  });
-                                  UIHelper.showErrorSnackBar(context,
-                                      ToneManager.t('snack_api_deleted'));
-                                },
-                              ),
-                            ],
-                          ),
+                          side: BorderSide(
+                              color: AppColors.primary.withOpacity(0.3),
+                              width: 1.5),
                         ),
-                      );
-                    }).toList(),
+                      ),
+                    ),
                   ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [AppColors.primary, Color(0xFF8B5CF6)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withOpacity(0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          if (controller.text.trim().isNotEmpty) {
+                            await widget.onSaveKey(controller.text);
+                            setDialogState(() {
+                              _localApiKey = controller.text.trim();
+                              _localAllApiKeys = List.from(widget.allApiKeys);
+                              controller.clear();
+                            });
+                            setState(() {
+                              _localApiKey = _localApiKey;
+                            });
+                            if (context.mounted) {
+                              UIHelper.showSuccessSnackBar(
+                                  context, ToneManager.t('snack_api_saved'));
+                            }
+                          }
+                        },
+                        icon: const Icon(Icons.add_circle_outline_rounded,
+                            size: 18, color: Colors.white),
+                        label: const Text('Add API',
+                            style: TextStyle(
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                fontSize: 14)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16)),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              if (_localAllApiKeys.isNotEmpty) ...[
+                const SizedBox(height: 24),
+                const Text('SAVED KEYS',
+                    style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textHint,
+                        letterSpacing: 1.5)),
+                const SizedBox(height: 12),
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                      maxHeight: MediaQuery.of(context).size.height * 0.3),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: _localAllApiKeys.map((key) {
+                        final isActive = _localApiKey == key;
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: isActive
+                                ? AppColors.primary.withOpacity(0.08)
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                                color: isActive
+                                    ? AppColors.primary.withOpacity(0.2)
+                                    : AppColors.surfaceVariant,
+                                width: 1.5),
+                            boxShadow: isActive
+                                ? [
+                                    BoxShadow(
+                                        color:
+                                            AppColors.primary.withOpacity(0.1),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 4))
+                                  ]
+                                : [],
+                          ),
+                          child: InkWell(
+                            onTap: () {
+                              widget.onSaveKey(key);
+                              setDialogState(() => _localApiKey = key);
+                              setState(() => _localApiKey = key);
+                            },
+                            borderRadius: BorderRadius.circular(16),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: isActive
+                                        ? AppColors.primary
+                                        : AppColors.surfaceVariant
+                                            .withOpacity(0.5),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    isActive
+                                        ? Icons.check_rounded
+                                        : Icons.lock_outline_rounded,
+                                    size: 14,
+                                    color: isActive
+                                        ? Colors.white
+                                        : AppColors.textHint,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '${key.substring(0, 8)}...${key.substring(key.length - 4)}',
+                                        style: TextStyle(
+                                            fontWeight: isActive
+                                                ? FontWeight.w900
+                                                : FontWeight.w600,
+                                            fontSize: 13,
+                                            color: isActive
+                                                ? AppColors.primary
+                                                : AppColors.textPrimary),
+                                      ),
+                                      if (isActive)
+                                        Text(ToneManager.t('dialog_api_active'),
+                                            style: const TextStyle(
+                                                fontSize: 9,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.primary,
+                                                letterSpacing: 0.5)),
+                                    ],
+                                  ),
+                                ),
+                                _buildStatusIndicator(key, setDialogState),
+                                const SizedBox(width: 8),
+                                IconButton(
+                                  icon: const Icon(Icons.delete_sweep_rounded,
+                                      size: 20, color: Colors.grey),
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  onPressed: () async {
+                                    final confirm =
+                                        await UIHelper.showConfirmDialog(
+                                      context: context,
+                                      title: 'Hapus API Key?',
+                                      message:
+                                          'Apakah kamu yakin ingin menghapus API Key ini?',
+                                      confirmText: 'Ya, Hapus',
+                                    );
+                                    if (confirm != true) return;
+
+                                    await widget.onDeleteKey(key);
+                                    setDialogState(() {
+                                      if (_localApiKey == key)
+                                        _localApiKey = null;
+                                      _apiStatus.remove(key);
+                                      _localAllApiKeys =
+                                          List.from(widget.allApiKeys);
+                                    });
+                                    setState(() {
+                                      if (_localApiKey == key)
+                                        _localApiKey = null;
+                                    });
+                                    if (context.mounted) {
+                                      UIHelper.showErrorSnackBar(context,
+                                          ToneManager.t('snack_api_deleted'));
+                                    }
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 16),
+              Center(
+                child: TextButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context); // Close dialog first
+                    _showAPITutorial();
+                  },
+                  icon: const Icon(Icons.help_outline_rounded,
+                      size: 14, color: AppColors.textHint),
+                  label: const Text('Bingung cara dapetin API Key-nya?',
+                      style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textHint,
+                          decoration: TextDecoration.underline)),
                 ),
               ),
             ],
-            const SizedBox(height: 16),
-            Center(
-              child: TextButton.icon(
-                onPressed: () {
-                  Navigator.pop(context); // Close dialog first
-                  _showAPITutorial();
-                },
-                icon: const Icon(Icons.help_outline_rounded, size: 14, color: AppColors.textHint),
-                label: const Text('Bingung cara dapetin API Key-nya?',
-                    style: TextStyle(fontSize: 11, color: AppColors.textHint, decoration: TextDecoration.underline)),
-              ),
-            ),
-          ],
+          ),
         );
       }),
     );
@@ -1333,7 +1431,8 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                 color: status ? Colors.green : Colors.red,
                 boxShadow: [
                   BoxShadow(
-                      color: (status ? Colors.green : Colors.red).withOpacity(0.4),
+                      color:
+                          (status ? Colors.green : Colors.red).withOpacity(0.4),
                       blurRadius: 4)
                 ],
               ),
@@ -1385,56 +1484,6 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                         style: const TextStyle(
                             fontSize: 20, fontWeight: FontWeight.bold)),
                     const Spacer(),
-                    // Personality Switcher
-                    ValueListenableBuilder<AppTone>(
-                        valueListenable: ToneManager.notifier,
-                        builder: (context, tone, child) {
-                          return PopupMenuButton<AppTone>(
-                            initialValue: tone,
-                            tooltip: 'Pilih Gaya Bicara AI',
-                            offset: const Offset(0, 40),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16)),
-                            onSelected: (AppTone newTone) {
-                              ToneManager.setTone(newTone);
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 6),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                    color: AppColors.primary.withOpacity(0.3)),
-                                color: AppColors.primary.withOpacity(0.05),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    tone == AppTone.genZ
-                                        ? '🤘'
-                                        : tone == AppTone.boomer
-                                            ? '👴'
-                                            : tone == AppTone.milenial
-                                                ? '☕'
-                                                : '🤵',
-                                    style: const TextStyle(fontSize: 14),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  const Icon(Icons.keyboard_arrow_down_rounded,
-                                      size: 14, color: AppColors.primary),
-                                ],
-                              ),
-                            ),
-                            itemBuilder: (context) => [
-                              _buildPopupItem(AppTone.genZ, 'Gen Z', '🤘'),
-                              _buildPopupItem(
-                                  AppTone.milenial, 'Milenial', '☕'),
-                              _buildPopupItem(AppTone.boomer, 'Boomer', '👴'),
-                              _buildPopupItem(AppTone.normal, 'Normal', '🤵'),
-                            ],
-                          );
-                        }),
                     const SizedBox(width: 8),
                     if (_localApiKey != null) ...[
                       IconButton(
@@ -1487,92 +1536,96 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
         child: SafeArea(
           child: Column(
             children: [
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2)),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-              child: Row(
-                children: [
-                  const Icon(Icons.lightbulb_rounded, color: Colors.amber),
-                  const SizedBox(width: 12),
-                  const Text('Tutorial Dapatkan API Key',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const Spacer(),
-                  IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close_rounded)),
-                ],
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2)),
               ),
-            ),
-            const Divider(),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(24),
-                children: [
-                  _buildStepItem(
-                    step: '1',
-                    title: 'Buka Google AI Studio',
-                    desc: 'Cari atau kunjungi: aistudio.google.com',
-                  ),
-                  _buildStepItem(
-                    step: '2',
-                    title: 'Login Akun Google',
-                    desc: 'Masuk pakai akun Gmail atau Google Workspace kamu.',
-                  ),
-                  _buildStepItem(
-                    step: '3',
-                    title: 'Klik "Get API Key"',
-                    desc: 'Pilih tombol menu di samping kiri (ikon kunci).',
-                  ),
-                  _buildStepItem(
-                    step: '4',
-                    title: 'Buat API Key Baru',
-                    desc: 'Klik "Create API key in new project".',
-                  ),
-                  _buildStepItem(
-                    step: '5',
-                    title: 'Salin ke MyDuitGweh',
-                    desc: 'Copy kode kuncinya, lalu pilih "Tambah API Key" di sini.',
-                    isLast: true,
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.blue.withOpacity(0.1)),
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                child: Row(
+                  children: [
+                    const Icon(Icons.lightbulb_rounded, color: Colors.amber),
+                    const SizedBox(width: 12),
+                    const Text('Tutorial Dapatkan API Key',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
+                    const Spacer(),
+                    IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close_rounded)),
+                  ],
+                ),
+              ),
+              const Divider(),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.all(24),
+                  children: [
+                    _buildStepItem(
+                      step: '1',
+                      title: 'Buka Google AI Studio',
+                      desc: 'Cari atau kunjungi: aistudio.google.com',
                     ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.info_outline_rounded,
-                            color: Colors.blue, size: 20),
-                        const SizedBox(width: 12),
-                        const Expanded(
-                          child: Text(
-                            'API Key Gemini (Free Tier) gratis untuk penggunaan personal.',
-                            style: TextStyle(fontSize: 12, color: Colors.blue),
+                    _buildStepItem(
+                      step: '2',
+                      title: 'Login Akun Google',
+                      desc:
+                          'Masuk pakai akun Gmail atau Google Workspace kamu.',
+                    ),
+                    _buildStepItem(
+                      step: '3',
+                      title: 'Klik "Get API Key"',
+                      desc: 'Pilih tombol menu di samping kiri (ikon kunci).',
+                    ),
+                    _buildStepItem(
+                      step: '4',
+                      title: 'Buat API Key Baru',
+                      desc: 'Klik "Create API key in new project".',
+                    ),
+                    _buildStepItem(
+                      step: '5',
+                      title: 'Salin ke MyDuitGweh',
+                      desc:
+                          'Copy kode kuncinya, lalu pilih "Tambah API Key" di sini.',
+                      isLast: true,
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.blue.withOpacity(0.1)),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.info_outline_rounded,
+                              color: Colors.blue, size: 20),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Text(
+                              'API Key Gemini (Free Tier) gratis untuk penggunaan personal.',
+                              style:
+                                  TextStyle(fontSize: 12, color: Colors.blue),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildStepItem({
     required String step,
@@ -1628,22 +1681,6 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
     );
   }
 
-  PopupMenuItem<AppTone> _buildPopupItem(
-      AppTone tone, String label, String emoji) {
-    return PopupMenuItem(
-      value: tone,
-      child: Row(
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 16)),
-          const SizedBox(width: 12),
-          Text(label,
-              style:
-                  const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-        ],
-      ),
-    );
-  }
-
   Widget _buildKeySetup() {
     return Padding(
       padding: const EdgeInsets.all(24.0),
@@ -1694,7 +1731,8 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
             onPressed: _showAPITutorial,
             icon: const Icon(Icons.help_outline_rounded, size: 16),
             label: const Text('Cara dapetin API Key gratis?',
-                style: TextStyle(fontSize: 13, decoration: TextDecoration.underline)),
+                style: TextStyle(
+                    fontSize: 13, decoration: TextDecoration.underline)),
           ),
         ],
       ),
@@ -1992,6 +2030,69 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
       ),
       child: Row(
         children: [
+          ValueListenableBuilder<AppTone>(
+            valueListenable: ToneManager.notifier,
+            builder: (context, tone, child) {
+              return PopupMenuButton<AppTone>(
+                initialValue: tone,
+                tooltip: 'Pilih Gaya Bicara AI',
+                offset: const Offset(0, -200),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
+                onSelected: (AppTone newTone) {
+                  ToneManager.setTone(newTone);
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    tone == AppTone.genZ
+                        ? '🤘'
+                        : tone == AppTone.boomer
+                            ? '👴'
+                            : tone == AppTone.milenial
+                                ? '☕'
+                                : '🤵',
+                    style: const TextStyle(fontSize: 18),
+                  ),
+                ),
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                      value: AppTone.genZ,
+                      child: Row(children: const [
+                        Text('🤘', style: TextStyle(fontSize: 16)),
+                        SizedBox(width: 8),
+                        Text('Gen Z', style: TextStyle(fontSize: 14))
+                      ])),
+                  PopupMenuItem(
+                      value: AppTone.milenial,
+                      child: Row(children: const [
+                        Text('☕', style: TextStyle(fontSize: 16)),
+                        SizedBox(width: 8),
+                        Text('Milenial', style: TextStyle(fontSize: 14))
+                      ])),
+                  PopupMenuItem(
+                      value: AppTone.boomer,
+                      child: Row(children: const [
+                        Text('👴', style: TextStyle(fontSize: 16)),
+                        SizedBox(width: 8),
+                        Text('Boomer', style: TextStyle(fontSize: 14))
+                      ])),
+                  PopupMenuItem(
+                      value: AppTone.normal,
+                      child: Row(children: const [
+                        Text('🤵', style: TextStyle(fontSize: 16)),
+                        SizedBox(width: 8),
+                        Text('Normal', style: TextStyle(fontSize: 14))
+                      ])),
+                ],
+              );
+            },
+          ),
           Expanded(
             child: Container(
               decoration: BoxDecoration(
@@ -2004,7 +2105,8 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                     hintText: 'Tanyakan sesuatu...',
                     border: InputBorder.none,
                     filled: false,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16)),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 20, vertical: 16)),
                 onSubmitted: _handleQuery,
               ),
             ),
