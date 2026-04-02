@@ -31,7 +31,7 @@ class GlobalInsightsScreen extends StatelessWidget {
                     ),
                   );
                 }
-                
+
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                   return _buildEmptyState(context);
                 }
@@ -39,9 +39,11 @@ class GlobalInsightsScreen extends StatelessWidget {
                 final wallets = snapshot.data!.docs;
                 double totalBalance = 0;
                 for (var w in wallets) {
-                  totalBalance += (w.data() as Map<String, dynamic>)['balance'] ?? 0;
+                  totalBalance +=
+                      (w.data() as Map<String, dynamic>)['balance'] ?? 0;
                 }
-                double avgBalance = wallets.isEmpty ? 0 : totalBalance / wallets.length;
+                double avgBalance =
+                    wallets.isEmpty ? 0 : totalBalance / wallets.length;
 
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -61,7 +63,8 @@ class GlobalInsightsScreen extends StatelessWidget {
                       StreamBuilder<QuerySnapshot>(
                         stream: _firestore.collection('users').snapshots(),
                         builder: (context, userSnap) {
-                          final userCount = userSnap.hasData ? userSnap.data!.docs.length : 0;
+                          final userCount =
+                              userSnap.hasData ? userSnap.data!.docs.length : 0;
                           return Row(
                             children: [
                               Expanded(
@@ -76,7 +79,8 @@ class GlobalInsightsScreen extends StatelessWidget {
                               Expanded(
                                 child: _buildSmallMetric(
                                   title: 'Network Growth',
-                                  value: '+${(userCount * 0.05).toStringAsFixed(1)}%',
+                                  value:
+                                      '+${(userCount * 0.05).toStringAsFixed(1)}%',
                                   icon: Icons.trending_up_rounded,
                                   color: Colors.green,
                                 ),
@@ -91,7 +95,8 @@ class GlobalInsightsScreen extends StatelessWidget {
                           Expanded(
                             child: _buildSmallMetric(
                               title: 'Avg. Wallet',
-                              value: CurrencyFormatter.formatCurrency(avgBalance),
+                              value:
+                                  CurrencyFormatter.formatCurrency(avgBalance),
                               icon: Icons.analytics_rounded,
                               color: Colors.blueAccent,
                             ),
@@ -108,12 +113,21 @@ class GlobalInsightsScreen extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 32),
-                      const Text('Economy Health Index', 
-                        style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: -0.5)),
+                      const Text('Economy Health Index',
+                          style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 18,
+                              letterSpacing: -0.5)),
                       const SizedBox(height: 16),
-                      _buildIndicatorTile('Cash Circulation', 'Highly Active', Icons.bolt_rounded, Colors.amber),
-                      _buildIndicatorTile('System Integrity', 'Secure & Syncing', Icons.verified_user_rounded, Colors.green),
-                      _buildIndicatorTile('API Latency', '8ms (Excellent)', Icons.speed_rounded, Colors.purple),
+                      _buildIndicatorTile('Cash Circulation', 'Highly Active',
+                          Icons.bolt_rounded, Colors.amber),
+                      _buildIndicatorTile(
+                          'System Integrity',
+                          'Secure & Syncing',
+                          Icons.verified_user_rounded,
+                          Colors.green),
+                      _buildIndicatorTile('API Latency', '8ms (Excellent)',
+                          Icons.speed_rounded, Colors.purple),
                       const SizedBox(height: 40),
                     ],
                   ),
@@ -139,10 +153,18 @@ class GlobalInsightsScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('LIVE INSIGHTS', 
-              style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, letterSpacing: -1, fontSize: 24)),
-            Text('REAL-TIME SYSTEM MONITOR', 
-              style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.bold, letterSpacing: 1, fontSize: 10)),
+            const Text('LIVE INSIGHTS',
+                style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -1,
+                    fontSize: 24)),
+            Text('REAL-TIME SYSTEM MONITOR',
+                style: TextStyle(
+                    color: Colors.grey[400],
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1,
+                    fontSize: 10)),
           ],
         ),
         background: Stack(
@@ -153,7 +175,8 @@ class GlobalInsightsScreen extends StatelessWidget {
               child: Container(
                 width: 150,
                 height: 150,
-                decoration: BoxDecoration(color: Colors.red[50], shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                    color: Colors.red[50], shape: BoxShape.circle),
               ),
             ),
           ],
@@ -178,17 +201,26 @@ class GlobalInsightsScreen extends StatelessWidget {
             children: [
               Container(
                 padding: const EdgeInsets.all(16),
-                decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-                child: const Icon(Icons.warning_amber_rounded, size: 32, color: Colors.white),
+                decoration: const BoxDecoration(
+                    color: Colors.red, shape: BoxShape.circle),
+                child: const Icon(Icons.warning_amber_rounded,
+                    size: 32, color: Colors.white),
               ),
               const SizedBox(height: 20),
-              const Text('Sinkronisasi Mesin Data', 
-                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: Colors.indigo)),
+              const Text('Sinkronisasi Mesin Data',
+                  style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 20,
+                      color: Colors.indigo)),
               const SizedBox(height: 12),
               const Text(
                 'Sistem membutuhkan Composite Index di Firestore untuk menampilkan statistik ini.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, height: 1.5, color: Colors.blueGrey),
+                style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    height: 1.5,
+                    color: Colors.blueGrey),
               ),
               const SizedBox(height: 8),
               const Text(
@@ -200,16 +232,21 @@ class GlobalInsightsScreen extends StatelessWidget {
               ElevatedButton.icon(
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Silakan hubungi tim IT atau buka Firebase Console untuk mengaktifkan indeks.')),
+                    const SnackBar(
+                        content: Text(
+                            'Silakan hubungi tim IT atau buka Firebase Console untuk mengaktifkan indeks.')),
                   );
                 },
                 icon: const Icon(Icons.bolt_rounded, size: 18),
-                label: const Text('AKTIFKAN ANALYTICS', style: TextStyle(fontWeight: FontWeight.w900)),
+                label: const Text('AKTIFKAN ANALYTICS',
+                    style: TextStyle(fontWeight: FontWeight.w900)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.indigo,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                   elevation: 0,
                 ),
               ),
@@ -229,13 +266,19 @@ class GlobalInsightsScreen extends StatelessWidget {
           children: [
             Container(
               padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(color: Colors.blueAccent.withOpacity(0.05), shape: BoxShape.circle),
-              child: const Icon(Icons.analytics_rounded, size: 48, color: Colors.blueAccent),
+              decoration: BoxDecoration(
+                  color: Colors.blueAccent.withOpacity(0.05),
+                  shape: BoxShape.circle),
+              child: const Icon(Icons.analytics_rounded,
+                  size: 48, color: Colors.blueAccent),
             ),
             const SizedBox(height: 24),
-            const Text('Data Sedang Disiapkan', 
-              textAlign: TextAlign.center,
-              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, letterSpacing: -0.5)),
+            const Text('Data Sedang Disiapkan',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 20,
+                    letterSpacing: -0.5)),
             const SizedBox(height: 12),
             const Text(
               'Sistem sedang mengumpulkan data agregat dari seluruh dompet. Jika ini pertama kali, silakan buat minimal satu dompet.',
@@ -254,21 +297,33 @@ class GlobalInsightsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMainMetric(BuildContext context, {required String title, required String value, required String subtitle, required IconData icon, required Color color}) {
+  Widget _buildMainMetric(BuildContext context,
+      {required String title,
+      required String value,
+      required String subtitle,
+      required IconData icon,
+      required Color color}) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
-          BoxShadow(color: color.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 10)),
+          BoxShadow(
+              color: color.withOpacity(0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 10)),
         ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(32),
         child: Stack(
           children: [
-            Positioned(right: -20, top: -20, child: Icon(icon, size: 120, color: Colors.white.withOpacity(0.1))),
+            Positioned(
+                right: -20,
+                top: -20,
+                child: Icon(icon,
+                    size: 120, color: Colors.white.withOpacity(0.1))),
             Padding(
               padding: const EdgeInsets.all(32.0),
               child: Column(
@@ -276,17 +331,30 @@ class GlobalInsightsScreen extends StatelessWidget {
                 children: [
                   Container(
                     padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
+                    decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        shape: BoxShape.circle),
                     child: Icon(icon, color: Colors.white, size: 24),
                   ),
                   const SizedBox(height: 24),
-                  Text(title, style: const TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w500)),
+                  Text(title,
+                      style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500)),
                   const SizedBox(height: 4),
                   FittedBox(
-                    child: Text(value, style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w900, letterSpacing: -1)),
+                    child: Text(value,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 36,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -1)),
                   ),
                   const SizedBox(height: 12),
-                  Text(subtitle, style: const TextStyle(color: Colors.white60, fontSize: 12)),
+                  Text(subtitle,
+                      style:
+                          const TextStyle(color: Colors.white60, fontSize: 12)),
                 ],
               ),
             ),
@@ -296,7 +364,11 @@ class GlobalInsightsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSmallMetric({required String title, required String value, required IconData icon, required Color color}) {
+  Widget _buildSmallMetric(
+      {required String title,
+      required String value,
+      required IconData icon,
+      required Color color}) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -309,23 +381,31 @@ class GlobalInsightsScreen extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+            decoration: BoxDecoration(
+                color: color.withOpacity(0.1), shape: BoxShape.circle),
             child: Icon(icon, color: color, size: 18),
           ),
           const SizedBox(height: 12),
-          Text(title, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey[600])),
+          Text(title,
+              style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[600])),
           const SizedBox(height: 4),
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
-            child: Text(value, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+            child: Text(value,
+                style:
+                    const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildIndicatorTile(String label, String value, IconData icon, Color color) {
+  Widget _buildIndicatorTile(
+      String label, String value, IconData icon, Color color) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -338,12 +418,15 @@ class GlobalInsightsScreen extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
+            decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(14)),
             child: Icon(icon, color: color, size: 20),
           ),
           const SizedBox(width: 16),
           Expanded(
-            child: Text(label, 
+            child: Text(
+              label,
               style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
               overflow: TextOverflow.ellipsis,
             ),
@@ -352,7 +435,9 @@ class GlobalInsightsScreen extends StatelessWidget {
           Flexible(
             child: FittedBox(
               fit: BoxFit.scaleDown,
-              child: Text(value, style: TextStyle(fontWeight: FontWeight.w900, color: color, fontSize: 14)),
+              child: Text(value,
+                  style: TextStyle(
+                      fontWeight: FontWeight.w900, color: color, fontSize: 14)),
             ),
           ),
         ],

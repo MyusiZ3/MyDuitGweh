@@ -8,7 +8,7 @@ class MaintenanceGateScreen extends StatelessWidget {
   final DateTime? endTime;
 
   const MaintenanceGateScreen({
-    super.key, 
+    super.key,
     required this.message,
     this.endTime,
   });
@@ -30,7 +30,7 @@ class MaintenanceGateScreen extends StatelessWidget {
               ),
             ),
           ),
-          
+
           // Decorative Blobs
           Positioned(
             top: -100,
@@ -56,7 +56,8 @@ class MaintenanceGateScreen extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.05),
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white.withOpacity(0.1), width: 2),
+                      border: Border.all(
+                          color: Colors.white.withOpacity(0.1), width: 2),
                       boxShadow: [
                         BoxShadow(
                           color: AppColors.primary.withOpacity(0.2),
@@ -74,7 +75,7 @@ class MaintenanceGateScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 48),
-                  
+
                   // Text Content
                   const Text(
                     'Sabar Ya, Bosku!',
@@ -98,7 +99,7 @@ class MaintenanceGateScreen extends StatelessWidget {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 32),
-                  
+
                   // Glass Message Container
                   ClipRRect(
                     borderRadius: BorderRadius.circular(24),
@@ -109,7 +110,8 @@ class MaintenanceGateScreen extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.05),
                           borderRadius: BorderRadius.circular(24),
-                          border: Border.all(color: Colors.white.withOpacity(0.1)),
+                          border:
+                              Border.all(color: Colors.white.withOpacity(0.1)),
                         ),
                         child: Text(
                           message,
@@ -123,16 +125,18 @@ class MaintenanceGateScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 48),
-                  
+
                   // Logout Button (In case they want to switch to admin account)
                   TextButton.icon(
                     onPressed: () => AuthService().signOut(),
-                    icon: const Icon(Icons.logout_rounded, color: Colors.white54, size: 18),
+                    icon: const Icon(Icons.logout_rounded,
+                        color: Colors.white54, size: 18),
                     label: const Text(
                       'Keluar Akun',
-                      style: TextStyle(color: Colors.white54, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                          color: Colors.white54, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],

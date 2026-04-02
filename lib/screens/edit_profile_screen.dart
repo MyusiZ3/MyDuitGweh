@@ -65,7 +65,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               controller: _nameController,
               decoration: const InputDecoration(
                 hintText: 'Nama Lengkap',
-                prefixIcon: Icon(Icons.person_outline_rounded, color: AppColors.primary),
+                prefixIcon: Icon(Icons.person_outline_rounded,
+                    color: AppColors.primary),
               ),
             ),
             const SizedBox(height: 32),
@@ -74,9 +75,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               height: 56,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _updateName,
-                child: _isLoading 
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text('Simpan Perubahan'),
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('Simpan Perubahan'),
               ),
             ),
           ],

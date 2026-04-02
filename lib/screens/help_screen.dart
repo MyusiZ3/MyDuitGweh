@@ -17,7 +17,11 @@ class HelpScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(24.0),
         children: [
-          const Text('Bagaimana kami bisa membantu?', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
+          const Text('Bagaimana kami bisa membantu?',
+              style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.textPrimary)),
           const SizedBox(height: 24),
           _buildHelpCard(
             'Cara Menambahkan Transaksi',
@@ -37,9 +41,15 @@ class HelpScreen extends StatelessWidget {
           const SizedBox(height: 32),
           const Divider(),
           const SizedBox(height: 24),
-          const Text('Masih ada pertanyaan?', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+          const Text('Masih ada pertanyaan?',
+              style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary)),
           const SizedBox(height: 12),
-          const Text('Hubungi tim dukungan kami melalui email jika Anda mengalami kendala teknis.', style: TextStyle(color: AppColors.textSecondary, height: 1.5)),
+          const Text(
+              'Hubungi tim dukungan kami melalui email jika Anda mengalami kendala teknis.',
+              style: TextStyle(color: AppColors.textSecondary, height: 1.5)),
           const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
@@ -51,7 +61,8 @@ class HelpScreen extends StatelessWidget {
               style: OutlinedButton.styleFrom(
                 foregroundColor: _primary,
                 side: const BorderSide(color: _primary),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
               ),
             ),
           ),
@@ -69,7 +80,12 @@ class HelpScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 2))],
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 10,
+              offset: const Offset(0, 2))
+        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -80,9 +96,17 @@ class HelpScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.textPrimary)),
+                Text(title,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: AppColors.textPrimary)),
                 const SizedBox(height: 8),
-                Text(desc, style: const TextStyle(color: AppColors.textSecondary, fontSize: 14, height: 1.5)),
+                Text(desc,
+                    style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 14,
+                        height: 1.5)),
               ],
             ),
           ),

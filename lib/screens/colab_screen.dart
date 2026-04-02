@@ -119,7 +119,8 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
   void initState() {
     super.initState();
     _loadMembers();
-    _unreadStream = widget.firestoreService.getUnreadCountStream(widget.wallet.id, widget.currentUid);
+    _unreadStream = widget.firestoreService
+        .getUnreadCountStream(widget.wallet.id, widget.currentUid);
   }
 
   Future<void> _loadMembers() async {
@@ -128,7 +129,8 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
         final info = await widget.firestoreService.getUserInfo(uid);
         if (mounted) {
           setState(() {
-            _memberNames[uid] = info?['displayName'] ?? info?['name'] ?? 'Pengguna';
+            _memberNames[uid] =
+                info?['displayName'] ?? info?['name'] ?? 'Pengguna';
           });
         }
       } catch (_) {
@@ -190,17 +192,23 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                               top: -4,
                               right: -4,
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
                                   color: AppColors.expense,
                                   borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: Colors.white, width: 2),
+                                  border:
+                                      Border.all(color: Colors.white, width: 2),
                                 ),
-                                constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+                                constraints: const BoxConstraints(
+                                    minWidth: 20, minHeight: 20),
                                 child: Center(
                                   child: Text(
                                     unreadCount > 99 ? '99+' : '$unreadCount',
-                                    style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800),
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w800),
                                   ),
                                 ),
                               ),
@@ -236,8 +244,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        CurrencyFormatter.formatCurrency(
-                            widget.wallet.balance),
+                        CurrencyFormatter.formatCurrency(widget.wallet.balance),
                         style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
@@ -384,9 +391,13 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: isOwner ? AppColors.primary.withOpacity(0.1) : AppColors.surfaceVariant,
+            color: isOwner
+                ? AppColors.primary.withOpacity(0.1)
+                : AppColors.surfaceVariant,
             borderRadius: BorderRadius.circular(20),
-            border: isOwner ? Border.all(color: AppColors.primary.withOpacity(0.3)) : null,
+            border: isOwner
+                ? Border.all(color: AppColors.primary.withOpacity(0.3))
+                : null,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -401,9 +412,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
-                  color: isOwner
-                      ? AppColors.primary
-                      : AppColors.textSecondary,
+                  color: isOwner ? AppColors.primary : AppColors.textSecondary,
                 ),
               ),
             ],
@@ -415,8 +424,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
 
   Widget _buildTransactionsList() {
     return StreamBuilder<List<TransactionModel>>(
-      stream: widget.firestoreService
-          .getTransactionsStream(widget.wallet.id),
+      stream: widget.firestoreService.getTransactionsStream(widget.wallet.id),
       builder: (context, snapshot) {
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return const Padding(
@@ -424,8 +432,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
             child: Center(
               child: Text(
                 'Belum ada transaksi',
-                style: TextStyle(
-                    color: AppColors.textHint, fontSize: 12),
+                style: TextStyle(color: AppColors.textHint, fontSize: 12),
               ),
             ),
           );
@@ -436,8 +443,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
         return Column(
           children: transactions.map((txn) {
             final isIncome = txn.isIncome;
-            final color =
-                isIncome ? AppColors.income : AppColors.expense;
+            final color = isIncome ? AppColors.income : AppColors.expense;
 
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),
@@ -451,8 +457,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
-                      TransactionCategory.getIconForCategory(
-                          txn.category),
+                      TransactionCategory.getIconForCategory(txn.category),
                       color: color,
                       size: 16,
                     ),
@@ -470,8 +475,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                           ),
                         ),
                         Text(
-                          CurrencyFormatter.formatRelativeDate(
-                              txn.date),
+                          CurrencyFormatter.formatRelativeDate(txn.date),
                           style: const TextStyle(
                             fontSize: 11,
                             color: AppColors.textHint,
@@ -503,15 +507,13 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Undang Anggota'),
         content: TextField(
           controller: emailController,
           decoration: const InputDecoration(
             hintText: 'Email teman untuk diundang',
-            prefixIcon:
-                Icon(Icons.email_outlined, color: AppColors.primary),
+            prefixIcon: Icon(Icons.email_outlined, color: AppColors.primary),
           ),
         ),
         actions: [
@@ -523,8 +525,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
             onPressed: () async {
               if (emailController.text.trim().isEmpty) return;
               final scaffoldMessenger = ScaffoldMessenger.of(context);
-              final success =
-                  await widget.firestoreService.addMemberByEmail(
+              final success = await widget.firestoreService.addMemberByEmail(
                 widget.wallet.id,
                 emailController.text.trim(),
               );

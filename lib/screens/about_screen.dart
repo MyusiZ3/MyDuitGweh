@@ -186,7 +186,7 @@ class AboutScreen extends StatelessWidget {
                           FittedBox(
                             fit: BoxFit.scaleDown,
                             child: Text(
-                              'Muhamad Sidik',
+                              'Muhamad Sidik \n(Arch)',
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700,
@@ -220,7 +220,7 @@ class AboutScreen extends StatelessWidget {
                           FittedBox(
                             fit: BoxFit.scaleDown,
                             child: Text(
-                              'Flutter & Firebase',
+                              'Flutter, Firebase, & \nDoa Hamba \nyg Tersakiti',
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700,

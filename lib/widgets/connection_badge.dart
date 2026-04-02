@@ -34,24 +34,28 @@ class _ConnectionBadgeState extends State<ConnectionBadge> {
         _checkPing();
         // Cek secara berkala tiap 10 detik
         _pingTimer?.cancel();
-        _pingTimer = Timer.periodic(const Duration(seconds: 10), (_) => _checkPing());
+        _pingTimer =
+            Timer.periodic(const Duration(seconds: 10), (_) => _checkPing());
       }
     });
-    
+
     // Initial check
     final results = await Connectivity().checkConnectivity();
     if (results.contains(ConnectivityResult.none)) {
       if (mounted) setState(() => _quality = ConnectionQuality.disconnected);
     } else {
       _checkPing();
-      _pingTimer = Timer.periodic(const Duration(seconds: 10), (_) => _checkPing());
+      _pingTimer =
+          Timer.periodic(const Duration(seconds: 10), (_) => _checkPing());
     }
   }
 
   Future<void> _checkPing() async {
     final startTime = DateTime.now();
     try {
-      final response = await http.get(Uri.parse('https://www.google.com/generate_204')).timeout(const Duration(seconds: 3));
+      final response = await http
+          .get(Uri.parse('https://www.google.com/generate_204'))
+          .timeout(const Duration(seconds: 3));
       final elapsedTimeMs = DateTime.now().difference(startTime).inMilliseconds;
       if (mounted) {
         setState(() {
@@ -62,13 +66,16 @@ class _ConnectionBadgeState extends State<ConnectionBadge> {
               _quality = ConnectionQuality.fair; // Kuning (Agak Lambat)
             }
           } else {
-            _quality = ConnectionQuality.poor; // Merah (Koneksi jelek dari Server)
+            _quality =
+                ConnectionQuality.poor; // Merah (Koneksi jelek dari Server)
           }
         });
       }
     } catch (_) {
       // Timeout atau error
-      if (mounted) setState(() => _quality = ConnectionQuality.disconnected); // Merah/Putus
+      if (mounted)
+        setState(
+            () => _quality = ConnectionQuality.disconnected); // Merah/Putus
     }
   }
 

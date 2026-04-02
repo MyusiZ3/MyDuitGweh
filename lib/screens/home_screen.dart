@@ -92,31 +92,38 @@ class _HomeScreenState extends State<HomeScreen> {
 
           // Premium In-App Dialog
           if (displayCount < 2) {
-            _showPremiumBroadcast(docId, title, message, currentCount: displayCount);
+            _showPremiumBroadcast(docId, title, message,
+                currentCount: displayCount);
           }
         }
       }
     });
 
     // 2. Listen for GLOBAL announcements (Systemwide)
-    _broadcastSub = _firestoreService.getBroadcastsStream(includePast: false).listen((broadcasts) async {
+    _broadcastSub = _firestoreService
+        .getBroadcastsStream(includePast: false)
+        .listen((broadcasts) async {
       if (!mounted) return;
       final prefs = await SharedPreferences.getInstance();
-      final lastNotifiedId = prefs.getString('last_notified_broadcast_id') ?? '';
-      
+      final lastNotifiedId =
+          prefs.getString('last_notified_broadcast_id') ?? '';
+
       // Track active broadcasts for marking as seen later
-      final activeBroadcasts = broadcasts.where((b) => b['status'] == 'ongoing').toList();
+      final activeBroadcasts =
+          broadcasts.where((b) => b['status'] == 'ongoing').toList();
       _currentActiveBroadcasts = activeBroadcasts;
-      
+
       // Unread = active + not yet SEEN by user (not dismissed)
-      final unseenCount = activeBroadcasts.where((b) => !_seenBroadcasts.contains(b['id'])).length;
-      
+      final unseenCount = activeBroadcasts
+          .where((b) => !_seenBroadcasts.contains(b['id']))
+          .length;
+
       setState(() => _unreadBroadcasts = unseenCount);
 
       if (activeBroadcasts.isNotEmpty) {
         final latest = activeBroadcasts.first;
         final latestId = latest['id'] as String;
-        
+
         // Show System Notification IF we haven't notified for this specific ID before
         if (latestId != lastNotifiedId) {
           _notificationService.showInstant(
@@ -125,17 +132,19 @@ class _HomeScreenState extends State<HomeScreen> {
             body: latest['title'] ?? '',
           );
           await prefs.setString('last_notified_broadcast_id', latestId);
-          
+
           // Premium In-App Dialog for Broadcast
           if (mounted) {
-            _showPremiumBroadcast(null, latest['title'] ?? 'PENGUMUMAN', latest['message'] ?? '');
+            _showPremiumBroadcast(
+                null, latest['title'] ?? 'PENGUMUMAN', latest['message'] ?? '');
           }
         }
       }
     });
   }
 
-  void _showPremiumBroadcast(String? docId, String title, String message, {int? currentCount}) {
+  void _showPremiumBroadcast(String? docId, String title, String message,
+      {int? currentCount}) {
     if (!mounted) return;
 
     if (docId != null && currentCount != null) {
@@ -159,7 +168,10 @@ class _HomeScreenState extends State<HomeScreen> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(28),
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 40, offset: const Offset(0, 15)),
+              BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 40,
+                  offset: const Offset(0, 15)),
             ],
           ),
           child: ClipRRect(
@@ -171,33 +183,35 @@ class _HomeScreenState extends State<HomeScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.85),
                   borderRadius: BorderRadius.circular(28),
-                  border: Border.all(color: Colors.white.withOpacity(0.5), width: 1),
+                  border: Border.all(
+                      color: Colors.white.withOpacity(0.5), width: 1),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      height: 4, width: 40,
-                      decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(2)),
+                      height: 4,
+                      width: 40,
+                      decoration: BoxDecoration(
+                          color: Colors.black12,
+                          borderRadius: BorderRadius.circular(2)),
                     ),
                     const SizedBox(height: 24),
-                    const Icon(Icons.auto_awesome_rounded, color: AppColors.primary, size: 32),
+                    const Icon(Icons.auto_awesome_rounded,
+                        color: AppColors.primary, size: 32),
                     const SizedBox(height: 16),
-                    Text(title.toUpperCase(), 
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 13, 
-                        fontWeight: FontWeight.w900, 
-                        letterSpacing: 2,
-                        color: AppColors.primary,
-                        decoration: TextDecoration.none
-                      )
-                    ),
+                    Text(title.toUpperCase(),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 2,
+                            color: AppColors.primary,
+                            decoration: TextDecoration.none)),
                     const SizedBox(height: 12),
                     Material(
-                      color: Colors.transparent,
-                      child: _renderMarkdown(message)
-                    ),
+                        color: Colors.transparent,
+                        child: _renderMarkdown(message)),
                     const SizedBox(height: 32),
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
@@ -209,9 +223,13 @@ class _HomeScreenState extends State<HomeScreen> {
                           borderRadius: BorderRadius.circular(18),
                         ),
                         child: const Center(
-                          child: Text('OK, UNDERSTOOD', 
-                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, letterSpacing: 0.5, fontSize: 13, decoration: TextDecoration.none)
-                          ),
+                          child: Text('OK, UNDERSTOOD',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.5,
+                                  fontSize: 13,
+                                  decoration: TextDecoration.none)),
                         ),
                       ),
                     ),
@@ -225,7 +243,9 @@ class _HomeScreenState extends State<HomeScreen> {
       transitionBuilder: (ctx, anim1, anim2, child) => FadeTransition(
         opacity: anim1,
         child: SlideTransition(
-          position: Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(CurvedAnimation(parent: anim1, curve: Curves.easeOutCubic)),
+          position: Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero)
+              .animate(
+                  CurvedAnimation(parent: anim1, curve: Curves.easeOutCubic)),
           child: child,
         ),
       ),
@@ -247,14 +267,14 @@ class _HomeScreenState extends State<HomeScreen> {
       String found = match.group(0)!;
       if (found.startsWith('**')) {
         spans.add(TextSpan(
-          text: found.substring(2, found.length - 2),
-          style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)
-        ));
+            text: found.substring(2, found.length - 2),
+            style: const TextStyle(
+                fontWeight: FontWeight.bold, color: AppColors.textPrimary)));
       } else {
         spans.add(TextSpan(
-          text: found.substring(1, found.length - 1),
-          style: const TextStyle(fontStyle: FontStyle.italic, color: AppColors.textPrimary)
-        ));
+            text: found.substring(1, found.length - 1),
+            style: const TextStyle(
+                fontStyle: FontStyle.italic, color: AppColors.textPrimary)));
       }
       lastMatchEnd = match.end;
     }
@@ -266,7 +286,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return RichText(
       textAlign: TextAlign.center,
       text: TextSpan(
-        style: const TextStyle(fontSize: 15, color: AppColors.textSecondary, height: 1.5),
+        style: const TextStyle(
+            fontSize: 15, color: AppColors.textSecondary, height: 1.5),
         children: spans,
       ),
     );
@@ -286,7 +307,6 @@ class _HomeScreenState extends State<HomeScreen> {
       await _securityService.authenticate();
     }
   }
-
 
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
@@ -311,15 +331,17 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _saveDismissedBroadcast(String id) async {
     final prefs = await SharedPreferences.getInstance();
     setState(() => _dismissedBroadcasts.add(id));
-    await prefs.setStringList('dismissed_broadcasts', _dismissedBroadcasts.toList());
+    await prefs.setStringList(
+        'dismissed_broadcasts', _dismissedBroadcasts.toList());
   }
 
   Future<void> _checkAdminRole() async {
     // Pengecekan pertama (Langsung & Force Refresh)
     bool isAdmin = await _authService.isAdmin(uid: _uid, forceRefresh: true);
-    bool isSuper = await _authService.isSuperAdmin(uid: _uid, forceRefresh: true);
-    
-    // Jika gagal, coba lagi sekali setelah 1.5 detik 
+    bool isSuper =
+        await _authService.isSuperAdmin(uid: _uid, forceRefresh: true);
+
+    // Jika gagal, coba lagi sekali setelah 1.5 detik
     // (Beri napas buat Firestore sinkron data session/role)
     if (!isAdmin) {
       await Future.delayed(const Duration(milliseconds: 1500));
@@ -421,14 +443,22 @@ class _HomeScreenState extends State<HomeScreen> {
                                           horizontal: 10, vertical: 2),
                                       decoration: BoxDecoration(
                                         gradient: LinearGradient(
-                                          colors: _isSuperAdmin 
-                                            ? [const Color(0xFFFFD700), const Color(0xFFFFA500)]
-                                            : [const Color(0xFF2196F3), const Color(0xFF1976D2)],
+                                          colors: _isSuperAdmin
+                                              ? [
+                                                  const Color(0xFFFFD700),
+                                                  const Color(0xFFFFA500)
+                                                ]
+                                              : [
+                                                  const Color(0xFF2196F3),
+                                                  const Color(0xFF1976D2)
+                                                ],
                                         ),
                                         borderRadius: BorderRadius.circular(12),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: (_isSuperAdmin ? const Color(0xFFFFD700) : Colors.blue)
+                                            color: (_isSuperAdmin
+                                                    ? const Color(0xFFFFD700)
+                                                    : Colors.blue)
                                                 .withOpacity(0.3),
                                             blurRadius: 8,
                                             offset: const Offset(0, 2),
@@ -437,10 +467,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ),
                                       child: Row(
                                         children: [
-                                          Icon(_isSuperAdmin ? Icons.workspace_premium_rounded : Icons.shield_rounded,
-                                              color: Colors.white, size: 10),
+                                          Icon(
+                                              _isSuperAdmin
+                                                  ? Icons
+                                                      .workspace_premium_rounded
+                                                  : Icons.shield_rounded,
+                                              color: Colors.white,
+                                              size: 10),
                                           const SizedBox(width: 4),
-                                          Text(_isSuperAdmin ? 'OWNER' : 'ADMIN',
+                                          Text(
+                                              _isSuperAdmin ? 'OWNER' : 'ADMIN',
                                               style: const TextStyle(
                                                   color: Colors.white,
                                                   fontSize: 8,
@@ -464,21 +500,25 @@ class _HomeScreenState extends State<HomeScreen> {
                                 .snapshots(),
                             builder: (context, snapshot) {
                               final unreadCount = (snapshot.hasData
-                                  ? snapshot.data!.docs.length
-                                  : 0) + _unreadBroadcasts;
+                                      ? snapshot.data!.docs.length
+                                      : 0) +
+                                  _unreadBroadcasts;
                               return Stack(
                                 clipBehavior: Clip.none,
                                 children: [
                                   IconButton(
                                     onPressed: () async {
                                       // Mark all current broadcasts as SEEN
-                                      final prefs = await SharedPreferences.getInstance();
+                                      final prefs =
+                                          await SharedPreferences.getInstance();
                                       for (var b in _currentActiveBroadcasts) {
                                         _seenBroadcasts.add(b['id'] as String);
                                       }
-                                      await prefs.setStringList('seen_broadcasts', _seenBroadcasts.toList());
+                                      await prefs.setStringList(
+                                          'seen_broadcasts',
+                                          _seenBroadcasts.toList());
                                       setState(() => _unreadBroadcasts = 0);
-                                      
+
                                       if (!mounted) return;
                                       await Navigator.push(
                                           context,
@@ -572,7 +612,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     // 1. BROADCAST & MAINTENANCE BANNERS
-                    SliverToBoxAdapter(child: _buildBroadcastAndMaintenanceBanners()),
+                    SliverToBoxAdapter(
+                        child: _buildBroadcastAndMaintenanceBanners()),
 
                     // 2. MAIN BALANCE CARD
                     SliverToBoxAdapter(
@@ -618,8 +659,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                         _isBalanceVisible = !_isBalanceVisible;
                                       });
                                       // Simpan ke background biar gak ganggu UI thread
-                                      SharedPreferences.getInstance().then((prefs) {
-                                        prefs.setBool('show_balance', _isBalanceVisible);
+                                      SharedPreferences.getInstance()
+                                          .then((prefs) {
+                                        prefs.setBool(
+                                            'show_balance', _isBalanceVisible);
                                       });
                                     },
                                     child: Icon(
@@ -650,19 +693,26 @@ class _HomeScreenState extends State<HomeScreen> {
                               Row(
                                 children: [
                                   Expanded(
-                                    child: _balanceAction(
-                                        Icons.account_balance_wallet_rounded,
-                                        ToneManager.t('nav_wallet'), () {
-                                      MainNav.of(context)?.setTab(1);
-                                    }),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: _balanceAction(
-                                        Icons.insights_rounded,
-                                        ToneManager.t('nav_report'), () {
-                                      MainNav.of(context)?.setTab(4);
-                                    }),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: _balanceAction(
+                                              Icons
+                                                  .account_balance_wallet_rounded,
+                                              ToneManager.t('nav_wallet'), () {
+                                            MainNav.of(context)?.setTab(1);
+                                          }),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: _balanceAction(
+                                              Icons.insights_rounded,
+                                              ToneManager.t('nav_report'), () {
+                                            MainNav.of(context)?.setTab(4);
+                                          }),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ],
                               ),
@@ -906,9 +956,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerRight,
-                  child: Text('Dari ${CurrencyFormatter.formatCurrency(_monthlyBudget)}',
-                      style:
-                          const TextStyle(fontSize: 11, color: AppColors.textHint)),
+                  child: Text(
+                      'Dari ${CurrencyFormatter.formatCurrency(_monthlyBudget)}',
+                      style: const TextStyle(
+                          fontSize: 11, color: AppColors.textHint)),
                 ),
               ),
             ],
@@ -1014,7 +1065,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(width: 8),
                       ConstrainedBox(
-                        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.35),
+                        constraints: BoxConstraints(
+                            maxWidth: MediaQuery.of(context).size.width * 0.35),
                         child: FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(
@@ -1085,12 +1137,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (_isAdmin) ...[
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: _isSuperAdmin ? Colors.amber.withOpacity(0.15) : AppColors.primary.withOpacity(0.1),
+                        color: _isSuperAdmin
+                            ? Colors.amber.withOpacity(0.15)
+                            : AppColors.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: _isSuperAdmin ? Colors.amber : AppColors.primary,
+                          color:
+                              _isSuperAdmin ? Colors.amber : AppColors.primary,
                           width: 1,
                         ),
                       ),
@@ -1098,9 +1154,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            _isSuperAdmin ? Icons.stars_rounded : Icons.verified_user_rounded,
+                            _isSuperAdmin
+                                ? Icons.stars_rounded
+                                : Icons.verified_user_rounded,
                             size: 10,
-                            color: _isSuperAdmin ? Colors.amber[900] : AppColors.primary,
+                            color: _isSuperAdmin
+                                ? Colors.amber[900]
+                                : AppColors.primary,
                           ),
                           const SizedBox(width: 4),
                           Text(
@@ -1108,7 +1168,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             style: TextStyle(
                               fontSize: 9,
                               fontWeight: FontWeight.w900,
-                              color: _isSuperAdmin ? Colors.amber[900] : AppColors.primary,
+                              color: _isSuperAdmin
+                                  ? Colors.amber[900]
+                                  : AppColors.primary,
                               letterSpacing: 0.5,
                             ),
                           ),
@@ -1134,7 +1196,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   trailing: const Icon(Icons.arrow_forward_ios_rounded,
                       size: 16, color: AppColors.primary),
                 ),
-
               _buildProfileMenuItem(
                 icon: Icons.shield_outlined,
                 label: 'Kunci Sidik Jari/Wajah',
@@ -1317,8 +1378,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-
-
   void _showToneSelector() {
     showModalBottomSheet(
       context: context,
@@ -1347,22 +1406,32 @@ class _HomeScreenState extends State<HomeScreen> {
                             ? Icons.coffee
                             : t == AppTone.boomer
                                 ? Icons.elderly
-                                : Icons.notes,
+                                : t == AppTone.pasangan
+                                    ? Icons.favorite_rounded
+                                    : Icons.notes,
                     color: ToneManager.notifier.value == t
-                        ? AppColors.primary
+                        ? (t == AppTone.pasangan
+                            ? const Color(0xFFFF2D55)
+                            : AppColors.primary)
                         : Colors.grey,
                   ),
-                  title: Text(t.name.toUpperCase(),
+                  title: Text(
+                      t == AppTone.pasangan ? 'MY BINI' : t.name.toUpperCase(),
                       style: TextStyle(
                         fontWeight: ToneManager.notifier.value == t
                             ? FontWeight.bold
                             : FontWeight.normal,
                         color: ToneManager.notifier.value == t
-                            ? AppColors.primary
+                            ? (t == AppTone.pasangan
+                                ? const Color(0xFFFF2D55)
+                                : AppColors.primary)
                             : Colors.black87,
                       )),
                   trailing: ToneManager.notifier.value == t
-                      ? const Icon(Icons.check_circle, color: AppColors.primary)
+                      ? Icon(Icons.check_circle,
+                          color: t == AppTone.pasangan
+                              ? const Color(0xFFFF2D55)
+                              : AppColors.primary)
                       : null,
                   onTap: () async {
                     await ToneManager.setTone(t);
@@ -1442,15 +1511,18 @@ class _HomeScreenState extends State<HomeScreen> {
         StreamBuilder<DocumentSnapshot>(
           stream: _firestoreService.getMaintenanceConfigStream(),
           builder: (context, snapshot) {
-            if (!snapshot.hasData || !snapshot.data!.exists) return const SizedBox();
+            if (!snapshot.hasData || !snapshot.data!.exists)
+              return const SizedBox();
             final config = snapshot.data!.data() as Map<String, dynamic>? ?? {};
             final isMaintenance = config['isMaintenance'] ?? false;
-            final startTime = (config['maintenanceStartTime'] as Timestamp?)?.toDate();
+            final startTime =
+                (config['maintenanceStartTime'] as Timestamp?)?.toDate();
             final msg = config['message'] ?? 'Maintenance mode aktif.';
 
             final now = DateTime.now();
-            final isRelevant = isMaintenance || (startTime != null && startTime.difference(now).inHours < 24);
-            
+            final isRelevant = isMaintenance ||
+                (startTime != null && startTime.difference(now).inHours < 24);
+
             if (!isRelevant) return const SizedBox();
 
             return Container(
@@ -1459,18 +1531,24 @@ class _HomeScreenState extends State<HomeScreen> {
               decoration: BoxDecoration(
                 color: isMaintenance ? Colors.red[50] : Colors.orange[50],
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: (isMaintenance ? Colors.red[100] : Colors.orange[100])!),
+                border: Border.all(
+                    color: (isMaintenance
+                        ? Colors.red[100]
+                        : Colors.orange[100])!),
               ),
               child: Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: (isMaintenance ? Colors.red : Colors.orange).withOpacity(0.1),
+                      color: (isMaintenance ? Colors.red : Colors.orange)
+                          .withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      isMaintenance ? Icons.construction_rounded : Icons.pending_actions_rounded, 
+                      isMaintenance
+                          ? Icons.construction_rounded
+                          : Icons.pending_actions_rounded,
                       color: isMaintenance ? Colors.red : Colors.orange,
                       size: 20,
                     ),
@@ -1481,15 +1559,32 @@ class _HomeScreenState extends State<HomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          isMaintenance ? 'SISTEM SEDANG DIPERBAIKI' : 'JADWAL PEMELIHARAAN', 
-                          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: isMaintenance ? Colors.red[900] : Colors.orange[900]),
+                          isMaintenance
+                              ? 'SISTEM SEDANG DIPERBAIKI'
+                              : 'JADWAL PEMELIHARAAN',
+                          style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 13,
+                              color: isMaintenance
+                                  ? Colors.red[900]
+                                  : Colors.orange[900]),
                         ),
-                        Text(msg, style: TextStyle(fontSize: 10, color: isMaintenance ? Colors.red[700] : Colors.orange[700], height: 1.3)),
+                        Text(msg,
+                            style: TextStyle(
+                                fontSize: 10,
+                                color: isMaintenance
+                                    ? Colors.red[700]
+                                    : Colors.orange[700],
+                                height: 1.3)),
                         if (!isMaintenance && startTime != null)
                           Padding(
                             padding: const EdgeInsets.only(top: 4),
-                            child: Text('Direncanakan: ${DateFormat('HH:mm, dd MMM').format(startTime)}', 
-                              style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.orange[800])),
+                            child: Text(
+                                'Direncanakan: ${DateFormat('HH:mm, dd MMM').format(startTime)}',
+                                style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.orange[800])),
                           ),
                       ],
                     ),
@@ -1504,8 +1599,9 @@ class _HomeScreenState extends State<HomeScreen> {
         StreamBuilder<List<Map<String, dynamic>>>(
           stream: _firestoreService.getBroadcastsStream(),
           builder: (context, snapshot) {
-            if (!snapshot.hasData || snapshot.data!.isEmpty) return const SizedBox();
-            
+            if (!snapshot.hasData || snapshot.data!.isEmpty)
+              return const SizedBox();
+
             // Filter: Ongoing broadcasts only, and not dismissed yet
             final activeBroadcasts = snapshot.data!.where((b) {
               final id = b['id'] as String;
@@ -1520,9 +1616,12 @@ class _HomeScreenState extends State<HomeScreen> {
             final type = latest['type'] ?? 'info';
             final title = latest['title'] ?? '📢 Kabar Baru!';
             final message = latest['message'] ?? '';
-            
+
             // PRIORITY: Urgent/Alert/News/Reminder trigger PREMIUM POPUP
-            if (type == 'urgent' || type == 'alert' || type == 'news' || type == 'reminder') {
+            if (type == 'urgent' ||
+                type == 'alert' ||
+                type == 'news' ||
+                type == 'reminder') {
               Future.delayed(const Duration(milliseconds: 800), () {
                 if (mounted && !_dismissedBroadcasts.contains(id)) {
                   _showPremiumBroadcastPopup(latest);
@@ -1543,15 +1642,20 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.info_rounded, color: Colors.blue, size: 24),
+                    const Icon(Icons.info_rounded,
+                        color: Colors.blue, size: 24),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
+                          Text(title,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w900, fontSize: 14)),
                           const SizedBox(height: 2),
-                          Text(message, style: TextStyle(color: Colors.grey[700], fontSize: 11)),
+                          Text(message,
+                              style: TextStyle(
+                                  color: Colors.grey[700], fontSize: 11)),
                         ],
                       ),
                     ),
@@ -1604,7 +1708,11 @@ class _HomeScreenState extends State<HomeScreen> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(32),
             boxShadow: [
-              BoxShadow(color: (isUrgent ? Colors.red : AppColors.primary).withOpacity(0.2), blurRadius: 40, offset: const Offset(0, 20)),
+              BoxShadow(
+                  color: (isUrgent ? Colors.red : AppColors.primary)
+                      .withOpacity(0.2),
+                  blurRadius: 40,
+                  offset: const Offset(0, 20)),
             ],
           ),
           child: ClipRRect(
@@ -1616,7 +1724,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.9),
                   borderRadius: BorderRadius.circular(32),
-                  border: Border.all(color: Colors.white.withOpacity(0.5), width: 1.5),
+                  border: Border.all(
+                      color: Colors.white.withOpacity(0.5), width: 1.5),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -1634,25 +1743,31 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    Text(type.toUpperCase().replaceAll('_', ' '), 
-                      style: TextStyle(
-                        fontSize: 10, 
-                        fontWeight: FontWeight.w900, 
-                        letterSpacing: 2,
-                        color: displayColor,
-                        decoration: TextDecoration.none
-                      )
-                    ),
+                    Text(type.toUpperCase().replaceAll('_', ' '),
+                        style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 2,
+                            color: displayColor,
+                            decoration: TextDecoration.none)),
                     const SizedBox(height: 12),
-                    Text(title, 
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.black, decoration: TextDecoration.none, letterSpacing: -0.5)
-                    ),
+                    Text(title,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.black,
+                            decoration: TextDecoration.none,
+                            letterSpacing: -0.5)),
                     const SizedBox(height: 16),
-                    Text(message, 
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 14, color: Colors.grey[800], height: 1.6, fontWeight: FontWeight.normal, decoration: TextDecoration.none)
-                    ),
+                    Text(message,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[800],
+                            height: 1.6,
+                            fontWeight: FontWeight.normal,
+                            decoration: TextDecoration.none)),
                     const SizedBox(height: 32),
                     Material(
                       color: Colors.transparent,
@@ -1668,12 +1783,20 @@ class _HomeScreenState extends State<HomeScreen> {
                           decoration: BoxDecoration(
                             color: Colors.black,
                             borderRadius: BorderRadius.circular(18),
-                            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 4))],
+                            boxShadow: [
+                              BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4))
+                            ],
                           ),
                           child: const Center(
-                            child: Text('UNDERSTOOD', 
-                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 1, fontSize: 13)
-                            ),
+                            child: Text('UNDERSTOOD',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 1,
+                                    fontSize: 13)),
                           ),
                         ),
                       ),
@@ -1688,7 +1811,8 @@ class _HomeScreenState extends State<HomeScreen> {
       transitionBuilder: (ctx, anim1, anim2, child) => FadeTransition(
         opacity: anim1,
         child: ScaleTransition(
-          scale: Tween<double>(begin: 0.9, end: 1.0).animate(CurvedAnimation(parent: anim1, curve: Curves.easeOutBack)),
+          scale: Tween<double>(begin: 0.9, end: 1.0).animate(
+              CurvedAnimation(parent: anim1, curve: Curves.easeOutBack)),
           child: child,
         ),
       ),

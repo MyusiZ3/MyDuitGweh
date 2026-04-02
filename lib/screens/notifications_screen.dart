@@ -35,7 +35,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Future<void> _saveDismissed(String id) async {
     final prefs = await SharedPreferences.getInstance();
     _dismissedBroadcasts.add(id);
-    await prefs.setStringList('dismissed_broadcasts', _dismissedBroadcasts.toList());
+    await prefs.setStringList(
+        'dismissed_broadcasts', _dismissedBroadcasts.toList());
     if (mounted) setState(() {});
   }
 
@@ -53,9 +54,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: const Text('Notifikasi',
-            style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+            style: TextStyle(
+                fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 20),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded,
+              color: AppColors.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -70,11 +73,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 .orderBy('timestamp', descending: true)
                 .snapshots(),
             builder: (context, notifSnap) {
-              if (notifSnap.connectionState == ConnectionState.waiting) return const Center(child: LoadingWidget());
+              if (notifSnap.connectionState == ConnectionState.waiting)
+                return const Center(child: LoadingWidget());
 
               // Combine and sort
               List<Map<String, dynamic>> allNotifications = [];
-              
+
               // 1. App Notifications
               if (notifSnap.hasData) {
                 for (var doc in notifSnap.data!.docs) {
@@ -90,7 +94,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 for (var b in broadcastSnap.data!) {
                   final bId = b['id'] as String;
                   if (_dismissedBroadcasts.contains(bId)) continue;
-                  
+
                   b['isGlobal'] = true;
                   b['isRead'] = true;
                   allNotifications.add(b);
@@ -99,8 +103,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
               // Sort by timestamp
               allNotifications.sort((a, b) {
-                final t1 = (a['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
-                final t2 = (b['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
+                final t1 =
+                    (a['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
+                final t2 =
+                    (b['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
                 return t2.compareTo(t1);
               });
 
@@ -115,7 +121,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   final data = allNotifications[index];
                   final id = data['id'];
                   final isGlobal = data['isGlobal'] ?? false;
-                  
+
                   final child = isGlobal
                       ? _buildGlobalNotificationCard(context, id, data)
                       : _buildNotificationCard(context, id, data);
@@ -168,9 +174,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.delete_outline_rounded, color: AppColors.expense, size: 22),
+            Icon(Icons.delete_outline_rounded,
+                color: AppColors.expense, size: 22),
             const SizedBox(height: 2),
-            Text('Hapus', style: TextStyle(color: AppColors.expense, fontSize: 9, fontWeight: FontWeight.w800)),
+            Text('Hapus',
+                style: TextStyle(
+                    color: AppColors.expense,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800)),
           ],
         ),
       ),
@@ -178,9 +189,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
-  Widget _buildGlobalNotificationCard(BuildContext context, String id, Map<String, dynamic> data) {
+  Widget _buildGlobalNotificationCard(
+      BuildContext context, String id, Map<String, dynamic> data) {
     final type = data['type'] ?? 'info';
-    final timestamp = (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
+    final timestamp =
+        (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
     Color accentColor = AppColors.primary;
     if (type == 'urgent') accentColor = Colors.orange[800]!;
     if (type == 'news') accentColor = Colors.deepPurple;
@@ -226,14 +239,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: accentColor.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           'GLOBAL',
-                          style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: accentColor),
+                          style: TextStyle(
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                              color: accentColor),
                         ),
                       ),
                     ],
@@ -241,7 +258,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   const SizedBox(height: 4),
                   Text(
                     data['message'] ?? '',
-                    style: TextStyle(color: AppColors.textHint, fontSize: 13, height: 1.4),
+                    style: TextStyle(
+                        color: AppColors.textHint, fontSize: 13, height: 1.4),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -257,11 +275,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
-  Widget _buildNotificationCard(BuildContext context, String docId, Map<String, dynamic> data) {
+  Widget _buildNotificationCard(
+      BuildContext context, String docId, Map<String, dynamic> data) {
     final type = data['type'] ?? 'info'; // 'invite', 'transaction', 'info'
     final isRead = data['isRead'] ?? false;
-    final timestamp = (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
-    
+    final timestamp =
+        (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -294,19 +314,24 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       Text(
                         data['title'] ?? 'Notifikasi',
                         style: TextStyle(
-                          fontWeight: isRead ? FontWeight.bold : FontWeight.w900,
+                          fontWeight:
+                              isRead ? FontWeight.bold : FontWeight.w900,
                           fontSize: 15,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         data['message'] ?? '',
-                        style: TextStyle(color: AppColors.textHint, fontSize: 13, height: 1.4),
+                        style: TextStyle(
+                            color: AppColors.textHint,
+                            fontSize: 13,
+                            height: 1.4),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         DateFormat('dd MMM, HH:mm').format(timestamp),
-                        style: const TextStyle(color: Colors.black26, fontSize: 11),
+                        style: const TextStyle(
+                            color: Colors.black26, fontSize: 11),
                       ),
                       if (type == 'invite' && data['status'] == 'pending') ...[
                         const SizedBox(height: 16),
@@ -319,7 +344,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   Container(
                     width: 8,
                     height: 8,
-                    decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                    decoration: const BoxDecoration(
+                        color: AppColors.primary, shape: BoxShape.circle),
                   )
               ],
             ),
@@ -357,7 +383,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
-  Widget _buildActionButtons(BuildContext context, String docId, Map<String, dynamic> data) {
+  Widget _buildActionButtons(
+      BuildContext context, String docId, Map<String, dynamic> data) {
     return Row(
       children: [
         Expanded(
@@ -367,10 +394,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
               padding: const EdgeInsets.symmetric(vertical: 10),
             ),
-            child: const Text('Terima', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: const Text('Terima',
+                style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ),
         const SizedBox(width: 12),
@@ -380,10 +409,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             style: OutlinedButton.styleFrom(
               side: const BorderSide(color: AppColors.expense),
               foregroundColor: AppColors.expense,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
               padding: const EdgeInsets.symmetric(vertical: 10),
             ),
-            child: const Text('Tolak', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: const Text('Tolak',
+                style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ),
       ],
@@ -395,16 +426,21 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.notifications_off_rounded, size: 80, color: Colors.black12),
+          Icon(Icons.notifications_off_rounded,
+              size: 80, color: Colors.black12),
           const SizedBox(height: 16),
           const Text('Belum ada notifikasi',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black26)),
+              style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black26)),
         ],
       ),
     );
   }
 
-  void _handleNotificationTap(BuildContext context, String docId, Map<String, dynamic> data) {
+  void _handleNotificationTap(
+      BuildContext context, String docId, Map<String, dynamic> data) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     FirebaseFirestore.instance
         .collection('users')
@@ -414,17 +450,22 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         .update({'isRead': true});
   }
 
-  Future<void> _respondToInvite(BuildContext context, String docId, Map<String, dynamic> data, bool accept) async {
+  Future<void> _respondToInvite(BuildContext context, String docId,
+      Map<String, dynamic> data, bool accept) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     final walletId = data['walletId'];
-    
+
     try {
       if (accept) {
         // Logic tambah user ke wallet
-        await FirebaseFirestore.instance.collection('wallets').doc(walletId).update({
+        await FirebaseFirestore.instance
+            .collection('wallets')
+            .doc(walletId)
+            .update({
           'members': FieldValue.arrayUnion([uid])
         });
-        UIHelper.showSuccessSnackBar(context, 'Berhasil bergabung dengan dompet!');
+        UIHelper.showSuccessSnackBar(
+            context, 'Berhasil bergabung dengan dompet!');
       } else {
         UIHelper.showSuccessSnackBar(context, 'Undangan ditolak.');
       }
@@ -435,11 +476,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           .doc(uid)
           .collection('notifications')
           .doc(docId)
-          .update({
-            'status': accept ? 'accepted' : 'rejected',
-            'isRead': true
-          });
-          
+          .update({'status': accept ? 'accepted' : 'rejected', 'isRead': true});
     } catch (e) {
       UIHelper.showErrorSnackBar(context, 'Gagal menanggapi undangan.');
     }

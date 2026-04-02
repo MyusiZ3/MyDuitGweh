@@ -4,11 +4,14 @@ import 'package:google_fonts/google_fonts.dart';
 class AppColors {
   // Primary palette (iOS Modern Blue)
   static const Color primary = Color(0xFF007AFF); // Standard Apple Blue
-  static const Color primaryDark = Color(0xFF0056D6); // Deep blue for pressed/header states
-  static const Color primaryLight = Color(0xFF5AC8FA); // Apple Cyan for gradients/accents
+  static const Color primaryDark =
+      Color(0xFF0056D6); // Deep blue for pressed/header states
+  static const Color primaryLight =
+      Color(0xFF5AC8FA); // Apple Cyan for gradients/accents
 
   // Accent / Deep Blue
-  static const Color deepBlue = Color(0xFF1C1C1E); // Swapped to iOS dark gray/black
+  static const Color deepBlue =
+      Color(0xFF1C1C1E); // Swapped to iOS dark gray/black
   static const Color deepBlueDark = Color(0xFF000000);
 
   // Background
@@ -119,8 +122,10 @@ class AppTheme {
         unselectedItemColor: AppColors.textHint,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
-        selectedLabelStyle: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
-        unselectedLabelStyle: TextStyle(fontSize: 11, fontWeight: FontWeight.w400),
+        selectedLabelStyle:
+            TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+        unselectedLabelStyle:
+            TextStyle(fontSize: 11, fontWeight: FontWeight.w400),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -174,7 +179,8 @@ class AppTheme {
           borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         hintStyle: GoogleFonts.plusJakartaSans(
           fontSize: 14,
           color: AppColors.textHint,
