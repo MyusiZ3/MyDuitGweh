@@ -11,6 +11,7 @@ import 'admin_logs_screen.dart';
 import '../../services/auth_service.dart';
 import '../../utils/currency_formatter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/services.dart';
 import '../../services/ai_service.dart';
 import '../../utils/ui_helper.dart';
 
@@ -177,9 +178,25 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                               MaterialPageRoute(
                                   builder: (_) => GlobalInsightsScreen())),
                         ),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+                    _buildSectionHeader(
+                        'AI System Engine', Icons.auto_awesome_rounded),
+                    const SizedBox(height: 16),
+                    GridView.count(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: 1.1,
+                      children: [
                         _buildCommandCard(
                           title: 'AI Advisor Quota',
-                          subtitle: '$_maxChatsPerHour chats/hr',
+                          subtitle: _resetDurationMinutes < 60
+                              ? '$_maxChatsPerHour chat / $_resetDurationMinutes min'
+                              : '$_maxChatsPerHour chat / ${(_resetDurationMinutes / 60).toStringAsFixed(_resetDurationMinutes % 60 == 0 ? 0 : 1)} jam',
                           icon: Icons.psychology_rounded,
                           color: const Color(0xFF8B5CF6),
                           onTap: () => _showAIQuotaControl(),
@@ -356,7 +373,8 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                                         icon = Icons.psychology_rounded;
                                         color = const Color(0xFF8B5CF6);
                                         title = 'AI Quota Diubah';
-                                      } else if (action == 'MAINTENANCE_SCHEDULE') {
+                                      } else if (action ==
+                                          'MAINTENANCE_SCHEDULE') {
                                         icon = Icons.schedule_rounded;
                                         color = Colors.indigo;
                                         title = 'Jadwal Maintenance';
@@ -837,198 +855,342 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          padding: EdgeInsets.fromLTRB(
-              24, 32, 24, MediaQuery.of(context).padding.bottom + 32),
+      builder: (ctx) => StatefulBuilder(builder: (context, setModalState) {
+        final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.8,
+          padding: EdgeInsets.only(bottom: bottomInset),
           decoration: const BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('AI Advisor Quota',
-                      style:
-                          TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close_rounded),
+          child: SafeArea(
+            top: false,
+            bottom: true,
+            child: Column(
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Kontrol jatah konsultasi AI untuk pengguna yang menggunakan integrated key (bawaan admin). Pengguna dengan API Key pribadi tidak akan dibatasi.',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-              const SizedBox(height: 32),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Max Chats per Hour',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                  Text('$tempMaxChats',
-                      style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF8B5CF6))),
-                ],
-              ),
-              Slider(
-                value: tempMaxChats.toDouble(),
-                min: 1,
-                max: 100,
-                divisions: 99,
-                activeColor: const Color(0xFF8B5CF6),
-                onChanged: (v) => setModalState(() => tempMaxChats = v.round()),
-              ),
-              const Divider(height: 48),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Reset Interval (Minutes)',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                  Text('$tempInterval',
-                      style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF8B5CF6))),
-                ],
-              ),
-              Slider(
-                value: tempInterval.toDouble(),
-                min: 5,
-                max: 1440,
-                divisions: 287,
-                activeColor: const Color(0xFF8B5CF6),
-                onChanged: (v) => setModalState(() => tempInterval = v.round()),
-              ),
-              const Divider(height: 48),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: tempAiEnabled ? Colors.green.withOpacity(0.05) : Colors.red.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: tempAiEnabled ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1)),
                 ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: tempAiEnabled ? Colors.green : Colors.red,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: (tempAiEnabled ? Colors.green : Colors.red).withOpacity(0.3),
-                            blurRadius: 8,
-                            spreadRadius: 1,
-                          )
-                        ],
-                      ),
-                      child: Icon(
-                        tempAiEnabled ? Icons.bolt_rounded : Icons.power_off_rounded,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            tempAiEnabled ? 'AI Service Active' : 'AI Service Disabled',
-                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
-                          ),
-                          Text(
-                            tempAiEnabled ? 'Fitur AI Advisor saat ini aktif untuk semua pengguna.' : 'Akses AI Advisor akan ditutup sementara untuk publik.',
-                            style: TextStyle(fontSize: 10, color: Colors.grey[600]),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Switch.adaptive(
-                      value: tempAiEnabled,
-                      activeColor: Colors.green,
-                      onChanged: (v) => setModalState(() => tempAiEnabled = v),
-                    ),
-                  ],
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.bolt_rounded,
+                          color: ui.Color.fromARGB(255, 0, 122, 255)),
+                      const SizedBox(width: 12),
+                      const Text('AI Advisor Management',
+                          style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 18,
+                              letterSpacing: -0.5)),
+                      const Spacer(),
+                      IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close_rounded, size: 20)),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 40),
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    try {
-                      await FirebaseFirestore.instance
-                          .collection('app_settings')
-                          .doc('ai_config')
-                          .set({
-                        'max_chats_per_hour': tempMaxChats,
-                        'reset_duration_minutes': tempInterval,
-                        'is_ai_enabled': tempAiEnabled,
-                        'lastUpdated': FieldValue.serverTimestamp(),
-                        'updatedBy':
-                            _authService.auth.currentUser?.uid ?? 'system',
-                      }, SetOptions(merge: true));
-
-                      // Add to logs
-                      await FirebaseFirestore.instance
-                          .collection('app_config')
-                          .doc('global')
-                          .collection('history')
-                          .add({
-                        'updatedBy':
-                            _authService.auth.currentUser?.uid ?? 'system',
-                        'updatedAt': FieldValue.serverTimestamp(),
-                        'action': tempAiEnabled != _isAiEnabled ? 'AI_STATUS_CHANGED' : 'AI_QUOTA_UPDATE',
-                        'status': tempAiEnabled,
-                        'max_chats': tempMaxChats,
-                        'interval': tempInterval,
-                      });
-
-                      setState(() {
-                        _maxChatsPerHour = tempMaxChats;
-                        _resetDurationMinutes = tempInterval;
-                        _isAiEnabled = tempAiEnabled;
-                      });
-
-                      if (mounted) Navigator.pop(context);
-
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('AI Quota configuration saved!'),
-                          backgroundColor: Colors.green,
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24),
+                  child: Text(
+                      'Atur limitasi akses AI untuk semua pengguna publik.',
+                      style: TextStyle(color: Colors.grey, fontSize: 13)),
+                ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Info Box with Glass style
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(24),
+                            border:
+                                Border.all(color: Colors.blue.withOpacity(0.1)),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle),
+                                child: const Icon(Icons.info_outline_rounded,
+                                    size: 16, color: Colors.blue),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Text(
+                                  'Kuota reset TOTAL setiap $tempInterval mnt dari chat pertama user (Fixed Window).',
+                                  style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.blue,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      );
-                    } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Failed to save: $e')),
-                      );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
+                        const SizedBox(height: 32),
+
+                        // Max Chats Input Section
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Max Chats per Hour',
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 16)),
+                                Text('Jatah pesan per user',
+                                    style: TextStyle(
+                                        fontSize: 11, color: Colors.grey)),
+                              ],
+                            ),
+                            Text('$tempMaxChats',
+                                style: const TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.w900,
+                                    color: ui.Color.fromRGBO(0, 122, 255, 1),
+                                    letterSpacing: -1)),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        SliderTheme(
+                          data: SliderTheme.of(context).copyWith(
+                            trackHeight: 8,
+                            thumbShape: const RoundSliderThumbShape(
+                                enabledThumbRadius: 12),
+                            overlayShape: const RoundSliderOverlayShape(
+                                overlayRadius: 24),
+                          ),
+                          child: Slider(
+                            value: tempMaxChats.toDouble(),
+                            min: 1,
+                            max: 100,
+                            divisions: 99,
+                            activeColor: ui.Color.fromRGBO(0, 122, 255, 1),
+                            inactiveColor: ui.Color.fromRGBO(0, 122, 255, 1)
+                                .withOpacity(0.1),
+                            onChanged: (v) =>
+                                setModalState(() => tempMaxChats = v.round()),
+                          ),
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        // Cycle Input Section
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Reset Cycle (Minutes)',
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 16)),
+                                Text('Jendela reset kuota (60 = 1 Jam)',
+                                    style: TextStyle(
+                                        fontSize: 11, color: Colors.grey)),
+                              ],
+                            ),
+                            Text('$tempInterval',
+                                style: const TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.w900,
+                                    color: ui.Color.fromRGBO(0, 122, 255, 1),
+                                    letterSpacing: -1)),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        SliderTheme(
+                          data: SliderTheme.of(context).copyWith(
+                            trackHeight: 8,
+                            thumbShape: const RoundSliderThumbShape(
+                                enabledThumbRadius: 12),
+                            overlayShape: const RoundSliderOverlayShape(
+                                overlayRadius: 24),
+                          ),
+                          child: Slider(
+                            value: tempInterval.toDouble(),
+                            min: 5,
+                            max: 1440,
+                            divisions: 287,
+                            activeColor: ui.Color.fromRGBO(0, 122, 255, 1),
+                            inactiveColor: ui.Color.fromRGBO(0, 122, 255, 1)
+                                .withOpacity(0.1),
+                            onChanged: (v) =>
+                                setModalState(() => tempInterval = v.round()),
+                          ),
+                        ),
+
+                        const SizedBox(height: 32),
+
+                        // Status Toggle Component
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(28),
+                            border: Border.all(
+                                color: Colors.black.withOpacity(0.03)),
+                            boxShadow: [
+                              BoxShadow(
+                                  color: Colors.black.withOpacity(0.02),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 10))
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: tempAiEnabled
+                                      ? Colors.green.withOpacity(0.1)
+                                      : Colors.red.withOpacity(0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  tempAiEnabled
+                                      ? Icons.check_circle_rounded
+                                      : Icons.pause_circle_rounded,
+                                  color:
+                                      tempAiEnabled ? Colors.green : Colors.red,
+                                  size: 24,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      tempAiEnabled
+                                          ? 'Service Active'
+                                          : 'Service Paused',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: 15),
+                                    ),
+                                    Text(
+                                      'Klik switch untuk ubah status.',
+                                      style: TextStyle(
+                                          fontSize: 10,
+                                          color: Colors.grey[500]),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Switch.adaptive(
+                                value: tempAiEnabled,
+                                activeColor: Colors.green,
+                                onChanged: (v) =>
+                                    setModalState(() => tempAiEnabled = v),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 40),
+
+                        // Action Button
+                        SizedBox(
+                          width: double.infinity,
+                          height: 64,
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              try {
+                                await FirebaseFirestore.instance
+                                    .collection('app_settings')
+                                    .doc('ai_config')
+                                    .set({
+                                  'max_chats_per_hour': tempMaxChats,
+                                  'reset_duration_minutes': tempInterval,
+                                  'is_ai_enabled': tempAiEnabled,
+                                  'lastUpdated': FieldValue.serverTimestamp(),
+                                  'updatedBy':
+                                      _authService.auth.currentUser?.uid ??
+                                          'system',
+                                }, SetOptions(merge: true));
+
+                                // Add to logs
+                                await FirebaseFirestore.instance
+                                    .collection('app_config')
+                                    .doc('global')
+                                    .collection('history')
+                                    .add({
+                                  'updatedBy':
+                                      _authService.auth.currentUser?.uid ??
+                                          'system',
+                                  'updatedAt': FieldValue.serverTimestamp(),
+                                  'action': tempAiEnabled != _isAiEnabled
+                                      ? 'AI_STATUS_CHANGED'
+                                      : 'AI_QUOTA_UPDATE',
+                                  'status': tempAiEnabled,
+                                  'max_chats': tempMaxChats,
+                                  'interval': tempInterval,
+                                });
+
+                                setState(() {
+                                  _maxChatsPerHour = tempMaxChats;
+                                  _resetDurationMinutes = tempInterval;
+                                  _isAiEnabled = tempAiEnabled;
+                                });
+
+                                if (mounted) Navigator.pop(context);
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                        'Konfigurasi berhasil disimpan! ✨'),
+                                    backgroundColor: Colors.green,
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Gagal: $e')),
+                                );
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.black,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20)),
+                              elevation: 0,
+                            ),
+                            child: const Text('SIMPAN KONFIGURASI',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 1)),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  child: const Text('SAVE CONFIGURATION',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      }),
     );
   }
 
@@ -1037,46 +1199,56 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          height: MediaQuery.of(context).size.height * 0.85,
+      builder: (ctx) => StatefulBuilder(builder: (context, setModalState) {
+        final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.8,
+          padding: EdgeInsets.only(bottom: bottomInset),
           decoration: const BoxDecoration(
-            color: Color(0xFFF8F9FE),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(40)),
+            color: AppColors.surface,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
           ),
           child: SafeArea(
+            top: false,
             bottom: true,
             child: Column(
               children: [
-                const SizedBox(height: 12),
                 Container(
                   width: 40,
                   height: 4,
+                  margin: const EdgeInsets.symmetric(vertical: 16),
                   decoration: BoxDecoration(
-                    color: Colors.black12,
+                    color: Colors.grey.shade300,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('AI Health Diagnostic',
-                              style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: -1)),
-                          Text('Gemini + Groq API Status',
-                              style: TextStyle(fontSize: 12, color: Colors.grey)),
-                        ],
-                      ),
+                      const Icon(Icons.health_and_safety_rounded,
+                          color: ui.Color.fromRGBO(0, 122, 255, 1)),
+                      const SizedBox(width: 12),
+                      const Text('AI Health Diagnostic',
+                          style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 18,
+                              letterSpacing: -0.5)),
+                      const Spacer(),
+                      IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close_rounded, size: 20)),
                     ],
                   ),
                 ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24),
+                  child: Text(
+                      'Validasi status Gemini & Groq API secara real-time.',
+                      style: TextStyle(color: Colors.grey, fontSize: 13)),
+                ),
+                const SizedBox(height: 16),
                 Expanded(
                   child: StreamBuilder<DocumentSnapshot>(
                     stream: FirebaseFirestore.instance
@@ -1084,457 +1256,738 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                         .doc('ai_config')
                         .snapshots(),
                     builder: (context, snapshot) {
-                      if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-                      final data = snapshot.data!.data() as Map<String, dynamic>? ?? {};
-                      final List<String> geminiKeys = List<String>.from(data['gemini_keys'] ?? []);
-                      final List<String> groqKeys = List<String>.from(data['groq_keys'] ?? []);
+                      if (!snapshot.hasData)
+                        return const Center(child: CircularProgressIndicator());
+                      final data =
+                          snapshot.data!.data() as Map<String, dynamic>? ?? {};
+                      final List<String> geminiKeys =
+                          List<String>.from(data['gemini_keys'] ?? []);
+                      final List<String> groqKeys =
+                          List<String>.from(data['groq_keys'] ?? []);
 
-                      Widget buildKeyCard(String key, int index, String provider, List<String> allKeys) {
-                        final obscuredKey = key.length > 12 ? "${key.substring(0, 6)}...${key.substring(key.length - 4)}" : key;
+                      Widget buildKeyCard(String key, int index,
+                          String provider, List<String> allKeys) {
+                        final obscuredKey = key.length > 12
+                            ? "${key.substring(0, 6)}...${key.substring(key.length - 4)}"
+                            : key;
                         final isGroq = provider == 'groq';
                         final keyField = isGroq ? 'groq_keys' : 'gemini_keys';
-                        final keyColor = isGroq ? const Color(0xFFF55036) : const Color(0xFF00C9FF);
-                        final keyIcon = isGroq ? Icons.bolt_rounded : Icons.vpn_key_rounded;
-                        return StatefulBuilder(
-                          builder: (context, setItemState) {
+                        final keyColor = isGroq
+                            ? const Color(0xFFF55036)
+                            : ui.Color.fromRGBO(0, 122, 255, 1);
+                        final keyIcon =
+                            isGroq ? Icons.bolt_rounded : Icons.vpn_key_rounded;
+
+                        // Fix: Defined status variables OUTSIDE the StatefulBuilder's closure (but inside buildKeyCard)
+                        // so they persist when setItemState causes a rebuild.
                         String healthStatus = 'unknown';
-                        String healthMessage = 'Tap cek untuk verifikasi';
-                        
+                        String healthMessage = 'Tap TEST to verify';
+
                         return StatefulBuilder(
                           builder: (context, setItemState) {
                             return Container(
-                              margin: const EdgeInsets.only(bottom: 12),
+                              margin: const EdgeInsets.symmetric(
+                                  horizontal: 24, vertical: 8),
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(24),
-                                border: Border.all(color: Colors.black.withOpacity(0.05)),
-                                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 20, offset: const Offset(0, 8))],
+                                border: Border.all(
+                                    color: Colors.black.withOpacity(0.04)),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.02),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 8),
+                                  ),
+                                ],
                               ),
-                              child: Column(children: [
-                                ListTile(
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                                  leading: Container(
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(color: keyColor.withOpacity(0.1), shape: BoxShape.circle),
-                                    child: Icon(keyIcon, color: keyColor, size: 18),
-                                  ),
-                                  title: Text(obscuredKey, style: const TextStyle(fontFamily: 'Monospace', fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: -0.5)),
-                                  subtitle: Text('${isGroq ? "Groq" : "Gemini"} #${index + 1}', style: const TextStyle(fontSize: 10, color: Colors.grey)),
-                                  trailing: IconButton(
-                                    icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
-                                    onPressed: () async {
-                                      final confirm = await UIHelper.showConfirmDialog(context: context, title: 'Hapus Key?', message: 'Yakin hapus API Key ini?', confirmText: 'Hapus');
-                                      if (confirm == true) {
-                                        allKeys.removeAt(index);
-                                        await FirebaseFirestore.instance.collection('app_settings').doc('ai_config').update({keyField: allKeys});
-                                        await FirebaseFirestore.instance.collection('app_config').doc('global').collection('history').add({
-                                          'updatedBy': FirebaseAuth.instance.currentUser?.uid ?? 'system',
-                                          'updatedAt': FieldValue.serverTimestamp(),
-                                          'action': isGroq ? 'GROQ_KEY_REMOVED' : 'AI_KEY_REMOVED',
-                                          'key_index': index,
-                                        });
-                                      }
-                                    },
-                                  ),
-                                ),
-                                const Divider(height: 1, indent: 20, endIndent: 20, color: Color(0xFFF0F0F0)),
-                                Padding(
-                                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 14),
-                                  child: Row(children: [
-                                    Expanded(child: Row(children: [
-                                      Container(
-                                        width: 10, 
-                                        height: 10, 
-                                        decoration: BoxDecoration(
-                                          color: healthStatus == 'ok' ? Colors.green : (healthStatus == 'limit' ? Colors.orange : (healthStatus == 'invalid' ? Colors.red : (healthStatus == 'error' ? Colors.red : Colors.grey))),
-                                          shape: BoxShape.circle,
-                                          boxShadow: healthStatus == 'unknown' || healthStatus == 'checking' ? null : [
-                                            BoxShadow(
-                                              color: (healthStatus == 'ok' ? Colors.green : (healthStatus == 'limit' ? Colors.orange : Colors.red)).withOpacity(0.4),
-                                              blurRadius: 6,
-                                              spreadRadius: 1,
-                                            )
-                                          ]
-                                        ),
+                              child: Column(
+                                children: [
+                                  ListTile(
+                                    contentPadding: const EdgeInsets.fromLTRB(
+                                        20, 10, 10, 10),
+                                    leading: Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: keyColor.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(16),
                                       ),
-                                      const SizedBox(width: 10),
-                                      Expanded(child: Text(healthMessage, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: healthStatus == 'ok' ? Colors.green : (healthStatus == 'limit' ? Colors.orange : (healthStatus == 'invalid' ? Colors.red : (healthStatus == 'error' ? Colors.red : Colors.grey[600])))), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                                    ])),
-                                    TextButton(
-                                      onPressed: healthStatus == 'checking' ? null : () async {
-                                        setItemState(() { healthStatus = 'checking'; healthMessage = 'Verifikasi...'; });
-                                        try {
-                                          final statusMap = isGroq ? await AIService().checkGroqKeyStatus(key) : await AIService().checkKeyStatus(key);
-                                          setItemState(() { 
-                                            healthStatus = statusMap['status'] ?? 'error'; 
-                                            healthMessage = statusMap['message'] ?? 'Error'; 
-                                          });
-                                        } catch (e) {
-                                          setItemState(() { healthStatus = 'error'; healthMessage = 'Error: $e'; });
+                                      child: Icon(keyIcon,
+                                          color: keyColor, size: 20),
+                                    ),
+                                    title: Text(
+                                      obscuredKey,
+                                      style: const TextStyle(
+                                        fontFamily: 'Monospace',
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 14,
+                                        letterSpacing: -0.5,
+                                      ),
+                                    ),
+                                    subtitle: Text(
+                                      '${isGroq ? "Groq" : "Gemini"} Config #${index + 1}',
+                                      style: TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.grey[500]),
+                                    ),
+                                    trailing: IconButton(
+                                      icon: const Icon(
+                                          Icons.delete_outline_rounded,
+                                          color: Colors.redAccent,
+                                          size: 22),
+                                      onPressed: () async {
+                                        final confirm =
+                                            await UIHelper.showConfirmDialog(
+                                                context: context,
+                                                title: 'Delete Key?',
+                                                message:
+                                                    'Are you sure you want to remove this API key?',
+                                                confirmText: 'Delete');
+                                        if (confirm == true) {
+                                          allKeys.removeAt(index);
+                                          await FirebaseFirestore.instance
+                                              .collection('app_settings')
+                                              .doc('ai_config')
+                                              .update({keyField: allKeys});
                                         }
                                       },
-                                      style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6), backgroundColor: Colors.black.withOpacity(0.03), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                                      child: Row(mainAxisSize: MainAxisSize.min, children: [
-                                        if (healthStatus == 'checking') const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                                        else const Icon(Icons.refresh_rounded, size: 14, color: Colors.black),
-                                        const SizedBox(width: 6),
-                                        Text(healthStatus == 'checking' ? 'Cek...' : 'Cek Status', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.black)),
-                                      ]),
                                     ),
-                                  ]),
-                                ),
-                              ]),
+                                  ),
+                                  Container(
+                                    margin: const EdgeInsets.symmetric(
+                                        horizontal: 20),
+                                    height: 1,
+                                    color: Colors.black.withOpacity(0.03),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                        20, 12, 12, 16),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Row(
+                                            children: [
+                                              Container(
+                                                width: 10,
+                                                height: 10,
+                                                decoration: BoxDecoration(
+                                                  color: healthStatus == 'ok'
+                                                      ? Colors.green
+                                                      : (healthStatus == 'limit'
+                                                          ? Colors.orange
+                                                          : (healthStatus ==
+                                                                      'invalid' ||
+                                                                  healthStatus ==
+                                                                      'error'
+                                                              ? Colors.red
+                                                              : Colors
+                                                                  .grey[400])),
+                                                  shape: BoxShape.circle,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Expanded(
+                                                child: Text(
+                                                  healthStatus == 'checking'
+                                                      ? 'Validating...'
+                                                      : healthMessage,
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: healthStatus == 'ok'
+                                                        ? Colors.green[700]
+                                                        : (healthStatus ==
+                                                                'limit'
+                                                            ? Colors.orange[700]
+                                                            : (healthStatus ==
+                                                                        'invalid' ||
+                                                                    healthStatus ==
+                                                                        'error'
+                                                                ? Colors
+                                                                    .red[700]
+                                                                : Colors.grey[
+                                                                    600])),
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Material(
+                                          color: Colors.transparent,
+                                          child: InkWell(
+                                            onTap: healthStatus == 'checking'
+                                                ? null
+                                                : () async {
+                                                    setItemState(() {
+                                                      healthStatus = 'checking';
+                                                    });
+                                                    try {
+                                                      final statusMap = isGroq
+                                                          ? await AIService()
+                                                              .checkGroqKeyStatus(
+                                                                  key)
+                                                          : await AIService()
+                                                              .checkKeyStatus(
+                                                                  key);
+                                                      setItemState(() {
+                                                        healthStatus =
+                                                            statusMap[
+                                                                    'status'] ??
+                                                                'error';
+                                                        healthMessage =
+                                                            statusMap[
+                                                                    'message'] ??
+                                                                'Error';
+                                                      });
+                                                    } catch (e) {
+                                                      setItemState(() {
+                                                        healthStatus = 'error';
+                                                        healthMessage =
+                                                            'Failed: $e';
+                                                      });
+                                                    }
+                                                  },
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                            child: Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 14,
+                                                      vertical: 8),
+                                              decoration: BoxDecoration(
+                                                color: Colors.black
+                                                    .withOpacity(0.04),
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  if (healthStatus ==
+                                                      'checking')
+                                                    const SizedBox(
+                                                      width: 12,
+                                                      height: 12,
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                              strokeWidth: 2,
+                                                              color:
+                                                                  Colors.black),
+                                                    )
+                                                  else
+                                                    const Icon(
+                                                        Icons.refresh_rounded,
+                                                        size: 14,
+                                                        color: Colors.black),
+                                                  const SizedBox(width: 6),
+                                                  Text(
+                                                    healthStatus == 'checking'
+                                                        ? 'TESTING'
+                                                        : 'TEST',
+                                                    style: const TextStyle(
+                                                        fontSize: 10,
+                                                        fontWeight:
+                                                            FontWeight.w900,
+                                                        color: Colors.black),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             );
                           },
                         );
-                          },
-                        );
                       }
 
-                      Widget buildSectionHeader(String label, IconData icon, Color color, int count, VoidCallback onAdd) {
+                      Widget buildSectionHeader(String label, IconData icon,
+                          Color color, int count, VoidCallback onAdd) {
                         return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: Row(children: [
-                            Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)), child: Icon(icon, size: 14, color: color)),
-                            const SizedBox(width: 8),
-                            Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1)),
-                            const Spacer(),
-                            Text('$count key', style: TextStyle(fontSize: 10, color: Colors.grey[500])),
-                            const SizedBox(width: 8),
-                            GestureDetector(
-                              onTap: onAdd,
-                              child: Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.add_rounded, color: Colors.white, size: 14)),
-                            ),
-                          ]),
+                          padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+                          child: Row(
+                            children: [
+                              Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                      color: color.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(10)),
+                                  child: Icon(icon, size: 16, color: color)),
+                              const SizedBox(width: 12),
+                              Text(label,
+                                  style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 1)),
+                              const Spacer(),
+                              Text('$count Keys',
+                                  style: TextStyle(
+                                      fontSize: 11, color: Colors.grey[500])),
+                              const SizedBox(width: 12),
+                              GestureDetector(
+                                  onTap: onAdd,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                        color: color,
+                                        borderRadius: BorderRadius.circular(8)),
+                                    child: const Icon(Icons.add_rounded,
+                                        color: Colors.white, size: 18),
+                                  )),
+                            ],
+                          ),
                         );
                       }
 
-                      return SingleChildScrollView(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          buildSectionHeader('GEMINI', Icons.auto_awesome_rounded, const Color(0xFF00C9FF), geminiKeys.length, () => _showAddKeyDialog(setModalState, 'gemini')),
+                      return ListView(
+                        padding: const EdgeInsets.only(top: 24, bottom: 32),
+                        children: [
+                          buildSectionHeader(
+                              'GEMINI API',
+                              Icons.auto_awesome_rounded,
+                              ui.Color.fromRGBO(0, 122, 255, 1),
+                              geminiKeys.length,
+                              () => _showAddKeyDialog(setModalState, 'gemini')),
                           if (geminiKeys.isEmpty)
-                            Container(padding: const EdgeInsets.all(20), margin: const EdgeInsets.only(bottom: 12), decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(16)), child: const Center(child: Text('Belum ada Gemini key', style: TextStyle(color: Colors.grey, fontSize: 12)))),
-                          ...geminiKeys.asMap().entries.map((e) => buildKeyCard(e.value, e.key, 'gemini', geminiKeys)),
-                          const SizedBox(height: 24),
-                          const Divider(),
-                          const SizedBox(height: 24),
-                          buildSectionHeader('GROQ', Icons.bolt_rounded, const Color(0xFFF55036), groqKeys.length, () => _showAddKeyDialog(setModalState, 'groq')),
+                            Container(
+                                padding: const EdgeInsets.all(32),
+                                margin: const EdgeInsets.symmetric(
+                                    horizontal: 24, vertical: 8),
+                                decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(24)),
+                                child: const Center(
+                                    child: Text('No Gemini keys configured',
+                                        style: TextStyle(
+                                            color: Colors.grey,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w500))))
+                          else
+                            ...geminiKeys.asMap().entries.map((e) =>
+                                buildKeyCard(
+                                    e.value, e.key, 'gemini', geminiKeys)),
+                          const SizedBox(height: 32),
+                          buildSectionHeader(
+                              'GROQ API',
+                              Icons.bolt_rounded,
+                              const Color(0xFFF55036),
+                              groqKeys.length,
+                              () => _showAddKeyDialog(setModalState, 'groq')),
                           if (groqKeys.isEmpty)
-                            Container(padding: const EdgeInsets.all(20), margin: const EdgeInsets.only(bottom: 12), decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(16)), child: const Center(child: Text('Belum ada Groq key', style: TextStyle(color: Colors.grey, fontSize: 12)))),
-                          ...groqKeys.asMap().entries.map((e) => buildKeyCard(e.value, e.key, 'groq', groqKeys)),
-                        ]),
+                            Container(
+                                padding: const EdgeInsets.all(32),
+                                margin: const EdgeInsets.symmetric(
+                                    horizontal: 24, vertical: 8),
+                                decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(24)),
+                                child: const Center(
+                                    child: Text('No Groq keys configured',
+                                        style: TextStyle(
+                                            color: Colors.grey,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w500))))
+                          else
+                            ...groqKeys.asMap().entries.map((e) =>
+                                buildKeyCard(e.value, e.key, 'groq', groqKeys)),
+                        ],
                       );
                     },
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
                   child: SizedBox(
                     width: double.infinity,
-                    height: 60,
+                    height: 64,
                     child: ElevatedButton(
                       onPressed: () => Navigator.pop(context),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.black,
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20)),
                         elevation: 0,
                       ),
                       child: const Text('DONE',
-                          style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
+                          style: TextStyle(
+                              fontWeight: FontWeight.w900, letterSpacing: 1.5)),
                     ),
                   ),
                 ),
               ],
             ),
           ),
-        ),
-      ),
+        );
+      }),
     );
   }
 
-  void _showAddKeyDialog(Function setModalState, String provider) {
+  void _showAddKeyDialog(Function setParentModalState, String provider) {
     final TextEditingController keyController = TextEditingController();
     final bool isGroq = provider == 'groq';
     final String keyFieldName = isGroq ? 'groq_keys' : 'gemini_keys';
-    final Color providerColor = isGroq ? const Color(0xFFF55036) : AppColors.primary;
+    final Color providerColor =
+        isGroq ? const Color(0xFFF55036) : AppColors.primary;
     final String providerLabel = isGroq ? 'GROQ' : 'GEMINI';
-    final String hintText = isGroq ? 'Masukkan Groq Key (gsk_...)' : 'Masukkan API Key (AIzaSy...)';
-    showGeneralDialog(
+    final String hintText =
+        isGroq ? 'Masukkan Groq Key (gsk_...)' : 'Masukkan API Key (AIzaSy...)';
+    bool isCheckingKey = false;
+
+    showModalBottomSheet(
       context: context,
-      barrierDismissible: true,
-      barrierLabel: '',
-      barrierColor: Colors.black.withOpacity(0.5),
-      transitionDuration: const Duration(milliseconds: 300),
-      transitionBuilder: (context, anim1, anim2, child) {
-        return ScaleTransition(
-          scale: CurvedAnimation(parent: anim1, curve: Curves.easeOutBack),
-          child: FadeTransition(opacity: anim1, child: child),
-        );
-      },
-      pageBuilder: (ctx, anim1, anim2) => Center(
-        child: SingleChildScrollView(
-          child: Container(
-            margin: EdgeInsets.only(
-              left: 32,
-              right: 32,
-              top: 32,
-              bottom: 32 + MediaQuery.of(ctx).viewInsets.bottom,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setDialogState) {
+          final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+          return Container(
+            height: MediaQuery.of(context).size.height * 0.8,
+            padding: EdgeInsets.only(bottom: bottomInset),
+            decoration: const BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
             ),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(32),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 40,
-                  offset: const Offset(0, 15),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(32),
-              child: BackdropFilter(
-                filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                child: Container(
-                  padding: const EdgeInsets.all(32),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.9),
-                    borderRadius: BorderRadius.circular(32),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.5),
-                      width: 1.5,
+            child: SafeArea(
+              top: false,
+              bottom: true,
+              child: Column(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.symmetric(vertical: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: providerColor.withOpacity(0.1),
-                            shape: BoxShape.circle,
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 8),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                  isGroq
+                                      ? Icons.bolt_rounded
+                                      : Icons.vpn_key_rounded,
+                                  color: providerColor),
+                              const SizedBox(width: 12),
+                              Text('Add $providerLabel API',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 18,
+                                      letterSpacing: -0.5)),
+                              const Spacer(),
+                              IconButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  icon: const Icon(Icons.close_rounded,
+                                      size: 20)),
+                            ],
                           ),
-                          child: Icon(
-                            isGroq ? Icons.bolt_rounded : Icons.vpn_key_rounded,
-                            color: providerColor,
-                            size: 32,
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        Text(
-                          'ADD $providerLabel API',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Tambahkan API Key baru ke dalam rotasi sistem untuk menambah kuota global.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[600],
-                            height: 1.5,
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-                        TextField(
-                          controller: keyController,
-                          autofocus: true,
-                          decoration: InputDecoration(
-                            hintText: hintText,
-                            hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
-                            filled: true,
-                            fillColor: Colors.black.withOpacity(0.05),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: BorderSide.none,
-                            ),
-                            contentPadding: const EdgeInsets.all(16),
-                            prefixIcon: const Icon(Icons.key_rounded, size: 18),
-                          ),
-                          style: const TextStyle(
-                            fontFamily: 'Monospace',
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: InkWell(
-                                onTap: () => Navigator.pop(ctx),
+                          const SizedBox(height: 24),
+                          const Text('TAMBAHKAN API KEY BARU',
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textHint)),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: keyController,
+                            style: const TextStyle(fontSize: 14),
+                            decoration: InputDecoration(
+                              hintText: hintText,
+                              hintStyle: TextStyle(
+                                  color: AppColors.textHint.withOpacity(0.5)),
+                              filled: true,
+                              fillColor:
+                                  AppColors.surfaceVariant.withOpacity(0.3),
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 16),
+                              border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(color: Colors.black12),
-                                  ),
-                                  child: const Center(
-                                    child: Text(
-                                      'BATAL',
+                                borderSide: BorderSide.none,
+                              ),
+                              prefixIcon: Icon(Icons.vpn_key_outlined,
+                                  size: 20,
+                                  color: providerColor.withOpacity(0.5)),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () async {
+                                    final clipboardData =
+                                        await Clipboard.getData(
+                                            Clipboard.kTextPlain);
+                                    if (clipboardData != null &&
+                                        clipboardData.text != null) {
+                                      keyController.text = clipboardData.text!;
+                                    }
+                                  },
+                                  icon: Icon(Icons.paste_rounded,
+                                      size: 16, color: providerColor),
+                                  label: Text('Paste',
                                       style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 12,
-                                        letterSpacing: 1,
-                                      ),
+                                          fontWeight: FontWeight.bold,
+                                          color: providerColor)),
+                                  style: ElevatedButton.styleFrom(
+                                    elevation: 0,
+                                    backgroundColor:
+                                        providerColor.withOpacity(0.1),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 14),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                      side: BorderSide(
+                                          color: providerColor.withOpacity(0.3),
+                                          width: 1.5),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: InkWell(
-                                onTap: () async {
-                                  final keyText = keyController.text.trim();
-                                  if (keyText.isEmpty) return;
-
-                                  // Validate API Key format
-                                  if (isGroq) {
-                                    if (!keyText.startsWith('gsk_') || keyText.length < 20) {
-                                      if (context.mounted) {
-                                        UIHelper.showErrorSnackBar(context, 'Format Groq Key tidak valid. Key harus diawali "gsk_".');
-                                      }
-                                      return;
-                                    }
-                                  } else {
-                                    if (!keyText.startsWith('AIza') || keyText.length < 30) {
-                                      if (context.mounted) {
-                                        UIHelper.showErrorSnackBar(context, 'Format Gemini Key tidak valid. Key harus diawali "AIza".');
-                                      }
-                                      return;
-                                    }
-                                  }
-
-                                  // Verify API Key with Google
-                                  try {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Row(
-                                          children: [
-                                            SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
-                                            SizedBox(width: 12),
-                                            Text('Memverifikasi API Key ke Google...'),
-                                          ],
-                                        ),
-                                        duration: Duration(seconds: 15),
-                                      ),
-                                    );
-
-                                    final statusResult = isGroq
-                                        ? await AIService().checkGroqKeyStatus(keyText)
-                                        : await AIService().checkKeyStatus(keyText);
-                                    if (context.mounted) ScaffoldMessenger.of(context).hideCurrentSnackBar();
-
-                                    if (statusResult['isValid'] != true) {
-                                      if (context.mounted) {
-                                        UIHelper.showErrorSnackBar(context, '❌ ${statusResult['message']}');
-                                      }
-                                      return;
-                                    }
-                                  } catch (e) {
-                                    if (context.mounted) ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                                    if (context.mounted) {
-                                      UIHelper.showErrorSnackBar(context, 'Gagal verifikasi: $e');
-                                    }
-                                    return;
-                                  }
-
-                                  try {
-                                    final configRef = FirebaseFirestore.instance
-                                        .collection('app_settings')
-                                        .doc('ai_config');
-                                    
-                                    final config = await configRef.get();
-                                    
-                                    List<String> keys = [];
-                                    if (config.exists) {
-                                      keys = List<String>.from(config.data()?[keyFieldName] ?? []);
-                                    }
-
-                                    // Check for duplicates
-                                    if (keys.contains(keyText)) {
-                                      if (context.mounted) {
-                                        UIHelper.showErrorSnackBar(context, 'API Key ini sudah ada di daftar!');
-                                      }
-                                      return;
-                                    }
-
-                                    keys.add(keyText);
-
-                                    await configRef.set(
-                                      {keyFieldName: keys},
-                                      SetOptions(merge: true),
-                                    );
-
-                                    // Log activity
-                                    await FirebaseFirestore.instance
-                                        .collection('app_config')
-                                        .doc('global')
-                                        .collection('history')
-                                        .add({
-                                      'updatedBy': FirebaseAuth.instance.currentUser?.uid ?? 'system',
-                                      'updatedAt': FieldValue.serverTimestamp(),
-                                      'action': isGroq ? 'GROQ_KEY_ADDED' : 'AI_KEY_ADDED',
-                                    });
-
-                                    if (ctx.mounted) Navigator.pop(ctx);
-                                    if (context.mounted) {
-                                      UIHelper.showSuccessSnackBar(context, '✅ $providerLabel Key valid dan berhasil ditambahkan!');
-                                    }
-                                  } catch (e) {
-                                    if (context.mounted) {
-                                      UIHelper.showErrorSnackBar(context, 'Gagal: $e');
-                                    }
-                                  }
-                                },
-                                borderRadius: BorderRadius.circular(16),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                flex: 2,
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  width: double.infinity,
+                                  height: 48,
                                   decoration: BoxDecoration(
-                                    color: Colors.black,
                                     borderRadius: BorderRadius.circular(16),
+                                    gradient: LinearGradient(
+                                      colors: isGroq
+                                          ? [
+                                              const Color(0xFFF55036),
+                                              const Color(0xFFFF7A66)
+                                            ]
+                                          : [
+                                              AppColors.primary,
+                                              const Color(0xFF8B5CF6)
+                                            ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.2),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 5),
+                                        color: providerColor.withOpacity(0.3),
+                                        blurRadius: 12,
+                                        offset: const Offset(0, 4),
                                       ),
                                     ],
                                   ),
-                                  child: const Center(
-                                    child: Text(
-                                      'SIMPAN KEY',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w900,
-                                        fontSize: 12,
-                                        letterSpacing: 1,
+                                  child: ElevatedButton(
+                                    onPressed: isCheckingKey
+                                        ? null
+                                        : () async {
+                                            final keyText =
+                                                keyController.text.trim();
+                                            if (keyText.isEmpty) return;
+
+                                            if (isGroq) {
+                                              if (!keyText.startsWith('gsk_') ||
+                                                  keyText.length < 20) {
+                                                if (context.mounted) {
+                                                  UIHelper.showErrorSnackBar(
+                                                      context,
+                                                      'Format Groq Key tidak valid. Key harus diawali "gsk_".');
+                                                }
+                                                return;
+                                              }
+                                            } else {
+                                              if (!keyText.startsWith('AIza') ||
+                                                  keyText.length < 30) {
+                                                if (context.mounted) {
+                                                  UIHelper.showErrorSnackBar(
+                                                      context,
+                                                      'Format Gemini Key tidak valid. Key harus diawali "AIza".');
+                                                }
+                                                return;
+                                              }
+                                            }
+
+                                            setDialogState(
+                                                () => isCheckingKey = true);
+
+                                            try {
+                                              final statusResult = isGroq
+                                                  ? await AIService()
+                                                      .checkGroqKeyStatus(
+                                                          keyText)
+                                                  : await AIService()
+                                                      .checkKeyStatus(keyText);
+
+                                              if (statusResult['isValid'] !=
+                                                  true) {
+                                                if (context.mounted) {
+                                                  UIHelper.showErrorSnackBar(
+                                                      context,
+                                                      '❌ ${statusResult['message']}');
+                                                }
+                                                setDialogState(() =>
+                                                    isCheckingKey = false);
+                                                return;
+                                              }
+                                            } catch (e) {
+                                              if (context.mounted) {
+                                                UIHelper.showErrorSnackBar(
+                                                    context,
+                                                    'Gagal verifikasi: $e');
+                                              }
+                                              setDialogState(
+                                                  () => isCheckingKey = false);
+                                              return;
+                                            }
+
+                                            try {
+                                              final configRef =
+                                                  FirebaseFirestore
+                                                      .instance
+                                                      .collection(
+                                                          'app_settings')
+                                                      .doc('ai_config');
+
+                                              final config =
+                                                  await configRef.get();
+
+                                              List<String> keys = [];
+                                              if (config.exists) {
+                                                keys = List<String>.from(
+                                                    config.data()?[
+                                                            keyFieldName] ??
+                                                        []);
+                                              }
+
+                                              if (keys.contains(keyText)) {
+                                                if (context.mounted) {
+                                                  UIHelper.showErrorSnackBar(
+                                                      context,
+                                                      'API Key ini sudah ada di daftar!');
+                                                }
+                                                setDialogState(() =>
+                                                    isCheckingKey = false);
+                                                return;
+                                              }
+
+                                              keys.add(keyText);
+
+                                              await configRef.set(
+                                                {keyFieldName: keys},
+                                                SetOptions(merge: true),
+                                              );
+
+                                              await FirebaseFirestore.instance
+                                                  .collection('app_config')
+                                                  .doc('global')
+                                                  .collection('history')
+                                                  .add({
+                                                'updatedBy': FirebaseAuth
+                                                        .instance
+                                                        .currentUser
+                                                        ?.uid ??
+                                                    'system',
+                                                'updatedAt': FieldValue
+                                                    .serverTimestamp(),
+                                                'action': isGroq
+                                                    ? 'GROQ_KEY_ADDED'
+                                                    : 'AI_KEY_ADDED',
+                                              });
+
+                                              if (context.mounted)
+                                                Navigator.pop(context);
+                                              if (context.mounted) {
+                                                UIHelper.showSuccessSnackBar(
+                                                    context,
+                                                    '✅ $providerLabel Key valid dan berhasil ditambahkan!');
+                                              }
+                                            } catch (e) {
+                                              if (context.mounted) {
+                                                UIHelper.showErrorSnackBar(
+                                                    context, 'Gagal: $e');
+                                              }
+                                              setDialogState(
+                                                  () => isCheckingKey = false);
+                                            }
+                                          },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.transparent,
+                                      shadowColor: Colors.transparent,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
                                       ),
                                     ),
+                                    child: isCheckingKey
+                                        ? const SizedBox(
+                                            height: 20,
+                                            width: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              valueColor:
+                                                  AlwaysStoppedAnimation<Color>(
+                                                      Colors.white),
+                                            ),
+                                          )
+                                        : const Text('Simpan & Validasi',
+                                            style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w900,
+                                                color: Colors.white)),
                                   ),
                                 ),
                               ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceVariant.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(16),
+                              border:
+                                  Border.all(color: AppColors.surfaceVariant),
                             ),
-                          ],
-                        ),
-                      ],
+                            child: Row(
+                              children: [
+                                const Icon(Icons.info_outline_rounded,
+                                    size: 20, color: AppColors.textHint),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    'Tambahkan API Key baru ke dalam rotasi sistem untuk menambah kuota global.',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.textHint,
+                                      height: 1.5,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
             ),
-          ),
-        ),
-      ),
+          );
+        });
+      },
     );
   }
 }

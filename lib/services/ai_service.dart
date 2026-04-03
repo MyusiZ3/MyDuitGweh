@@ -100,6 +100,50 @@ class AIService {
     return _integratedApiKeys;
   }
 
+  static Future<Map<String, dynamic>> getUserQuotaStatus() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return {'count': 0, 'limit': 10};
+
+      // Force server fetch for critical config updates (Real-time sync)
+      final configDoc = await FirebaseFirestore.instance
+          .collection('app_settings')
+          .doc('ai_config')
+          .get(const GetOptions(source: Source.serverAndCache));
+      
+      final config = configDoc.data() ?? {};
+      final limit = config['max_chats_per_hour'] ?? 10;
+      final resetMinutes = config['reset_duration_minutes'] ?? 60;
+
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get(const GetOptions(source: Source.serverAndCache));
+      
+      final data = userDoc.data() ?? {};
+      final int count = data['aiCount'] ?? 0;
+      final Timestamp? cycleStartTs = data['aiCycleStart'] as Timestamp?;
+      final DateTime now = DateTime.now();
+
+      // Check if cycle expired (Logic mirror from _checkUserQuota)
+      if (cycleStartTs != null) {
+        final cycleStart = cycleStartTs.toDate();
+        if (now.difference(cycleStart).inMinutes >= resetMinutes) {
+          // Cycle expired, effectively 0 in UI (next chat will trigger DB reset)
+          return {'count': 0, 'limit': limit};
+        }
+      }
+
+      return {
+        'count': count,
+        'limit': limit,
+      };
+    } catch (e) {
+      debugPrint('Error getting quota status: $e');
+      return {'count': 0, 'limit': 10};
+    }
+  }
+
   // Common Indonesian female name patterns/prefixes (Sorted A-Z)
   static const List<String> _femaleNamePatterns = [
     'alesha',

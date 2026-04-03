@@ -1,11 +1,11 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
 import 'dart:convert';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/services.dart';
@@ -1012,6 +1012,8 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
   final _uuid = const Uuid();
   final Map<String, String?> _apiStatus =
       {}; // key -> status ('ok', 'limit', 'error')
+  int _aiCount = 0;
+  int _aiLimit = 10;
 
   @override
   void initState() {
@@ -1024,6 +1026,17 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
     AIService.getIntegratedApiKeysAsync().then((_) {
       if (mounted) setState(() {});
     });
+    _refreshQuota();
+  }
+
+  Future<void> _refreshQuota() async {
+    final status = await AIService.getUserQuotaStatus();
+    if (mounted) {
+      setState(() {
+        _aiCount = status['count'] ?? 0;
+        _aiLimit = status['limit'] ?? 10;
+      });
+    }
   }
 
   @override
@@ -2168,8 +2181,11 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
       ),
     );
   }
-
   Widget _buildQuotaPreviewCard() {
+    final int remaining = (_aiLimit - _aiCount).clamp(0, _aiLimit);
+    final double progress = (_aiCount / _aiLimit).clamp(0.0, 1.0);
+    final bool isHigh = progress > 0.8;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -2187,20 +2203,23 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.bolt_rounded, color: Colors.orange, size: 20),
+          Icon(Icons.bolt_rounded, 
+              color: isHigh ? AppColors.expense : Colors.orange, 
+              size: 20),
           const SizedBox(height: 12),
-          const Text('AI Quota',
+          const Text('Sisa Kuota AI',
               style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12)),
           const SizedBox(height: 4),
-          const Text('8 / 10 limit',
-              style: TextStyle(color: AppColors.textHint, fontSize: 10)),
+          Text('$remaining / $_aiLimit chat tersisa',
+              style: const TextStyle(color: AppColors.textHint, fontSize: 10)),
           const SizedBox(height: 12),
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
-              value: 0.8,
-              backgroundColor: Colors.orange.withOpacity(0.1),
-              valueColor: const AlwaysStoppedAnimation<Color>(Colors.orange),
+              value: progress,
+              backgroundColor: (isHigh ? AppColors.expense : Colors.orange).withOpacity(0.1),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                  isHigh ? AppColors.expense : Colors.orange),
               minHeight: 4,
             ),
           ),
@@ -2623,13 +2642,11 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
     );
   }
 
-  Future<void> _handleQuery(String query) async {
-    if (query.trim().isEmpty) return;
+  Future<void> _handleQuery(String text) async {
+    if (text.trim().isEmpty) return;
 
     setState(() {
-      if (!_messages.any((m) => m['text'] == query && m['isAI'] == false)) {
-        _messages.add({'text': query, 'isAI': false});
-      }
+      _messages.add({'text': text, 'isAI': false});
       _isLoading = true;
       _queryController.clear();
     });
@@ -2637,6 +2654,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
     _scrollToBottom();
 
     try {
+      // 1. Ambil data wallet & transaksi untuk konteks AI
       final wallets =
           await widget.firestoreService.getWalletsStream(widget.uid).first;
       final walletIds = wallets.map((w) => w.id).toList();
@@ -2647,6 +2665,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
               endDate: widget.selectedDateRange.end)
           .first;
 
+      // 2. Siapkan history chat
       final history = _messages.take(_messages.length - 1).map((m) {
         if (m['isAI'] == true) {
           return Content.model([TextPart(m['text'])]);
@@ -2655,35 +2674,38 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
         }
       }).toList();
 
-      final res = await _aiService.getFinancialAdvice(
-          apiKey: _localApiKey,
-          transactions: txns,
-          userQuery: query,
-          dateRange: widget.selectedDateRange,
-          tone: ToneManager.notifier.value,
-          history: history);
+      // 3. Panggil AI Service
+      final response = await _aiService.getFinancialAdvice(
+        apiKey: _localApiKey,
+        transactions: txns,
+        userQuery: text,
+        dateRange: widget.selectedDateRange,
+        tone: ToneManager.notifier.value,
+        history: history,
+      );
 
       if (mounted) {
         setState(() {
-          _messages.add({'text': res, 'isAI': true});
+          _messages.add({'text': response, 'isAI': true});
           _isLoading = false;
         });
         _saveCurrentSession();
+        _scrollToBottom();
+        
+        // 4. Refresh quota setelah berhasil chat
+        _refreshQuota();
       }
     } catch (e) {
-      debugPrint('AI Query final error: $e');
+      debugPrint('AI Query Error: $e');
       if (mounted) {
         setState(() {
           _messages.add({
-            'text':
-                'Waduh, Archen lagi agak pusing (Limit/Error). Coba lagi beberapa saat lagi ya atau cek API di pengaturan.',
+            'text': 'Waduh, Archen lagi agak pusing (Limit/Error). Coba lagi beberapa saat lagi ya atau cek API di pengaturan.',
             'isAI': true,
           });
           _isLoading = false;
         });
       }
-    } finally {
-      if (mounted) _scrollToBottom();
     }
   }
 

@@ -240,11 +240,11 @@ class AboutScreen extends StatelessWidget {
             const Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(CupertinoIcons.heart_fill,
-                    color: Colors.redAccent, size: 16),
+                Icon(Icons.copyright_rounded,
+                    size: 14, color: AppColors.textHint),
                 SizedBox(width: 6),
                 Text(
-                  'Vibo Codingo 2026',
+                  ' 2026 MyDuitGweh | Arch\nAll Rights Reserved',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
