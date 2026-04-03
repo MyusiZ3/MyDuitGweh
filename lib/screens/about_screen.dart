@@ -237,17 +237,29 @@ class AboutScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 32),
-            const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            Column(
               children: [
-                Icon(Icons.copyright_rounded,
-                    size: 14, color: AppColors.textHint),
-                SizedBox(width: 6),
-                Text(
-                  ' 2026 MyDuitGweh | Arch\nAll Rights Reserved',
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(Icons.copyright_rounded, size: 14, color: AppColors.textHint),
+                    SizedBox(width: 4),
+                    Text(
+                      '2026 MyDuitGweh | Arch',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textHint,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'All Rights Reserved',
                   style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
                     color: AppColors.textHint,
                   ),
                 ),

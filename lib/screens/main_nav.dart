@@ -26,6 +26,10 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
   bool _isExpanded = false;
   late AnimationController _fabController;
   late Animation<double> _expandAnimation;
+  
+  // Keys to communicate with Screens
+  final GlobalKey<WalletScreenState> _walletKey = GlobalKey<WalletScreenState>();
+  final GlobalKey<ColabScreenState> _colabKey = GlobalKey<ColabScreenState>();
 
   @override
   void initState() {
@@ -70,11 +74,11 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
     });
   }
 
-  final List<Widget> _screens = [
+  late final List<Widget> _screens = [
     const HomeScreen(),
-    const WalletScreen(),
+    WalletScreen(key: _walletKey),
     const SizedBox(), // placeholder for Add button
-    const ColabScreen(),
+    ColabScreen(key: _colabKey),
     const ReportScreen(),
   ];
 
@@ -83,6 +87,15 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
       _toggleFAB();
       return;
     }
+    
+    // Reset screen search if we are leaving them
+    if (_currentIndex == 1 && index != 1) {
+      _walletKey.currentState?.resetSearch();
+    }
+    if (_currentIndex == 3 && index != 3) {
+      _colabKey.currentState?.resetSearch();
+    }
+
     setState(() {
       _currentIndex = index;
       _isExpanded = false;
@@ -318,30 +331,32 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
         animation: _fabController,
         builder: (context, child) {
           return Container(
-            width: 65,
-            height: 65,
+            width: 58,
+            height: 58,
+            transform: Matrix4.translationValues(0, -8, 0), // Lift slightly above nav bar edge
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
+                  AppColors.primary.withOpacity(0.85),
                   AppColors.primary,
-                  AppColors.primary.withAlpha(200),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              shape: BoxShape.circle,
+              borderRadius: BorderRadius.circular(20), // iOS squircle shape
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withOpacity(0.3),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 12,
+                  spreadRadius: 0,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
             child: Transform.scale(
               scale: 1.0 + (_fabController.value * 0.1), // Slight pulse
               child: Transform.rotate(
-                angle: _expandAnimation.value * (3.14159 / 4), // Rotate 45deg
+                angle: _expandAnimation.value * (3.14159 / 4), // Rotate to forms an 'X'
                 child: const Icon(
                   Icons.add_rounded,
                   color: Colors.white,
