@@ -368,11 +368,25 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String _getGreeting() {
-    var hour = DateTime.now().hour;
-    if (hour < 12) return 'Selamat Pagi';
-    if (hour < 15) return 'Selamat Siang';
-    if (hour < 18) return 'Selamat Sore';
-    return 'Selamat Malam';
+    final now = DateTime.now();
+    final hour = now.hour;
+    final minute = now.minute;
+    final totalMinutes = hour * 60 + minute;
+
+    // Pagi: 03:00 - 11:30
+    if (totalMinutes >= 180 && totalMinutes <= 690) {
+      return ToneManager.t('greeting_pagi');
+    }
+    // Siang: 11:31 - 14:30
+    if (totalMinutes >= 691 && totalMinutes <= 870) {
+      return ToneManager.t('greeting_siang');
+    }
+    // Sore: 14:31 - 17:59
+    if (totalMinutes >= 871 && totalMinutes <= 1079) {
+      return ToneManager.t('greeting_sore');
+    }
+    // Malam: 18:00 - 02:59
+    return ToneManager.t('greeting_malam');
   }
 
   @override
@@ -994,17 +1008,18 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.receipt_long_outlined,
-                      color: AppColors.textHint.withOpacity(0.3), size: 32),
+                  const Icon(Icons.history_toggle_off_rounded,
+                      color: AppColors.textHint, size: 40),
                   const SizedBox(height: 12),
-                  const Text('Satu catatan, satu perubahan!',
-                      style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700)),
-                  Text(ToneManager.t('home_empty'),
+                  Text(ToneManager.t('home_empty_title'),
                       style: const TextStyle(
-                          color: AppColors.textHint, fontSize: 11)),
+                          color: AppColors.textPrimary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 4),
+                  Text(ToneManager.t('home_empty_msg'),
+                      style: const TextStyle(
+                          color: AppColors.textHint, fontSize: 12)),
                 ],
               ),
             ),
@@ -1099,11 +1114,11 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) => Container(
-          padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).padding.bottom + 24),
-          decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+            padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).padding.bottom + 24),
+            decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1379,97 +1394,157 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showToneSelector() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.only(top: 16, bottom: 40),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2))),
-            const SizedBox(height: 24),
-            const Text('Vibe Bahasa (App Tone)',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            ...AppTone.values.map((t) => ListTile(
-                  leading: Icon(
-                    t == AppTone.genZ
-                        ? Icons.rocket_launch
-                        : t == AppTone.milenial
-                            ? Icons.coffee
-                            : t == AppTone.boomer
-                                ? Icons.elderly
-                                : t == AppTone.pasangan
-                                    ? Icons.favorite_rounded
-                                    : Icons.notes,
-                    color: ToneManager.notifier.value == t
-                        ? (t == AppTone.pasangan
-                            ? const Color(0xFFFF2D55)
-                            : AppColors.primary)
-                        : Colors.grey,
-                  ),
-                  title: Text(
-                      t == AppTone.pasangan ? 'MY BINI' : t.name.toUpperCase(),
-                      style: TextStyle(
-                        fontWeight: ToneManager.notifier.value == t
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                        color: ToneManager.notifier.value == t
-                            ? (t == AppTone.pasangan
-                                ? const Color(0xFFFF2D55)
-                                : AppColors.primary)
-                            : Colors.black87,
-                      )),
-                  trailing: ToneManager.notifier.value == t
-                      ? Icon(Icons.check_circle,
-                          color: t == AppTone.pasangan
-                              ? const Color(0xFFFF2D55)
-                              : AppColors.primary)
-                      : null,
-                  onTap: () async {
-                    await ToneManager.setTone(t);
-                    if (mounted) Navigator.pop(ctx);
-                  },
-                )),
-          ],
-        ),
-      ),
-    );
+    UIHelper.showToneSelector(context);
   }
 
   void _showBudgetDialog() {
     final controller = TextEditingController(
         text: _monthlyBudget == 0 ? '' : _monthlyBudget.toStringAsFixed(0));
-    showDialog(
+    showGeneralDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Target Budget'),
-        content: TextField(
-            controller: controller,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(prefixText: 'Rp ')),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Batal')),
-          ElevatedButton(
-            onPressed: () async {
-              final budget = double.tryParse(controller.text) ?? 0.0;
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.setDouble('monthly_budget', budget);
-              setState(() => _monthlyBudget = budget);
-              Navigator.pop(context);
-            },
-            child: const Text('Simpan'),
+      barrierDismissible: true,
+      barrierLabel: '',
+      barrierColor: Colors.black.withOpacity(0.5),
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (ctx, anim1, anim2) => Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(
+          child: Padding(
+            padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 32),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(32),
+                boxShadow: [
+                  BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 40,
+                      offset: const Offset(0, 10))
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(32),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.9),
+                      border: Border.all(color: Colors.white.withOpacity(0.5)),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.track_changes_rounded,
+                              color: AppColors.primary, size: 32),
+                        ),
+                        const SizedBox(height: 20),
+                        const Text('Target Budget',
+                            style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -0.5)),
+                        const SizedBox(height: 8),
+                        Text('Atur batas pengeluaran bulananmu.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                fontSize: 13, color: Colors.grey[600])),
+                        const SizedBox(height: 24),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: TextField(
+                            controller: controller,
+                            keyboardType: TextInputType.number,
+                            style: const TextStyle(
+                                fontSize: 20, fontWeight: FontWeight.w800),
+                            decoration: InputDecoration(
+                              prefixText: 'Rp ',
+                              prefixStyle: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.black54),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 16),
+                              hintText: '0',
+                              hintStyle: TextStyle(color: Colors.grey[400]),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: InkWell(
+                                onTap: () => Navigator.pop(ctx),
+                                borderRadius: BorderRadius.circular(16),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(color: Colors.grey[300]!),
+                                  ),
+                                  child: const Center(
+                                    child: Text('Batal',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14)),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: InkWell(
+                                onTap: () async {
+                                  final budget = double.tryParse(controller.text) ?? 0.0;
+                                  final prefs = await SharedPreferences.getInstance();
+                                  await prefs.setDouble('monthly_budget', budget);
+                                  setState(() => _monthlyBudget = budget);
+                                  if (ctx.mounted) Navigator.pop(ctx);
+                                },
+                                borderRadius: BorderRadius.circular(16),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary,
+                                    borderRadius: BorderRadius.circular(16),
+                                    boxShadow: [
+                                      BoxShadow(
+                                          color: AppColors.primary.withOpacity(0.3),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 4))
+                                    ],
+                                  ),
+                                  child: const Center(
+                                    child: Text('Simpan',
+                                        style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14)),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
-        ],
+        ),
       ),
     );
   }

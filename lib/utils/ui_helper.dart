@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
 import '../utils/app_theme.dart';
+import '../utils/tone_dictionary.dart';
 
 class UIHelper {
   static void showSuccessSnackBar(BuildContext context, String message) {
@@ -13,52 +14,76 @@ class UIHelper {
         context, message, AppColors.expense, Icons.error_outline_rounded);
   }
 
+  static void showInfoSnackBar(BuildContext context, String message) {
+    _showTopToast(
+        context, message, Colors.blueGrey, Icons.info_outline_rounded);
+  }
+
   static void _showTopToast(
       BuildContext context, String message, Color color, IconData icon) {
     final overlay = Overlay.of(context);
     final overlayEntry = OverlayEntry(
       builder: (context) => Positioned(
-        top: MediaQuery.of(context).padding.top + 20,
+        top: MediaQuery.of(context).padding.top + 16,
         left: 20,
         right: 20,
         child: Material(
           color: Colors.transparent,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: BackdropFilter(
-              filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.85),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                      color: Colors.white.withOpacity(0.2), width: 1.5),
-                  boxShadow: [
-                    BoxShadow(
-                        color: color.withOpacity(0.2),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10)),
-                  ],
+          child: TweenAnimationBuilder<double>(
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeOutBack,
+            tween: Tween(begin: 0.0, end: 1.0),
+            builder: (context, value, child) {
+              return Transform.translate(
+                offset: Offset(0, -50 * (1 - value)),
+                child: Opacity(
+                  opacity: value.clamp(0.0, 1.0),
+                  child: child,
                 ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          shape: BoxShape.circle),
-                      child: Icon(icon, color: Colors.white, size: 18),
+              );
+            },
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(100),
+                child: BackdropFilter(
+                  filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1C1C1E).withOpacity(0.85),
+                      borderRadius: BorderRadius.circular(100),
+                      border: Border.all(
+                          color: Colors.white.withOpacity(0.15), width: 0.5),
+                      boxShadow: [
+                        BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10)),
+                      ],
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                        child: Text(message,
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.3))),
-                  ],
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                              color: color.withOpacity(0.15),
+                              shape: BoxShape.circle),
+                          child: Icon(icon, color: color, size: 18),
+                        ),
+                        const SizedBox(width: 12),
+                        Flexible(
+                          child: Text(message,
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: -0.2)),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -68,7 +93,11 @@ class UIHelper {
     );
 
     overlay.insert(overlayEntry);
-    Future.delayed(const Duration(seconds: 2), () => overlayEntry.remove());
+    Future.delayed(const Duration(seconds: 3), () {
+      if (overlayEntry.mounted) {
+        overlayEntry.remove();
+      }
+    });
   }
 
   static Future<bool?> showConfirmDialog({
@@ -391,5 +420,227 @@ class UIHelper {
             ),
           ],
         ));
+  }
+
+  static void showToneSelector(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      elevation: 0,
+      builder: (ctx) => BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: SafeArea(
+          bottom: false,
+          child: Container(
+            margin: EdgeInsets.fromLTRB(
+                16, 0, 16, MediaQuery.of(ctx).padding.bottom + 16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.8),
+              borderRadius: BorderRadius.circular(32),
+              border: Border.all(color: Colors.white.withOpacity(0.5), width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.12),
+                  blurRadius: 32,
+                  offset: const Offset(0, 8),
+                )
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 12),
+                  Container(
+                    width: 36,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(2.5),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Vibe Bahasa AI',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -0.8,
+                                color: Colors.black,
+                              ),
+                            ),
+                            Text(
+                              'Pilih kepribadian asistenmu',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.black54,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Material(
+                          color: Colors.black.withOpacity(0.05),
+                          shape: const CircleBorder(),
+                          child: InkWell(
+                            onTap: () => Navigator.pop(ctx),
+                            customBorder: const CircleBorder(),
+                            child: const Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: Icon(Icons.close_rounded, size: 20),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: ValueListenableBuilder<AppTone>(
+                        valueListenable: ToneManager.notifier,
+                        builder: (context, currentTone, child) {
+                          return Column(
+                            children: AppTone.values.map((t) {
+                              final isSelected = currentTone == t;
+                              final isMyBini = t == AppTone.pasangan;
+                              final activeColor = isMyBini
+                                  ? const Color(0xFFFF2D55)
+                                  : AppColors.primary;
+
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child: InkWell(
+                                  onTap: () async {
+                                    await ToneManager.setTone(t);
+                                    if (ctx.mounted) {
+                                      Future.delayed(const Duration(milliseconds: 150), 
+                                        () => Navigator.pop(ctx));
+                                    }
+                                  },
+                                  borderRadius: BorderRadius.circular(22),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 250),
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? activeColor.withOpacity(0.12)
+                                          : Colors.white.withOpacity(0.4),
+                                      borderRadius: BorderRadius.circular(22),
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? activeColor.withOpacity(0.3)
+                                            : Colors.transparent,
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 48,
+                                          height: 48,
+                                          decoration: BoxDecoration(
+                                            color: isSelected
+                                                ? activeColor.withOpacity(0.2)
+                                                : Colors.grey.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(14),
+                                          ),
+                                          alignment: Alignment.center,
+                                          child: Text(
+                                            t == AppTone.genZ
+                                                ? '🤘'
+                                                : t == AppTone.milenial
+                                                    ? '☕'
+                                                    : t == AppTone.boomer
+                                                        ? '👴'
+                                                        : t == AppTone.pasangan
+                                                            ? '❤️'
+                                                            : '🤵',
+                                            style: const TextStyle(fontSize: 24),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 16),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                isMyBini
+                                                    ? 'MY BINI'
+                                                    : t.name.toUpperCase(),
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w800,
+                                                  fontSize: 16,
+                                                  letterSpacing: -0.2,
+                                                  color: isSelected
+                                                      ? activeColor
+                                                      : Colors.black,
+                                                ),
+                                              ),
+                                              Text(
+                                                _getToneDescription(t),
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: isSelected
+                                                      ? activeColor.withOpacity(0.7)
+                                                      : Colors.black45,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        if (isSelected)
+                                          Icon(Icons.check_circle_rounded,
+                                              color: activeColor, size: 28)
+                                        else
+                                          Icon(Icons.arrow_forward_ios_rounded,
+                                              color: Colors.black12, size: 16),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  static String _getToneDescription(AppTone tone) {
+    switch (tone) {
+      case AppTone.genZ:
+        return 'Gaya asik, pake slang biar ga kaku.';
+      case AppTone.milenial:
+        return 'Santai tapi sopan, ala anak kopi.';
+      case AppTone.boomer:
+        return 'Formal dan penuh wejangan bijak.';
+      case AppTone.pasangan:
+        return 'Galak tapi sayang, tukang ngomel duit.';
+      case AppTone.normal:
+        return 'Profesional, singkat, dan padat.';
+    }
   }
 }
