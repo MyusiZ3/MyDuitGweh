@@ -460,39 +460,61 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSectionHeader('System & Utility',
-                Icons.settings_suggest_rounded, Colors.orange),
+            _buildSectionHeader('System & Utility', Icons.settings_suggest_rounded, Colors.orange),
             _buildPremiumCard(
               child: Column(
                 children: [
-                  Row(
-                    children: [
-                      const Expanded(
-                          child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                            Text('Status Maintenance',
-                                style: TextStyle(fontWeight: FontWeight.bold)),
-                            Text('Mode perbaikan sistem global.',
-                                style: TextStyle(
-                                    fontSize: 10, color: Colors.grey)),
-                          ])),
-                      Switch.adaptive(
-                          value: _maintenanceMode,
-                          activeColor: Colors.orange,
-                          onChanged: (v) =>
-                              setState(() => _maintenanceMode = v)),
-                    ],
-                  ),
-                  const Divider(height: 32),
-                  TextField(
-                    controller: _maintenanceMsgController,
-                    maxLines: 2,
-                    decoration: const InputDecoration(
-                      labelText: 'Pesan Maintenance',
-                      prefixIcon:
-                          Icon(Icons.message_rounded, color: Colors.orange),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: _maintenanceMode ? Colors.orange.withOpacity(0.05) : Colors.grey.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: _maintenanceMode ? Colors.orange.withOpacity(0.1) : Colors.black.withOpacity(0.05),
+                      ),
                     ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: _maintenanceMode ? Colors.orange.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            _maintenanceMode ? Icons.construction_rounded : Icons.check_circle_outline_rounded,
+                            color: _maintenanceMode ? Colors.orange : Colors.grey,
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _maintenanceMode ? 'Maintenance ON' : 'System Normal',
+                                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: -0.5),
+                              ),
+                              Text('Mode perbaikan sistem global.',
+                                  style: TextStyle(fontSize: 11, color: Colors.grey)),
+                            ],
+                          ),
+                        ),
+                        Switch.adaptive(
+                            value: _maintenanceMode,
+                            activeColor: Colors.orange,
+                            onChanged: (v) => setState(() => _maintenanceMode = v)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  _buildModernTextField(
+                    controller: _maintenanceMsgController,
+                    label: 'Pesan Maintenance',
+                    icon: Icons.message_rounded,
+                    color: Colors.orange,
+                    maxLines: 2,
                   ),
                   const SizedBox(height: 16),
                   Row(
@@ -520,127 +542,164 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
               ),
             ),
             const SizedBox(height: 32),
-            _buildSectionHeader('Versioning & Update',
-                Icons.system_update_rounded, Colors.blue),
+            _buildSectionHeader('Versioning & Update', Icons.system_update_rounded, Colors.blue),
             _buildPremiumCard(
               child: Column(
                 children: [
-                  TextField(
+                  _buildModernTextField(
                     controller: _minVersionController,
-                    decoration: const InputDecoration(
-                      labelText: 'Force Update vMin',
-                      prefixIcon:
-                          Icon(Icons.verified_rounded, color: Colors.blue),
-                    ),
+                    label: 'Force Update vMin',
+                    icon: Icons.verified_rounded,
+                    color: Colors.blue,
                   ),
                   const SizedBox(height: 16),
-                  TextField(
+                  _buildModernTextField(
                     controller: _latestVersionController,
-                    decoration: const InputDecoration(
-                      labelText: 'Latest Version',
-                      prefixIcon:
-                          Icon(Icons.new_releases_rounded, color: Colors.blue),
-                    ),
+                    label: 'Latest Version',
+                    icon: Icons.new_releases_rounded,
+                    color: Colors.blue,
                   ),
                   const SizedBox(height: 16),
-                  TextField(
+                  _buildModernTextField(
                     controller: _downloadUrlController,
-                    decoration: const InputDecoration(
-                      labelText: 'Download URL (Direct)',
-                      prefixIcon: Icon(Icons.link_rounded, color: Colors.blue),
-                    ),
+                    label: 'Download URL (Direct)',
+                    icon: Icons.link_rounded,
+                    color: Colors.blue,
                   ),
+                  const SizedBox(height: 8),
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton.icon(
                       onPressed: () {
                         setState(() {
-                          _downloadUrlController.text =
-                              'https://myduitgweh.web.app/app-release.apk';
+                          _downloadUrlController.text = 'https://myduitgweh.web.app/app-release.apk';
                         });
                       },
-                      icon: const Icon(Icons.cloud_done_rounded, size: 14),
+                      style: TextButton.styleFrom(
+                        backgroundColor: Colors.blue.withOpacity(0.05),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      icon: const Icon(Icons.cloud_done_rounded, size: 14, color: Colors.blue),
                       label: const Text('Use Firebase Hosting URL',
-                          style: TextStyle(fontSize: 10)),
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blue)),
                     ),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 32),
-            _buildSectionHeader('AI Financial Advisor',
-                Icons.psychology_outlined, Colors.purple),
+            _buildSectionHeader('AI Financial Advisor', Icons.psychology_rounded, const Color(0xFF8B5CF6)),
             _buildPremiumCard(
               child: Column(
                 children: [
-                  Row(
-                    children: [
-                      const Expanded(
-                        child: Text('Aktifkan Engine Advisor',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: _advisorEnabled ? const Color(0xFF8B5CF6).withOpacity(0.05) : Colors.red.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: _advisorEnabled ? const Color(0xFF8B5CF6).withOpacity(0.1) : Colors.red.withOpacity(0.1),
                       ),
-                      Switch.adaptive(
-                        value: _advisorEnabled,
-                        activeColor: Colors.purple,
-                        onChanged: (v) => setState(() => _advisorEnabled = v),
-                      ),
-                    ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: _advisorEnabled ? const Color(0xFF8B5CF6).withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            _advisorEnabled ? Icons.psychology_rounded : Icons.power_off_rounded,
+                            color: _advisorEnabled ? const Color(0xFF8B5CF6) : Colors.red,
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _advisorEnabled ? 'Engine Active' : 'Engine Suspended',
+                                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: -0.5),
+                              ),
+                              Text('Global toggle untuk AI Advisor',
+                                  style: TextStyle(fontSize: 11, color: Colors.grey)),
+                            ],
+                          ),
+                        ),
+                        Switch.adaptive(
+                          value: _advisorEnabled,
+                          activeColor: const Color(0xFF8B5CF6),
+                          onChanged: (v) => setState(() => _advisorEnabled = v),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   DropdownButtonFormField<String>(
                     value: _advisorProvider,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.black.withOpacity(0.02),
                       labelText: 'Engine Provider',
-                      prefixIcon:
-                          Icon(Icons.hub_outlined, color: Colors.purple),
+                      labelStyle: TextStyle(fontWeight: FontWeight.bold, color: Colors.black.withOpacity(0.6)),
+                      prefixIcon: const Icon(Icons.hub_rounded, color: Color(0xFF8B5CF6), size: 20),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     ),
+                    icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.grey),
                     items: const [
                       DropdownMenuItem(
-                          value: 'gemini', child: Text('Google Gemini ♊')),
+                          value: 'gemini', child: Text('Google Gemini ♊', style: TextStyle(fontWeight: FontWeight.w600))),
                       DropdownMenuItem(
-                          value: 'groq', child: Text('Groq AI 🏎️')),
+                          value: 'groq', child: Text('Groq API 🏎️', style: TextStyle(fontWeight: FontWeight.w600))),
                     ],
                     onChanged: (v) => setState(() => _advisorProvider = v!),
                   ),
                   const SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
-                    height: 50,
-                    child: OutlinedButton.icon(
-                      icon: const Icon(Icons.key_outlined, color: Colors.purple),
-                      label: const Text('Kelola API Keys Advisor',
-                          style: TextStyle(color: Colors.purple)),
+                    height: 52,
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.vpn_key_rounded, size: 18),
+                      label: const Text('MANAGE API KEYS', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 0.5)),
                       onPressed: _showAdvisorKeysManager,
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.purple),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF8B5CF6).withOpacity(0.1),
+                        foregroundColor: const Color(0xFF8B5CF6),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   Row(
                     children: [
                       Expanded(
-                        child: TextField(
+                        child: _buildModernTextField(
                           controller: _advisorMinTransController,
-                          keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(
-                            labelText: 'Trigger (Trans)',
-                            helperText: 'Min. transaksi baru',
-                          ),
+                          label: 'Trigger (Trans)',
+                          helper: 'Min. tx baru',
+                          icon: Icons.swap_horiz_rounded,
+                          color: const Color(0xFF8B5CF6),
+                          isNumber: true,
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: TextField(
+                        child: _buildModernTextField(
                           controller: _advisorCooldownController,
-                          keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(
-                            labelText: 'Cooldown (Jam)',
-                            helperText: 'Lama jeda analisa',
-                          ),
+                          label: 'Cooldown (Jam)',
+                          helper: 'Jeda analisa',
+                          icon: Icons.hourglass_empty_rounded,
+                          color: const Color(0xFF8B5CF6),
+                          isNumber: true,
                         ),
                       ),
                     ],
@@ -701,6 +760,40 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                   fontWeight: FontWeight.w900,
                   letterSpacing: -0.5)),
         ],
+      ),
+    );
+  }
+
+  Widget _buildModernTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    required Color color,
+    String? helper,
+    bool isNumber = false,
+    int maxLines = 1,
+  }) {
+    return TextField(
+      controller: controller,
+      keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+      maxLines: maxLines,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(fontWeight: FontWeight.bold, color: Colors.black.withOpacity(0.6)),
+        helperText: helper,
+        helperStyle: const TextStyle(fontSize: 10),
+        prefixIcon: Icon(icon, color: color, size: 20),
+        filled: true,
+        fillColor: Colors.black.withOpacity(0.02),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: color.withOpacity(0.5), width: 1.5),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
     );
   }

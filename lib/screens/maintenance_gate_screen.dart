@@ -78,7 +78,7 @@ class MaintenanceGateScreen extends StatelessWidget {
 
                   // Text Content
                   const Text(
-                    'Sabar Ya, Bosku!',
+                    'Sabar Yaa!',
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.w900,
@@ -89,7 +89,7 @@ class MaintenanceGateScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   const Text(
-                    'Sistem Sedang Dalam Perbaikan Rutin',
+                    'Sistem Lagi di Maintenace Duluu ama Atmin..',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
