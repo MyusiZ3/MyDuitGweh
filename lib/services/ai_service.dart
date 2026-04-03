@@ -1044,7 +1044,7 @@ DATA PENGGUNA:
 
 INSTRUKSI SINGKAT:
 1. Berikan analisis dalam 1-2 kalimat saja (MAKSIMAL 20   KATA !!).
-2. FOKUS PADA HAL PALING KRUSIAL dari data (pemasukan vs pengeluaran, atau kategori paling boros) JANGAN TULISKAN NOMINAL YANG TDIAK PERLU !!!.
+2. FOKUS PADA HAL PALING KRUSIAL dari data (pemasukan vs pengeluaran, atau kategori paling boros) JANGAN TULISKAN NOMINAL YANG TIDAK PERLU !!!.
 3. GAYA BAHASA WAJIB: $toneInstruction
 4. Awali jawabanmu HANYA dengan format TEPAT seperti ini:**Archen (´･ω･`):** [spasi] [enter] [spasi]
    Pastikan tidak ada teks lain di depan atau di dalam kurung.
