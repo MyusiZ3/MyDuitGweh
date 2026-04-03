@@ -49,7 +49,8 @@ class UIHelper {
                 child: BackdropFilter(
                   filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
                       color: const Color(0xFF1C1C1E).withOpacity(0.85),
                       borderRadius: BorderRadius.circular(100),
@@ -389,8 +390,8 @@ class UIHelper {
                 'Layanan AI Advisor sedang dinonaktifkan sementara oleh admin untuk pemeliharaan rutin. Silakan coba beberapa saat lagi ya!',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    color: Colors.grey[700], 
-                    fontSize: 14, 
+                    color: Colors.grey[700],
+                    fontSize: 14,
                     height: 1.6,
                     fontWeight: FontWeight.w500)),
             const SizedBox(height: 32),
@@ -438,7 +439,8 @@ class UIHelper {
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.8),
               borderRadius: BorderRadius.circular(32),
-              border: Border.all(color: Colors.white.withOpacity(0.5), width: 1.5),
+              border:
+                  Border.all(color: Colors.white.withOpacity(0.5), width: 1.5),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.12),
@@ -525,8 +527,9 @@ class UIHelper {
                                   onTap: () async {
                                     await ToneManager.setTone(t);
                                     if (ctx.mounted) {
-                                      Future.delayed(const Duration(milliseconds: 150), 
-                                        () => Navigator.pop(ctx));
+                                      Future.delayed(
+                                          const Duration(milliseconds: 150),
+                                          () => Navigator.pop(ctx));
                                     }
                                   },
                                   borderRadius: BorderRadius.circular(22),
@@ -554,7 +557,8 @@ class UIHelper {
                                             color: isSelected
                                                 ? activeColor.withOpacity(0.2)
                                                 : Colors.grey.withOpacity(0.1),
-                                            borderRadius: BorderRadius.circular(14),
+                                            borderRadius:
+                                                BorderRadius.circular(14),
                                           ),
                                           alignment: Alignment.center,
                                           child: Text(
@@ -567,7 +571,8 @@ class UIHelper {
                                                         : t == AppTone.pasangan
                                                             ? '❤️'
                                                             : '🤵',
-                                            style: const TextStyle(fontSize: 24),
+                                            style:
+                                                const TextStyle(fontSize: 24),
                                           ),
                                         ),
                                         const SizedBox(width: 16),
@@ -594,7 +599,8 @@ class UIHelper {
                                                 style: TextStyle(
                                                   fontSize: 12,
                                                   color: isSelected
-                                                      ? activeColor.withOpacity(0.7)
+                                                      ? activeColor
+                                                          .withOpacity(0.7)
                                                       : Colors.black45,
                                                   fontWeight: FontWeight.w500,
                                                 ),
@@ -632,13 +638,13 @@ class UIHelper {
   static String _getToneDescription(AppTone tone) {
     switch (tone) {
       case AppTone.genZ:
-        return 'Gaya asik, pake slang biar ga kaku.';
+        return 'Gatau ini suka-suka DEV aja.';
       case AppTone.milenial:
-        return 'Santai tapi sopan, ala anak kopi.';
+        return 'Santuyy, ala-ala anak Jaksel.';
       case AppTone.boomer:
-        return 'Formal dan penuh wejangan bijak.';
+        return 'Yahh gitulah ala-ala boomer yg bijak.';
       case AppTone.pasangan:
-        return 'Galak tapi sayang, tukang ngomel duit.';
+        return 'Inikah my bini gweh?';
       case AppTone.normal:
         return 'Profesional, singkat, dan padat.';
     }

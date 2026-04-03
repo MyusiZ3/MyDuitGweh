@@ -75,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen>
     }
 
     if (password.length < 6) {
-      UIHelper.showErrorSnackBar(context, 'Password minimal 6 karakter! 🛡️');
+      UIHelper.showErrorSnackBar(context, 'Password minimal 6 karakter!');
       return;
     }
 
@@ -89,14 +89,14 @@ class _LoginScreenState extends State<LoginScreen>
       if (_isLogin) {
         await _authService.signInWithEmail(email, password);
         if (mounted) {
-          UIHelper.showSuccessSnackBar(context, 'Berhasil Masuk! 🚀');
+          UIHelper.showSuccessSnackBar(context, 'Berhasil Masuk!');
           // Clear any pushed routes (like from Onboarding) so AuthGate can render root
           Navigator.of(context).popUntil((route) => route.isFirst);
         }
       } else {
         await _authService.signUpWithEmail(email, password, name);
         if (mounted) {
-          UIHelper.showSuccessSnackBar(context, 'Akun berhasil dibuat! 🎉✨');
+          UIHelper.showSuccessSnackBar(context, 'Akun berhasil dibuat!');
           // Clear any pushed routes
           Navigator.of(context).popUntil((route) => route.isFirst);
         }
@@ -113,7 +113,7 @@ class _LoginScreenState extends State<LoginScreen>
     try {
       final user = await _authService.signInWithGoogle();
       if (user != null && mounted) {
-        UIHelper.showSuccessSnackBar(context, 'Login Google Berhasil! 🌐🚀');
+        UIHelper.showSuccessSnackBar(context, 'Login Google Berhasil!');
         // Clear any pushed routes
         Navigator.of(context).popUntil((route) => route.isFirst);
       }
@@ -531,14 +531,14 @@ class _LoginScreenState extends State<LoginScreen>
   void _showForgotPass() async {
     final email = _emailController.text.trim();
     if (email.isEmpty) {
-      UIHelper.showErrorSnackBar(context, 'Tulis email dulu ya! 📧');
+      UIHelper.showErrorSnackBar(context, 'Tulis email dulu ya!');
       return;
     }
     try {
       await _authService.sendPasswordResetEmail(email);
       if (mounted) {
         UIHelper.showSuccessSnackBar(
-            context, 'Cek e-mail kamu untuk reset password! 📧✨');
+            context, 'Cek e-mail kamu untuk reset password!');
       }
     } catch (e) {
       if (mounted) UIHelper.showErrorSnackBar(context, e.toString());

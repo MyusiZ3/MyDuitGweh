@@ -1173,19 +1173,24 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                                   SnackBar(
                                     content: const Row(
                                       children: [
-                                        Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                                        Icon(Icons.check_circle_rounded,
+                                            color: Colors.white, size: 20),
                                         SizedBox(width: 12),
-                                        Text('Konfigurasi AI diperbarui! ✨'),
+                                        Text('Konfigurasi AI diperbarui!'),
                                       ],
                                     ),
                                     backgroundColor: AppColors.primary,
                                     behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(16)),
                                   ),
                                 );
                               } catch (e) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Gagal: $e'), backgroundColor: Colors.redAccent),
+                                  SnackBar(
+                                      content: Text('Gagal: $e'),
+                                      backgroundColor: Colors.redAccent),
                                 );
                               }
                             },
@@ -1279,7 +1284,7 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                       if (!snapshot.hasData)
                         return const Center(child: CircularProgressIndicator());
                       final data =
-snapshot.data!.data() as Map<String, dynamic>? ?? {};
+                          snapshot.data!.data() as Map<String, dynamic>? ?? {};
                       final List<String> geminiKeys =
                           List<String>.from(data['gemini_keys'] ?? []);
                       final List<String> groqKeys =
@@ -1393,9 +1398,13 @@ snapshot.data!.data() as Map<String, dynamic>? ?? {};
                                                       ? Colors.green
                                                       : (healthStatus == 'limit'
                                                           ? Colors.orange
-                                                          : (healthStatus == 'invalid' || healthStatus == 'error'
+                                                          : (healthStatus ==
+                                                                      'invalid' ||
+                                                                  healthStatus ==
+                                                                      'error'
                                                               ? Colors.red
-                                                              : Colors.grey[400])),
+                                                              : Colors
+                                                                  .grey[400])),
                                                   shape: BoxShape.circle,
                                                 ),
                                               ),
@@ -1414,10 +1423,12 @@ snapshot.data!.data() as Map<String, dynamic>? ?? {};
                                                         : (healthStatus ==
                                                                 'unknown'
                                                             ? AppColors.textHint
-                                                            : Colors.orange[800]),
+                                                            : Colors
+                                                                .orange[800]),
                                                   ),
                                                   maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
                                                 ),
                                               ),
                                             ],
@@ -1427,7 +1438,8 @@ snapshot.data!.data() as Map<String, dynamic>? ?? {};
                                         SizedBox(
                                           height: 38,
                                           child: ElevatedButton(
-                                            onPressed: healthStatus == 'checking'
+                                            onPressed: healthStatus ==
+                                                    'checking'
                                                 ? null
                                                 : () async {
                                                     setItemState(() {
@@ -1435,27 +1447,43 @@ snapshot.data!.data() as Map<String, dynamic>? ?? {};
                                                     });
                                                     try {
                                                       final statusMap = isGroq
-                                                          ? await AIService().checkGroqKeyStatus(key)
-                                                          : await AIService().checkKeyStatus(key);
+                                                          ? await AIService()
+                                                              .checkGroqKeyStatus(
+                                                                  key)
+                                                          : await AIService()
+                                                              .checkKeyStatus(
+                                                                  key);
                                                       setItemState(() {
-                                                        healthStatus = statusMap['status'] ?? 'error';
-                                                        healthMessage = statusMap['message'] ?? 'Error';
+                                                        healthStatus =
+                                                            statusMap[
+                                                                    'status'] ??
+                                                                'error';
+                                                        healthMessage =
+                                                            statusMap[
+                                                                    'message'] ??
+                                                                'Error';
                                                       });
                                                     } catch (e) {
                                                       setItemState(() {
                                                         healthStatus = 'error';
-                                                        healthMessage = 'Failed: $e';
+                                                        healthMessage =
+                                                            'Failed: $e';
                                                       });
                                                     }
                                                   },
                                             style: ElevatedButton.styleFrom(
-                                              backgroundColor: AppColors.primary.withOpacity(0.1),
-                                              foregroundColor: AppColors.primary,
+                                              backgroundColor: AppColors.primary
+                                                  .withOpacity(0.1),
+                                              foregroundColor:
+                                                  AppColors.primary,
                                               elevation: 0,
-                                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 20),
                                               shape: RoundedRectangleBorder(
                                                   borderRadius:
-                                                      BorderRadius.circular(16)),
+                                                      BorderRadius.circular(
+                                                          16)),
                                             ),
                                             child: healthStatus == 'checking'
                                                 ? const SizedBox(
@@ -1463,15 +1491,21 @@ snapshot.data!.data() as Map<String, dynamic>? ?? {};
                                                     height: 16,
                                                     child: CircularProgressIndicator(
                                                         strokeWidth: 2,
-                                                        valueColor: AlwaysStoppedAnimation(AppColors.primary)),
+                                                        valueColor:
+                                                            AlwaysStoppedAnimation(
+                                                                AppColors
+                                                                    .primary)),
                                                   )
                                                 : const Row(
                                                     children: [
-                                                      Icon(Icons.bolt_rounded, size: 14),
+                                                      Icon(Icons.bolt_rounded,
+                                                          size: 14),
                                                       SizedBox(width: 6),
                                                       Text('TEST',
                                                           style: TextStyle(
-                                                              fontWeight: FontWeight.w900,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w900,
                                                               fontSize: 12)),
                                                     ],
                                                   ),
