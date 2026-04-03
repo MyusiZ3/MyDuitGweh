@@ -20,7 +20,8 @@ class AIService {
       final doc = await FirebaseFirestore.instance
           .collection('app_config')
           .doc('global')
-          .get();
+          .get()
+          .timeout(const Duration(seconds: 3));
       if (doc.exists) return doc.data()!;
     } catch (e) {
       debugPrint('Error getting Global config: $e');
@@ -33,7 +34,8 @@ class AIService {
       final doc = await FirebaseFirestore.instance
           .collection('app_settings')
           .doc('ai_config')
-          .get();
+          .get()
+          .timeout(const Duration(seconds: 3));
       if (doc.exists) return doc.data()!;
     } catch (e) {
       debugPrint('Error getting AI config: $e');
@@ -148,7 +150,7 @@ class AIService {
           return {
             'count': 0,
             'limit': limit,
-            'nextReset': 'Sekarang',
+            'nextReset': '-- ${resetMinutes}m',
             'interval': resetMinutes
           };
         }
@@ -499,6 +501,7 @@ class AIService {
     required String systemPrompt,
     required String userQuery,
     List<Content>? history,
+    int maxTokens = 2048,
   }) async {
     final messages = <Map<String, String>>[];
     messages.add({'role': 'system', 'content': systemPrompt});
@@ -524,7 +527,7 @@ class AIService {
         'model': model,
         'messages': messages,
         'temperature': 0.8,
-        'max_tokens': 2048,
+        'max_tokens': maxTokens,
       }),
     );
 
@@ -648,7 +651,8 @@ class AIService {
       if (!uniqueGroqKeys.contains(k)) uniqueGroqKeys.add(k);
     }
 
-    final summary = _generateDataSummary(transactions, dateRange, wallets: wallets);
+    final summary =
+        _generateDataSummary(transactions, dateRange, wallets: wallets);
 
     // Get user name and gender for pasangan mode
     final userName = currentUser?.displayName ?? 'Sayang';
@@ -715,8 +719,6 @@ INSTRUKSI:
 4. Gunakan Markdown untuk format jawaban (bullet point, bold).
 5. Jangan berikan nasihat investasi berisiko tinggi.
 6. JIKA PENGGUNA HANYA MENYAPA (Halo, Hai, Pagi, Malam, dll) atau memberikan input singkat yang tidak memerlukan analisis mendalam, JANGAN memberondong dengan ringkasan data atau saran panjang. Balaslah sesingkat dan seramah mungkin sesuai kepribadianmu.
-7. Kamu WAJIB mengawali jawabanmu pada baris paling atas dengan format TEPAT seperti ini: **Analisis Archen:** [spasi]
-   Pastikan tidak ada teks lain di depannya.
 ''';
 
     try {
@@ -729,8 +731,9 @@ INSTRUKSI:
 
       for (String currentKey in uniqueGeminiKeys) {
         final isLastKey = currentKey == uniqueGeminiKeys.last;
-        final isPersonalKey =
-            isCustomApi && apiPlatform != 'groq' && currentKey == uniqueGeminiKeys.first;
+        final isPersonalKey = isCustomApi &&
+            apiPlatform != 'groq' &&
+            currentKey == uniqueGeminiKeys.first;
 
         Future<bool> tryWithModel(String mName) async {
           try {
@@ -810,13 +813,16 @@ INSTRUKSI:
         if (uniqueGroqKeys.isNotEmpty) {
           debugPrint('>>> Gemini ALL LIMIT. FALLING BACK TO GROQ...');
           final groqModels = [
+            'llama-3.1-8b-instant',
             'llama-3.3-70b-versatile',
-            'gemma2-9b-it',
-            'llama-3.1-8b-instant'
+            'allam-2-7b',
+            'groq/compound',
+            'groq/compound-mini'
           ];
           for (String groqKey in uniqueGroqKeys) {
-            final isPersonalGroq =
-                isCustomApi && apiPlatform == 'groq' && groqKey == uniqueGroqKeys.first;
+            final isPersonalGroq = isCustomApi &&
+                apiPlatform == 'groq' &&
+                groqKey == uniqueGroqKeys.first;
 
             for (String groqModel in groqModels) {
               try {
@@ -878,7 +884,8 @@ INSTRUKSI:
   }
 
   String _generateDataSummary(
-      List<TransactionModel> transactions, DateTimeRange range, {List<WalletModel>? wallets}) {
+      List<TransactionModel> transactions, DateTimeRange range,
+      {List<WalletModel>? wallets}) {
     double totalIncome = 0;
     double totalExpense = 0;
     Map<String, double> categoryBreakdown = {};
@@ -956,7 +963,7 @@ ${transactions.take(20).map((t) => "[${DateFormat('dd/MM').format(t.date)}] ${t.
       }
 
       if (geminiKeys.isEmpty && groqKeys.isEmpty) {
-        return '**Analisis Archen:** Masalah teknis. (API Key Analytic belum dikonfigurasi Admin)';
+        return '**Archen Analytic:** Masalah teknis. (API Key Analytic belum dikonfigurasi Admin)';
       }
 
       final int minTrans = config['advisor_min_transactions'] ?? 5;
@@ -966,7 +973,7 @@ ${transactions.take(20).map((t) => "[${DateFormat('dd/MM').format(t.date)}] ${t.
 
       // CEK TRIGGER TRANSAKSI
       if (transactions.length < minTrans) {
-        return '**Analisis Archen:** Data transaksimu masih kurang (butuh $minTrans transaksi). Kumpulkan lebih banyak data agar Archen bisa menganalisis ya!';
+        return '**Archen Analytic:** Data transaksimu masih kurang (butuh $minTrans transaksi). Kumpulkan lebih banyak data agar Archen bisa menganalisis ya!';
       }
 
       // CEK COOLDOWN
@@ -982,11 +989,12 @@ ${transactions.take(20).map((t) => "[${DateFormat('dd/MM').format(t.date)}] ${t.
           final int remainingMins = cooldownHours > difference.inHours
               ? (59 - (difference.inMinutes % 60))
               : 0;
-          return '$cachedAnalysis\n\n(Archen sedang draining, cek lagi ${remainingHours == 0 ? "$remainingMins menit" : "$remainingHours jam $remainingMins menit"} ke depan)';
+          return '$cachedAnalysis(Archen Lagi draining nii, cek lagi ${remainingHours == 0 ? "$remainingMins menit" : "$remainingHours jam $remainingMins menit"} ke depan)';
         }
       }
 
-      final summary = AIService()._generateDataSummary(transactions, dateRange, wallets: wallets);
+      final summary = AIService()
+          ._generateDataSummary(transactions, dateRange, wallets: wallets);
 
       final currentUser = FirebaseAuth.instance.currentUser;
       final userName = currentUser?.displayName ?? 'Sayang';
@@ -1035,10 +1043,10 @@ DATA PENGGUNA:
 - Ringkasan Data: $summary
 
 INSTRUKSI SINGKAT:
-1. Berikan analisis dalam 1-2 kalimat saja (Maksimal 25 kata).
-2. Fokus pada hal paling krusial dari data (pemasukan vs pengeluaran, atau kategori paling boros).
+1. Berikan analisis dalam 1-2 kalimat saja (MAKSIMAL 20   KATA !!).
+2. FOKUS PADA HAL PALING KRUSIAL dari data (pemasukan vs pengeluaran, atau kategori paling boros) JANGAN TULISKAN NOMINAL YANG TDIAK PERLU !!!.
 3. GAYA BAHASA WAJIB: $toneInstruction
-4. Awali jawabanmu HANYA dengan format TEPAT seperti ini: **Analisis Archen:** [spasi]
+4. Awali jawabanmu HANYA dengan format TEPAT seperti ini:**Archen (´･ω･`):** [spasi] [enter] [spasi]
    Pastikan tidak ada teks lain di depan atau di dalam kurung.
 ''';
 
@@ -1047,18 +1055,29 @@ INSTRUKSI SINGKAT:
 
       // FUNCTION GROQ FALLBACK
       Future<String?> tryGroqList() async {
+        final List<String> fallbackModels = [
+          'llama-3.3-70b-versatile',
+          'llama-3.1-8b-instant',
+          'allam-2-7b',
+          'groq/compound',
+          'groq/compound-mini'
+        ];
+
         for (String k in groqKeys) {
-          try {
-            final res = await _callGroqApi(
-              apiKey: k.trim(),
-              model: 'llama-3.3-70b-versatile',
-              systemPrompt: systemPrompt,
-              userQuery: userQuery,
-            );
-            if (res != null && res.isNotEmpty) return res;
-          } catch (e) {
-            debugPrint('>>> Advisor Groq Fallback [$k]: $e');
-            continue;
+          for (String m in fallbackModels) {
+            try {
+              final res = await _callGroqApi(
+                apiKey: k.trim(),
+                model: m,
+                systemPrompt: systemPrompt,
+                userQuery: userQuery,
+                maxTokens: 150,
+              );
+              if (res != null && res.isNotEmpty) return res;
+            } catch (e) {
+              debugPrint('>>> Advisor Groq Fallback [$k][$m]: $e');
+              continue;
+            }
           }
         }
         return null;
@@ -1079,6 +1098,7 @@ INSTRUKSI SINGKAT:
                 model: m,
                 apiKey: k.trim(),
                 systemInstruction: Content.system(systemPrompt),
+                generationConfig: GenerationConfig(maxOutputTokens: 150),
               );
               final res =
                   await model.generateContent([Content.text(userQuery)]);

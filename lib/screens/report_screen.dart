@@ -42,6 +42,7 @@ class _ReportScreenState extends State<ReportScreen> {
 
   int _touchedPieIndex = -1;
   bool _isCategoryMode = true;
+  bool _isCheckingAi = false;
   String? _aiApiKey;
   String? _aiApiPlatform; // 'gemini' or 'groq'
   List<String> _allApiKeys = []; // Stores combined "key|platform"
@@ -231,8 +232,7 @@ class _ReportScreenState extends State<ReportScreen> {
                     // Use set comparison to avoid rebuild loop (List != List is always true for new instances)
                     final set1 = _currentWalletIds.toSet();
                     final set2 = walletIds.toSet();
-                    if (set1.length != set2.length ||
-                        !set1.containsAll(set2)) {
+                    if (set1.length != set2.length || !set1.containsAll(set2)) {
                       setState(() => _currentWalletIds = walletIds);
                     }
                   }
@@ -297,9 +297,20 @@ class _ReportScreenState extends State<ReportScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
+          if (_isCheckingAi) return;
+          
+          setState(() {
+            _isCheckingAi = true;
+          });
+          
           // Check if AI is globally enabled
           final isEnabled = await AIService.isGlobalAiEnabled();
+          
           if (!context.mounted) return;
+          
+          setState(() {
+            _isCheckingAi = false;
+          });
 
           if (!isEnabled) {
             UIHelper.showAiMaintenanceDialog(context);
@@ -325,9 +336,20 @@ class _ReportScreenState extends State<ReportScreen> {
             ),
           );
         },
-        label: const Text('Tanya AI',
-            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-        icon: const Icon(Icons.auto_awesome_rounded, color: Colors.white),
+        label: _isCheckingAi
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              )
+            : const Text('Tanya AI',
+                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+        icon: _isCheckingAi 
+            ? const SizedBox.shrink() 
+            : const Icon(Icons.auto_awesome_rounded, color: Colors.white),
         backgroundColor: AppColors.primary,
         elevation: 4,
       ),
@@ -1443,8 +1465,8 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                                   () => isCheckingKey = true);
 
                                               final isValid = await _aiService
-                                                  .checkPlatformQuota(
-                                                      textKey, selectedPlatform);
+                                                  .checkPlatformQuota(textKey,
+                                                      selectedPlatform);
 
                                               if (!context.mounted) return;
 
@@ -2319,7 +2341,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
           double score = 100;
           String status = "Sangat Sehat";
           String initialAnalysis =
-              "Analisis Archen: Menghitung kesehatan keuanganmu...";
+              "Archen Analytic: Menghitung kesehatan keuanganmu...";
 
           if (income > 0) {
             double savingsRate = (income - expense) / income;
@@ -2442,31 +2464,45 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                         )
                       : Future.value(initialAnalysis),
                   builder: (context, analysisSnapshot) {
-                    String displayStr = analysisSnapshot.data ?? initialAnalysis;
+                    String displayStr =
+                        analysisSnapshot.data ?? initialAnalysis;
                     String? drainingWarning;
-                    if (displayStr.contains('(Archen sedang draining')) {
-                      final parts = displayStr.split('(Archen sedang draining');
+                    if (displayStr.contains('(Archen Lagi draining')) {
+                      final parts = displayStr.split('(Archen Lagi draining');
                       displayStr = parts[0].trim();
                       if (parts.length > 1) {
                         drainingWarning =
-                            'Archen sedang draining${parts[1].replaceAll(')', '').trim()}';
+                            'Archen Lagi Draining ${parts[1].replaceAll(')', '').trim()}';
                       }
                     }
 
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          displayStr,
-                          style: const TextStyle(
+                        MarkdownBody(
+                          data: displayStr,
+                          styleSheet: MarkdownStyleSheet(
+                            p: const TextStyle(
                               color: Colors.white,
                               fontSize: 12,
                               height: 1.4,
-                              fontWeight: FontWeight.w500),
+                              fontWeight: FontWeight.w500,
+                            ),
+                            strong: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              height: 1.4,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            listBullet: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                            ),
+                          ),
                         ),
                         if (drainingWarning != null)
                           Padding(
-                            padding: const EdgeInsets.only(top: 16),
+                            padding: const EdgeInsets.only(top: 20),
                             child: Align(
                               alignment: Alignment.centerLeft,
                               child: InkWell(
@@ -2477,10 +2513,10 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                 borderRadius: BorderRadius.circular(16),
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 6),
+                                      horizontal: 12, vertical: 8),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.15),
-                                    borderRadius: BorderRadius.circular(100),
+                                    color: Colors.amberAccent.withOpacity(0.15),
+                                    borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
                                         color: Colors.white.withOpacity(0.3),
                                         width: 0.5),
@@ -2489,12 +2525,12 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(Icons.battery_alert_rounded,
-                                          color: Colors.amberAccent, size: 14),
-                                      SizedBox(width: 6),
-                                      Text('Agent Info',
+                                          color: Colors.amberAccent, size: 16),
+                                      SizedBox(width: 8),
+                                      Text('Status: Cooldown',
                                           style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 10,
+                                              color: Colors.amberAccent,
+                                              fontSize: 11,
                                               fontWeight: FontWeight.bold)),
                                     ],
                                   ),
@@ -2869,7 +2905,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                   p: const TextStyle(
                       fontSize: 14, height: 1.5, color: Colors.black87),
                   strong: const TextStyle(
-                      fontWeight: FontWeight.w900, color: AppColors.primary),
+                      fontWeight: FontWeight.bold, color: AppColors.primary),
                   listBullet:
                       const TextStyle(fontSize: 14, color: AppColors.primary),
                 ),
