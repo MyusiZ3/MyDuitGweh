@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 import '../models/transaction_model.dart';
+import '../models/wallet_model.dart';
 import '../utils/tone_dictionary.dart';
 import 'package:intl/intl.dart';
 
@@ -596,6 +597,7 @@ class AIService {
     required String? apiKey,
     String? apiPlatform, // 'gemini' or 'groq'
     required List<TransactionModel> transactions,
+    List<WalletModel>? wallets,
     required String userQuery,
     required DateTimeRange dateRange,
     AppTone tone = AppTone.normal,
@@ -646,7 +648,7 @@ class AIService {
       if (!uniqueGroqKeys.contains(k)) uniqueGroqKeys.add(k);
     }
 
-    final summary = _generateDataSummary(transactions, dateRange);
+    final summary = _generateDataSummary(transactions, dateRange, wallets: wallets);
 
     // Get user name and gender for pasangan mode
     final userName = currentUser?.displayName ?? 'Sayang';
@@ -713,6 +715,8 @@ INSTRUKSI:
 4. Gunakan Markdown untuk format jawaban (bullet point, bold).
 5. Jangan berikan nasihat investasi berisiko tinggi.
 6. JIKA PENGGUNA HANYA MENYAPA (Halo, Hai, Pagi, Malam, dll) atau memberikan input singkat yang tidak memerlukan analisis mendalam, JANGAN memberondong dengan ringkasan data atau saran panjang. Balaslah sesingkat dan seramah mungkin sesuai kepribadianmu.
+7. Kamu WAJIB mengawali jawabanmu pada baris paling atas dengan format TEPAT seperti ini: **Analisis Archen:** [spasi]
+   Pastikan tidak ada teks lain di depannya.
 ''';
 
     try {
@@ -874,7 +878,7 @@ INSTRUKSI:
   }
 
   String _generateDataSummary(
-      List<TransactionModel> transactions, DateTimeRange range) {
+      List<TransactionModel> transactions, DateTimeRange range, {List<WalletModel>? wallets}) {
     double totalIncome = 0;
     double totalExpense = 0;
     Map<String, double> categoryBreakdown = {};
@@ -894,12 +898,22 @@ INSTRUKSI:
         .map((e) => "- ${e.key}: Rp ${e.value.toStringAsFixed(0)}")
         .join("\n");
 
+    String walletsStr = "";
+    if (wallets != null && wallets.isNotEmpty) {
+      walletsStr = "\nSTATUS DOMPET SAAT INI:\n" +
+          wallets
+              .map((w) =>
+                  "- ${w.walletName} (${w.type == 'colab' ? 'Tabungan Bersama' : w.type == 'debt' ? 'Hutang/Piutang' : 'Pribadi'}): Rp ${w.balance.toStringAsFixed(0)}")
+              .join("\n") +
+          "\n";
+    }
+
     return '''
-RINGKASAN TRANSAKSI:
+RINGKASAN DATA KEUANGAN (${DateFormat('dd/MM').format(range.start)} - ${DateFormat('dd/MM').format(range.end)}):
 - Total Pemasukan: Rp ${totalIncome.toStringAsFixed(0)}
 - Total Pengeluaran: Rp ${totalExpense.toStringAsFixed(0)}
 - Saldo Bersih: Rp ${(totalIncome - totalExpense).toStringAsFixed(0)}
-
+$walletsStr
 RINCIAN PENGELUARAN PER KATEGORI:
 $breakdownStr
 
@@ -911,6 +925,7 @@ ${transactions.take(20).map((t) => "[${DateFormat('dd/MM').format(t.date)}] ${t.
   // === SPECIALIZED FINANCIAL ADVISOR (ANALYTIC) ===
   static Future<String> getAdvisorAnalysis({
     required List<TransactionModel> transactions,
+    List<WalletModel>? wallets,
     required DateTimeRange dateRange,
     required double score,
     required String status,
@@ -941,7 +956,7 @@ ${transactions.take(20).map((t) => "[${DateFormat('dd/MM').format(t.date)}] ${t.
       }
 
       if (geminiKeys.isEmpty && groqKeys.isEmpty) {
-        return 'Analisis Archen: Masalah teknis. (API Key Analytic belum dikonfigurasi Admin)';
+        return '**Analisis Archen:** Masalah teknis. (API Key Analytic belum dikonfigurasi Admin)';
       }
 
       final int minTrans = config['advisor_min_transactions'] ?? 5;
@@ -951,7 +966,7 @@ ${transactions.take(20).map((t) => "[${DateFormat('dd/MM').format(t.date)}] ${t.
 
       // CEK TRIGGER TRANSAKSI
       if (transactions.length < minTrans) {
-        return 'Data transaksimu masih kurang (butuh $minTrans transaksi). Kumpulkan lebih banyak data agar Archen bisa menganalisis ya!';
+        return '**Analisis Archen:** Data transaksimu masih kurang (butuh $minTrans transaksi). Kumpulkan lebih banyak data agar Archen bisa menganalisis ya!';
       }
 
       // CEK COOLDOWN
@@ -971,7 +986,7 @@ ${transactions.take(20).map((t) => "[${DateFormat('dd/MM').format(t.date)}] ${t.
         }
       }
 
-      final summary = AIService()._generateDataSummary(transactions, dateRange);
+      final summary = AIService()._generateDataSummary(transactions, dateRange, wallets: wallets);
 
       final currentUser = FirebaseAuth.instance.currentUser;
       final userName = currentUser?.displayName ?? 'Sayang';
@@ -1023,7 +1038,8 @@ INSTRUKSI SINGKAT:
 1. Berikan analisis dalam 1-2 kalimat saja (Maksimal 25 kata).
 2. Fokus pada hal paling krusial dari data (pemasukan vs pengeluaran, atau kategori paling boros).
 3. GAYA BAHASA WAJIB: $toneInstruction
-4. Awali kalimatmu HANYA dengan "Analisis Archen:(Di Bold kata Analisis Archen Ini) " (tanpa tanda kutip), lalu lanjutkan dengan analisis gayamu.
+4. Awali jawabanmu HANYA dengan format TEPAT seperti ini: **Analisis Archen:** [spasi]
+   Pastikan tidak ada teks lain di depan atau di dalam kurung.
 ''';
 
       final userQuery =

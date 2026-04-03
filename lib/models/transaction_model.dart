@@ -83,9 +83,11 @@ class TransactionModel {
 class TransactionCategory {
   static const List<String> incomeCategories = [
     'Gaji',
-    'Freelance',
+    'Bonus',
     'Investasi',
+    'Freelance',
     'Hadiah',
+    'Penjualan',
     'Transfer Masuk',
     'Lainnya',
   ];
@@ -94,10 +96,17 @@ class TransactionCategory {
     'Makanan',
     'Transportasi',
     'Belanja',
-    'Hiburan',
+    'Cicilan',
+    'Hutang',
     'Tagihan',
     'Kesehatan',
     'Pendidikan',
+    'Hobi',
+    'Pajak',
+    'Asuransi',
+    'Zakat/Donasi',
+    'Langganan',
+    'Hiburan',
     'Transfer Keluar',
     'Lainnya',
   ];
@@ -109,32 +118,50 @@ class TransactionCategory {
   static IconData getIconForCategory(String category) {
     switch (category) {
       case 'Gaji':
-        return Icons.account_balance_wallet;
-      case 'Freelance':
-        return Icons.work_outline;
+        return Icons.payments_outlined;
+      case 'Bonus':
+        return Icons.auto_awesome_outlined;
       case 'Investasi':
-        return Icons.trending_up;
+        return Icons.trending_up_rounded;
+      case 'Freelance':
+        return Icons.work_outline_rounded;
       case 'Hadiah':
-        return Icons.card_giftcard;
+        return Icons.card_giftcard_rounded;
+      case 'Penjualan':
+        return Icons.storefront_rounded;
       case 'Transfer Masuk':
       case 'Transfer Keluar':
-        return Icons.swap_horiz;
+        return Icons.swap_horiz_rounded;
       case 'Makanan':
-        return Icons.restaurant;
+        return Icons.restaurant_rounded;
       case 'Transportasi':
-        return Icons.directions_car_outlined;
+        return Icons.directions_car_rounded;
       case 'Belanja':
         return Icons.shopping_bag_outlined;
+      case 'Cicilan':
+        return Icons.credit_card_rounded;
+      case 'Hutang':
+        return Icons.money_off_rounded;
+      case 'Tagihan':
+        return Icons.receipt_long_rounded;
+      case 'Kesehatan':
+        return Icons.local_hospital_rounded;
+      case 'Pendidikan':
+        return Icons.school_rounded;
+      case 'Hobi':
+        return Icons.sports_esports_rounded;
+      case 'Pajak':
+        return Icons.account_balance_outlined;
+      case 'Asuransi':
+        return Icons.verified_user_outlined;
+      case 'Zakat/Donasi':
+        return Icons.volunteer_activism_rounded;
+      case 'Langganan':
+        return Icons.subscriptions_outlined;
       case 'Hiburan':
         return Icons.movie_outlined;
-      case 'Tagihan':
-        return Icons.receipt_long_outlined;
-      case 'Kesehatan':
-        return Icons.local_hospital_outlined;
-      case 'Pendidikan':
-        return Icons.school_outlined;
       default:
-        return Icons.more_horiz;
+        return Icons.more_horiz_rounded;
     }
   }
 }

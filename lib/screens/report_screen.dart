@@ -46,6 +46,7 @@ class _ReportScreenState extends State<ReportScreen> {
   String? _aiApiPlatform; // 'gemini' or 'groq'
   List<String> _allApiKeys = []; // Stores combined "key|platform"
   List<String> _currentWalletIds = [];
+  List<WalletModel> _allWallets = []; // Store current wallets for AIcontext
 
   @override
   void initState() {
@@ -223,12 +224,17 @@ class _ReportScreenState extends State<ReportScreen> {
 
                 final walletIds = wallets.map((w) => w.id).toList();
                 WidgetsBinding.instance.addPostFrameCallback((_) {
-                  // Use set comparison to avoid rebuild loop (List != List is always true for new instances)
-                  final set1 = _currentWalletIds.toSet();
-                  final set2 = walletIds.toSet();
-                  if (mounted &&
-                      (set1.length != set2.length || !set1.containsAll(set2))) {
-                    setState(() => _currentWalletIds = walletIds);
+                  if (mounted) {
+                    // Update current wallets list for AI context
+                    _allWallets = wallets;
+
+                    // Use set comparison to avoid rebuild loop (List != List is always true for new instances)
+                    final set1 = _currentWalletIds.toSet();
+                    final set2 = walletIds.toSet();
+                    if (set1.length != set2.length ||
+                        !set1.containsAll(set2)) {
+                      setState(() => _currentWalletIds = walletIds);
+                    }
                   }
                 });
 
@@ -315,6 +321,7 @@ class _ReportScreenState extends State<ReportScreen> {
               uid: _uid,
               firestoreService: _firestoreService,
               walletIds: _currentWalletIds,
+              wallets: _allWallets,
             ),
           );
         },
@@ -1052,6 +1059,7 @@ class _AIAdvisorSheet extends StatefulWidget {
   final String uid;
   final FirestoreService firestoreService;
   final List<String> walletIds;
+  final List<WalletModel> wallets;
 
   const _AIAdvisorSheet({
     this.apiKey,
@@ -1064,6 +1072,7 @@ class _AIAdvisorSheet extends StatefulWidget {
     required this.uid,
     required this.firestoreService,
     required this.walletIds,
+    required this.wallets,
   });
 
   @override
@@ -2425,6 +2434,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                   future: (snapshot.hasData && snapshot.data!.isNotEmpty)
                       ? AIService.getAdvisorAnalysis(
                           transactions: snapshot.data!,
+                          wallets: widget.wallets,
                           dateRange: widget.selectedDateRange,
                           score: score,
                           status: status,
@@ -2858,6 +2868,8 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                 styleSheet: MarkdownStyleSheet(
                   p: const TextStyle(
                       fontSize: 14, height: 1.5, color: Colors.black87),
+                  strong: const TextStyle(
+                      fontWeight: FontWeight.w900, color: AppColors.primary),
                   listBullet:
                       const TextStyle(fontSize: 14, color: AppColors.primary),
                 ),
@@ -3010,6 +3022,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
         apiKey: _localApiKey,
         apiPlatform: _localApiPlatform,
         transactions: txns,
+        wallets: widget.wallets,
         userQuery: text,
         dateRange: widget.selectedDateRange,
         tone: ToneManager.notifier.value,

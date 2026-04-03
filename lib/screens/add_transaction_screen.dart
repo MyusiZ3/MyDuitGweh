@@ -138,8 +138,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final categories = TransactionCategory.getCategoriesForType(_selectedType);
-
     return Container(
       padding: EdgeInsets.only(
         left: 24,
@@ -196,15 +194,40 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Category dropdown
-            _buildDropdown<String>(
-              value: _selectedCategory,
-              hint: 'Pilih Kategori',
-              icon: Icons.category_outlined,
-              items: categories
-                  .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                  .toList(),
-              onChanged: (val) => setState(() => _selectedCategory = val),
+            // Category selector (Searchable)
+            InkWell(
+              onTap: _showCategoryPicker,
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceVariant,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      _selectedCategory == null
+                          ? Icons.category_outlined
+                          : TransactionCategory.getIconForCategory(_selectedCategory!),
+                      color: _selectedCategory == null ? AppColors.textHint : AppColors.primary,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        _selectedCategory ?? 'Pilih Kategori',
+                        style: TextStyle(
+                          color: _selectedCategory == null ? AppColors.textHint : AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    const Icon(Icons.search_rounded, size: 20, color: AppColors.textHint),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textHint),
+                  ],
+                ),
+              ),
             ),
             const SizedBox(height: 12),
 
@@ -299,6 +322,101 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                     color: isSelected ? color : AppColors.textSecondary,
                     fontSize: 14)),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _showCategoryPicker() {
+    final categories = TransactionCategory.getCategoriesForType(_selectedType);
+    final searchController = TextEditingController();
+    List<String> filteredCategories = List.from(categories);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          height: MediaQuery.of(context).size.height * 0.7,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+              Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+              const SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: TextField(
+                  controller: searchController,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    hintText: 'Cari kategori...',
+                    prefixIcon: const Icon(Icons.search_rounded),
+                    suffixIcon: searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              searchController.clear();
+                              setModalState(() => filteredCategories = categories);
+                            },
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: AppColors.surfaceVariant,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                  ),
+                  onChanged: (val) {
+                    setModalState(() {
+                      filteredCategories = categories
+                          .where((c) => c.toLowerCase().contains(val.toLowerCase()))
+                          .toList();
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  itemCount: filteredCategories.length,
+                  itemBuilder: (context, index) {
+                    final category = filteredCategories[index];
+                    final isSelected = _selectedCategory == category;
+                    return ListTile(
+                      leading: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.grey[100],
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          TransactionCategory.getIconForCategory(category),
+                          color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                          size: 20,
+                        ),
+                      ),
+                      title: Text(
+                        category,
+                        style: TextStyle(
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                        ),
+                      ),
+                      trailing: isSelected ? const Icon(Icons.check_circle, color: AppColors.primary) : null,
+                      onTap: () {
+                        setState(() => _selectedCategory = category);
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
