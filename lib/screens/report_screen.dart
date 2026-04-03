@@ -57,9 +57,9 @@ class _ReportScreenState extends State<ReportScreen> {
     // Cache the stream based on parameters to prevent rebuild flickering
     final walletKey = walletIds.map((id) => id).toList().join(',');
     final lastWalletKey = _lastWalletIds?.join(',');
-    
-    if (_txnStream != null && 
-        walletKey == lastWalletKey && 
+
+    if (_txnStream != null &&
+        walletKey == lastWalletKey &&
         _lastDateRange == selectedDateRange) {
       return _txnStream!;
     }
@@ -192,7 +192,8 @@ class _ReportScreenState extends State<ReportScreen> {
                   // Use set comparison to avoid rebuild loop (List != List is always true for new instances)
                   final set1 = _currentWalletIds.toSet();
                   final set2 = walletIds.toSet();
-                  if (mounted && (set1.length != set2.length || !set1.containsAll(set2))) {
+                  if (mounted &&
+                      (set1.length != set2.length || !set1.containsAll(set2))) {
                     setState(() => _currentWalletIds = walletIds);
                   }
                 });
@@ -1395,54 +1396,55 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                           ),
                           const SizedBox(height: 8),
                           // Consolidated Shared/Integrated Keys
-                          StatefulBuilder(
-                            builder: (context, innerSetState) {
-                              final keysCount = _aiService.getIntegratedKeys().length;
-                              final isActive =
-                                  _localApiKey == null || _localApiKey!.isEmpty;
-                              return Container(
-                                margin: const EdgeInsets.only(bottom: 8),
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 10),
-                                decoration: BoxDecoration(
-                                  color: AppColors.surfaceVariant.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                      color: isActive
-                                          ? AppColors.primary.withOpacity(0.3)
-                                          : Colors.transparent,
-                                      width: 1),
+                          StatefulBuilder(builder: (context, innerSetState) {
+                            final keysCount =
+                                _aiService.getIntegratedKeys().length;
+                            final isActive =
+                                _localApiKey == null || _localApiKey!.isEmpty;
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 10),
+                              decoration: BoxDecoration(
+                                color:
+                                    AppColors.surfaceVariant.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                    color: isActive
+                                        ? AppColors.primary.withOpacity(0.3)
+                                        : Colors.transparent,
+                                    width: 1),
+                              ),
+                              child: InkWell(
+                                onTap: () {
+                                  widget.onRemoveKey(); // Set null in prefs
+                                  setDialogState(() => _localApiKey = "");
+                                  setState(() => _localApiKey = "");
+                                },
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                        isActive
+                                            ? Icons.radio_button_checked
+                                            : Icons.radio_button_off,
+                                        size: 16,
+                                        color: isActive
+                                            ? AppColors.primary
+                                            : Colors.grey),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                          'Integrated Keys ($keysCount keys)',
+                                          style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColors.textPrimary)),
+                                    ),
+                                  ],
                                 ),
-                                child: InkWell(
-                                  onTap: () {
-                                    widget.onRemoveKey(); // Set null in prefs
-                                    setDialogState(() => _localApiKey = "");
-                                    setState(() => _localApiKey = "");
-                                  },
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                          isActive
-                                              ? Icons.radio_button_checked
-                                              : Icons.radio_button_off,
-                                          size: 16,
-                                          color: isActive
-                                              ? AppColors.primary
-                                              : Colors.grey),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Text('Integrated Keys ($keysCount keys)',
-                                            style: const TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w600,
-                                                color: AppColors.textPrimary)),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            }
-                          ),
+                              ),
+                            );
+                          }),
                           if (_localAllApiKeys.isNotEmpty) ...[
                             const SizedBox(height: 24),
                             const Text('SAVED KEYS',
@@ -1672,7 +1674,9 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                     const SizedBox(width: 12),
                     Text(_currentSessionId == null ? 'AI Dashboard' : 'Chat',
                         style: const TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.5)),
                     const Spacer(),
                     const SizedBox(width: 8),
                     if (_localApiKey != null) ...[
@@ -1782,7 +1786,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                               ),
                                             ),
                                             const SizedBox(height: 24),
-                                            const Text('Peringatan Skid!',
+                                            const Text('Baca Yaaa!',
                                                 textAlign: TextAlign.center,
                                                 style: TextStyle(
                                                     fontSize: 20,
@@ -1792,7 +1796,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                                         AppColors.textPrimary)),
                                             const SizedBox(height: 12),
                                             const Text(
-                                                'Pake AI ini buat manage uang di APP ini, bukan malah buat curhat anjerr, limit coo... *Archen',
+                                                'Ni AI gweh buat untuk manage uang di APP ini, bukan malah buat curhat anjerr, limit coo... *Archen',
                                                 textAlign: TextAlign.center,
                                                 style: TextStyle(
                                                     color:
@@ -2040,7 +2044,10 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
               size: 48, color: AppColors.primary),
           const SizedBox(height: 12),
           const Text('Pilih Mode AI Advisor',
-              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, letterSpacing: -0.5)),
+              style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 20,
+                  letterSpacing: -0.5)),
           const SizedBox(height: 8),
           const Text(
               'Gunakan asisten keuangan pintar untuk menganalisis data Anda secara instan.',
@@ -2082,7 +2089,9 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
             icon: const Icon(Icons.help_outline_rounded, size: 14),
             label: const Text('Cara dapetin API Key gratis?',
                 style: TextStyle(
-                    fontSize: 12, decoration: TextDecoration.underline, color: AppColors.textHint)),
+                    fontSize: 12,
+                    decoration: TextDecoration.underline,
+                    color: AppColors.textHint)),
           ),
         ],
       ),
@@ -2119,14 +2128,19 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
               TextButton(
                   onPressed: _showClearAllConfirm,
                   child: const Text('Hapus Semua',
-                      style: TextStyle(fontSize: 11, color: Colors.redAccent, fontWeight: FontWeight.bold))),
+                      style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.redAccent,
+                          fontWeight: FontWeight.bold))),
           ],
         ),
         const SizedBox(height: 8),
         _allSessions.isEmpty
             ? _buildEmptySessions()
             : Column(
-                children: _allSessions.map((session) => _buildSessionItem(session)).toList(),
+                children: _allSessions
+                    .map((session) => _buildSessionItem(session))
+                    .toList(),
               ),
         const SizedBox(height: 32),
       ],
@@ -2135,140 +2149,216 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
 
   Widget _buildHealthScoreCard() {
     return StreamBuilder<List<TransactionModel>>(
-      stream: widget.firestoreService.getFilteredTransactionsStream(
-        walletIds: widget.walletIds,
-        startDate: widget.selectedDateRange.start,
-        endDate: widget.selectedDateRange.end,
-      ),
-      builder: (context, snapshot) {
-        double income = 0;
-        double expense = 0;
-        if (snapshot.hasData) {
-          for (var txn in snapshot.data!) {
-            if (txn.isIncome) income += txn.amount;
-            else expense += txn.amount;
+        stream: widget.firestoreService.getFilteredTransactionsStream(
+          walletIds: widget.walletIds,
+          startDate: widget.selectedDateRange.start,
+          endDate: widget.selectedDateRange.end,
+        ),
+        builder: (context, snapshot) {
+          double income = 0;
+          double expense = 0;
+          if (snapshot.hasData) {
+            for (var txn in snapshot.data!) {
+              if (txn.isIncome)
+                income += txn.amount;
+              else
+                expense += txn.amount;
+            }
           }
-        }
 
-        double score = 100;
-        String status = "Sangat Sehat";
-        String initialAnalysis = "Analisis Archen: Menghitung kesehatan keuanganmu...";
+          double score = 100;
+          String status = "Sangat Sehat";
+          String initialAnalysis =
+              "Analisis Archen: Menghitung kesehatan keuanganmu...";
 
-        if (income > 0) {
-          double savingsRate = (income - expense) / income;
-          score = (savingsRate * 100).clamp(0, 100);
-          
-          if (score > 80) status = "Sangat Sehat";
-          else if (score > 50) status = "Cukup Sehat";
-          else if (score > 20) status = "Waspada";
-          else status = "Kritis";
-        } else if (expense > 0) {
-          score = 0;
-          status = "Kritis";
-        }
+          if (income > 0) {
+            double savingsRate = (income - expense) / income;
+            score = (savingsRate * 100).clamp(0, 100);
 
-        return Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: score > 50 
-                ? [const Color(0xFF6A11CB), const Color(0xFF2575FC)]
-                : [const Color(0xFFFF416C), const Color(0xFFFF4B2B)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                color: (score > 50 ? const Color(0xFF6A11CB) : const Color(0xFFFF416C)).withOpacity(0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
+            if (score > 80)
+              status = "Sangat Sehat";
+            else if (score > 50)
+              status = "Cukup Sehat";
+            else if (score > 20)
+              status = "Waspada";
+            else
+              status = "Kritis";
+          } else if (expense > 0) {
+            score = 0;
+            status = "Kritis";
+          }
+
+          return Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: score > 50
+                    ? [const Color(0xFF6A11CB), const Color(0xFF2575FC)]
+                    : [const Color(0xFFFF416C), const Color(0xFFFF4B2B)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: [
+                BoxShadow(
+                  color: (score > 50
+                          ? const Color(0xFF6A11CB)
+                          : const Color(0xFFFF416C))
+                      .withOpacity(0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.security_rounded,
+                              color: Colors.white, size: 14),
+                          SizedBox(width: 6),
+                          Text('AI Health Diagnose',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold)),
+                        ],
+                      ),
                     ),
-                    child: const Row(
+                    Text(
+                        'Update: ${DateFormat('HH:mm').format(DateTime.now())}',
+                        style: const TextStyle(
+                            color: Colors.white70, fontSize: 10)),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(Icons.security_rounded, color: Colors.white, size: 14),
-                        SizedBox(width: 6),
-                        Text('AI Health Diagnose',
-                            style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                        Text(score.toStringAsFixed(0),
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 48,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -2)),
+                        Text(status,
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold)),
                       ],
                     ),
-                  ),
-                  Text('Update: ${DateFormat('HH:mm').format(DateTime.now())}',
-                      style: const TextStyle(color: Colors.white70, fontSize: 10)),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(score.toStringAsFixed(0),
+                    const Spacer(),
+                    Container(
+                      width: 70,
+                      height: 70,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white24, width: 6),
+                      ),
+                      child: AnimatedHeartbeat(
+                        score: score,
+                        icon: score > 50
+                            ? Icons.favorite_rounded
+                            : Icons.warning_rounded,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                // REAL AI ANALYSIS TEXT
+                FutureBuilder<String>(
+                  future: (snapshot.hasData && snapshot.data!.isNotEmpty)
+                      ? AIService.getAdvisorAnalysis(
+                          transactions: snapshot.data!,
+                          dateRange: widget.selectedDateRange,
+                          score: score,
+                          status: status,
+                          tone: ToneManager.notifier.value,
+                        )
+                      : Future.value(initialAnalysis),
+                  builder: (context, analysisSnapshot) {
+                    String displayStr = analysisSnapshot.data ?? initialAnalysis;
+                    String? drainingWarning;
+                    if (displayStr.contains('(Archen sedang draining')) {
+                      final parts = displayStr.split('(Archen sedang draining');
+                      displayStr = parts[0].trim();
+                      if (parts.length > 1) {
+                        drainingWarning =
+                            'Archen sedang draining${parts[1].replaceAll(')', '').trim()}';
+                      }
+                    }
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          displayStr,
                           style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 48,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: -2)),
-                      Text(status,
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  const Spacer(),
-                  Container(
-                    width: 70,
-                    height: 70,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white24, width: 6),
-                    ),
-                    child: AnimatedHeartbeat(
-                      score: score,
-                      icon: score > 50 ? Icons.favorite_rounded : Icons.warning_rounded,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              // REAL AI ANALYSIS TEXT
-              FutureBuilder<String>(
-                future: (snapshot.hasData && snapshot.data!.isNotEmpty)
-                  ? AIService.getAdvisorAnalysis(
-                      transactions: snapshot.data!,
-                      dateRange: widget.selectedDateRange,
-                      score: score,
-                      status: status,
-                      tone: ToneManager.notifier.value,
-                    )
-                  : Future.value(initialAnalysis),
-                builder: (context, analysisSnapshot) {
-                  return Text(
-                    analysisSnapshot.data ?? initialAnalysis,
-                    style: const TextStyle(color: Colors.white, fontSize: 12, height: 1.4, fontWeight: FontWeight.w500),
-                  );
-                },
-              ),
-            ],
-          ),
-        );
-      }
-    );
+                              fontSize: 12,
+                              height: 1.4,
+                              fontWeight: FontWeight.w500),
+                        ),
+                        if (drainingWarning != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 16),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: InkWell(
+                                onTap: () {
+                                  UIHelper.showInfoSnackBar(
+                                      context, drainingWarning!);
+                                },
+                                borderRadius: BorderRadius.circular(16),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.15),
+                                    borderRadius: BorderRadius.circular(100),
+                                    border: Border.all(
+                                        color: Colors.white.withOpacity(0.3),
+                                        width: 0.5),
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.battery_alert_rounded,
+                                          color: Colors.amberAccent, size: 14),
+                                      SizedBox(width: 6),
+                                      Text('Draining Info',
+                                          style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold)),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
+          );
+        });
   }
 
   Widget _buildQuotaPreviewCard() {
@@ -2298,7 +2388,8 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: (isHigh ? Colors.red : AppColors.primary).withOpacity(0.1),
+                  color: (isHigh ? Colors.red : AppColors.primary)
+                      .withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(Icons.bolt_rounded,
@@ -2343,7 +2434,10 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
             const SizedBox(height: 8),
             Text(
               'Reset dlm $_nextReset',
-              style: TextStyle(fontSize: 9, color: AppColors.textHint.withOpacity(0.6), fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  fontSize: 9,
+                  color: AppColors.textHint.withOpacity(0.6),
+                  fontWeight: FontWeight.bold),
             ),
           ],
         ],
@@ -2374,7 +2468,10 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
             Icon(Icons.add_comment_rounded, color: Colors.white, size: 20),
             const SizedBox(height: 12),
             const Text('Tanya Archen',
-                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: Colors.white)),
+                style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 12,
+                    color: Colors.white)),
             const SizedBox(height: 4),
             const Text('Mulai chat baru',
                 style: TextStyle(color: Colors.white70, fontSize: 10)),
@@ -2383,7 +2480,10 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
             const SizedBox(height: 8),
             Text(
               'AI Assist',
-              style: TextStyle(fontSize: 9, color: Colors.white.withOpacity(0.6), fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  fontSize: 9,
+                  color: Colors.white.withOpacity(0.6),
+                  fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -2397,9 +2497,10 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
       alignment: Alignment.center,
       child: Column(
         children: [
-          Icon(Icons.chat_bubble_outline_rounded, size: 48, color: Colors.grey.shade200),
+          Icon(Icons.chat_bubble_outline_rounded,
+              size: 48, color: Colors.grey.shade200),
           const SizedBox(height: 16),
-          Text('Belum ada riwayat percakapan', 
+          Text('Belum ada riwayat percakapan',
               style: TextStyle(color: AppColors.textHint, fontSize: 12)),
         ],
       ),
@@ -2423,7 +2524,8 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
             color: AppColors.primary.withOpacity(0.1),
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.chat_rounded, size: 18, color: AppColors.primary),
+          child: const Icon(Icons.chat_rounded,
+              size: 18, color: AppColors.primary),
         ),
         title: Text(session['title'],
             maxLines: 1,
@@ -2434,7 +2536,8 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                 .format(DateTime.parse(session['lastUpdate'])),
             style: const TextStyle(fontSize: 10, color: AppColors.textHint)),
         trailing: IconButton(
-          icon: const Icon(Icons.delete_outline_rounded, size: 20, color: Colors.grey),
+          icon: const Icon(Icons.delete_outline_rounded,
+              size: 20, color: Colors.grey),
           onPressed: () => _showDeleteConfirm(session['id']),
         ),
       ),
@@ -2506,7 +2609,9 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                 children: [
                   Text(title,
                       style: const TextStyle(
-                          fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: -0.5)),
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16,
+                          letterSpacing: -0.5)),
                   Text(subtitle,
                       style: TextStyle(
                           fontSize: 11, color: AppColors.textSecondary)),
@@ -2661,77 +2766,34 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
           ValueListenableBuilder<AppTone>(
             valueListenable: ToneManager.notifier,
             builder: (context, tone, child) {
-              return PopupMenuButton<AppTone>(
-                initialValue: tone,
-                tooltip: 'Pilih Gaya Bicara AI',
-                offset: const Offset(0, -250),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
-                onSelected: (AppTone newTone) {
-                  ToneManager.setTone(newTone);
-                },
-                child: Container(
-                  margin: const EdgeInsets.only(right: 8),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: tone == AppTone.pasangan
-                        ? const Color(0xFFFF2D55).withOpacity(0.15)
-                        : AppColors.primary.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Text(
-                    tone == AppTone.genZ
-                        ? '🤘'
-                        : tone == AppTone.boomer
-                            ? '👴'
-                            : tone == AppTone.milenial
-                                ? '☕'
-                                : tone == AppTone.pasangan
-                                    ? '❤️'
-                                    : '🤵',
-                    style: const TextStyle(fontSize: 18),
+              return Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => UIHelper.showToneSelector(context),
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: tone == AppTone.pasangan
+                          ? const Color(0xFFFF2D55).withOpacity(0.15)
+                          : AppColors.primary.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      tone == AppTone.genZ
+                          ? '🤘'
+                          : tone == AppTone.boomer
+                              ? '👴'
+                              : tone == AppTone.milenial
+                                  ? '☕'
+                                  : tone == AppTone.pasangan
+                                      ? '❤️'
+                                      : '🤵',
+                      style: const TextStyle(fontSize: 18),
+                    ),
                   ),
                 ),
-                itemBuilder: (context) => [
-                  PopupMenuItem(
-                      value: AppTone.pasangan,
-                      child: Row(children: const [
-                        Text('❤️', style: TextStyle(fontSize: 16)),
-                        SizedBox(width: 8),
-                        Text('Inikah My',
-                            style: TextStyle(
-                                fontSize: 14, fontWeight: FontWeight.w600))
-                      ])),
-                  const PopupMenuDivider(),
-                  PopupMenuItem(
-                      value: AppTone.genZ,
-                      child: Row(children: const [
-                        Text('🤘', style: TextStyle(fontSize: 16)),
-                        SizedBox(width: 8),
-                        Text('Gen Z', style: TextStyle(fontSize: 14))
-                      ])),
-                  PopupMenuItem(
-                      value: AppTone.milenial,
-                      child: Row(children: const [
-                        Text('☕', style: TextStyle(fontSize: 16)),
-                        SizedBox(width: 8),
-                        Text('Milenial', style: TextStyle(fontSize: 14))
-                      ])),
-                  PopupMenuItem(
-                      value: AppTone.boomer,
-                      child: Row(children: const [
-                        Text('👴', style: TextStyle(fontSize: 16)),
-                        SizedBox(width: 8),
-                        Text('Boomer', style: TextStyle(fontSize: 14))
-                      ])),
-                  PopupMenuItem(
-                      value: AppTone.normal,
-                      child: Row(children: const [
-                        Text('🤵', style: TextStyle(fontSize: 16)),
-                        SizedBox(width: 8),
-                        Text('Normal', style: TextStyle(fontSize: 14))
-                      ])),
-                ],
               );
             },
           ),
@@ -2819,7 +2881,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
         });
         _saveCurrentSession();
         _scrollToBottom();
-        
+
         // 4. Refresh quota setelah berhasil chat
         _refreshQuota();
       }
@@ -2828,7 +2890,8 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
       if (mounted) {
         setState(() {
           _messages.add({
-            'text': 'Waduh, Archen lagi agak pusing (Limit/Error). Coba lagi beberapa saat lagi ya atau cek API di pengaturan.',
+            'text':
+                'Waduh, Archen lagi agak pusing (Limit/Error). Coba lagi beberapa saat lagi ya atau cek API di pengaturan.',
             'isAI': true,
           });
           _isLoading = false;
@@ -2853,14 +2916,15 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
 class AnimatedHeartbeat extends StatefulWidget {
   final double score;
   final IconData icon;
-  
+
   const AnimatedHeartbeat({super.key, required this.score, required this.icon});
 
   @override
   State<AnimatedHeartbeat> createState() => _AnimatedHeartbeatState();
 }
 
-class _AnimatedHeartbeatState extends State<AnimatedHeartbeat> with SingleTickerProviderStateMixin {
+class _AnimatedHeartbeatState extends State<AnimatedHeartbeat>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
 
@@ -2883,10 +2947,11 @@ class _AnimatedHeartbeatState extends State<AnimatedHeartbeat> with SingleTicker
   }
 
   void _updateSpeed() {
-    int durationMs = 800; 
-    if (widget.score >= 80) durationMs = 1200; // Calm heartbeat
+    int durationMs = 800;
+    if (widget.score >= 80)
+      durationMs = 1200; // Calm heartbeat
     else if (widget.score < 50) durationMs = 400; // Panic heartbeat
-    
+
     _controller.duration = Duration(milliseconds: durationMs);
     _controller.repeat(reverse: true);
   }

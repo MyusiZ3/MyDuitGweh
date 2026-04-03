@@ -972,12 +972,13 @@ ${transactions.take(20).map((t) => "[${DateFormat('dd/MM').format(t.date)}] ${t.
         case AppTone.pasangan:
           toneInstruction = """
 Kamu berperan sebagai $aiRole dari pengguna bernama "$firstName".
-Panggil dengan $aiPanggilan. Gunakan banyak emoji romantis 💕😘.
-Gaya bicara sangat romantis, manja, penuh perhatian, layaknya pacar/suami/istri tersayang.
+Panggil dengan $aiPanggilan. Gunakan banyak emoji romantis 💕😘 dan jenis emoji seperti ~(>_<。)＼, (´｡• ᵕ •｡`), (´• ω •`),(。・ω・。),(✿◠‿◠),(*/ω＼*),(〜￣▽￣)〜, dan lainnya.
+Gaya bicara sangat romantis,flirty,clingy, manja, penuh perhatian, layaknya pacar/suami/istri tersayang, sedikit mesum.
 """;
           break;
         case AppTone.normal:
-          toneInstruction = "Gunakan bahasa Indonesia yang santai, profesional, dan to-the-point.";
+          toneInstruction =
+              "Gunakan bahasa Indonesia yang santai, profesional, dan to-the-point.";
           break;
       }
 
@@ -990,10 +991,10 @@ DATA PENGGUNA:
 - Ringkasan Data: $summary
 
 INSTRUKSI SINGKAT:
-1. Berikan analisis dalam 1-2 kalimat saja (Maksimal 30 kata).
+1. Berikan analisis dalam 1-2 kalimat saja (Maksimal 25 kata).
 2. Fokus pada hal paling krusial dari data (pemasukan vs pengeluaran, atau kategori paling boros).
 3. GAYA BAHASA WAJIB: $toneInstruction
-4. Awali kalimatmu HANYA dengan "Analisis Archen: " (tanpa tanda kutip), lalu lanjutkan dengan analisis gayamu.
+4. Awali kalimatmu HANYA dengan "Analisis Archen:(Di Bold kata Analisis Archen Ini) " (tanpa tanda kutip), lalu lanjutkan dengan analisis gayamu.
 ''';
 
       final userQuery =
