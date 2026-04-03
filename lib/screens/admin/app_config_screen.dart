@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:google_generative_ai/google_generative_ai.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/ui_helper.dart';
 import '../../services/auth_service.dart';
@@ -19,14 +22,18 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
   bool _maintenanceMode = false;
   bool _advisorEnabled = true;
   String _advisorProvider = 'gemini';
+  List<String> _geminiKeys = [];
+  List<String> _groqKeys = [];
   final TextEditingController _minVersionController = TextEditingController();
-  final TextEditingController _latestVersionController = TextEditingController();
+  final TextEditingController _latestVersionController =
+      TextEditingController();
   final TextEditingController _downloadUrlController = TextEditingController();
   final TextEditingController _maintenanceMsgController =
       TextEditingController();
-  final TextEditingController _advisorApiKeyController = TextEditingController();
-  final TextEditingController _advisorMinTransController = TextEditingController();
-  final TextEditingController _advisorCooldownController = TextEditingController();
+  final TextEditingController _advisorMinTransController =
+      TextEditingController();
+  final TextEditingController _advisorCooldownController =
+      TextEditingController();
   DateTime? _startTime;
   DateTime? _endTime;
   bool _isSaving = false;
@@ -44,7 +51,6 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
     _latestVersionController.dispose();
     _downloadUrlController.dispose();
     _maintenanceMsgController.dispose();
-    _advisorApiKeyController.dispose();
     _advisorMinTransController.dispose();
     _advisorCooldownController.dispose();
     super.dispose();
@@ -61,7 +67,8 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
 
   Future<void> _loadConfig() async {
     try {
-      final configDoc = await _firestore.collection('app_config').doc('global').get();
+      final configDoc =
+          await _firestore.collection('app_config').doc('global').get();
       if (configDoc.exists) {
         final data = configDoc.data()!;
         setState(() {
@@ -73,7 +80,16 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
           // AI Advisor Config
           _advisorEnabled = data['is_advisor_enabled'] ?? true;
           _advisorProvider = data['advisor_provider'] ?? 'gemini';
-          _advisorApiKeyController.text = data['advisor_api_key'] ?? '';
+          _geminiKeys = List<String>.from(data['advisor_gemini_keys'] ?? []);
+          _groqKeys = List<String>.from(data['advisor_groq_keys'] ?? []);
+          
+          // Migrasi old API ke format baru kalau ada
+          final oldKey = data['advisor_api_key'] ?? '';
+          if (oldKey.toString().isNotEmpty) {
+             if (oldKey.toString().startsWith('gsk_') && !_groqKeys.contains(oldKey)) _groqKeys.add(oldKey);
+             if (oldKey.toString().startsWith('AIza') && !_geminiKeys.contains(oldKey)) _geminiKeys.add(oldKey);
+          }
+
           _advisorMinTransController.text =
               (data['advisor_min_transactions'] ?? 5).toString();
           _advisorCooldownController.text =
@@ -142,7 +158,9 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
       // Advisor Config
       'is_advisor_enabled': _advisorEnabled,
       'advisor_provider': _advisorProvider,
-      'advisor_api_key': _advisorApiKeyController.text,
+      'advisor_gemini_keys': _geminiKeys,
+      'advisor_groq_keys': _groqKeys,
+      'advisor_api_key': '', // clear deprecated field
       'advisor_min_transactions':
           int.tryParse(_advisorMinTransController.text) ?? 5,
       'advisor_cooldown_hours':
@@ -320,7 +338,8 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                         decoration: BoxDecoration(
                           color: Colors.amber.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                          border:
+                              Border.all(color: Colors.amber.withOpacity(0.3)),
                         ),
                         child: const Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -385,8 +404,8 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
           Container(
             width: 24,
             height: 24,
-            decoration: const BoxDecoration(
-                color: Colors.blue, shape: BoxShape.circle),
+            decoration:
+                const BoxDecoration(color: Colors.blue, shape: BoxShape.circle),
             alignment: Alignment.center,
             child: Text(num.toString(),
                 style: const TextStyle(
@@ -441,8 +460,8 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSectionHeader(
-                'System & Utility', Icons.settings_suggest_rounded, Colors.orange),
+            _buildSectionHeader('System & Utility',
+                Icons.settings_suggest_rounded, Colors.orange),
             _buildPremiumCard(
               child: Column(
                 children: [
@@ -501,8 +520,8 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
               ),
             ),
             const SizedBox(height: 32),
-            _buildSectionHeader(
-                'Versioning & Update', Icons.system_update_rounded, Colors.blue),
+            _buildSectionHeader('Versioning & Update',
+                Icons.system_update_rounded, Colors.blue),
             _buildPremiumCard(
               child: Column(
                 children: [
@@ -549,8 +568,8 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
               ),
             ),
             const SizedBox(height: 32),
-            _buildSectionHeader(
-                'AI Financial Advisor', Icons.psychology_outlined, Colors.purple),
+            _buildSectionHeader('AI Financial Advisor',
+                Icons.psychology_outlined, Colors.purple),
             _buildPremiumCard(
               child: Column(
                 children: [
@@ -584,13 +603,20 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                     onChanged: (v) => setState(() => _advisorProvider = v!),
                   ),
                   const SizedBox(height: 16),
-                  TextField(
-                    controller: _advisorApiKeyController,
-                    obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Dedicated API Key',
-                      prefixIcon:
-                          Icon(Icons.vpn_key_outlined, color: Colors.purple),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.key_outlined, color: Colors.purple),
+                      label: const Text('Kelola API Keys Advisor',
+                          style: TextStyle(color: Colors.purple)),
+                      onPressed: _showAdvisorKeysManager,
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.purple),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -898,4 +924,298 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
       },
     );
   }
+
+  void _showAdvisorKeysManager() {
+    final TextEditingController newKeyController = TextEditingController();
+    bool isAdding = false;
+    String addType = 'gemini'; // 'gemini' or 'groq'
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.85,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                children: [
+                   Container(
+                    margin: const EdgeInsets.only(top: 12, bottom: 8),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text('Kelola API Keys Advisor',
+                        style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.purple)),
+                  ),
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      children: [
+                        if (isAdding) ...[
+                          Row(
+                            children: [
+                              Expanded(
+                                child: DropdownButtonFormField<String>(
+                                  value: addType,
+                                  decoration: const InputDecoration(labelText: 'Tipe Key'),
+                                  items: const [
+                                    DropdownMenuItem(value: 'gemini', child: Text('Gemini')),
+                                    DropdownMenuItem(value: 'groq', child: Text('Groq')),
+                                  ],
+                                  onChanged: (v) => setModalState(() => addType = v!),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                flex: 2,
+                                child: TextField(
+                                  controller: newKeyController,
+                                  decoration: const InputDecoration(labelText: 'API Key'),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              TextButton(
+                                onPressed: () {
+                                  setModalState(() {
+                                    isAdding = false;
+                                    newKeyController.clear();
+                                  });
+                                },
+                                child: const Text('Batal'),
+                              ),
+                              ElevatedButton(
+                                onPressed: () {
+                                  final k = newKeyController.text.trim();
+                                  if (k.isNotEmpty) {
+                                    setState(() {
+                                      if (addType == 'gemini' && !_geminiKeys.contains(k)) {
+                                         _geminiKeys.add(k);
+                                      } else if (addType == 'groq' && !_groqKeys.contains(k)) {
+                                         _groqKeys.add(k);
+                                      }
+                                    });
+                                    setModalState(() {
+                                      isAdding = false;
+                                      newKeyController.clear();
+                                    });
+                                  }
+                                },
+                                child: const Text('Simpan Key'),
+                              ),
+                            ],
+                          ),
+                          const Divider(height: 32),
+                        ] else ...[
+                          OutlinedButton.icon(
+                            icon: const Icon(Icons.add),
+                            label: const Text('Tambah API Key'),
+                            onPressed: () => setModalState(() => isAdding = true),
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+
+                        const Text('Gemini API Keys', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        const SizedBox(height: 8),
+                        if (_geminiKeys.isEmpty) const Text('Belum ada data.', style: TextStyle(color: Colors.grey)),
+                        ..._geminiKeys.map((key) => _buildKeyItem(key, 'gemini', () {
+                          setState(() => _geminiKeys.remove(key));
+                          setModalState((){});
+                        })),
+
+                         const SizedBox(height: 24),
+
+                        const Text('Groq API Keys', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        const SizedBox(height: 8),
+                        if (_groqKeys.isEmpty) const Text('Belum ada data.', style: TextStyle(color: Colors.grey)),
+                         ..._groqKeys.map((key) => _buildKeyItem(key, 'groq', () {
+                          setState(() => _groqKeys.remove(key));
+                          setModalState((){});
+                        })),
+                        const SizedBox(height: 100),
+                      ]
+                    )
+                  )
+                ],
+              ),
+            );
+          }
+        );
+      }
+    );
+  }
+
+  Widget _buildKeyItem(String apiKey, String type, VoidCallback onDelete) {
+    bool isTesting = false;
+    String testResult = '';
+    Color testColor = Colors.grey;
+
+    return StatefulBuilder(
+      builder: (context, setItemState) {
+        return Card(
+           margin: const EdgeInsets.only(bottom: 8),
+           elevation: 0,
+           shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(color: Colors.grey.withOpacity(0.3)),
+           ),
+           child: Padding(
+             padding: const EdgeInsets.all(12),
+             child: Column(
+               crossAxisAlignment: CrossAxisAlignment.start,
+               children: [
+                 Row(
+                   children: [
+                     Expanded(
+                        child: Text(
+                          apiKey,
+                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        )
+                     ),
+                     IconButton(
+                       icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+                       onPressed: onDelete,
+                       padding: EdgeInsets.zero,
+                       constraints: const BoxConstraints(),
+                     ),
+                   ],
+                 ),
+                 const SizedBox(height: 8),
+                 Row(
+                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                   children: [
+                      if (isTesting)
+                        const SizedBox(
+                          width: 14, height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      else if (testResult.isNotEmpty)
+                        Expanded(
+                          child: Text(
+                            testResult,
+                            style: TextStyle(color: testColor, fontSize: 12, fontWeight: FontWeight.bold),
+                          ),
+                        )
+                      else
+                        const Flexible(child: Text('Belum dites', style: TextStyle(color: Colors.grey, fontSize: 12))),
+                      
+                      SizedBox(
+                        height: 30,
+                        child: TextButton(
+                          onPressed: isTesting ? null : () async {
+                              setItemState(() {
+                                 isTesting = true;
+                                 testResult = 'Menghubungkan...';
+                                 testColor = Colors.grey;
+                              });
+
+                              bool success = false;
+                              String msg = '';
+                              if (type == 'gemini') {
+                                 final res = await _testGemini(apiKey);
+                                 success = res.success;
+                                 msg = res.message;
+                              } else {
+                                 final res = await _testGroq(apiKey);
+                                 success = res.success;
+                                 msg = res.message;
+                              }
+
+                              setItemState(() {
+                                 isTesting = false;
+                                 testResult = success ? 'Normal / Active' : msg;
+                                 testColor = success ? Colors.green : Colors.red;
+                              });
+                          },
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                          ),
+                          child: const Text('Cek Koneksi', style: TextStyle(fontSize: 12)),
+                        ),
+                      )
+                   ],
+                 )
+               ],
+             )
+           ),
+        );
+      }
+    );
+  }
+
+  Future<({bool success, String message})> _testGemini(String key) async {
+    final fallbackModels = [
+      'gemini-3.1-pro-preview',
+      'gemini-2.5-flash',
+      'gemini-2.0-flash'
+    ];
+
+    for (String m in fallbackModels) {
+      try {
+        final model = GenerativeModel(model: m, apiKey: key);
+        await model.generateContent([Content.text('test')]);
+        return (success: true, message: 'Valid ($m)');
+      } catch (e) {
+        final errStr = e.toString().toLowerCase();
+        bool isNotFound = errStr.contains('not found') || errStr.contains('404');
+        if (isNotFound) continue; // Try next fallback model
+
+        if (errStr.contains('api key not valid')) return (success: false, message: 'Invalid Key');
+        if (errStr.contains('quota')) return (success: false, message: 'Quota Exceeded');
+        if (errStr.contains('exhausted')) return (success: false, message: 'API Limit Exhausted');
+        return (success: false, message: 'Error: ${e.toString().split('\n').first}');
+      }
+    }
+    return (success: false, message: 'Models Not Found / API Limit');
+  }
+
+  Future<({bool success, String message})> _testGroq(String key) async {
+    try {
+      final res = await http.post(
+        Uri.parse('https://api.groq.com/openai/v1/chat/completions'),
+        headers: {
+          'Authorization': 'Bearer $key',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          "model": "llama-3.3-70b-versatile",
+          "messages": [{"role": "user", "content": "hi"}],
+          "max_tokens": 10
+        }), // very small max_tokens
+      );
+
+      if (res.statusCode == 200) {
+        return (success: true, message: 'Valid');
+      } else {
+        final err = jsonDecode(res.body);
+        if (err['error']?['code'] == 'invalid_api_key') return (success: false, message: 'Invalid Key');
+        if (res.statusCode == 429) return (success: false, message: 'Rate Limit / Quota Exceeded');
+        return (success: false, message: 'Error \${res.statusCode}');
+      }
+    } catch (e) {
+      return (success: false, message: 'Failed to connect');
+    }
+  }
+
 }

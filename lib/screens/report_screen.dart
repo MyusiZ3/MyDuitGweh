@@ -36,16 +36,42 @@ class _ReportScreenState extends State<ReportScreen> {
   );
 
   late Stream<List<WalletModel>> _walletStream;
+  Stream<List<TransactionModel>>? _txnStream;
+  List<String>? _lastWalletIds;
+  DateTimeRange? _lastDateRange;
+
   int _touchedPieIndex = -1;
   bool _isCategoryMode = true;
   String? _aiApiKey;
   List<String> _allApiKeys = [];
+  List<String> _currentWalletIds = [];
 
   @override
   void initState() {
     super.initState();
     _walletStream = _firestoreService.getWalletsStream(_uid);
     _loadAIKey();
+  }
+
+  Stream<List<TransactionModel>> _getTxnStream(List<String> walletIds) {
+    // Cache the stream based on parameters to prevent rebuild flickering
+    final walletKey = walletIds.map((id) => id).toList().join(',');
+    final lastWalletKey = _lastWalletIds?.join(',');
+    
+    if (_txnStream != null && 
+        walletKey == lastWalletKey && 
+        _lastDateRange == selectedDateRange) {
+      return _txnStream!;
+    }
+
+    _lastWalletIds = List.from(walletIds);
+    _lastDateRange = selectedDateRange;
+    _txnStream = _firestoreService.getFilteredTransactionsStream(
+      walletIds: walletIds,
+      startDate: selectedDateRange.start,
+      endDate: selectedDateRange.end,
+    );
+    return _txnStream!;
   }
 
   Future<void> _loadAIKey() async {
@@ -162,13 +188,17 @@ class _ReportScreenState extends State<ReportScreen> {
                       'Belum ada dompet', 'Buat dompet dulu yuk!');
 
                 final walletIds = wallets.map((w) => w.id).toList();
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  // Use set comparison to avoid rebuild loop (List != List is always true for new instances)
+                  final set1 = _currentWalletIds.toSet();
+                  final set2 = walletIds.toSet();
+                  if (mounted && (set1.length != set2.length || !set1.containsAll(set2))) {
+                    setState(() => _currentWalletIds = walletIds);
+                  }
+                });
 
                 return StreamBuilder<List<TransactionModel>>(
-                  stream: _firestoreService.getFilteredTransactionsStream(
-                    walletIds: walletIds,
-                    startDate: selectedDateRange.start,
-                    endDate: selectedDateRange.end,
-                  ),
+                  stream: _getTxnStream(walletIds),
                   builder: (context, txnSnapshot) {
                     if (txnSnapshot.connectionState == ConnectionState.waiting)
                       return const Padding(
@@ -248,6 +278,7 @@ class _ReportScreenState extends State<ReportScreen> {
               selectedDateRange: selectedDateRange,
               uid: _uid,
               firestoreService: _firestoreService,
+              walletIds: _currentWalletIds,
             ),
           );
         },
@@ -983,9 +1014,10 @@ class _AIAdvisorSheet extends StatefulWidget {
   final DateTimeRange selectedDateRange;
   final String uid;
   final FirestoreService firestoreService;
+  final List<String> walletIds;
 
   const _AIAdvisorSheet({
-    required this.apiKey,
+    this.apiKey,
     required this.allApiKeys,
     required this.onSaveKey,
     required this.onDeleteKey,
@@ -993,6 +1025,7 @@ class _AIAdvisorSheet extends StatefulWidget {
     required this.selectedDateRange,
     required this.uid,
     required this.firestoreService,
+    required this.walletIds,
   });
 
   @override
@@ -1014,6 +1047,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
       {}; // key -> status ('ok', 'limit', 'error')
   int _aiCount = 0;
   int _aiLimit = 10;
+  String? _nextReset;
 
   @override
   void initState() {
@@ -1035,6 +1069,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
       setState(() {
         _aiCount = status['count'] ?? 0;
         _aiLimit = status['limit'] ?? 10;
+        _nextReset = status['nextReset'];
       });
     }
   }
@@ -2060,12 +2095,15 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
       children: [
         _buildHealthScoreCard(),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(child: _buildQuotaPreviewCard()),
-            const SizedBox(width: 12),
-            Expanded(child: _buildNewChatQuickCard()),
-          ],
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(child: _buildQuotaPreviewCard()),
+              const SizedBox(width: 12),
+              Expanded(child: _buildNewChatQuickCard()),
+            ],
+          ),
         ),
         const SizedBox(height: 24),
         Row(
@@ -2096,91 +2134,143 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
   }
 
   Widget _buildHealthScoreCard() {
-    // Dummy logic for now, should be connected to AI analysis result
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF6A11CB).withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
+    return StreamBuilder<List<TransactionModel>>(
+      stream: widget.firestoreService.getFilteredTransactionsStream(
+        walletIds: widget.walletIds,
+        startDate: widget.selectedDateRange.start,
+        endDate: widget.selectedDateRange.end,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.security_rounded, color: Colors.white, size: 14),
-                    SizedBox(width: 6),
-                    Text('AI Health Diagnose',
-                        style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                  ],
-                ),
+      builder: (context, snapshot) {
+        double income = 0;
+        double expense = 0;
+        if (snapshot.hasData) {
+          for (var txn in snapshot.data!) {
+            if (txn.isIncome) income += txn.amount;
+            else expense += txn.amount;
+          }
+        }
+
+        double score = 100;
+        String status = "Sangat Sehat";
+        String initialAnalysis = "Analisis Archen: Menghitung kesehatan keuanganmu...";
+
+        if (income > 0) {
+          double savingsRate = (income - expense) / income;
+          score = (savingsRate * 100).clamp(0, 100);
+          
+          if (score > 80) status = "Sangat Sehat";
+          else if (score > 50) status = "Cukup Sehat";
+          else if (score > 20) status = "Waspada";
+          else status = "Kritis";
+        } else if (expense > 0) {
+          score = 0;
+          status = "Kritis";
+        }
+
+        return Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: score > 50 
+                ? [const Color(0xFF6A11CB), const Color(0xFF2575FC)]
+                : [const Color(0xFFFF416C), const Color(0xFFFF4B2B)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: (score > 50 ? const Color(0xFF6A11CB) : const Color(0xFFFF416C)).withOpacity(0.3),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
               ),
-              const Text('Update: Tadi',
-                  style: TextStyle(color: Colors.white70, fontSize: 10)),
             ],
           ),
-          const SizedBox(height: 20),
-          Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('85',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 48,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: -2)),
-                  Text('Sangat Sehat',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold)),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.security_rounded, color: Colors.white, size: 14),
+                        SizedBox(width: 6),
+                        Text('AI Health Diagnose',
+                            style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ),
+                  Text('Update: ${DateFormat('HH:mm').format(DateTime.now())}',
+                      style: const TextStyle(color: Colors.white70, fontSize: 10)),
                 ],
               ),
-              const Spacer(),
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white24, width: 8),
-                ),
-                child: const Center(
-                  child: Icon(Icons.favorite_rounded, color: Colors.white, size: 32),
-                ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(score.toStringAsFixed(0),
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 48,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -2)),
+                      Text(status,
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  const Spacer(),
+                  Container(
+                    width: 70,
+                    height: 70,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white24, width: 6),
+                    ),
+                    child: AnimatedHeartbeat(
+                      score: score,
+                      icon: score > 50 ? Icons.favorite_rounded : Icons.warning_rounded,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              // REAL AI ANALYSIS TEXT
+              FutureBuilder<String>(
+                future: (snapshot.hasData && snapshot.data!.isNotEmpty)
+                  ? AIService.getAdvisorAnalysis(
+                      transactions: snapshot.data!,
+                      dateRange: widget.selectedDateRange,
+                      score: score,
+                      status: status,
+                      tone: ToneManager.notifier.value,
+                    )
+                  : Future.value(initialAnalysis),
+                builder: (context, analysisSnapshot) {
+                  return Text(
+                    analysisSnapshot.data ?? initialAnalysis,
+                    style: const TextStyle(color: Colors.white, fontSize: 12, height: 1.4, fontWeight: FontWeight.w500),
+                  );
+                },
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          const Text(
-            'Analisis Archen: Pengeluaranmu bulan ini sangat terkontrol. Pertahankan tabungan minimal 20% ya!',
-            style: TextStyle(color: Colors.white, fontSize: 12, height: 1.4),
-          ),
-        ],
-      ),
+        );
+      }
     );
   }
+
   Widget _buildQuotaPreviewCard() {
     final int remaining = (_aiLimit - _aiCount).clamp(0, _aiLimit);
     final double progress = (_aiCount / _aiLimit).clamp(0.0, 1.0);
@@ -2203,26 +2293,59 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.bolt_rounded, 
-              color: isHigh ? AppColors.expense : Colors.orange, 
-              size: 20),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: (isHigh ? Colors.red : AppColors.primary).withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.bolt_rounded,
+                    size: 14, color: isHigh ? Colors.red : AppColors.primary),
+              ),
+              const SizedBox(width: 8),
+              const Text('AI Quota',
+                  style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textHint)),
+            ],
+          ),
           const SizedBox(height: 12),
-          const Text('Sisa Kuota AI',
-              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12)),
-          const SizedBox(height: 4),
-          Text('$remaining / $_aiLimit chat tersisa',
-              style: const TextStyle(color: AppColors.textHint, fontSize: 10)),
-          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text('$remaining',
+                  style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: isHigh ? Colors.red : AppColors.textPrimary)),
+              Text('/$_aiLimit',
+                  style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textHint)),
+            ],
+          ),
+          const SizedBox(height: 8),
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: progress,
-              backgroundColor: (isHigh ? AppColors.expense : Colors.orange).withOpacity(0.1),
+              backgroundColor: Colors.grey.shade100,
               valueColor: AlwaysStoppedAnimation<Color>(
-                  isHigh ? AppColors.expense : Colors.orange),
+                  isHigh ? Colors.red : AppColors.primary),
               minHeight: 4,
             ),
           ),
+          if (_nextReset != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Reset dlm $_nextReset',
+              style: TextStyle(fontSize: 9, color: AppColors.textHint.withOpacity(0.6), fontWeight: FontWeight.bold),
+            ),
+          ],
         ],
       ),
     );
@@ -2245,7 +2368,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
             ),
           ],
         ),
-        child: const Column(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(Icons.add_comment_rounded, color: Colors.white, size: 20),
@@ -2255,8 +2378,13 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
             const SizedBox(height: 4),
             const Text('Mulai chat baru',
                 style: TextStyle(color: Colors.white70, fontSize: 10)),
-            const SizedBox(height: 12),
+            const Spacer(),
             Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 14),
+            const SizedBox(height: 8),
+            Text(
+              'AI Assist',
+              style: TextStyle(fontSize: 9, color: Colors.white.withOpacity(0.6), fontWeight: FontWeight.bold),
+            ),
           ],
         ),
       ),
@@ -2719,5 +2847,73 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
         );
       }
     });
+  }
+}
+
+class AnimatedHeartbeat extends StatefulWidget {
+  final double score;
+  final IconData icon;
+  
+  const AnimatedHeartbeat({super.key, required this.score, required this.icon});
+
+  @override
+  State<AnimatedHeartbeat> createState() => _AnimatedHeartbeatState();
+}
+
+class _AnimatedHeartbeatState extends State<AnimatedHeartbeat> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this);
+    _animation = Tween<double>(begin: 1.0, end: 1.25).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+    _updateSpeed();
+  }
+
+  @override
+  void didUpdateWidget(AnimatedHeartbeat oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.score != widget.score) {
+      _updateSpeed();
+    }
+  }
+
+  void _updateSpeed() {
+    int durationMs = 800; 
+    if (widget.score >= 80) durationMs = 1200; // Calm heartbeat
+    else if (widget.score < 50) durationMs = 400; // Panic heartbeat
+    
+    _controller.duration = Duration(milliseconds: durationMs);
+    _controller.repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(
+      scale: _animation,
+      child: Center(
+        child: Icon(
+          widget.icon,
+          color: Colors.white,
+          size: 28,
+          shadows: [
+            Shadow(
+              color: Colors.white.withOpacity(0.5),
+              blurRadius: 10,
+            )
+          ],
+        ),
+      ),
+    );
   }
 }

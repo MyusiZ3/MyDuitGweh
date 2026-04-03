@@ -931,13 +931,27 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                                     size: 16, color: Colors.blue),
                               ),
                               const SizedBox(width: 16),
-                              Expanded(
-                                child: Text(
-                                  'Kuota reset TOTAL setiap $tempInterval mnt dari chat pertama user (Fixed Window).',
-                                  style: const TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.blue,
-                                      fontWeight: FontWeight.bold),
+                              const Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'INFO RESET KUOTA',
+                                      style: TextStyle(
+                                          fontSize: 10,
+                                          color: Colors.blue,
+                                          fontWeight: FontWeight.w900,
+                                          letterSpacing: 1),
+                                    ),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      'Sistem menggunakan Fixed Window. Kuota user akan di-reset (kembali ke 0) setiap interval yang ditentukan sejak chat pertama mereka dalam siklus tersebut.',
+                                      style: TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.blueGrey,
+                                          height: 1.4),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
@@ -1156,27 +1170,33 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                                 if (mounted) Navigator.pop(context);
 
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                        'Konfigurasi berhasil disimpan! ✨'),
-                                    backgroundColor: Colors.green,
+                                  SnackBar(
+                                    content: const Row(
+                                      children: [
+                                        Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                                        SizedBox(width: 12),
+                                        Text('Konfigurasi AI diperbarui! ✨'),
+                                      ],
+                                    ),
+                                    backgroundColor: AppColors.primary,
                                     behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                   ),
                                 );
                               } catch (e) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Gagal: $e')),
+                                  SnackBar(content: Text('Gagal: $e'), backgroundColor: Colors.redAccent),
                                 );
                               }
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.black,
+                              backgroundColor: AppColors.primary,
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(20)),
                               elevation: 0,
                             ),
-                            child: const Text('SIMPAN KONFIGURASI',
+                            child: const Text('SIMPAN PERUBAHAN',
                                 style: TextStyle(
                                     fontWeight: FontWeight.w900,
                                     letterSpacing: 1)),
@@ -1259,7 +1279,7 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                       if (!snapshot.hasData)
                         return const Center(child: CircularProgressIndicator());
                       final data =
-                          snapshot.data!.data() as Map<String, dynamic>? ?? {};
+snapshot.data!.data() as Map<String, dynamic>? ?? {};
                       final List<String> geminiKeys =
                           List<String>.from(data['gemini_keys'] ?? []);
                       final List<String> groqKeys =
@@ -1278,8 +1298,6 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                         final keyIcon =
                             isGroq ? Icons.bolt_rounded : Icons.vpn_key_rounded;
 
-                        // Fix: Defined status variables OUTSIDE the StatefulBuilder's closure (but inside buildKeyCard)
-                        // so they persist when setItemState causes a rebuild.
                         String healthStatus = 'unknown';
                         String healthMessage = 'Tap TEST to verify';
 
@@ -1375,13 +1393,9 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                                                       ? Colors.green
                                                       : (healthStatus == 'limit'
                                                           ? Colors.orange
-                                                          : (healthStatus ==
-                                                                      'invalid' ||
-                                                                  healthStatus ==
-                                                                      'error'
+                                                          : (healthStatus == 'invalid' || healthStatus == 'error'
                                                               ? Colors.red
-                                                              : Colors
-                                                                  .grey[400])),
+                                                              : Colors.grey[400])),
                                                   shape: BoxShape.circle,
                                                 ),
                                               ),
@@ -1392,34 +1406,28 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                                                       ? 'Validating...'
                                                       : healthMessage,
                                                   style: TextStyle(
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w700,
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.w900,
+                                                    letterSpacing: -0.2,
                                                     color: healthStatus == 'ok'
-                                                        ? Colors.green[700]
+                                                        ? Colors.green[800]
                                                         : (healthStatus ==
-                                                                'limit'
-                                                            ? Colors.orange[700]
-                                                            : (healthStatus ==
-                                                                        'invalid' ||
-                                                                    healthStatus ==
-                                                                        'error'
-                                                                ? Colors
-                                                                    .red[700]
-                                                                : Colors.grey[
-                                                                    600])),
+                                                                'unknown'
+                                                            ? AppColors.textHint
+                                                            : Colors.orange[800]),
                                                   ),
                                                   maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
+                                                  overflow: TextOverflow.ellipsis,
                                                 ),
                                               ),
                                             ],
                                           ),
                                         ),
-                                        Material(
-                                          color: Colors.transparent,
-                                          child: InkWell(
-                                            onTap: healthStatus == 'checking'
+                                        const SizedBox(width: 12),
+                                        SizedBox(
+                                          height: 38,
+                                          child: ElevatedButton(
+                                            onPressed: healthStatus == 'checking'
                                                 ? null
                                                 : () async {
                                                     setItemState(() {
@@ -1427,76 +1435,46 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                                                     });
                                                     try {
                                                       final statusMap = isGroq
-                                                          ? await AIService()
-                                                              .checkGroqKeyStatus(
-                                                                  key)
-                                                          : await AIService()
-                                                              .checkKeyStatus(
-                                                                  key);
+                                                          ? await AIService().checkGroqKeyStatus(key)
+                                                          : await AIService().checkKeyStatus(key);
                                                       setItemState(() {
-                                                        healthStatus =
-                                                            statusMap[
-                                                                    'status'] ??
-                                                                'error';
-                                                        healthMessage =
-                                                            statusMap[
-                                                                    'message'] ??
-                                                                'Error';
+                                                        healthStatus = statusMap['status'] ?? 'error';
+                                                        healthMessage = statusMap['message'] ?? 'Error';
                                                       });
                                                     } catch (e) {
                                                       setItemState(() {
                                                         healthStatus = 'error';
-                                                        healthMessage =
-                                                            'Failed: $e';
+                                                        healthMessage = 'Failed: $e';
                                                       });
                                                     }
                                                   },
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                            child: Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 14,
-                                                      vertical: 8),
-                                              decoration: BoxDecoration(
-                                                color: Colors.black
-                                                    .withOpacity(0.04),
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                              ),
-                                              child: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  if (healthStatus ==
-                                                      'checking')
-                                                    const SizedBox(
-                                                      width: 12,
-                                                      height: 12,
-                                                      child:
-                                                          CircularProgressIndicator(
-                                                              strokeWidth: 2,
-                                                              color:
-                                                                  Colors.black),
-                                                    )
-                                                  else
-                                                    const Icon(
-                                                        Icons.refresh_rounded,
-                                                        size: 14,
-                                                        color: Colors.black),
-                                                  const SizedBox(width: 6),
-                                                  Text(
-                                                    healthStatus == 'checking'
-                                                        ? 'TESTING'
-                                                        : 'TEST',
-                                                    style: const TextStyle(
-                                                        fontSize: 10,
-                                                        fontWeight:
-                                                            FontWeight.w900,
-                                                        color: Colors.black),
-                                                  ),
-                                                ],
-                                              ),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: AppColors.primary.withOpacity(0.1),
+                                              foregroundColor: AppColors.primary,
+                                              elevation: 0,
+                                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                                              shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(16)),
                                             ),
+                                            child: healthStatus == 'checking'
+                                                ? const SizedBox(
+                                                    width: 16,
+                                                    height: 16,
+                                                    child: CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                        valueColor: AlwaysStoppedAnimation(AppColors.primary)),
+                                                  )
+                                                : const Row(
+                                                    children: [
+                                                      Icon(Icons.bolt_rounded, size: 14),
+                                                      SizedBox(width: 6),
+                                                      Text('TEST',
+                                                          style: TextStyle(
+                                                              fontWeight: FontWeight.w900,
+                                                              fontSize: 12)),
+                                                    ],
+                                                  ),
                                           ),
                                         ),
                                       ],

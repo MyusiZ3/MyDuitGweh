@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -11,8 +12,20 @@ import 'package:intl/intl.dart';
 class AIService {
   static const String _modelName = 'gemini-3.1-pro-preview';
   static final ValueNotifier<String> statusNotifier = ValueNotifier("ok");
-
   static List<String> _integratedApiKeys = [];
+
+  static Future<Map<String, dynamic>> getGlobalConfig() async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('app_config')
+          .doc('global')
+          .get();
+      if (doc.exists) return doc.data()!;
+    } catch (e) {
+      debugPrint('Error getting Global config: $e');
+    }
+    return {};
+  }
 
   static Future<Map<String, dynamic>> getAIConfig() async {
     try {
@@ -109,8 +122,8 @@ class AIService {
       final configDoc = await FirebaseFirestore.instance
           .collection('app_settings')
           .doc('ai_config')
-          .get(const GetOptions(source: Source.serverAndCache));
-      
+          .get(const GetOptions(source: Source.server));
+
       final config = configDoc.data() ?? {};
       final limit = config['max_chats_per_hour'] ?? 10;
       final resetMinutes = config['reset_duration_minutes'] ?? 60;
@@ -118,8 +131,8 @@ class AIService {
       final userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
-          .get(const GetOptions(source: Source.serverAndCache));
-      
+          .get(const GetOptions(source: Source.server));
+
       final data = userDoc.data() ?? {};
       final int count = data['aiCount'] ?? 0;
       final Timestamp? cycleStartTs = data['aiCycleStart'] as Timestamp?;
@@ -128,15 +141,37 @@ class AIService {
       // Check if cycle expired (Logic mirror from _checkUserQuota)
       if (cycleStartTs != null) {
         final cycleStart = cycleStartTs.toDate();
-        if (now.difference(cycleStart).inMinutes >= resetMinutes) {
+        final minutesPassed = now.difference(cycleStart).inMinutes;
+        if (minutesPassed >= resetMinutes) {
           // Cycle expired, effectively 0 in UI (next chat will trigger DB reset)
-          return {'count': 0, 'limit': limit};
+          return {
+            'count': 0,
+            'limit': limit,
+            'nextReset': 'Sekarang',
+            'interval': resetMinutes
+          };
         }
+
+        final nextResetDateTime =
+            cycleStart.add(Duration(minutes: resetMinutes));
+        final diff = nextResetDateTime.difference(now);
+        final nextResetStr = diff.inHours > 0
+            ? '${diff.inHours}j ${diff.inMinutes % 60}m'
+            : '${diff.inMinutes}m';
+
+        return {
+          'count': count,
+          'limit': limit,
+          'nextReset': nextResetStr,
+          'interval': resetMinutes
+        };
       }
 
       return {
         'count': count,
         'limit': limit,
+        'nextReset': 'Baru Dimulai',
+        'interval': resetMinutes
       };
     } catch (e) {
       debugPrint('Error getting quota status: $e');
@@ -348,8 +383,13 @@ class AIService {
   Future<Map<String, dynamic>> checkKeyStatus(String apiKey) async {
     try {
       // 3. Fallback Gemini Models (Updated for 2026)
-      final fallbackModels = ['gemini-3.1-pro-preview', 'gemini-2.5-flash', 'gemini-2.0-flash'];
-      final model = GenerativeModel(model: fallbackModels.first, apiKey: apiKey);
+      final fallbackModels = [
+        'gemini-3.1-pro-preview',
+        'gemini-2.5-flash',
+        'gemini-2.0-flash'
+      ];
+      final model =
+          GenerativeModel(model: fallbackModels.first, apiKey: apiKey);
       // Use a more standard prompt, 2.5-flash might reject 'hi' as low-entropy or test Junk
       debugPrint('>>> Checking Gemini Key: ${apiKey.substring(0, 5)}...');
       await model.generateContent(
@@ -646,6 +686,7 @@ INSTRUKSI:
 3. Berikan tips hemat yang relevan dengan pola pengeluarannya.
 4. Gunakan Markdown untuk format jawaban (bullet point, bold).
 5. Jangan berikan nasihat investasi berisiko tinggi.
+6. JIKA PENGGUNA HANYA MENYAPA (Halo, Hai, Pagi, Malam, dll) atau memberikan input singkat yang tidak memerlukan analisis mendalam, JANGAN memberondong dengan ringkasan data atau saran panjang. Balaslah sesingkat dan seramah mungkin sesuai kepribadianmu.
 ''';
 
     try {
@@ -662,7 +703,8 @@ INSTRUKSI:
 
         Future<bool> tryWithModel(String mName) async {
           try {
-            debugPrint('>>> CALLING GEMINI: $mName with key ${currentKey.substring(0, 10)}...');
+            debugPrint(
+                '>>> CALLING GEMINI: $mName with key ${currentKey.substring(0, 10)}...');
             final model = GenerativeModel(
               model: mName,
               apiKey: currentKey,
@@ -835,5 +877,208 @@ $breakdownStr
 DAFTAR TRANSAKSI TERAKHIR (Sample 20 item):
 ${transactions.take(20).map((t) => "[${DateFormat('dd/MM').format(t.date)}] ${t.type == 'income' ? '+' : '-'} Rp ${t.amount.toStringAsFixed(0)} (${t.category}: ${t.note})").join("\n")}
 ''';
+  }
+
+  // === SPECIALIZED FINANCIAL ADVISOR (ANALYTIC) ===
+  static Future<String> getAdvisorAnalysis({
+    required List<TransactionModel> transactions,
+    required DateTimeRange dateRange,
+    required double score,
+    required String status,
+    AppTone tone = AppTone.normal,
+  }) async {
+    try {
+      final config = await getGlobalConfig();
+      final bool isEnabled = config['is_advisor_enabled'] ?? true;
+      if (!isEnabled)
+        return 'Fitur Analisis AI sedang dinonaktifkan oleh Admin.';
+
+      final String provider = config['advisor_provider'] ?? 'gemini';
+      final List<String> geminiKeys =
+          List<String>.from(config['advisor_gemini_keys'] ?? []);
+      final List<String> groqKeys =
+          List<String>.from(config['advisor_groq_keys'] ?? []);
+
+      // Migrasi backward-compatibility jika masih nyangkut legacy key lama
+      final String legacyKey =
+          (config['advisor_api_key'] ?? '').toString().trim();
+      if (legacyKey.isNotEmpty) {
+        if (legacyKey.startsWith('gsk_') && !groqKeys.contains(legacyKey)) {
+          groqKeys.add(legacyKey);
+        } else if (legacyKey.startsWith('AIza') &&
+            !geminiKeys.contains(legacyKey)) {
+          geminiKeys.add(legacyKey);
+        }
+      }
+
+      if (geminiKeys.isEmpty && groqKeys.isEmpty) {
+        return 'Analisis Archen: Masalah teknis. (API Key Analytic belum dikonfigurasi Admin)';
+      }
+
+      final int minTrans = config['advisor_min_transactions'] ?? 5;
+      final int cooldownHours = config['advisor_cooldown_hours'] ?? 24;
+
+      final prefs = await SharedPreferences.getInstance();
+
+      // CEK TRIGGER TRANSAKSI
+      if (transactions.length < minTrans) {
+        return 'Data transaksimu masih kurang (butuh $minTrans transaksi). Kumpulkan lebih banyak data agar Archen bisa menganalisis ya!';
+      }
+
+      // CEK COOLDOWN
+      final String? lastUpdateStr = prefs.getString('advisor_last_update');
+      final String? cachedAnalysis = prefs.getString('advisor_cached_analysis');
+
+      if (lastUpdateStr != null && cachedAnalysis != null) {
+        final DateTime lastUpdate = DateTime.parse(lastUpdateStr);
+        final Duration difference = DateTime.now().difference(lastUpdate);
+
+        if (difference.inHours < cooldownHours) {
+          final int remainingHours = cooldownHours - difference.inHours;
+          final int remainingMins = cooldownHours > difference.inHours
+              ? (59 - (difference.inMinutes % 60))
+              : 0;
+          return '$cachedAnalysis\n\n(Archen sedang draining, cek lagi ${remainingHours == 0 ? "$remainingMins menit" : "$remainingHours jam $remainingMins menit"} ke depan)';
+        }
+      }
+
+      final summary = AIService()._generateDataSummary(transactions, dateRange);
+
+      final currentUser = FirebaseAuth.instance.currentUser;
+      final userName = currentUser?.displayName ?? 'Sayang';
+      final userGender = _guessGender(userName);
+      final aiRole = userGender == 'female'
+          ? 'boyfriend (pacar cowok)'
+          : 'girlfriend (pacar cewek)';
+      final aiPanggilan = userGender == 'female'
+          ? 'sayang, beb, cinta, my love'
+          : 'sayang, beb, cinta, my love, cantik';
+      final firstName = userName.split(' ').first;
+
+      String toneInstruction = "";
+      switch (tone) {
+        case AppTone.genZ:
+          toneInstruction =
+              "Pake gaya bahasa Gen-Z yang asik, banyak slang (Luh, Gue, Gweh, Cuan, Boncos), sering pake emoji, dan agak frontal tapi jujur.";
+          break;
+        case AppTone.milenial:
+          toneInstruction =
+              "Pake gaya bahasa Milenial yang santai, campur dikit bahasa Inggris (lifestyle, cashflow, struggle), fokus ke keseimbangan hidup dan 'healing' keuangan.";
+          break;
+        case AppTone.boomer:
+          toneInstruction =
+              "Pake gaya bahasa orang tua yang bijak dan sangat sopan. Panggil pengguna 'Nak' atau 'Ananda', sering ucapkan 'Alhamdulillah' atau 'MasyaAllah', dan fokus ke penghematan.";
+          break;
+        case AppTone.pasangan:
+          toneInstruction = """
+Kamu berperan sebagai $aiRole dari pengguna bernama "$firstName".
+Panggil dengan $aiPanggilan. Gunakan banyak emoji romantis 💕😘.
+Gaya bicara sangat romantis, manja, penuh perhatian, layaknya pacar/suami/istri tersayang.
+""";
+          break;
+        case AppTone.normal:
+          toneInstruction = "Gunakan bahasa Indonesia yang santai, profesional, dan to-the-point.";
+          break;
+      }
+
+      final systemPrompt = '''
+Kamu adalah "Archen Advisor", pakar analisis keuangan yang tajam dan solutif.
+Tugasmu adalah memberikan 1-2 kalimat analisis singkat berdasarkan data keuangan dan skor kesehatan pengguna.
+
+DATA PENGGUNA:
+- Skor Kesehatan: $score/100 (Status: $status)
+- Ringkasan Data: $summary
+
+INSTRUKSI SINGKAT:
+1. Berikan analisis dalam 1-2 kalimat saja (Maksimal 30 kata).
+2. Fokus pada hal paling krusial dari data (pemasukan vs pengeluaran, atau kategori paling boros).
+3. GAYA BAHASA WAJIB: $toneInstruction
+4. Awali kalimatmu HANYA dengan "Analisis Archen: " (tanpa tanda kutip), lalu lanjutkan dengan analisis gayamu.
+''';
+
+      final userQuery =
+          'Berikan analisis kesehatan keuangan singkat saya berdasarkan data tersebut.';
+
+      // FUNCTION GROQ FALLBACK
+      Future<String?> tryGroqList() async {
+        for (String k in groqKeys) {
+          try {
+            final res = await _callGroqApi(
+              apiKey: k.trim(),
+              model: 'llama-3.3-70b-versatile',
+              systemPrompt: systemPrompt,
+              userQuery: userQuery,
+            );
+            if (res != null && res.isNotEmpty) return res;
+          } catch (e) {
+            debugPrint('>>> Advisor Groq Fallback [$k]: $e');
+            continue;
+          }
+        }
+        return null;
+      }
+
+      // FUNCTION GEMINI FALLBACK
+      Future<String?> tryGeminiList() async {
+        final List<String> fallbackModels = [
+          'gemini-3.1-pro-preview',
+          'gemini-2.5-flash',
+          'gemini-2.0-flash'
+        ];
+
+        for (String k in geminiKeys) {
+          for (String m in fallbackModels) {
+            try {
+              final model = GenerativeModel(
+                model: m,
+                apiKey: k.trim(),
+                systemInstruction: Content.system(systemPrompt),
+              );
+              final res =
+                  await model.generateContent([Content.text(userQuery)]);
+              if (res.text != null && res.text!.isNotEmpty) return res.text;
+            } catch (e) {
+              debugPrint('>>> Advisor Gemini Fallback [$k][$m]: $e');
+              final errStr = e.toString().toLowerCase();
+              bool isQuotaErr = errStr.contains('quota') ||
+                  errStr.contains('429') ||
+                  errStr.contains('exhausted') ||
+                  errStr.contains('limit');
+              bool isNotFound =
+                  errStr.contains('not found') || errStr.contains('404');
+
+              if (!isQuotaErr && !isNotFound) break;
+              continue; // Try next fallback model
+            }
+          }
+        }
+        return null;
+      }
+
+      String? finalAnalysis;
+
+      if (provider == 'groq') {
+        finalAnalysis = await tryGroqList();
+        finalAnalysis ??= await tryGeminiList();
+      } else {
+        finalAnalysis = await tryGeminiList();
+        finalAnalysis ??= await tryGroqList();
+      }
+
+      final result = finalAnalysis ??
+          'Gagal melakukan analisis AI (Semua API limit / invalid).';
+
+      // JIKA BERHASIL (Tidak gagal), KITA CACHE
+      if (finalAnalysis != null) {
+        await prefs.setString('advisor_cached_analysis', result);
+        await prefs.setString(
+            'advisor_last_update', DateTime.now().toIso8601String());
+      }
+
+      return result;
+    } catch (e) {
+      debugPrint('Error getAdvisorAnalysis: $e');
+      return 'Terjadi kerusakan pada koneksi server kesehatan.';
+    }
   }
 }
