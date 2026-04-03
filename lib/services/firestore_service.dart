@@ -258,9 +258,19 @@ class FirestoreService {
     return doc.data();
   }
 
+  Future<void> updateUserProfile(String uid, Map<String, dynamic> data) async {
+    await _firestore.collection('users').doc(uid).set(data, SetOptions(merge: true));
+  }
+
   Future<void> leaveWallet(String walletId, String uid) async {
     await _firestore.collection('wallets').doc(walletId).update({
       'members': FieldValue.arrayRemove([uid])
+    });
+  }
+
+  Future<void> kickMember(String walletId, String memberUid) async {
+    await _firestore.collection('wallets').doc(walletId).update({
+      'members': FieldValue.arrayRemove([memberUid])
     });
   }
 

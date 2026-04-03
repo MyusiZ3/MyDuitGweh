@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../services/firestore_service.dart';
 import '../models/chat_message_model.dart';
 import '../utils/app_theme.dart';
+import '../utils/ui_helper.dart';
 import 'package:intl/intl.dart';
 
 class WalletChatScreen extends StatefulWidget {
@@ -133,17 +134,18 @@ class _WalletChatScreenState extends State<WalletChatScreen>
             // Preview bubble
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(16),
               margin: const EdgeInsets.only(bottom: 20),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.06),
-                borderRadius: BorderRadius.circular(14),
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.black.withOpacity(0.05)),
               ),
               child: Text(
                 msg.message,
                 style: const TextStyle(
-                    fontSize: 13, color: AppColors.textSecondary),
-                maxLines: 3,
+                    fontSize: 14, color: AppColors.textPrimary, height: 1.4),
+                maxLines: 4,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -157,14 +159,14 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: Colors.blue.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(Icons.edit_rounded,
-                    color: AppColors.primary, size: 20),
+                    color: Colors.blue, size: 20),
               ),
               title: const Text('Edit Pesan',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, letterSpacing: -0.3)),
               subtitle: const Text('Ubah isi pesan ini',
                   style: TextStyle(fontSize: 12, color: AppColors.textHint)),
             ),
@@ -187,11 +189,12 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                 ),
                 title: const Text('Hapus Pesan',
                     style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                        letterSpacing: -0.3,
                         color: AppColors.expense)),
                 subtitle: Text(
-                  'Bisa dihapus dalam ${5 - DateTime.now().difference(msg.timestamp).inMinutes} menit lagi',
+                  'Sisa waktu: ${15 - DateTime.now().difference(msg.timestamp).inMinutes} menit',
                   style:
                       const TextStyle(fontSize: 12, color: AppColors.textHint),
                 ),
@@ -211,10 +214,11 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                 ),
                 title: Text('Hapus Pesan',
                     style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                        letterSpacing: -0.3,
                         color: AppColors.textHint.withOpacity(0.5))),
-                subtitle: const Text('Batas waktu 5 menit sudah lewat',
+                subtitle: const Text('Batas waktu 15 menit sudah lewat',
                     style: TextStyle(fontSize: 12, color: AppColors.textHint)),
               ),
           ],
@@ -223,33 +227,21 @@ class _WalletChatScreenState extends State<WalletChatScreen>
     );
   }
 
-  void _confirmUnsend(ChatMessage msg) {
-    showDialog(
+  void _confirmUnsend(ChatMessage msg) async {
+    final confirm = await UIHelper.showConfirmDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Hapus Pesan?'),
-        content: const Text(
-            'Pesan ini akan dihapus untuk semua orang. Tindakan ini tidak dapat dibatalkan.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _firestoreService.deleteMessage(
-                walletId: widget.walletId,
-                messageId: msg.id,
-              );
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.expense),
-            child: const Text('Hapus'),
-          ),
-        ],
-      ),
+      title: 'Hapus Pesan?',
+      message: 'Pesan ini akan dihapus untuk semua orang. Tindakan ini tidak dapat dibatalkan.',
+      confirmText: 'Ya, Hapus',
+      isDangerous: true,
     );
+
+    if (confirm == true) {
+      _firestoreService.deleteMessage(
+        walletId: widget.walletId,
+        messageId: msg.id,
+      );
+    }
   }
 
   // Track the most recent message ID to avoid redundant read-receipt writes
@@ -261,7 +253,8 @@ class _WalletChatScreenState extends State<WalletChatScreen>
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        elevation: 0,
+        elevation: 0.5,
+        centerTitle: false,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded,
               size: 20, color: AppColors.textPrimary),
@@ -496,28 +489,29 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: msg.isDeleted
-                        ? (isMe
-                            ? AppColors.primary.withOpacity(0.3)
-                            : Colors.white.withOpacity(0.6))
-                        : (isMe ? AppColors.primary : Colors.white),
-                    borderRadius: BorderRadius.only(
-                      topLeft: const Radius.circular(18),
-                      topRight: const Radius.circular(18),
-                      bottomLeft:
-                          Radius.circular(isMe ? 18 : (showAvatar ? 4 : 18)),
-                      bottomRight:
-                          Radius.circular(isMe ? (showAvatar ? 4 : 18) : 18),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
+                    decoration: BoxDecoration(
+                      color: msg.isDeleted
+                          ? (isMe
+                              ? Colors.grey[300]
+                              : Colors.grey[100])
+                          : (isMe ? AppColors.primary : Colors.white),
+                      borderRadius: BorderRadius.only(
+                        topLeft: const Radius.circular(20),
+                        topRight: const Radius.circular(20),
+                        bottomLeft:
+                            Radius.circular(isMe ? 20 : (showAvatar ? 4 : 20)),
+                        bottomRight:
+                            Radius.circular(isMe ? (showAvatar ? 4 : 20) : 20),
                       ),
-                    ],
-                  ),
+                      boxShadow: [
+                        if (!isMe)
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.03),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1),
+                          ),
+                      ],
+                    ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
@@ -595,61 +589,67 @@ class _WalletChatScreenState extends State<WalletChatScreen>
     return Container(
       padding: EdgeInsets.only(
         left: 16,
-        right: 8,
-        top: 12,
-        bottom: MediaQuery.of(context).padding.bottom + 12,
+        right: 16,
+        top: 14,
+        bottom: MediaQuery.of(context).padding.bottom + 14,
       ),
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
+        border: Border(
+          top: BorderSide(color: Colors.grey.withOpacity(0.1), width: 0.5),
+        ),
       ),
       child: Row(
         children: [
           Expanded(
             child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
               decoration: BoxDecoration(
-                color: AppColors.background,
-                borderRadius: BorderRadius.circular(24),
+                color: const Color(0xFFF2F2F7),
+                borderRadius: BorderRadius.circular(22),
               ),
               child: TextField(
                 controller: _messageController,
                 textCapitalization: TextCapitalization.sentences,
                 maxLines: 4,
                 minLines: 1,
-                style: const TextStyle(fontSize: 14),
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                 decoration: InputDecoration(
-                  hintText: _isEditing ? 'Edit pesan...' : 'Tulis pesan...',
+                  hintText: _isEditing ? 'Ubah pesan...' : 'Masukkan pesan...',
                   hintStyle:
-                      const TextStyle(color: AppColors.textHint, fontSize: 14),
+                      const TextStyle(color: Color(0xFF8E8E93), fontSize: 15),
                   border: InputBorder.none,
                   contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   isDense: true,
                 ),
                 onSubmitted: (_) => _sendMessage(),
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
           GestureDetector(
             onTap: _sendMessage,
-            child: Container(
-              width: 44,
-              height: 44,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 38,
+              height: 38,
               decoration: BoxDecoration(
-                color: _isEditing ? AppColors.income : AppColors.primary,
-                borderRadius: BorderRadius.circular(14),
+                color: _isEditing ? Colors.orange : AppColors.primary,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: (_isEditing ? Colors.orange : AppColors.primary)
+                        .withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3)
+                  )
+                ]
               ),
               child: Icon(
-                _isEditing ? Icons.check_rounded : Icons.send_rounded,
+                _isEditing ? Icons.check_rounded : Icons.arrow_upward_rounded,
                 color: Colors.white,
-                size: 20,
+                size: 22,
               ),
             ),
           ),
