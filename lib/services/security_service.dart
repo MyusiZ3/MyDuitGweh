@@ -2,6 +2,8 @@ import 'package:local_auth/local_auth.dart';
 import 'package:local_auth_android/local_auth_android.dart';
 import 'package:local_auth_ios/local_auth_ios.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:safe_device/safe_device.dart';
+import 'package:flutter/foundation.dart';
 
 class SecurityService {
   final LocalAuthentication _auth = LocalAuthentication();
@@ -47,5 +49,27 @@ class SecurityService {
   Future<void> setBiometricEnabled(bool enabled) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_biometricKey, enabled);
+  }
+
+  /// Mengecek apakah device sudah di-root/jailbreak atau menggunakan emulator
+  static Future<bool> isDeviceSafe() async {
+    // Return true aja pas web/desktop
+    if (kIsWeb) return true;
+
+    try {
+      final isJailBroken = await SafeDevice.isJailBroken;
+      final isRealDevice = await SafeDevice.isRealDevice;
+
+      // Un-safe jika di-root atau dicurigai emulator (diabaikan kalau mau dukung tes emulator)
+      // Di tahap real production, isRealDevice = false kadang kita block juga.
+      if (isJailBroken) {
+        return false; // Bahaya karena root / jailbreak
+      }
+
+      return true;
+    } catch (e) {
+      // Fallback
+      return true;
+    }
   }
 }

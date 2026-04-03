@@ -16,6 +16,8 @@ import 'screens/maintenance_gate_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'services/auth_service.dart';
 import 'services/update_service.dart';
+import 'services/security_service.dart';
+import 'screens/security_gate_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -80,46 +82,60 @@ class _AuthGateState extends State<AuthGate> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: _authStream,
-      // CRITICAL: Provide initialData so hot reload doesn't lose current state
-      initialData: FirebaseAuth.instance.currentUser,
-      builder: (context, snapshot) {
-        // DEBUG LOG
-        debugPrint('--- AUTH GATE STATE: ${snapshot.connectionState} ---');
-        debugPrint(
-            '--- HAS USER: ${snapshot.hasData} | UID: ${snapshot.data?.uid} ---');
-
-        if (snapshot.connectionState == ConnectionState.waiting &&
-            snapshot.data == null) {
-          return const SplashView();
+    return FutureBuilder<bool>(
+      future: SecurityService.isDeviceSafe(),
+      builder: (context, safetySnapshot) {
+        if (safetySnapshot.connectionState == ConnectionState.waiting) {
+          return const SplashView(); // While checking safety
         }
 
-        final user = snapshot.data;
+        final isSafe = safetySnapshot.data ?? true;
+        if (!isSafe) {
+          return const SecurityGateScreen();
+        }
 
-        return FutureBuilder<bool>(
-          // Use a unique key to force rebuild of FutureBuilder when user changes
-          key: ValueKey(user?.uid ?? 'logged-out'),
-          future: _checkOnboarding(),
-          builder: (context, onbSnapshot) {
-            if (onbSnapshot.connectionState == ConnectionState.waiting) {
+        return StreamBuilder<User?>(
+          stream: _authStream,
+          // CRITICAL: Provide initialData so hot reload doesn't lose current state
+          initialData: FirebaseAuth.instance.currentUser,
+          builder: (context, snapshot) {
+            // DEBUG LOG
+            debugPrint('--- AUTH GATE STATE: ${snapshot.connectionState} ---');
+            debugPrint(
+                '--- HAS USER: ${snapshot.hasData} | UID: ${snapshot.data?.uid} ---');
+
+            if (snapshot.connectionState == ConnectionState.waiting &&
+                snapshot.data == null) {
               return const SplashView();
             }
 
-            final onboardingDone = onbSnapshot.data ?? false;
-            debugPrint('--- ONBOARDING DONE: $onboardingDone ---');
+            final user = snapshot.data;
 
-            if (!onboardingDone) {
-              return const OnboardingScreen();
-            }
+            return FutureBuilder<bool>(
+              // Use a unique key to force rebuild of FutureBuilder when user changes
+              key: ValueKey(user?.uid ?? 'logged-out'),
+              future: _checkOnboarding(),
+              builder: (context, onbSnapshot) {
+                if (onbSnapshot.connectionState == ConnectionState.waiting) {
+                  return const SplashView();
+                }
 
-            if (user != null) {
-              debugPrint('--- NAVIGATING TO MAINTENANCE WRAPPER ---');
-              return MaintenanceGateWrapper(user: user);
-            } else {
-              debugPrint('--- NAVIGATING TO LOGIN SCREEN ---');
-              return const LoginScreen();
-            }
+                final onboardingDone = onbSnapshot.data ?? false;
+                debugPrint('--- ONBOARDING DONE: $onboardingDone ---');
+
+                if (!onboardingDone) {
+                  return const OnboardingScreen();
+                }
+
+                if (user != null) {
+                  debugPrint('--- NAVIGATING TO MAINTENANCE WRAPPER ---');
+                  return MaintenanceGateWrapper(user: user);
+                } else {
+                  debugPrint('--- NAVIGATING TO LOGIN SCREEN ---');
+                  return const LoginScreen();
+                }
+              },
+            );
           },
         );
       },
