@@ -26,9 +26,10 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
   bool _isExpanded = false;
   late AnimationController _fabController;
   late Animation<double> _expandAnimation;
-  
+
   // Keys to communicate with Screens
-  final GlobalKey<WalletScreenState> _walletKey = GlobalKey<WalletScreenState>();
+  final GlobalKey<WalletScreenState> _walletKey =
+      GlobalKey<WalletScreenState>();
   final GlobalKey<ColabScreenState> _colabKey = GlobalKey<ColabScreenState>();
 
   @override
@@ -87,7 +88,7 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
       _toggleFAB();
       return;
     }
-    
+
     // Reset screen search if we are leaving them
     if (_currentIndex == 1 && index != 1) {
       _walletKey.currentState?.resetSearch();
@@ -224,7 +225,7 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
         children: [
           _buildSpeedDialItem(
             icon: Icons.qr_code_scanner_rounded,
-            label: 'Scan Struk (AI)',
+            label: 'Scan Struk (OCR)',
             color: AppColors.primary,
             onTap: () {
               _toggleFAB();
@@ -333,7 +334,8 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
           return Container(
             width: 58,
             height: 58,
-            transform: Matrix4.translationValues(0, -8, 0), // Lift slightly above nav bar edge
+            transform: Matrix4.translationValues(
+                0, -8, 0), // Lift slightly above nav bar edge
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
@@ -356,7 +358,8 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
             child: Transform.scale(
               scale: 1.0 + (_fabController.value * 0.1), // Slight pulse
               child: Transform.rotate(
-                angle: _expandAnimation.value * (3.14159 / 4), // Rotate to forms an 'X'
+                angle: _expandAnimation.value *
+                    (3.14159 / 4), // Rotate to forms an 'X'
                 child: const Icon(
                   Icons.add_rounded,
                   color: Colors.white,

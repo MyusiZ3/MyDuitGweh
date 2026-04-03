@@ -466,6 +466,18 @@ class AIService {
     return status['isValid'] == true;
   }
 
+  Future<bool> checkGroqQuota(String apiKey) async {
+    final status = await checkGroqKeyStatus(apiKey);
+    return status['isValid'] == true;
+  }
+
+  Future<bool> checkPlatformQuota(String apiKey, String platform) async {
+    if (platform == 'groq') {
+      return checkGroqQuota(apiKey);
+    }
+    return checkQuota(apiKey);
+  }
+
   // Helper to expose integrated keys status check
   List<String> getIntegratedKeys() => _integratedApiKeys;
 
@@ -582,6 +594,7 @@ class AIService {
 
   Future<String> getFinancialAdvice({
     required String? apiKey,
+    String? apiPlatform, // 'gemini' or 'groq'
     required List<TransactionModel> transactions,
     required String userQuery,
     required DateTimeRange dateRange,
@@ -606,18 +619,31 @@ class AIService {
     }
 
     final integratedKeys = await getIntegratedApiKeysAsync();
+    final groqIntegratedKeys = await getGroqApiKeysAsync();
 
     // Logic: Use personal key first, then fallback to ALL integrated keys
-    final List<String> keysToUse = [];
+    final List<String> geminiKeysToUse = [];
+    final List<String> groqKeysToUse = [];
+
     if (isCustomApi) {
-      keysToUse.add(apiKey.trim());
+      if (apiPlatform == 'groq') {
+        groqKeysToUse.add(apiKey.trim());
+      } else {
+        geminiKeysToUse.add(apiKey.trim());
+      }
     }
-    keysToUse.addAll(integratedKeys);
+    geminiKeysToUse.addAll(integratedKeys);
+    groqKeysToUse.addAll(groqIntegratedKeys);
 
     // Remove duplicates while preserving order
-    final uniqueKeys = <String>[];
-    for (var k in keysToUse) {
-      if (!uniqueKeys.contains(k)) uniqueKeys.add(k);
+    final uniqueGeminiKeys = <String>[];
+    for (var k in geminiKeysToUse) {
+      if (!uniqueGeminiKeys.contains(k)) uniqueGeminiKeys.add(k);
+    }
+
+    final uniqueGroqKeys = <String>[];
+    for (var k in groqKeysToUse) {
+      if (!uniqueGroqKeys.contains(k)) uniqueGroqKeys.add(k);
     }
 
     final summary = _generateDataSummary(transactions, dateRange);
@@ -697,9 +723,10 @@ INSTRUKSI:
       GenerateContentResponse? finalResponse;
       Exception? lastQuotaException;
 
-      for (String currentKey in uniqueKeys) {
-        final isLastKey = currentKey == uniqueKeys.last;
-        final isPersonalKey = isCustomApi && currentKey == uniqueKeys.first;
+      for (String currentKey in uniqueGeminiKeys) {
+        final isLastKey = currentKey == uniqueGeminiKeys.last;
+        final isPersonalKey =
+            isCustomApi && apiPlatform != 'groq' && currentKey == uniqueGeminiKeys.first;
 
         Future<bool> tryWithModel(String mName) async {
           try {
@@ -768,7 +795,7 @@ INSTRUKSI:
         debugPrint(
             '>>> ROTATION: API Key $currentKey exhausted for all models, switching to next key...');
         if (isLastKey) {
-          statusNotifier.value = 'exhausted';
+          statusNotifier.value = uniqueGroqKeys.isEmpty ? 'exhausted' : 'limit';
         } else if (isPersonalKey) {
           statusNotifier.value = 'limit';
         }
@@ -776,15 +803,17 @@ INSTRUKSI:
 
       // === GROQ FALLBACK ===
       if (finalResponse == null) {
-        final groqKeys = await getGroqApiKeysAsync();
-        if (groqKeys.isNotEmpty) {
+        if (uniqueGroqKeys.isNotEmpty) {
           debugPrint('>>> Gemini ALL LIMIT. FALLING BACK TO GROQ...');
           final groqModels = [
             'llama-3.3-70b-versatile',
             'gemma2-9b-it',
             'llama-3.1-8b-instant'
           ];
-          for (String groqKey in groqKeys) {
+          for (String groqKey in uniqueGroqKeys) {
+            final isPersonalGroq =
+                isCustomApi && apiPlatform == 'groq' && groqKey == uniqueGroqKeys.first;
+
             for (String groqModel in groqModels) {
               try {
                 debugPrint('>>> CALLING GROQ: $groqModel...');
@@ -796,7 +825,7 @@ INSTRUKSI:
                   history: limitedHistory,
                 );
                 if (result != null && result.isNotEmpty) {
-                  statusNotifier.value = 'limit';
+                  statusNotifier.value = isPersonalGroq ? 'ok' : 'limit';
                   return result;
                 }
               } catch (e) {

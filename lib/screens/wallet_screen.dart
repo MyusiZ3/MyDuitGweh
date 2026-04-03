@@ -84,11 +84,13 @@ class WalletScreenState extends State<WalletScreen> {
                 child: TextField(
                   controller: _searchController,
                   style: const TextStyle(fontSize: 16),
-                  onChanged: (val) => setState(() => _searchQuery = val.toLowerCase()),
+                  onChanged: (val) =>
+                      setState(() => _searchQuery = val.toLowerCase()),
                   decoration: InputDecoration(
                     hintText: 'Cari dompet atau kategori...',
                     hintStyle: const TextStyle(color: Color(0xFF8E8E93)),
-                    prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF8E8E93), size: 20),
+                    prefixIcon: const Icon(Icons.search_rounded,
+                        color: Color(0xFF8E8E93), size: 20),
                     suffixIcon: _searchQuery.isEmpty
                         ? null
                         : GestureDetector(
@@ -96,10 +98,12 @@ class WalletScreenState extends State<WalletScreen> {
                               _searchController.clear();
                               setState(() => _searchQuery = "");
                             },
-                            child: const Icon(Icons.cancel_rounded, color: Color(0xFF8E8E93), size: 18),
+                            child: const Icon(Icons.cancel_rounded,
+                                color: Color(0xFF8E8E93), size: 18),
                           ),
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
                   ),
                 ),
               ),
@@ -129,8 +133,10 @@ class WalletScreenState extends State<WalletScreen> {
                 ),
                 labelColor: Colors.black,
                 unselectedLabelColor: const Color(0xFF8E8E93),
-                labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-                unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                labelStyle:
+                    const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                unselectedLabelStyle:
+                    const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
                 tabs: const [
                   Tab(text: 'Pribadi'),
                   Tab(text: 'Bersama'),
@@ -143,16 +149,19 @@ class WalletScreenState extends State<WalletScreen> {
                 stream: _firestoreService.getWalletsStream(_uid),
                 builder: (context, snapshot) {
                   // Only show shimmer if we are waiting for initial data and there is no data yet
-                  if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+                  if (snapshot.connectionState == ConnectionState.waiting &&
+                      !snapshot.hasData) {
                     return TabBarView(
                       physics: const NeverScrollableScrollPhysics(),
                       children: List.generate(
                         3,
                         (index) => ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 0),
                           physics: const BouncingScrollPhysics(),
                           itemCount: 4,
-                          itemBuilder: (context, _) => const ShimmerWalletCard(),
+                          itemBuilder: (context, _) =>
+                              const ShimmerWalletCard(),
                         ),
                       ),
                     );
@@ -163,9 +172,12 @@ class WalletScreenState extends State<WalletScreen> {
                     return w.walletName.toLowerCase().contains(_searchQuery);
                   }).toList();
 
-                  final personalWallets = filteredWallets.where((w) => w.isPersonal).toList();
-                  final colabWallets = filteredWallets.where((w) => w.isColab).toList();
-                  final debtWallets = filteredWallets.where((w) => w.isDebt).toList();
+                  final personalWallets =
+                      filteredWallets.where((w) => w.isPersonal).toList();
+                  final colabWallets =
+                      filteredWallets.where((w) => w.isColab).toList();
+                  final debtWallets =
+                      filteredWallets.where((w) => w.isDebt).toList();
 
                   return TabBarView(
                     physics: const BouncingScrollPhysics(),
@@ -622,9 +634,7 @@ class WalletScreenState extends State<WalletScreen> {
                   'Masukkan 6 digit kode undangan dari temanmu\nuntuk mulai mencatat bersama.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                      color: AppColors.textHint,
-                      fontSize: 13,
-                      height: 1.5),
+                      color: AppColors.textHint, fontSize: 13, height: 1.5),
                 ),
                 const SizedBox(height: 24),
                 TextField(
@@ -667,13 +677,12 @@ class WalletScreenState extends State<WalletScreen> {
                         : () async {
                             if (codeController.text.length < 6) {
                               UIHelper.showErrorSnackBar(
-                                  context, 'Kode harus 6 digit ya! 🔑');
+                                  context, 'Kode harus 6 digit ya! (〜￣▽￣)〜');
                               return;
                             }
                             setModalState(() => isChecking = true);
                             final success = await _firestoreService
-                                .joinWalletByCode(
-                                    codeController.text, _uid);
+                                .joinWalletByCode(codeController.text, _uid);
                             if (!context.mounted) return;
                             Navigator.pop(context);
                             if (success) {
@@ -893,63 +902,92 @@ class WalletScreenState extends State<WalletScreen> {
                               color: AppColors.textHint,
                               letterSpacing: 1)),
                       const SizedBox(height: 12),
-                      ...wallet.members.map((memberUid) => FutureBuilder<Map<String, dynamic>?>(
-                        future: _firestoreService.getUserInfo(memberUid),
-                        builder: (context, snapshot) {
-                          final name = snapshot.data?['displayName'] ?? 'Memuat...';
-                          final isOwner = memberUid == wallet.owner;
-                          final isMe = memberUid == _uid;
+                      ...wallet.members
+                          .map((memberUid) =>
+                              FutureBuilder<Map<String, dynamic>?>(
+                                future:
+                                    _firestoreService.getUserInfo(memberUid),
+                                builder: (context, snapshot) {
+                                  final name = snapshot.data?['displayName'] ??
+                                      'Memuat...';
+                                  final isOwner = memberUid == wallet.owner;
+                                  final isMe = memberUid == _uid;
 
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 14,
-                                  backgroundColor: AppColors.primary.withOpacity(0.1),
-                                  child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?',
-                                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.primary)),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    isMe ? '$name (Anda)' : name,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: isMe ? FontWeight.w700 : FontWeight.w500,
-                                      color: const Color(0xFF1C1C1E),
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 8),
+                                    child: Row(
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 14,
+                                          backgroundColor: AppColors.primary
+                                              .withOpacity(0.1),
+                                          child: Text(
+                                              name.isNotEmpty
+                                                  ? name[0].toUpperCase()
+                                                  : '?',
+                                              style: const TextStyle(
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: AppColors.primary)),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            isMe ? '$name (Anda)' : name,
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: isMe
+                                                  ? FontWeight.w700
+                                                  : FontWeight.w500,
+                                              color: const Color(0xFF1C1C1E),
+                                            ),
+                                          ),
+                                        ),
+                                        if (isOwner)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.primary
+                                                  .withOpacity(0.1),
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                            ),
+                                            child: const Text('OWNER',
+                                                style: TextStyle(
+                                                    fontSize: 8,
+                                                    fontWeight: FontWeight.w800,
+                                                    color: AppColors.primary)),
+                                          )
+                                        else if (wallet.owner == _uid)
+                                          IconButton(
+                                            icon: const Icon(
+                                                Icons.person_remove_rounded,
+                                                color: AppColors.expense,
+                                                size: 18),
+                                            onPressed: () async {
+                                              final confirm = await UIHelper
+                                                  .showConfirmDialog(
+                                                context: context,
+                                                title: ToneManager.t(
+                                                    'dialog_kick_member_title'),
+                                                message: ToneManager.t(
+                                                    'dialog_kick_member_msg'),
+                                              );
+                                              if (confirm == true) {
+                                                await _firestoreService
+                                                    .kickMember(
+                                                        wallet.id, memberUid);
+                                                // No need to pop, StreamBuilder will update
+                                              }
+                                            },
+                                          ),
+                                      ],
                                     ),
-                                  ),
-                                ),
-                                if (isOwner)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.primary.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: const Text('OWNER', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: AppColors.primary)),
-                                  )
-                                else if (wallet.owner == _uid)
-                                  IconButton(
-                                    icon: const Icon(Icons.person_remove_rounded, color: AppColors.expense, size: 18),
-                                    onPressed: () async {
-                                      final confirm = await UIHelper.showConfirmDialog(
-                                        context: context,
-                                        title: ToneManager.t('dialog_kick_member_title'),
-                                        message: ToneManager.t('dialog_kick_member_msg'),
-                                      );
-                                      if (confirm == true) {
-                                        await _firestoreService.kickMember(wallet.id, memberUid);
-                                        // No need to pop, StreamBuilder will update
-                                      }
-                                    },
-                                  ),
-                              ],
-                            ),
-                          );
-                        },
-                      )).toList(),
+                                  );
+                                },
+                              ))
+                          .toList(),
                     ],
                   ),
                 ),
@@ -1066,7 +1104,8 @@ class WalletScreenState extends State<WalletScreen> {
                           confirmDismiss: (direction) async {
                             // Restriction: only the creator can delete their transaction
                             if (t.createdBy != _uid) {
-                              UIHelper.showErrorSnackBar(context, ToneManager.t('error_not_creator_delete'));
+                              UIHelper.showErrorSnackBar(context,
+                                  ToneManager.t('error_not_creator_delete'));
                               return false;
                             }
                             return await UIHelper.showConfirmDialog(
@@ -1173,7 +1212,8 @@ class WalletScreenState extends State<WalletScreen> {
               Text(
                 ToneManager.t('wallet_empty_title'),
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
               Text(
@@ -1195,7 +1235,8 @@ class WalletScreenState extends State<WalletScreen> {
                         borderRadius: BorderRadius.circular(20)),
                   ),
                   child: const Text('Buat Dompet',
-                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                      style:
+                          TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
                 ),
               ),
             ],
@@ -1319,8 +1360,8 @@ class _WalletCard extends StatelessWidget {
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
                           letterSpacing: -0.5,
-                          color: wallet.isDebt && wallet.debtType == 'payable' 
-                              ? AppColors.expense 
+                          color: wallet.isDebt && wallet.debtType == 'payable'
+                              ? AppColors.expense
                               : const Color(0xFF1C1C1E),
                         ),
                         maxLines: 1,
@@ -1329,7 +1370,8 @@ class _WalletCard extends StatelessWidget {
                       if (wallet.isColab)
                         Container(
                           margin: const EdgeInsets.only(top: 4),
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
                             color: AppColors.deepBlue.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(100),
@@ -1348,7 +1390,8 @@ class _WalletCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 4),
-                const Icon(Icons.chevron_right_rounded, color: Color(0xFFC7C7CC), size: 20),
+                const Icon(Icons.chevron_right_rounded,
+                    color: Color(0xFFC7C7CC), size: 20),
               ],
             ),
           ),

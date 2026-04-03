@@ -43,7 +43,8 @@ class _ReportScreenState extends State<ReportScreen> {
   int _touchedPieIndex = -1;
   bool _isCategoryMode = true;
   String? _aiApiKey;
-  List<String> _allApiKeys = [];
+  String? _aiApiPlatform; // 'gemini' or 'groq'
+  List<String> _allApiKeys = []; // Stores combined "key|platform"
   List<String> _currentWalletIds = [];
 
   @override
@@ -77,46 +78,79 @@ class _ReportScreenState extends State<ReportScreen> {
   Future<void> _loadAIKey() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _aiApiKey = prefs.getString('gemini_api_key');
-      _allApiKeys = prefs.getStringList('gemini_all_api_keys') ?? [];
+      _aiApiKey = prefs.getString('user_ai_api_key');
+      _aiApiPlatform = prefs.getString('user_ai_api_platform') ?? 'gemini';
+      _allApiKeys = prefs.getStringList('user_all_api_keys_v2') ?? [];
+
+      // Robust Migration / Synchronization
+      // 1. Check for REALLY old key name
+      final oldKeyName = prefs.getString('gemini_api_key');
+      if (oldKeyName != null && _aiApiKey == null) {
+        _aiApiKey = oldKeyName;
+        _aiApiPlatform = 'gemini';
+        prefs.setString('user_ai_api_key', oldKeyName);
+        prefs.setString('user_ai_api_platform', 'gemini');
+        prefs.remove('gemini_api_key');
+      }
+
+      // 2. Ensure current key is in the list
+      if (_aiApiKey != null && _aiApiKey!.isNotEmpty) {
+        final entry = '$_aiApiKey|$_aiApiPlatform';
+        if (!_allApiKeys.contains(entry)) {
+          _allApiKeys.add(entry);
+          prefs.setStringList('user_all_api_keys_v2', _allApiKeys);
+        }
+      }
     });
   }
 
-  Future<void> _saveAIKey(String key) async {
+  Future<void> _saveAIKey(String key, String platform) async {
     final trimmedKey = key.trim();
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('gemini_api_key', trimmedKey);
+    await prefs.setString('user_ai_api_key', trimmedKey);
+    await prefs.setString('user_ai_api_platform', platform);
 
     if (trimmedKey.isNotEmpty) {
-      if (!_allApiKeys.contains(trimmedKey)) {
+      final entry = '$trimmedKey|$platform';
+      if (!_allApiKeys.contains(entry)) {
         setState(() {
-          _allApiKeys = [trimmedKey, ..._allApiKeys];
+          _allApiKeys = [entry, ..._allApiKeys];
         });
-        await prefs.setStringList('gemini_all_api_keys', _allApiKeys);
+        await prefs.setStringList('user_all_api_keys_v2', _allApiKeys);
       }
     }
 
     setState(() {
       _aiApiKey = trimmedKey;
+      _aiApiPlatform = platform;
     });
   }
 
-  Future<void> _deleteStoredKey(String key) async {
+  Future<void> _deleteStoredKey(String entry) async {
     final prefs = await SharedPreferences.getInstance();
-    _allApiKeys.remove(key);
-    await prefs.setStringList('gemini_all_api_keys', _allApiKeys);
+    _allApiKeys.remove(entry);
+    await prefs.setStringList('user_all_api_keys_v2', _allApiKeys);
+
+    final parts = entry.split('|');
+    final key = parts[0];
 
     if (_aiApiKey == key) {
       _aiApiKey = null;
-      await prefs.remove('gemini_api_key');
+      _aiApiPlatform = null;
+      await prefs.remove('user_ai_api_key');
+      await prefs.remove('user_ai_api_platform');
     }
     setState(() {});
   }
 
   Future<void> _removeAIKey() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('gemini_api_key');
-    setState(() => _aiApiKey = null);
+    await prefs.remove('user_ai_api_key');
+    await prefs.remove('user_ai_api_platform');
+    setState(() {
+      _aiApiKey = null;
+      _aiApiPlatform = null;
+    });
   }
 
   @override
@@ -272,6 +306,7 @@ class _ReportScreenState extends State<ReportScreen> {
             backgroundColor: Colors.transparent,
             builder: (context) => _AIAdvisorSheet(
               apiKey: _aiApiKey,
+              apiPlatform: _aiApiPlatform,
               allApiKeys: _allApiKeys,
               onSaveKey: _saveAIKey,
               onDeleteKey: _deleteStoredKey,
@@ -1008,8 +1043,9 @@ class _ReportScreenState extends State<ReportScreen> {
 
 class _AIAdvisorSheet extends StatefulWidget {
   final String? apiKey;
+  final String? apiPlatform;
   final List<String> allApiKeys;
-  final Function(String) onSaveKey;
+  final Function(String, String) onSaveKey;
   final Function(String) onDeleteKey;
   final VoidCallback onRemoveKey;
   final DateTimeRange selectedDateRange;
@@ -1019,6 +1055,7 @@ class _AIAdvisorSheet extends StatefulWidget {
 
   const _AIAdvisorSheet({
     this.apiKey,
+    this.apiPlatform,
     required this.allApiKeys,
     required this.onSaveKey,
     required this.onDeleteKey,
@@ -1038,6 +1075,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
   final AIService _aiService = AIService();
   bool _isLoading = false;
   String? _localApiKey;
+  String? _localApiPlatform;
   String? _currentSessionId;
   List<String> _localAllApiKeys = [];
   List<Map<String, dynamic>> _messages = [];
@@ -1054,14 +1092,68 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
   void initState() {
     super.initState();
     _localApiKey = widget.apiKey;
+    _localApiPlatform = widget.apiPlatform;
     _localAllApiKeys = List.from(widget.allApiKeys);
     _loadSessionsList();
 
     // Pre-fetch integrated keys from Firestore
     AIService.getIntegratedApiKeysAsync().then((_) {
-      if (mounted) setState(() {});
+      AIService.getGroqApiKeysAsync().then((_) {
+        if (mounted) setState(() {});
+      });
     });
     _refreshQuota();
+  }
+
+  Widget _buildPlatformToggle({
+    required String label,
+    required bool isSelected,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : AppColors.surfaceVariant,
+            width: 1.5,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  )
+                ]
+              : [],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 20,
+              color: isSelected ? Colors.white : AppColors.textHint,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: isSelected ? Colors.white : AppColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _refreshQuota() async {
@@ -1079,7 +1171,10 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
   void didUpdateWidget(_AIAdvisorSheet oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.apiKey != oldWidget.apiKey) {
-      setState(() => _localApiKey = widget.apiKey);
+      setState(() {
+        _localApiKey = widget.apiKey;
+        _localApiPlatform = widget.apiPlatform;
+      });
     }
     if (widget.allApiKeys != oldWidget.allApiKeys) {
       setState(() => _localAllApiKeys = List.from(widget.allApiKeys));
@@ -1164,6 +1259,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
   void _showManageAPIDialog() {
     final controller = TextEditingController();
     bool isCheckingKey = false;
+    String selectedPlatform = 'gemini';
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1215,6 +1311,30 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                   onPressed: () => Navigator.pop(context),
                                   icon: const Icon(Icons.close_rounded,
                                       size: 20)),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildPlatformToggle(
+                                  label: 'Gemini',
+                                  isSelected: selectedPlatform == 'gemini',
+                                  icon: Icons.auto_awesome_rounded,
+                                  onTap: () => setDialogState(
+                                      () => selectedPlatform = 'gemini'),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildPlatformToggle(
+                                  label: 'Groq',
+                                  isSelected: selectedPlatform == 'groq',
+                                  icon: Icons.bolt_rounded,
+                                  onTap: () => setDialogState(
+                                      () => selectedPlatform = 'groq'),
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 24),
@@ -1314,14 +1434,18 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                                   () => isCheckingKey = true);
 
                                               final isValid = await _aiService
-                                                  .checkQuota(textKey);
+                                                  .checkPlatformQuota(
+                                                      textKey, selectedPlatform);
 
                                               if (!context.mounted) return;
 
                                               if (isValid) {
-                                                await widget.onSaveKey(textKey);
+                                                await widget.onSaveKey(
+                                                    textKey, selectedPlatform);
                                                 setDialogState(() {
                                                   _localApiKey = textKey;
+                                                  _localApiPlatform =
+                                                      selectedPlatform;
                                                   _localAllApiKeys = List.from(
                                                       widget.allApiKeys);
                                                   _apiStatus[textKey] = 'ok';
@@ -1343,7 +1467,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                                 if (context.mounted) {
                                                   UIHelper.showErrorSnackBar(
                                                       context,
-                                                      "API Key tidak valid atau limit! Silakan gunakan key lain.");
+                                                      "API Key $selectedPlatform tidak valid atau limit! Silakan gunakan key lain.");
                                                 }
                                               }
                                             }
@@ -1418,8 +1542,14 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                               child: InkWell(
                                 onTap: () {
                                   widget.onRemoveKey(); // Set null in prefs
-                                  setDialogState(() => _localApiKey = "");
-                                  setState(() => _localApiKey = "");
+                                  setDialogState(() {
+                                    _localApiKey = "";
+                                    _localApiPlatform = null;
+                                  });
+                                  setState(() {
+                                    _localApiKey = "";
+                                    _localApiPlatform = null;
+                                  });
                                 },
                                 child: Row(
                                   children: [
@@ -1460,7 +1590,11 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                       MediaQuery.of(context).size.height * 0.4),
                               child: SingleChildScrollView(
                                 child: Column(
-                                  children: _localAllApiKeys.map((key) {
+                                  children: _localAllApiKeys.map((entry) {
+                                    final parts = entry.split('|');
+                                    final key = parts[0];
+                                    final platform =
+                                        parts.length > 1 ? parts[1] : 'gemini';
                                     final isActive = _localApiKey == key;
                                     return Container(
                                       margin: const EdgeInsets.only(bottom: 12),
@@ -1490,10 +1624,15 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                       ),
                                       child: InkWell(
                                         onTap: () {
-                                          widget.onSaveKey(key);
-                                          setDialogState(
-                                              () => _localApiKey = key);
-                                          setState(() => _localApiKey = key);
+                                          widget.onSaveKey(key, platform);
+                                          setDialogState(() {
+                                            _localApiKey = key;
+                                            _localApiPlatform = platform;
+                                          });
+                                          setState(() {
+                                            _localApiKey = key;
+                                            _localApiPlatform = platform;
+                                          });
                                         },
                                         borderRadius: BorderRadius.circular(16),
                                         child: Row(
@@ -1510,8 +1649,10 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                               child: Icon(
                                                 isActive
                                                     ? Icons.check_rounded
-                                                    : Icons
-                                                        .lock_outline_rounded,
+                                                    : (platform == 'groq'
+                                                        ? Icons.bolt_rounded
+                                                        : Icons
+                                                            .auto_awesome_rounded),
                                                 size: 14,
                                                 color: isActive
                                                     ? Colors.white
@@ -2063,7 +2204,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
             color: AppColors.primary,
             onTap: () {
               setState(() => _localApiKey = "");
-              widget.onSaveKey(""); // Save to prefs
+              widget.onSaveKey("", "gemini"); // Save to prefs
             },
           ),
           const SizedBox(height: 12),
@@ -2340,7 +2481,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                       Icon(Icons.battery_alert_rounded,
                                           color: Colors.amberAccent, size: 14),
                                       SizedBox(width: 6),
-                                      Text('Draining Info',
+                                      Text('Agent Info',
                                           style: TextStyle(
                                               color: Colors.white,
                                               fontSize: 10,
@@ -2867,6 +3008,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
       // 3. Panggil AI Service
       final response = await _aiService.getFinancialAdvice(
         apiKey: _localApiKey,
+        apiPlatform: _localApiPlatform,
         transactions: txns,
         userQuery: text,
         dateRange: widget.selectedDateRange,
