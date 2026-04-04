@@ -34,6 +34,13 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
       TextEditingController();
   final TextEditingController _advisorCooldownController =
       TextEditingController();
+  // Survey Config
+  bool _surveyEnabled = false;
+  final TextEditingController _surveyMinTransactionsController =
+      TextEditingController();
+  final TextEditingController _surveyMinAccountAgeController =
+      TextEditingController();
+
   DateTime? _startTime;
   DateTime? _endTime;
   bool _isSaving = false;
@@ -53,6 +60,8 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
     _maintenanceMsgController.dispose();
     _advisorMinTransController.dispose();
     _advisorCooldownController.dispose();
+    _surveyMinTransactionsController.dispose();
+    _surveyMinAccountAgeController.dispose();
     super.dispose();
   }
 
@@ -82,12 +91,14 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
           _advisorProvider = data['advisor_provider'] ?? 'gemini';
           _geminiKeys = List<String>.from(data['advisor_gemini_keys'] ?? []);
           _groqKeys = List<String>.from(data['advisor_groq_keys'] ?? []);
-          
+
           // Migrasi old API ke format baru kalau ada
           final oldKey = data['advisor_api_key'] ?? '';
           if (oldKey.toString().isNotEmpty) {
-             if (oldKey.toString().startsWith('gsk_') && !_groqKeys.contains(oldKey)) _groqKeys.add(oldKey);
-             if (oldKey.toString().startsWith('AIza') && !_geminiKeys.contains(oldKey)) _geminiKeys.add(oldKey);
+            if (oldKey.toString().startsWith('gsk_') &&
+                !_groqKeys.contains(oldKey)) _groqKeys.add(oldKey);
+            if (oldKey.toString().startsWith('AIza') &&
+                !_geminiKeys.contains(oldKey)) _geminiKeys.add(oldKey);
           }
 
           _advisorMinTransController.text =
@@ -98,6 +109,20 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
               'Aplikasi sedang dalam pemeliharaan rutin.';
           _startTime = (data['maintenanceStartTime'] as Timestamp?)?.toDate();
           _endTime = (data['maintenanceEndTime'] as Timestamp?)?.toDate();
+        });
+      }
+
+      // Load Survey Config separately
+      final surveyDoc =
+          await _firestore.collection('app_config').doc('survey').get();
+      if (surveyDoc.exists) {
+        final sData = surveyDoc.data()!;
+        setState(() {
+          _surveyEnabled = sData['isAvailable'] ?? false;
+          _surveyMinTransactionsController.text =
+              (sData['minTransactions'] ?? 0).toString();
+          _surveyMinAccountAgeController.text =
+              (sData['minAccountAgeDays'] ?? 0).toString();
         });
       }
     } catch (e) {
@@ -139,49 +164,106 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
   }
 
   Future<void> _saveConfig() async {
+    final confirmed = await UIHelper.showConfirmDialog(
+      context: context,
+      title: 'Simpan Konfigurasi?',
+      message:
+          'Semua perubahan (Sistem, AI, & Survei) akan langsung diterapkan ke aplikasi dan tercatat di log.',
+    );
+    if (confirmed != true) return;
+
     setState(() => _isSaving = true);
 
-    final batch = _firestore.batch();
-    final configRef = _firestore.collection('app_config').doc('global');
-    final historyRef = configRef.collection('history').doc();
+    try {
+      final batch = _firestore.batch();
+      final configRef = _firestore.collection('app_config').doc('global');
+      final surveyRef = _firestore.collection('app_config').doc('survey');
+      final historyRef = configRef.collection('history').doc();
 
-    final Map<String, dynamic> configData = {
-      'isMaintenance': _maintenanceMode,
-      'minVersion': _minVersionController.text,
-      'latestVersion': _latestVersionController.text,
-      'downloadUrl': _downloadUrlController.text,
-      'maintenanceMessage': _maintenanceMsgController.text,
-      'maintenanceStartTime':
-          _startTime != null ? Timestamp.fromDate(_startTime!) : null,
-      'maintenanceEndTime':
-          _endTime != null ? Timestamp.fromDate(_endTime!) : null,
-      // Advisor Config
-      'is_advisor_enabled': _advisorEnabled,
-      'advisor_provider': _advisorProvider,
-      'advisor_gemini_keys': _geminiKeys,
-      'advisor_groq_keys': _groqKeys,
-      'advisor_api_key': '', // clear deprecated field
-      'advisor_min_transactions':
-          int.tryParse(_advisorMinTransController.text) ?? 5,
-      'advisor_cooldown_hours':
-          int.tryParse(_advisorCooldownController.text) ?? 24,
-      'lastUpdated': FieldValue.serverTimestamp(),
-    };
+      // Check for log-worthy changes
+      final prevDoc = await configRef.get();
+      final prevData = prevDoc.data() ?? {};
+      final prevSurveyDoc = await surveyRef.get();
+      final prevSurveyData = prevSurveyDoc.data() ?? {};
 
-    batch.set(configRef, configData, SetOptions(merge: true));
+      // 1. App Global Config
+      final Map<String, dynamic> configData = {
+        'isMaintenance': _maintenanceMode,
+        'minVersion': _minVersionController.text,
+        'latestVersion': _latestVersionController.text,
+        'downloadUrl': _downloadUrlController.text,
+        'maintenanceMessage': _maintenanceMsgController.text,
+        'maintenanceStartTime':
+            _startTime != null ? Timestamp.fromDate(_startTime!) : null,
+        'maintenanceEndTime':
+            _endTime != null ? Timestamp.fromDate(_endTime!) : null,
+        'is_advisor_enabled': _advisorEnabled,
+        'advisor_provider': _advisorProvider,
+        'advisor_gemini_keys': _geminiKeys,
+        'advisor_groq_keys': _groqKeys,
+        'advisor_api_key': '',
+        'advisor_min_transactions':
+            int.tryParse(_advisorMinTransController.text) ?? 5,
+        'advisor_cooldown_hours':
+            int.tryParse(_advisorCooldownController.text) ?? 24,
+        'lastUpdated': FieldValue.serverTimestamp(),
+      };
+      batch.set(configRef, configData, SetOptions(merge: true));
 
-    batch.set(historyRef, {
-      ...configData,
-      'updatedAt': FieldValue.serverTimestamp(),
-      'action': 'CONFIG_UPDATE',
-      'updatedBy': _authService.auth.currentUser?.uid ?? 'system',
-    });
+      // 2. Survey Config
+      final Map<String, dynamic> surveyData = {
+        'isAvailable': _surveyEnabled,
+        'minTransactions':
+            int.tryParse(_surveyMinTransactionsController.text) ?? 0,
+        'minAccountAgeDays':
+            int.tryParse(_surveyMinAccountAgeController.text) ?? 0,
+      };
+      batch.set(surveyRef, surveyData, SetOptions(merge: true));
 
-    await batch.commit();
+      // 3. Create Specific History Logs
+      final uid = _authService.auth.currentUser?.uid ?? 'system';
 
-    setState(() => _isSaving = false);
-    if (mounted) {
-      _showSuccessSheet();
+      // Log Survey Toggle specifically
+      if (prevSurveyData['isAvailable'] != _surveyEnabled) {
+        final surveyLogRef = configRef.collection('history').doc();
+        batch.set(surveyLogRef, {
+          'action': 'SURVEY_TOGGLED',
+          'enabled': _surveyEnabled,
+          'updatedBy': uid,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
+
+      // Log AI Status if changed
+      if (prevData['is_advisor_enabled'] != _advisorEnabled) {
+        final aiLogRef = configRef.collection('history').doc();
+        batch.set(aiLogRef, {
+          'action': 'AI_STATUS_CHANGED',
+          'enabled': _advisorEnabled,
+          'updatedBy': uid,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
+
+      // General config update log
+      batch.set(historyRef, {
+        ...configData,
+        'updatedAt': FieldValue.serverTimestamp(),
+        'action': 'CONFIG_UPDATE',
+        'updatedBy': uid,
+      });
+
+      await batch.commit();
+
+      if (mounted) _showSuccessSheet();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal menyimpan: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
@@ -460,30 +542,50 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSectionHeader('System & Utility', Icons.settings_suggest_rounded, Colors.orange),
+            _buildSectionHeader('System & Utility',
+                Icons.settings_suggest_rounded, Colors.black),
             _buildPremiumCard(
               child: Column(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: _maintenanceMode ? Colors.orange.withOpacity(0.05) : Colors.grey.withOpacity(0.05),
+                      color: _maintenanceMode
+                          ? Colors.black
+                          : Colors.blue.withOpacity(0.04),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: _maintenanceMode ? Colors.orange.withOpacity(0.1) : Colors.black.withOpacity(0.05),
+                        color: _maintenanceMode
+                            ? Colors.black
+                            : Colors.blue.withOpacity(0.1),
                       ),
+                      boxShadow: _maintenanceMode
+                          ? [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              )
+                            ]
+                          : null,
                     ),
                     child: Row(
                       children: [
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: _maintenanceMode ? Colors.orange.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+                            color: _maintenanceMode
+                                ? Colors.white.withOpacity(0.2)
+                                : Colors.blue.withOpacity(0.1),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
-                            _maintenanceMode ? Icons.construction_rounded : Icons.check_circle_outline_rounded,
-                            color: _maintenanceMode ? Colors.orange : Colors.grey,
+                            _maintenanceMode
+                                ? Icons.construction_rounded
+                                : Icons.check_circle_rounded,
+                            color: _maintenanceMode
+                                ? Colors.white
+                                : Colors.blue.shade700,
                             size: 22,
                           ),
                         ),
@@ -493,18 +595,36 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                _maintenanceMode ? 'Maintenance ON' : 'System Normal',
-                                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: -0.5),
+                                _maintenanceMode
+                                    ? 'Maintenance ON'
+                                    : 'System Normal',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 16,
+                                    color: _maintenanceMode
+                                        ? Colors.white
+                                        : Colors.black87,
+                                    letterSpacing: -0.5),
                               ),
-                              Text('Mode perbaikan sistem global.',
-                                  style: TextStyle(fontSize: 11, color: Colors.grey)),
+                              Text(
+                                  _maintenanceMode
+                                      ? 'Sistem sedang dibatasi.'
+                                      : 'Sistem berjalan optimal.',
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      color: _maintenanceMode
+                                          ? Colors.white70
+                                          : Colors.blueGrey)),
                             ],
                           ),
                         ),
                         Switch.adaptive(
-                            value: _maintenanceMode,
-                            activeColor: Colors.orange,
-                            onChanged: (v) => setState(() => _maintenanceMode = v)),
+                          value: _maintenanceMode,
+                          activeColor: Colors.white,
+                          activeTrackColor: Colors.white24,
+                          onChanged: (v) =>
+                              setState(() => _maintenanceMode = v),
+                        ),
                       ],
                     ),
                   ),
@@ -513,7 +633,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                     controller: _maintenanceMsgController,
                     label: 'Pesan Maintenance',
                     icon: Icons.message_rounded,
-                    color: Colors.orange,
+                    color: Colors.black,
                     maxLines: 2,
                   ),
                   const SizedBox(height: 16),
@@ -542,7 +662,8 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
               ),
             ),
             const SizedBox(height: 32),
-            _buildSectionHeader('Versioning & Update', Icons.system_update_rounded, Colors.blue),
+            _buildSectionHeader('Versioning & Update',
+                Icons.system_update_rounded, Colors.black),
             _buildPremiumCard(
               child: Column(
                 children: [
@@ -550,21 +671,21 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                     controller: _minVersionController,
                     label: 'Force Update vMin',
                     icon: Icons.verified_rounded,
-                    color: Colors.blue,
+                    color: Colors.black,
                   ),
                   const SizedBox(height: 16),
                   _buildModernTextField(
                     controller: _latestVersionController,
                     label: 'Latest Version',
                     icon: Icons.new_releases_rounded,
-                    color: Colors.blue,
+                    color: Colors.black,
                   ),
                   const SizedBox(height: 16),
                   _buildModernTextField(
                     controller: _downloadUrlController,
                     label: 'Download URL (Direct)',
                     icon: Icons.link_rounded,
-                    color: Colors.blue,
+                    color: Colors.black,
                   ),
                   const SizedBox(height: 8),
                   Align(
@@ -572,47 +693,67 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                     child: TextButton.icon(
                       onPressed: () {
                         setState(() {
-                          _downloadUrlController.text = 'https://myduitgweh.web.app/app-release.apk';
+                          _downloadUrlController.text =
+                              'https://myduitgweh.web.app/app-release.apk';
                         });
                       },
                       style: TextButton.styleFrom(
-                        backgroundColor: Colors.blue.withOpacity(0.05),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        backgroundColor: Colors.black.withOpacity(0.05),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
                       ),
-                      icon: const Icon(Icons.cloud_done_rounded, size: 14, color: Colors.blue),
+                      icon: const Icon(Icons.cloud_done_rounded,
+                          size: 14, color: Colors.black54),
                       label: const Text('Use Firebase Hosting URL',
-                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blue)),
+                          style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87)),
                     ),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 32),
-            _buildSectionHeader('AI Financial Advisor', Icons.psychology_rounded, const Color(0xFF8B5CF6)),
+            _buildSectionHeader(
+                'AI Financial Advisor', Icons.psychology_rounded, Colors.black),
             _buildPremiumCard(
               child: Column(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: _advisorEnabled ? const Color(0xFF8B5CF6).withOpacity(0.05) : Colors.red.withOpacity(0.05),
+                      color: _advisorEnabled
+                          ? Colors.black
+                          : Colors.red.withOpacity(0.05),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: _advisorEnabled ? const Color(0xFF8B5CF6).withOpacity(0.1) : Colors.red.withOpacity(0.1),
-                      ),
+                      boxShadow: _advisorEnabled
+                          ? [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              )
+                            ]
+                          : null,
                     ),
                     child: Row(
                       children: [
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: _advisorEnabled ? const Color(0xFF8B5CF6).withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                            color: _advisorEnabled
+                                ? Colors.white.withOpacity(0.2)
+                                : Colors.red.withOpacity(0.1),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
-                            _advisorEnabled ? Icons.psychology_rounded : Icons.power_off_rounded,
-                            color: _advisorEnabled ? const Color(0xFF8B5CF6) : Colors.red,
+                            _advisorEnabled
+                                ? Icons.psychology_rounded
+                                : Icons.power_off_rounded,
+                            color: _advisorEnabled ? Colors.white : Colors.red,
                             size: 22,
                           ),
                         ),
@@ -622,17 +763,30 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                _advisorEnabled ? 'Engine Active' : 'Engine Suspended',
-                                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: -0.5),
+                                _advisorEnabled
+                                    ? 'Engine Active'
+                                    : 'Engine Suspended',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 16,
+                                    color: _advisorEnabled
+                                        ? Colors.white
+                                        : Colors.black87,
+                                    letterSpacing: -0.5),
                               ),
                               Text('Global toggle untuk AI Advisor',
-                                  style: TextStyle(fontSize: 11, color: Colors.grey)),
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      color: _advisorEnabled
+                                          ? Colors.white70
+                                          : Colors.grey)),
                             ],
                           ),
                         ),
                         Switch.adaptive(
                           value: _advisorEnabled,
-                          activeColor: const Color(0xFF8B5CF6),
+                          activeColor: Colors.white,
+                          activeTrackColor: Colors.white24,
                           onChanged: (v) => setState(() => _advisorEnabled = v),
                         ),
                       ],
@@ -645,20 +799,29 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                       filled: true,
                       fillColor: Colors.black.withOpacity(0.02),
                       labelText: 'Engine Provider',
-                      labelStyle: TextStyle(fontWeight: FontWeight.bold, color: Colors.black.withOpacity(0.6)),
-                      prefixIcon: const Icon(Icons.hub_rounded, color: Color(0xFF8B5CF6), size: 20),
+                      labelStyle: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black.withOpacity(0.6)),
+                      prefixIcon: const Icon(Icons.hub_rounded,
+                          color: Colors.black, size: 20),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide.none,
                       ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
                     ),
-                    icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.grey),
+                    icon: const Icon(Icons.keyboard_arrow_down_rounded,
+                        color: Colors.grey),
                     items: const [
                       DropdownMenuItem(
-                          value: 'gemini', child: Text('Google Gemini ♊', style: TextStyle(fontWeight: FontWeight.w600))),
+                          value: 'gemini',
+                          child: Text('Google Gemini',
+                              style: TextStyle(fontWeight: FontWeight.w600))),
                       DropdownMenuItem(
-                          value: 'groq', child: Text('Groq API 🏎️', style: TextStyle(fontWeight: FontWeight.w600))),
+                          value: 'groq',
+                          child: Text('Groq API',
+                              style: TextStyle(fontWeight: FontWeight.w600))),
                     ],
                     onChanged: (v) => setState(() => _advisorProvider = v!),
                   ),
@@ -667,14 +830,20 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                     width: double.infinity,
                     height: 52,
                     child: ElevatedButton.icon(
-                      icon: const Icon(Icons.vpn_key_rounded, size: 18),
-                      label: const Text('MANAGE API KEYS', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                      icon: const Icon(Icons.vpn_key_rounded,
+                          size: 18, color: Colors.black87),
+                      label: const Text('MANAGE API KEYS',
+                          style: TextStyle(
+                              fontWeight: FontWeight.w900, letterSpacing: 0.5)),
                       onPressed: _showAdvisorKeysManager,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF8B5CF6).withOpacity(0.1),
-                        foregroundColor: const Color(0xFF8B5CF6),
+                        backgroundColor: Colors.black.withOpacity(0.05),
+                        foregroundColor: Colors.black,
                         elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: BorderSide(
+                                color: Colors.black.withOpacity(0.1))),
                       ),
                     ),
                   ),
@@ -687,7 +856,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                           label: 'Trigger (Trans)',
                           helper: 'Min. tx baru',
                           icon: Icons.swap_horiz_rounded,
-                          color: const Color(0xFF8B5CF6),
+                          color: Colors.black,
                           isNumber: true,
                         ),
                       ),
@@ -698,11 +867,123 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                           label: 'Cooldown (Jam)',
                           helper: 'Jeda analisa',
                           icon: Icons.hourglass_empty_rounded,
-                          color: const Color(0xFF8B5CF6),
+                          color: Colors.black,
                           isNumber: true,
                         ),
                       ),
                     ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+            _buildSectionHeader('User Survey (Satisfaction)',
+                Icons.thumbs_up_down_rounded, Colors.black),
+            _buildPremiumCard(
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: _surveyEnabled
+                          ? Colors.black
+                          : Colors.blueGrey.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: _surveyEnabled
+                            ? Colors.black
+                            : Colors.blueGrey.withOpacity(0.1),
+                      ),
+                      boxShadow: _surveyEnabled
+                          ? [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              )
+                            ]
+                          : null,
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: _surveyEnabled
+                                ? Colors.white.withOpacity(0.2)
+                                : Colors.blueGrey.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.thumbs_up_down_rounded,
+                            color:
+                                _surveyEnabled ? Colors.white : Colors.blueGrey,
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _surveyEnabled
+                                    ? 'Survey Opened'
+                                    : 'Survey Closed',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 16,
+                                    color: _surveyEnabled
+                                        ? Colors.white
+                                        : Colors.black87,
+                                    letterSpacing: -0.5),
+                              ),
+                              Text('Aktifkan survei kepuasan user',
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      color: _surveyEnabled
+                                          ? Colors.white70
+                                          : Colors.blueGrey)),
+                            ],
+                          ),
+                        ),
+                        Switch.adaptive(
+                          value: _surveyEnabled,
+                          activeColor: Colors.white,
+                          activeTrackColor:
+                              const Color.fromARGB(60, 255, 255, 255),
+                          onChanged: (v) => setState(() => _surveyEnabled = v),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  _buildConfigSlider(
+                    label: 'Min. Transaksi',
+                    value: double.tryParse(
+                            _surveyMinTransactionsController.text) ??
+                        0,
+                    min: 0,
+                    max: 50,
+                    divisions: 10,
+                    color: Colors.black,
+                    onChanged: (val) => setState(() =>
+                        _surveyMinTransactionsController.text =
+                            val.toInt().toString()),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildConfigSlider(
+                    label: 'Umur Akun (Hari)',
+                    value:
+                        double.tryParse(_surveyMinAccountAgeController.text) ??
+                            0,
+                    min: 0,
+                    max: 30,
+                    divisions: 30,
+                    color: Colors.black,
+                    onChanged: (val) => setState(() =>
+                        _surveyMinAccountAgeController.text =
+                            val.toInt().toString()),
                   ),
                 ],
               ),
@@ -719,7 +1000,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                         height: 20,
                         child: CircularProgressIndicator(
                             color: Colors.white, strokeWidth: 2))
-                    : const Icon(Icons.save_rounded),
+                    : const Icon(Icons.save_rounded, color: Colors.white),
                 label: Text(_isSaving ? 'Saving...' : 'Publish Configurations'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.black,
@@ -744,6 +1025,63 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildConfigSlider({
+    required String label,
+    required double value,
+    required double min,
+    required double max,
+    required int divisions,
+    required Color color,
+    required Function(double) onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label,
+                style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87)),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                value.toInt().toString(),
+                style: TextStyle(
+                    fontWeight: FontWeight.w900, fontSize: 12, color: color),
+              ),
+            ),
+          ],
+        ),
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            trackHeight: 4,
+            thumbShape: const RoundSliderThumbShape(
+                enabledThumbRadius: 8, elevation: 4),
+            overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
+            activeTrackColor: color,
+            inactiveTrackColor: color.withOpacity(0.1),
+            thumbColor: Colors.white,
+            overlayColor: color.withOpacity(0.2),
+          ),
+          child: Slider(
+            value: value,
+            min: min,
+            max: max,
+            divisions: divisions,
+            onChanged: onChanged,
+          ),
+        ),
+      ],
     );
   }
 
@@ -779,7 +1117,8 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
       maxLines: maxLines,
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(fontWeight: FontWeight.bold, color: Colors.black.withOpacity(0.6)),
+        labelStyle: TextStyle(
+            fontWeight: FontWeight.bold, color: Colors.black.withOpacity(0.6)),
         helperText: helper,
         helperStyle: const TextStyle(fontSize: 10),
         prefixIcon: Icon(icon, color: color, size: 20),
@@ -793,7 +1132,8 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: color.withOpacity(0.5), width: 1.5),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
     );
   }
@@ -1024,12 +1364,11 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
     String addType = 'gemini'; // 'gemini' or 'groq'
 
     showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (context) {
+          return StatefulBuilder(builder: (context, setModalState) {
             return Container(
               height: MediaQuery.of(context).size.height * 0.85,
               decoration: const BoxDecoration(
@@ -1038,7 +1377,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
               ),
               child: Column(
                 children: [
-                   Container(
+                  Container(
                     margin: const EdgeInsets.only(top: 12, bottom: 8),
                     width: 40,
                     height: 4,
@@ -1053,108 +1392,170 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                         style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: Colors.purple)),
+                            color: Colors.black87)),
                   ),
                   Expanded(
-                    child: ListView(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      children: [
+                      child: ListView(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          children: [
                         if (isAdding) ...[
-                          Row(
-                            children: [
-                              Expanded(
-                                child: DropdownButtonFormField<String>(
-                                  value: addType,
-                                  decoration: const InputDecoration(labelText: 'Tipe Key'),
-                                  items: const [
-                                    DropdownMenuItem(value: 'gemini', child: Text('Gemini')),
-                                    DropdownMenuItem(value: 'groq', child: Text('Groq')),
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.02),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                  color: Colors.black.withOpacity(0.05)),
+                            ),
+                            child: Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: DropdownButtonFormField<String>(
+                                        value: addType,
+                                        decoration: InputDecoration(
+                                          labelText: 'Tipe Key',
+                                          filled: true,
+                                          fillColor: Colors.white,
+                                          border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                              borderSide: BorderSide.none),
+                                        ),
+                                        items: const [
+                                          DropdownMenuItem(
+                                              value: 'gemini',
+                                              child: Text('Gemini')),
+                                          DropdownMenuItem(
+                                              value: 'groq',
+                                              child: Text('Groq')),
+                                        ],
+                                        onChanged: (v) =>
+                                            setModalState(() => addType = v!),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      flex: 2,
+                                      child: TextField(
+                                        controller: newKeyController,
+                                        decoration: InputDecoration(
+                                          labelText: 'API Key',
+                                          filled: true,
+                                          fillColor: Colors.white,
+                                          border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                              borderSide: BorderSide.none),
+                                        ),
+                                      ),
+                                    ),
                                   ],
-                                  onChanged: (v) => setModalState(() => addType = v!),
                                 ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                flex: 2,
-                                child: TextField(
-                                  controller: newKeyController,
-                                  decoration: const InputDecoration(labelText: 'API Key'),
+                                const SizedBox(height: 12),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    TextButton(
+                                      onPressed: () {
+                                        setModalState(() {
+                                          isAdding = false;
+                                          newKeyController.clear();
+                                        });
+                                      },
+                                      child: const Text('Batal',
+                                          style: TextStyle(color: Colors.grey)),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        final k = newKeyController.text.trim();
+                                        if (k.isNotEmpty) {
+                                          setState(() {
+                                            if (addType == 'gemini' &&
+                                                !_geminiKeys.contains(k)) {
+                                              _geminiKeys.add(k);
+                                            } else if (addType == 'groq' &&
+                                                !_groqKeys.contains(k)) {
+                                              _groqKeys.add(k);
+                                            }
+                                          });
+                                          setModalState(() {
+                                            isAdding = false;
+                                            newKeyController.clear();
+                                          });
+                                        }
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.black,
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(12)),
+                                      ),
+                                      child: const Text('Simpan Key'),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              TextButton(
-                                onPressed: () {
-                                  setModalState(() {
-                                    isAdding = false;
-                                    newKeyController.clear();
-                                  });
-                                },
-                                child: const Text('Batal'),
-                              ),
-                              ElevatedButton(
-                                onPressed: () {
-                                  final k = newKeyController.text.trim();
-                                  if (k.isNotEmpty) {
-                                    setState(() {
-                                      if (addType == 'gemini' && !_geminiKeys.contains(k)) {
-                                         _geminiKeys.add(k);
-                                      } else if (addType == 'groq' && !_groqKeys.contains(k)) {
-                                         _groqKeys.add(k);
-                                      }
-                                    });
-                                    setModalState(() {
-                                      isAdding = false;
-                                      newKeyController.clear();
-                                    });
-                                  }
-                                },
-                                child: const Text('Simpan Key'),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                           const Divider(height: 32),
                         ] else ...[
-                          OutlinedButton.icon(
-                            icon: const Icon(Icons.add),
-                            label: const Text('Tambah API Key'),
-                            onPressed: () => setModalState(() => isAdding = true),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 48,
+                            child: OutlinedButton.icon(
+                              icon: const Icon(Icons.add_rounded, size: 20),
+                              label: const Text('TAMBAH API KEY BARU',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 0.5)),
+                              onPressed: () =>
+                                  setModalState(() => isAdding = true),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.black,
+                                side: const BorderSide(color: Colors.black87),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14)),
+                              ),
+                            ),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 20),
                         ],
-
-                        const Text('Gemini API Keys', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        const Text('Gemini API Keys',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 16)),
                         const SizedBox(height: 8),
-                        if (_geminiKeys.isEmpty) const Text('Belum ada data.', style: TextStyle(color: Colors.grey)),
-                        ..._geminiKeys.map((key) => _buildKeyItem(key, 'gemini', () {
-                          setState(() => _geminiKeys.remove(key));
-                          setModalState((){});
-                        })),
-
-                         const SizedBox(height: 24),
-
-                        const Text('Groq API Keys', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        if (_geminiKeys.isEmpty)
+                          const Text('Belum ada data.',
+                              style: TextStyle(color: Colors.grey)),
+                        ..._geminiKeys
+                            .map((key) => _buildKeyItem(key, 'gemini', () {
+                                  setState(() => _geminiKeys.remove(key));
+                                  setModalState(() {});
+                                })),
+                        const SizedBox(height: 24),
+                        const Text('Groq API Keys',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 16)),
                         const SizedBox(height: 8),
-                        if (_groqKeys.isEmpty) const Text('Belum ada data.', style: TextStyle(color: Colors.grey)),
-                         ..._groqKeys.map((key) => _buildKeyItem(key, 'groq', () {
-                          setState(() => _groqKeys.remove(key));
-                          setModalState((){});
-                        })),
+                        if (_groqKeys.isEmpty)
+                          const Text('Belum ada data.',
+                              style: TextStyle(color: Colors.grey)),
+                        ..._groqKeys
+                            .map((key) => _buildKeyItem(key, 'groq', () {
+                                  setState(() => _groqKeys.remove(key));
+                                  setModalState(() {});
+                                })),
                         const SizedBox(height: 100),
-                      ]
-                    )
-                  )
+                      ]))
                 ],
               ),
             );
-          }
-        );
-      }
-    );
+          });
+        });
   }
 
   Widget _buildKeyItem(String apiKey, String type, VoidCallback onDelete) {
@@ -1162,99 +1563,108 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
     String testResult = '';
     Color testColor = Colors.grey;
 
-    return StatefulBuilder(
-      builder: (context, setItemState) {
-        return Card(
-           margin: const EdgeInsets.only(bottom: 8),
-           elevation: 0,
-           shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(color: Colors.grey.withOpacity(0.3)),
-           ),
-           child: Padding(
-             padding: const EdgeInsets.all(12),
-             child: Column(
-               crossAxisAlignment: CrossAxisAlignment.start,
-               children: [
-                 Row(
-                   children: [
-                     Expanded(
+    return StatefulBuilder(builder: (context, setItemState) {
+      return Card(
+        margin: const EdgeInsets.only(bottom: 8),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: Colors.grey.withOpacity(0.3)),
+        ),
+        child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
                         child: Text(
-                          apiKey,
-                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        )
-                     ),
-                     IconButton(
-                       icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-                       onPressed: onDelete,
-                       padding: EdgeInsets.zero,
-                       constraints: const BoxConstraints(),
-                     ),
-                   ],
-                 ),
-                 const SizedBox(height: 8),
-                 Row(
-                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                   children: [
-                      if (isTesting)
-                        const SizedBox(
-                          width: 14, height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      else if (testResult.isNotEmpty)
-                        Expanded(
-                          child: Text(
-                            testResult,
-                            style: TextStyle(color: testColor, fontSize: 12, fontWeight: FontWeight.bold),
-                          ),
-                        )
-                      else
-                        const Flexible(child: Text('Belum dites', style: TextStyle(color: Colors.grey, fontSize: 12))),
-                      
-                      SizedBox(
-                        height: 30,
-                        child: TextButton(
-                          onPressed: isTesting ? null : () async {
-                              setItemState(() {
-                                 isTesting = true;
-                                 testResult = 'Menghubungkan...';
-                                 testColor = Colors.grey;
-                              });
-
-                              bool success = false;
-                              String msg = '';
-                              if (type == 'gemini') {
-                                 final res = await _testGemini(apiKey);
-                                 success = res.success;
-                                 msg = res.message;
-                              } else {
-                                 final res = await _testGroq(apiKey);
-                                 success = res.success;
-                                 msg = res.message;
-                              }
-
-                              setItemState(() {
-                                 isTesting = false;
-                                 testResult = success ? 'Normal / Active' : msg;
-                                 testColor = success ? Colors.green : Colors.red;
-                              });
-                          },
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                          ),
-                          child: const Text('Cek Koneksi', style: TextStyle(fontSize: 12)),
+                      apiKey,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w600, fontSize: 13),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    )),
+                    IconButton(
+                      icon:
+                          const Icon(Icons.delete, color: Colors.red, size: 20),
+                      onPressed: onDelete,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    if (isTesting)
+                      const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    else if (testResult.isNotEmpty)
+                      Expanded(
+                        child: Text(
+                          testResult,
+                          style: TextStyle(
+                              color: testColor,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold),
                         ),
                       )
-                   ],
-                 )
-               ],
-             )
-           ),
-        );
-      }
-    );
+                    else
+                      const Flexible(
+                          child: Text('Belum dites',
+                              style:
+                                  TextStyle(color: Colors.grey, fontSize: 12))),
+                    SizedBox(
+                      height: 30,
+                      child: TextButton(
+                        onPressed: isTesting
+                            ? null
+                            : () async {
+                                setItemState(() {
+                                  isTesting = true;
+                                  testResult = 'Menghubungkan...';
+                                  testColor = Colors.grey;
+                                });
+
+                                bool success = false;
+                                String msg = '';
+                                if (type == 'gemini') {
+                                  final res = await _testGemini(apiKey);
+                                  success = res.success;
+                                  msg = res.message;
+                                } else {
+                                  final res = await _testGroq(apiKey);
+                                  success = res.success;
+                                  msg = res.message;
+                                }
+
+                                setItemState(() {
+                                  isTesting = false;
+                                  testResult =
+                                      success ? 'Normal / Active' : msg;
+                                  testColor =
+                                      success ? Colors.green : Colors.red;
+                                });
+                              },
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                        ),
+                        child: const Text('Cek Koneksi',
+                            style: TextStyle(fontSize: 12)),
+                      ),
+                    )
+                  ],
+                )
+              ],
+            )),
+      );
+    });
   }
 
   Future<({bool success, String message})> _testGemini(String key) async {
@@ -1271,13 +1681,20 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
         return (success: true, message: 'Valid ($m)');
       } catch (e) {
         final errStr = e.toString().toLowerCase();
-        bool isNotFound = errStr.contains('not found') || errStr.contains('404');
+        bool isNotFound =
+            errStr.contains('not found') || errStr.contains('404');
         if (isNotFound) continue; // Try next fallback model
 
-        if (errStr.contains('api key not valid')) return (success: false, message: 'Invalid Key');
-        if (errStr.contains('quota')) return (success: false, message: 'Quota Exceeded');
-        if (errStr.contains('exhausted')) return (success: false, message: 'API Limit Exhausted');
-        return (success: false, message: 'Error: ${e.toString().split('\n').first}');
+        if (errStr.contains('api key not valid'))
+          return (success: false, message: 'Invalid Key');
+        if (errStr.contains('quota'))
+          return (success: false, message: 'Quota Exceeded');
+        if (errStr.contains('exhausted'))
+          return (success: false, message: 'API Limit Exhausted');
+        return (
+          success: false,
+          message: 'Error: ${e.toString().split('\n').first}'
+        );
       }
     }
     return (success: false, message: 'Models Not Found / API Limit');
@@ -1293,7 +1710,9 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
         },
         body: jsonEncode({
           "model": "llama-3.3-70b-versatile",
-          "messages": [{"role": "user", "content": "hi"}],
+          "messages": [
+            {"role": "user", "content": "hi"}
+          ],
           "max_tokens": 10
         }), // very small max_tokens
       );
@@ -1302,13 +1721,14 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
         return (success: true, message: 'Valid');
       } else {
         final err = jsonDecode(res.body);
-        if (err['error']?['code'] == 'invalid_api_key') return (success: false, message: 'Invalid Key');
-        if (res.statusCode == 429) return (success: false, message: 'Rate Limit / Quota Exceeded');
+        if (err['error']?['code'] == 'invalid_api_key')
+          return (success: false, message: 'Invalid Key');
+        if (res.statusCode == 429)
+          return (success: false, message: 'Rate Limit / Quota Exceeded');
         return (success: false, message: 'Error \${res.statusCode}');
       }
     } catch (e) {
       return (success: false, message: 'Failed to connect');
     }
   }
-
 }

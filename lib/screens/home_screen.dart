@@ -1465,32 +1465,67 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    // 2. Extra checks for Auto-Trigger
-    if (autoTrigger) {
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(_uid).get();
-      if (!userDoc.exists) return;
-      
-      final userData = userDoc.data()!;
-      final bool alreadyDone = userData['surveyDone'] ?? false;
-      if (alreadyDone) return;
-
-      final createdAt = (userData['createdAt'] as Timestamp).toDate();
-      final accountAgeDays = DateTime.now().difference(createdAt).inDays;
-      
-      if (accountAgeDays < (config.minAccountAgeDays ?? 0)) return;
-
-      // Check transaction count
-      final txCount = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(_uid)
-          .collection('transactions')
-          .count()
-          .get()
-          .then((v) => v.count);
-
-      if ((txCount ?? 0) < (config.minTransactions ?? 0)) return;
+    // 2. Fetch User Data for Criteria Check
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(_uid).get();
+    if (!userDoc.exists) return;
+    
+    final userData = userDoc.data()!;
+    final bool alreadyDone = userData['surveyDone'] ?? false;
+    
+    // If auto-triggering, don't show if already done
+    if (autoTrigger && alreadyDone) return;
+    
+    // If manually clicking and already done, show info
+    if (!autoTrigger && alreadyDone) {
+      if (mounted) {
+        UIHelper.showInfoDialog(context, 'Sudah Berpartisipasi', 'Kamu sudah mengisi survei ini sebelumnya. Terima kasih banyak atas masukannya! ❤️');
+      }
+      return;
     }
 
+    // 3. Check Account Age
+    // Ambil dari Firestore, tapi jika null gunakan metadata asli dari Firebase Auth (waktu daftar pertama)
+    DateTime createdAt = (userData['createdAt'] as Timestamp?)?.toDate() ?? 
+                         FirebaseAuth.instance.currentUser?.metadata.creationTime ?? 
+                         DateTime.now();
+    
+    // Hitung Hari (Ceil agar 1 jam terhitung 1 hari, 25 jam terhitung 2 hari)
+    final accountAgeDays = (DateTime.now().difference(createdAt).inHours / 24).ceil();
+    final minAge = config.minAccountAgeDays ?? 0;
+    
+    if (accountAgeDays < minAge) {
+      if (!autoTrigger && mounted) {
+        UIHelper.showInfoDialog(
+          context, 
+          'Belum Memenuhi Syarat', 
+          'Maaf, kamu perlu menggunakan aplikasi minimal selama $minAge hari untuk memberikan feedback. (Sekarang: $accountAgeDays hari)'
+        );
+      }
+      return;
+    }
+
+    // 4. Check Transaction Count
+    final txCountResult = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(_uid)
+        .collection('transactions')
+        .count()
+        .get();
+    final txCount = txCountResult.count ?? 0;
+    final minTx = config.minTransactions ?? 0;
+
+    if (txCount < minTx) {
+      if (!autoTrigger && mounted) {
+        UIHelper.showInfoDialog(
+          context, 
+          'Belum Memenuhi Syarat', 
+          'Kamu perlu memiliki minimal $minTx transaksi tercatat untuk memberikan feedback. (Sekarang: $txCount transaksi)'
+        );
+      }
+      return;
+    }
+
+    // 5. Success -> Show Sheet
     if (mounted) _showSurveySheet();
   }
 

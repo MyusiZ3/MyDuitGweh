@@ -13,6 +13,7 @@ import '../../utils/ui_helper.dart';
 import '../../models/survey_config_model.dart';
 import '../../models/feedback_model.dart';
 import '../../services/ai_service.dart';
+import 'app_config_screen.dart';
 
 class GlobalInsightsScreen extends StatefulWidget {
   final bool isSuperAdmin;
@@ -1925,43 +1926,8 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (!snapshot.hasData || snapshot.data == null) {
-          return Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.amber.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.amber.withOpacity(0.3)),
-            ),
-            child: Column(
-              children: [
-                const Icon(Icons.warning_amber_rounded,
-                    color: Colors.amber, size: 48),
-                const SizedBox(height: 16),
-                const Text('Konfigurasi Belum Ada',
-                    style: TextStyle(fontWeight: FontWeight.w900)),
-                const Text(
-                    'Klik tombol di bawah untuk mengaktifkan fitur survei pertama kali.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 12)),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: () => _firestoreService.updateSurveyConfig(
-                      SurveyConfigModel(
-                          isAvailable: true,
-                          minTransactions: 0,
-                          minAccountAgeDays: 0)),
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.amber[800]),
-                  child: const Text('AKTIFKAN SURVEI SEKARANG',
-                      style: TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.bold)),
-                ),
-              ],
-            ),
-          );
-        }
-        final config = snapshot.data!;
+        final config = snapshot.data;
+        final isAvailable = config?.isAvailable ?? false;
 
         return Container(
           padding: const EdgeInsets.all(24),
@@ -1981,48 +1947,65 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Status Survei',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w900, fontSize: 16)),
-                      Text('Enable/Disable survei untuk user',
-                          style: TextStyle(color: Colors.grey, fontSize: 12)),
-                    ],
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: isAvailable ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      isAvailable ? Icons.check_circle_rounded : Icons.cancel_rounded,
+                      color: isAvailable ? Colors.green : Colors.red,
+                      size: 20,
+                    ),
                   ),
-                  Switch.adaptive(
-                    value: config.isAvailable,
-                    activeColor: Colors.green,
-                    onChanged: (val) => _firestoreService
-                        .updateSurveyConfig(config.copyWith(isAvailable: val)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isAvailable ? 'Survei Sedang Aktif' : 'Survei Nonaktif',
+                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+                        ),
+                        Text(
+                          isAvailable 
+                            ? 'User dapat mengisi survei kepuasan.' 
+                            : 'Fitur survei ditutup untuk sementara.',
+                          style: const TextStyle(color: Colors.grey, fontSize: 11),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
               const Divider(height: 32),
-              const Text('Kriteria Partisipasi',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
-              const SizedBox(height: 16),
-              _buildConfigSlider(
-                label: 'Min. Transaksi',
-                value: config.minTransactions.toDouble(),
-                min: 0,
-                max: 50,
-                divisions: 10,
-                onChanged: (val) => _firestoreService.updateSurveyConfig(
-                    config.copyWith(minTransactions: val.toInt())),
-              ),
-              const SizedBox(height: 12),
-              _buildConfigSlider(
-                label: 'Umur Akun (Hari)',
-                value: config.minAccountAgeDays.toDouble(),
-                min: 0,
-                max: 30,
-                divisions: 30,
-                onChanged: (val) => _firestoreService.updateSurveyConfig(
-                    config.copyWith(minAccountAgeDays: val.toInt())),
+              if (config != null) ...[
+                _buildStatusRow('Min. Transaksi', '${config.minTransactions} Transaksi'),
+                const SizedBox(height: 12),
+                _buildStatusRow('Min. Umur Akun', '${config.minAccountAgeDays} Hari'),
+                const SizedBox(height: 20),
+              ],
+              SizedBox(
+                width: double.infinity,
+                child: TextButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const AppConfigScreen()),
+                    );
+                  },
+                  icon: const Icon(Icons.settings_suggest_rounded, size: 18),
+                  label: const Text('UBAH KONFIGURASI DI APP SETTINGS', 
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11)),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.indigo,
+                    backgroundColor: Colors.indigo.withOpacity(0.05),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
               ),
             ],
           ),
@@ -2031,44 +2014,12 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
     );
   }
 
-  Widget _buildConfigSlider({
-    required String label,
-    required double value,
-    required double min,
-    required double max,
-    required int divisions,
-    required Function(double) onChanged,
-  }) {
+  Widget _buildStatusRow(String label, String value) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        SizedBox(
-            width: 100,
-            child: Text(label,
-                style: const TextStyle(fontSize: 12, color: Colors.grey))),
-        Expanded(
-          child: SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              trackHeight: 2,
-              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-              overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
-            ),
-            child: Slider(
-              value: value,
-              min: min,
-              max: max,
-              divisions: divisions,
-              activeColor: Colors.black87,
-              inactiveColor: Colors.grey[200],
-              onChanged: onChanged,
-            ),
-          ),
-        ),
-        SizedBox(
-            width: 30,
-            child: Text(value.toInt().toString(),
-                textAlign: TextAlign.end,
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold, fontSize: 12))),
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600)),
+        Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.black87)),
       ],
     );
   }

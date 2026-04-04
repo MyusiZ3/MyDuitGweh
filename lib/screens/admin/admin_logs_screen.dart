@@ -56,6 +56,11 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
       'icon': Icons.psychology_rounded
     },
     {
+      'id': 'SURVEY_TOGGLED',
+      'label': 'Survei',
+      'icon': Icons.thumbs_up_down_rounded
+    },
+    {
       'id': 'GROQ_KEY_ADDED',
       'label': 'Groq +',
       'icon': Icons.bolt_rounded
@@ -449,10 +454,22 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
       title = 'Hapus Pengguna';
       subtitle = data['userEmail'] ?? 'User ID Dihapus';
     } else if (action == 'CONFIG_UPDATE') {
-      icon = Icons.settings_rounded;
-      color = Colors.teal;
-      title = 'Config Sistem';
-      subtitle = 'Parameter aplikasi diubah.';
+      icon = Icons.settings_suggest_rounded;
+      color = Colors.blueGrey;
+      title = 'Konfigurasi Sistem';
+      subtitle = 'Parameter aplikasi diperbarui.';
+    } else if (action == 'AI_STATUS_CHANGED') {
+      final isEnabled = data['enabled'] ?? false;
+      icon = isEnabled ? Icons.power_rounded : Icons.power_off_rounded;
+      color = isEnabled ? Colors.green : Colors.red;
+      title = 'AI Global Status';
+      subtitle = 'AI ${isEnabled ? 'DIAKTIFKAN' : 'DIMATIKAN'} secara global.';
+    } else if (action == 'SURVEY_TOGGLED') {
+      final isEnabled = data['enabled'] ?? false;
+      icon = Icons.thumbs_up_down_rounded;
+      color = isEnabled ? Colors.cyan : Colors.blueGrey;
+      title = 'Status Survei';
+      subtitle = 'Survei kepuasan ${isEnabled ? 'DIBUKA' : 'DITUTUP'}.';
     } else if (action == 'AI_KEY_ADDED') {
       icon = Icons.vpn_key_rounded;
       color = Colors.green;
