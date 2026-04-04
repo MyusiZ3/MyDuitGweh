@@ -489,8 +489,9 @@ class _ReportScreenState extends State<ReportScreen> {
                             ),
                           ),
                         ),
+                        const SizedBox(height: 4),
                         const Text(
-                          'Catat transaksi otomatis dari notifikasi',
+                          'Pencatatan otomatis dari notifikasi keuangan',
                           style: TextStyle(
                             fontSize: 12,
                             color: AppColors.textHint,
@@ -537,24 +538,30 @@ class _ReportScreenState extends State<ReportScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: () async {
-                  await NotifListenerBridge.openSettings();
-                  // Re-check after returning from settings
-                  Future.delayed(const Duration(seconds: 2), _checkNotifStatus);
-                },
-                icon: const Icon(Icons.settings_suggest_rounded,
-                    color: Colors.white, size: 20),
-                label: const Text('Buka Pengaturan Izin'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        await NotifListenerBridge.openSettings();
+                        // Re-check after returning from settings
+                        Future.delayed(const Duration(seconds: 2), _checkNotifStatus);
+                      },
+                      icon: const Icon(Icons.settings_suggest_rounded,
+                          color: Colors.white, size: 20),
+                      label: const Text('Buka Pengaturan Perizinan'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
               if (_isNotifBannerDismissed && !_isNotifAccessGranted) ...[
                 const SizedBox(height: 8),

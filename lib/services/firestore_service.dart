@@ -126,6 +126,62 @@ class FirestoreService {
     await batch.commit();
   }
 
+  /// Automatically get or create the "Financial Apps" wallet for a user
+  Future<String> getOrCreateFinancialWallet(String uid) async {
+    final query = await _firestore
+        .collection('wallets')
+        .where('owner', isEqualTo: uid)
+        .where('walletName', isEqualTo: 'Financial Apps')
+        .limit(1)
+        .get();
+
+    if (query.docs.isNotEmpty) {
+      return query.docs.first.id;
+    }
+
+    // Create new wallet
+    final wallet = WalletModel(
+      id: '',
+      walletName: 'Financial Apps',
+      balance: 0.0,
+      type: 'personal',
+      members: [uid],
+      owner: uid,
+      createdAt: DateTime.now(),
+    );
+
+    return createWallet(wallet);
+  }
+
+  /// Add a transaction directly from a recognized notification
+  Future<void> addAutoTransaction({
+    required String uid,
+    required double amount,
+    required bool isIncome,
+    required String title,
+    required String description,
+  }) async {
+    final walletId = await getOrCreateFinancialWallet(uid);
+    
+    // Get current user name for createdByName if possible
+    final userSnap = await _firestore.collection('users').doc(uid).get();
+    final userName = userSnap.data()?['displayName'] ?? 'Auto-Sync';
+
+    final transaction = TransactionModel(
+      id: '',
+      walletId: walletId,
+      amount: amount,
+      type: isIncome ? 'income' : 'expense',
+      category: 'Auto-Sync', // Default category for recognition
+      note: '$title: $description',
+      date: DateTime.now(),
+      createdBy: uid,
+      createdByName: userName,
+    );
+
+    await addTransaction(transaction);
+  }
+
   Stream<List<TransactionModel>> getAllTransactionsStream(
       List<String> walletIds) {
     if (walletIds.isEmpty) return Stream.value([]);

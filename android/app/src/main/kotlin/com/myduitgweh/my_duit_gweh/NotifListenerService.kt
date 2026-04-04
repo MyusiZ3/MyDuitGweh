@@ -75,9 +75,25 @@ class NotifListenerService : NotificationListenerService() {
         }
 
         try {
+            // Ignore grouped summary notifications to prevent capturing "X new messages"
+            if ((sbn.notification.flags and android.app.Notification.FLAG_GROUP_SUMMARY) != 0) {
+                return
+            }
+
             val extras = sbn.notification?.extras ?: return
             val title = extras.getCharSequence("android.title")?.toString() ?: ""
-            val text = extras.getCharSequence("android.text")?.toString() ?: ""
+            var text = extras.getCharSequence("android.text")?.toString() ?: ""
+
+            // Attempt to get more detailed text if available
+            val bigText = extras.getCharSequence("android.bigText")?.toString()
+            if (!bigText.isNullOrBlank()) {
+                text = bigText
+            } else {
+                val textLines = extras.getCharSequenceArray("android.textLines")
+                if (textLines != null && textLines.isNotEmpty()) {
+                    text = textLines.joinToString("\n") { it.toString() }
+                }
+            }
 
             // Skip jika title dan text kosong atau hanya notif kosong
             if (title.isBlank() && text.isBlank()) return

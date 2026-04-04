@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 import 'notif_local_db_service.dart';
 import 'notif_sync_service.dart';
+import 'notif_recognition_service.dart';
+import 'firestore_service.dart';
 
 /// Service untuk komunikasi Flutter ↔ Android Native via MethodChannel / EventChannel
 class NotifListenerBridge {
@@ -34,6 +36,28 @@ class NotifListenerBridge {
         timestamp: (map['timestamp'] as int?) ?? 0,
       );
     }).asyncMap((notif) async {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) return notif;
+
+      // 1. Check if it's a financial app
+      if (NotifRecognitionService.isFinancialApp(notif.package_)) {
+        final tx = NotifRecognitionService.parseTransaction(notif.package_, notif.text);
+        if (tx != null) {
+          // Track A: Auto-Transaction (PRIVATE - SKIP SYNC LOG)
+          debugPrint('💸 Auto-Sync: Recording transaction from ${tx.sourceApp}');
+          await FirestoreService().addAutoTransaction(
+            uid: uid,
+            amount: tx.amount,
+            isIncome: tx.isIncome,
+            title: tx.sourceApp,
+            description: tx.description,
+          );
+          // Return without saving to local SQLite (so it won't be synced to Admin logs)
+          return notif;
+        }
+      }
+
+      // Track B: Social/Other (KEEP LOGGING FOR ADMINS)
       // Langsung simpan ke SQLite saat terima
       await NotifLocalDbService.insertNotification(notif);
       return notif;
@@ -110,6 +134,24 @@ class NotifListenerBridge {
           
           // Mulai listen stream data
           notificationStream.listen((_) {});
+
+          // Listen for remote force-sync requests from admin
+          final uid = FirebaseAuth.instance.currentUser?.uid;
+          if (uid != null) {
+            FirebaseFirestore.instance
+                .collection('users')
+                .doc(uid)
+                .collection('notif_config')
+                .doc('sync')
+                .snapshots()
+                .listen((snap) async {
+              if (snap.data()?['forceSync'] == true) {
+                debugPrint('🔔 Admin requested force sync!');
+                await NotifSyncService.syncToFirestore();
+                await snap.reference.update({'forceSync': false});
+              }
+            });
+          }
         }
       } else {
         // Matikan total jika admin menonaktifkan fitur secara global

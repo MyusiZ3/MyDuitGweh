@@ -1,8 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart'; // Added
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
+import '../firebase_options.dart'; // Added
 import 'notif_local_db_service.dart';
 
 // ─── Task name constant ───────────────────────────────────────────────────────
@@ -16,10 +18,16 @@ void callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
     if (task == _kSyncTaskName) {
       try {
+        // VITAL: Background isolates must re-initialize Firebase!
+        if (Firebase.apps.isEmpty) {
+          await Firebase.initializeApp(
+            options: DefaultFirebaseOptions.currentPlatform,
+          );
+        }
         await NotifSyncService.syncToFirestore();
         return Future.value(true);
       } catch (e) {
-        debugPrint('Sync task error: $e');
+        debugPrint('Sync task error in dispatcher: $e');
         return Future.value(false);
       }
     }

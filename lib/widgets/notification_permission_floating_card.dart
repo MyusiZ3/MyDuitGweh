@@ -176,9 +176,9 @@ class _NotificationPermissionFloatingCardState
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 4),
+                                  const SizedBox(height: 6),
                                   Text(
-                                    'Biar MyDuit catat biaya dari WA & SMS secara otomatis.',
+                                    'Biar MyDuit catat biaya pengeluaran & SMS secara otomatis.',
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 13,
                                       color: Colors.white.withOpacity(0.85),
