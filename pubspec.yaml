@@ -1,8 +1,8 @@
 name: my_duit_gweh
 description: "My Duit Gweh - Smart Financial Manager"
-publish_to: 'none'
+publish_to: "none"
 
-version: 1.0.0+1
+version: 1.0.0
 
 environment:
   sdk: ^3.6.0
@@ -50,7 +50,7 @@ dependencies:
   sqflite: ^2.3.3
   path: ^1.9.0
   workmanager: ^0.5.2
-  
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

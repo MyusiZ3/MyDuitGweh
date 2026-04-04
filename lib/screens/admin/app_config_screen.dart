@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/ui_helper.dart';
@@ -78,12 +79,17 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
     try {
       final configDoc =
           await _firestore.collection('app_config').doc('global').get();
+      
+      // Ambil versi dari pubspec.yaml buat default kalau di firestore masih null
+      final packageInfo = await PackageInfo.fromPlatform();
+      final currentAppVersion = packageInfo.version;
+
       if (configDoc.exists) {
         final data = configDoc.data()!;
         setState(() {
           _maintenanceMode = data['isMaintenance'] ?? false;
-          _minVersionController.text = data['minVersion'] ?? '1.0.0';
-          _latestVersionController.text = data['latestVersion'] ?? '1.0.0';
+          _minVersionController.text = data['minVersion'] ?? currentAppVersion;
+          _latestVersionController.text = data['latestVersion'] ?? currentAppVersion;
           _downloadUrlController.text = data['downloadUrl'] ?? '';
 
           // AI Advisor Config

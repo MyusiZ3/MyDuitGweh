@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../utils/app_theme.dart';
 
 class AboutScreen extends StatelessWidget {
@@ -105,17 +106,23 @@ class AboutScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 2),
-                          const FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              '1.0.0',
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFF1C1C1E),
-                                letterSpacing: -0.5,
-                              ),
-                            ),
+                          FutureBuilder<PackageInfo>(
+                            future: PackageInfo.fromPlatform(),
+                            builder: (context, snapshot) {
+                              final version = snapshot.data?.version ?? '...';
+                              return FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  version,
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF1C1C1E),
+                                    letterSpacing: -0.5,
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                         ],
                       ),
