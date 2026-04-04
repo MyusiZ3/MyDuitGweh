@@ -77,6 +77,12 @@ class FirestoreService {
     await batch.commit();
   }
 
+  Future<void> renameWallet(String walletId, String newName) async {
+    await _firestore.collection('wallets').doc(walletId).update({
+      'walletName': newName,
+    });
+  }
+
   String _generateInviteCode() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     return List.generate(6, (index) => chars[Random().nextInt(chars.length)])

@@ -752,9 +752,24 @@ class WalletScreenState extends State<WalletScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(wallet.walletName,
-                              style: const TextStyle(
-                                  fontSize: 22, fontWeight: FontWeight.bold)),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(wallet.walletName,
+                                    style: const TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.bold)),
+                              ),
+                              if (wallet.owner == _uid || !wallet.isColab)
+                                IconButton(
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  icon: const Icon(Icons.edit_outlined,
+                                      color: AppColors.primary, size: 20),
+                                  onPressed: () => _showRenameWalletDialog(wallet),
+                                ),
+                            ],
+                          ),
                           const SizedBox(height: 4),
                           Text(
                             wallet.isDebt
@@ -1193,6 +1208,94 @@ class WalletScreenState extends State<WalletScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  void _showRenameWalletDialog(WalletModel wallet) {
+    final nameController = TextEditingController(text: wallet.walletName);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: EdgeInsets.only(
+          left: 24,
+          right: 24,
+          top: 24,
+          bottom: MediaQuery.of(context).viewInsets.bottom +
+              MediaQuery.of(context).padding.bottom +
+              24,
+        ),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.textHint.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text('Ubah Nama Dompet',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 20),
+            TextField(
+              controller: nameController,
+              textCapitalization: TextCapitalization.words,
+              autofocus: true,
+              decoration: InputDecoration(
+                hintText: 'Masukkan nama baru',
+                prefixIcon: const Icon(Icons.edit_rounded, color: AppColors.primary),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: AppColors.primary)),
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton(
+                onPressed: () async {
+                  if (nameController.text.isNotEmpty &&
+                      nameController.text != wallet.walletName) {
+                    await _firestoreService.renameWallet(
+                        wallet.id, nameController.text);
+                    if (!context.mounted) return;
+                    Navigator.pop(context); // Pop dialog
+                    Navigator.pop(context); // Pop details sheet to refresh/close
+                    UIHelper.showSuccessSnackBar(context,
+                        'Nama dompet berhasil diubah ke "${nameController.text}"! 📝');
+                  } else {
+                    Navigator.pop(context);
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                ),
+                child: const Text('Simpan Perubahan',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Colors.white)),
+              ),
+            ),
+          ],
         ),
       ),
     );
