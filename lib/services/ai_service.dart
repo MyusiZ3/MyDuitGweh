@@ -814,11 +814,12 @@ INSTRUKSI:
         if (uniqueGroqKeys.isNotEmpty) {
           debugPrint('>>> Gemini ALL LIMIT. FALLING BACK TO GROQ...');
           final groqModels = [
+            'qwen/qwen3-32b',
+            'llama-3.1-8b-instant',
+            'llama-3.3-70b-versatile',
             'openai/gpt-oss-20b',
             'openai/gpt-oss-13b',
             'openai/gpt-oss-7b',
-            'llama-3.1-8b-instant',
-            'llama-3.3-70b-versatile',
             'meta-llama/llama-prompt-guard-2-22m',
             'meta-llama/llama-prompt-guard-2-86m',
             'moonshotai/kimi-k2-instruct',
