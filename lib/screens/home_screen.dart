@@ -12,6 +12,7 @@ import '../services/security_service.dart';
 import '../services/notification_service.dart';
 import '../models/transaction_model.dart';
 import '../models/wallet_model.dart';
+import '../widgets/notification_permission_floating_card.dart';
 import '../widgets/shimmer_loading.dart';
 import '../widgets/connection_badge.dart';
 import '../utils/app_theme.dart';
@@ -426,9 +427,11 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context, activeTone, child) {
         return Scaffold(
           backgroundColor: AppColors.background,
-          body: StreamBuilder<List<WalletModel>>(
-            stream: _walletsStream,
-            builder: (context, snapshot) {
+          body: Stack(
+            children: [
+              StreamBuilder<List<WalletModel>>(
+                stream: _walletsStream,
+                builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const ShimmerHomeScreen();
               }
@@ -903,16 +906,18 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     _buildRecentTransactions(walletIds),
-                    const SliverPadding(padding: EdgeInsets.only(bottom: 110)),
                   ],
                 ),
               );
             },
           ),
-        );
-      },
+          const NotificationPermissionFloatingCard(),
+        ],
+      ),
     );
-  }
+  },
+);
+}
 
   Widget _balanceAction(IconData icon, String label, VoidCallback onTap) {
     return GestureDetector(
