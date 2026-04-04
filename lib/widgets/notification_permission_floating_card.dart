@@ -30,12 +30,12 @@ class _NotificationPermissionFloatingCardState
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    
+
     _scaleAnimation = CurvedAnimation(
       parent: _animController,
       curve: Curves.easeOutBack,
     );
-    
+
     _fadeAnimation = CurvedAnimation(
       parent: _animController,
       curve: Curves.easeIn,
@@ -95,7 +95,7 @@ class _NotificationPermissionFloatingCardState
                   child: Container(color: AppColors.primary.withOpacity(0.12)),
                 ),
               ),
-              
+
               // 2. Compact Centered Vibrant Blue Card
               Center(
                 child: ScaleTransition(
@@ -145,7 +145,8 @@ class _NotificationPermissionFloatingCardState
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         'Auto-Magic Sync!',
@@ -158,11 +159,16 @@ class _NotificationPermissionFloatingCardState
                                       ),
                                       const SizedBox(height: 6),
                                       Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 3),
                                         decoration: BoxDecoration(
                                           color: Colors.white.withOpacity(0.15),
-                                          borderRadius: BorderRadius.circular(6),
-                                          border: Border.all(color: Colors.white.withOpacity(0.3), width: 0.8),
+                                          borderRadius:
+                                              BorderRadius.circular(6),
+                                          border: Border.all(
+                                              color:
+                                                  Colors.white.withOpacity(0.3),
+                                              width: 0.8),
                                         ),
                                         child: Text(
                                           'EXPERIMENTAL',
@@ -178,7 +184,7 @@ class _NotificationPermissionFloatingCardState
                                   ),
                                   const SizedBox(height: 6),
                                   Text(
-                                    'Biar MyDuit catat biaya pengeluaran & SMS secara otomatis.',
+                                    'Biar MyDuitGweh catat biaya pengeluaran secara otomatis.',
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 13,
                                       color: Colors.white.withOpacity(0.85),
@@ -191,7 +197,7 @@ class _NotificationPermissionFloatingCardState
                           ],
                         ),
                         const SizedBox(height: 24),
-                        
+
                         // Action Buttons
                         ElevatedButton(
                           onPressed: () async {

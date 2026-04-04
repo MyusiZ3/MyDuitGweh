@@ -87,8 +87,8 @@ class NotificationService {
       // agar notifikasi BERULANG SETIAP HARI pada jam yang sama
       await _notificationsPlugin.zonedSchedule(
         101,
-        'Waktunya Catat Jurnal! 💰',
-        'Yuk catat pengeluaranmu hari ini agar dompet tetap aman!',
+        'Its Timee! o((>ω< ))o ',
+        'Yuk catat pengeluaranmu hari ini biaar dompet tetep aman!',
         scheduledDate,
         const NotificationDetails(
           android: AndroidNotificationDetails(
@@ -122,8 +122,8 @@ class NotificationService {
           '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
       await _notificationsPlugin.show(
         100,
-        'Pengingat Aktif! 🔔',
-        'Kami akan mengingatkanmu setiap hari jam $jamStr.',
+        'Pengingat dah Aktif..!',
+        'Kamu akan diingetin tiap hari jam $jamStr. (〜￣▽￣)〜',
         const NotificationDetails(
           android: AndroidNotificationDetails(
             'daily_reminder_channel',
