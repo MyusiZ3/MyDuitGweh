@@ -1,5 +1,7 @@
 import 'dart:math';
 import 'dart:async';
+import '../models/survey_config_model.dart';
+import '../models/feedback_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -441,6 +443,47 @@ class FirestoreService {
   }
 
   // ══════════════════════════════════════════════════
+  // ADMIN ANALYTICS: EAGLE EYE
+  // ══════════════════════════════════════════════════
+
+  /// Query ALL transactions globally (no wallet filter) for admin analytics
+  Future<List<TransactionModel>> getGlobalTransactions({
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    final start = DateTime(startDate.year, startDate.month, startDate.day);
+    final end = DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59);
+    final snap = await _firestore
+        .collection('transactions')
+        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
+        .where('date', isLessThanOrEqualTo: Timestamp.fromDate(end))
+        .orderBy('date', descending: true)
+        .limit(2000)
+        .get();
+    return snap.docs
+        .map((doc) =>
+            TransactionModel.fromJson(doc.data(), docId: doc.id))
+        .toList();
+  }
+
+  /// Query new user registrations within a period for growth chart
+  Future<List<Map<String, dynamic>>> getUserRegistrations({
+    required int daysBack,
+  }) async {
+    final cutoff = DateTime.now().subtract(Duration(days: daysBack));
+    final snap = await _firestore
+        .collection('users')
+        .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(cutoff))
+        .orderBy('createdAt')
+        .get();
+    return snap.docs.map((doc) {
+      final data = doc.data();
+      data['uid'] = doc.id;
+      return data;
+    }).toList();
+  }
+
+  // ══════════════════════════════════════════════════
   // ADMIN TOOLS: MAINTENANCE & BROADCAST
   // ══════════════════════════════════════════════════
 
@@ -546,5 +589,84 @@ class FirestoreService {
 
   Future<void> deleteBroadcast(String id) async {
     await _firestore.collection('broadcasts').doc(id).delete();
+  }
+
+  // ══════════════════════════════════════════════════
+  // USER FEEDBACK & SURVEY CONFIG (FASE 4)
+  // ══════════════════════════════════════════════════
+
+  /// Submit user feedback
+  Future<void> submitFeedback(FeedbackModel feedback) async {
+    await _firestore.collection('user_feedbacks').add(feedback.toJson());
+    
+    // Mark user as having completed the survey
+    await _firestore.collection('users').doc(feedback.userId).update({
+      'surveyDone': true,
+    });
+  }
+
+  /// Get real-time survey configuration
+  Stream<SurveyConfigModel> getSurveyConfigStream() {
+    return _firestore
+        .collection('app_config')
+        .doc('survey')
+        .snapshots()
+        .map((snap) {
+      if (!snap.exists) {
+        return SurveyConfigModel(
+          isAvailable: true,
+          minTransactions: 5,
+          minAccountAgeDays: 3,
+        );
+      }
+      return SurveyConfigModel.fromJson(snap.data()!);
+    });
+  }
+
+  /// Update survey configuration with Audit Logging
+  Future<void> updateSurveyConfig(SurveyConfigModel config) async {
+    final oldDoc = await _firestore.collection('app_config').doc('survey').get();
+    final oldData = oldDoc.data() ?? {};
+    
+    await _firestore
+        .collection('app_config')
+        .doc('survey')
+        .set(config.toJson(), SetOptions(merge: true));
+
+    // Audit Log Construction
+    String logMessage = "Admin mengubah kofigurasi survei: ";
+    if (oldData['isAvailable'] != config.isAvailable) {
+      logMessage += "Status jadi ${config.isAvailable ? 'AKTIF' : 'NONAKTIF'}. ";
+    }
+    if (oldData['minTransactions'] != config.minTransactions) {
+      logMessage += "Min Transaksi jadi ${config.minTransactions}. ";
+    }
+    if (oldData['minAccountAgeDays'] != config.minAccountAgeDays) {
+      logMessage += "Min Umur Akun jadi ${config.minAccountAgeDays} hari.";
+    }
+
+    // Add to Global History
+    await _firestore
+        .collection('app_config')
+        .doc('global')
+        .collection('history')
+        .add({
+      'action': 'SURVEY_CONFIG_UPDATE',
+      'message': logMessage,
+      'updatedBy': FirebaseAuth.instance.currentUser?.uid ?? 'system',
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Get recent feedbacks for Admin preview
+  Stream<List<FeedbackModel>> getRecentFeedbacks({int limit = 10}) {
+    return _firestore
+        .collection('user_feedbacks')
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((doc) => FeedbackModel.fromJson(doc.data(), docId: doc.id))
+            .toList());
   }
 }

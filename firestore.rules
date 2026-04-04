@@ -25,6 +25,17 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    match /app_config/survey {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    match /user_feedbacks/{feedbackId} {
+      allow read: if isAdmin();
+      allow create: if request.auth != null;
+      allow update, delete: if isSuperAdmin();
+    }
+
     match /app_settings/ai_config {
       allow read: if request.auth != null;
       allow write: if isAdmin();

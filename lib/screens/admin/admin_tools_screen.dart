@@ -176,7 +176,7 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                           onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (_) => GlobalInsightsScreen())),
+                                  builder: (_) => GlobalInsightsScreen(isSuperAdmin: _isSuperAdmin))),
                         ),
                       ],
                     ),
