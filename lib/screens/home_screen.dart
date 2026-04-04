@@ -25,6 +25,8 @@ import 'about_screen.dart';
 import 'login_screen.dart';
 import 'notifications_screen.dart';
 import 'admin/admin_tools_screen.dart';
+import '../widgets/bottom_sheets/experience_survey_sheet.dart';
+import '../models/survey_config_model.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -58,11 +60,35 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _notificationService.init(); // Inisiasi & Minta Izin Notifikasi awal
     _loadSettings();
     _checkAppLock();
     _initNotificationListener();
     _checkAdminRole();
     _walletsStream = _firestoreService.getWalletsStream(_uid);
+    _initSurveyListener();
+    
+    // Auto-trigger survey check after minor delay
+    Future.delayed(const Duration(seconds: 5), () => _checkAndShowSurvey(autoTrigger: true));
+  }
+
+  StreamSubscription? _surveyConfigSub;
+  SurveyConfigModel? _currentSurveyConfig;
+
+  void _initSurveyListener() {
+    _surveyConfigSub = _firestoreService.getSurveyConfigStream().listen((config) {
+      if (!mounted) return;
+      
+      // If status changed from inactive to active, and we are not in admin mode
+      if (_currentSurveyConfig != null && 
+          !_currentSurveyConfig!.isAvailable && 
+          config.isAvailable && 
+          !_isAdmin) {
+        UIHelper.showSuccessSnackBar(context, '📣 Survei Kepuasan Baru tersedia! Cek di profil ya.');
+      }
+      
+      setState(() => _currentSurveyConfig = config);
+    });
   }
 
   void _initNotificationListener() {
@@ -297,6 +323,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _notifListener?.cancel();
     _broadcastSub?.cancel();
+    _surveyConfigSub?.cancel();
     super.dispose();
   }
 
@@ -1114,14 +1141,17 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) => Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.8,
+            ),
             padding: EdgeInsets.only(
                 bottom: MediaQuery.of(context).padding.bottom + 24),
             decoration: const BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
               const SizedBox(height: 12),
               Container(
                   width: 40,
@@ -1196,6 +1226,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
               const SizedBox(height: 16),
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
               if (_isAdmin)
                 _buildProfileMenuItem(
                   icon: Icons.auto_fix_high_rounded,
@@ -1362,6 +1397,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   onTap: () => Navigator.push(context,
                       MaterialPageRoute(builder: (_) => const AboutScreen()))),
               _buildProfileMenuItem(
+                icon: Icons.rate_review_outlined,
+                label: 'Survei Kepuasan',
+                onTap: () {
+                  Navigator.pop(context);
+                  _checkAndShowSurvey();
+                },
+              ),
+              _buildProfileMenuItem(
                   icon: Icons.logout,
                   label: ToneManager.t('profile_logout'),
                   iconColor: AppColors.expense,
@@ -1386,6 +1429,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             (r) => false);
                     }
                   }),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -1395,6 +1442,65 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _showToneSelector() {
     UIHelper.showToneSelector(context);
+  }
+
+  Future<void> _checkAndShowSurvey({bool autoTrigger = false}) async {
+    // 1. Get current config (use cached if available)
+    final config = _currentSurveyConfig ?? await FirebaseFirestore.instance
+        .collection('app_config')
+        .doc('survey')
+        .get()
+        .then((doc) => doc.exists 
+            ? SurveyConfigModel.fromJson(doc.data()!) 
+            : SurveyConfigModel(isAvailable: true, minTransactions: 0, minAccountAgeDays: 0));
+
+    if (config == null || !config.isAvailable) {
+      if (!autoTrigger && mounted) {
+        UIHelper.showInfoDialog(
+          context, 
+          'Survei Ditutup', 
+          'Maaf banget, survei saat ini sedang ditutup oleh Archen. Ditunggu jadwal berikutnya ya! 🙏'
+        );
+      }
+      return;
+    }
+
+    // 2. Extra checks for Auto-Trigger
+    if (autoTrigger) {
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(_uid).get();
+      if (!userDoc.exists) return;
+      
+      final userData = userDoc.data()!;
+      final bool alreadyDone = userData['surveyDone'] ?? false;
+      if (alreadyDone) return;
+
+      final createdAt = (userData['createdAt'] as Timestamp).toDate();
+      final accountAgeDays = DateTime.now().difference(createdAt).inDays;
+      
+      if (accountAgeDays < (config.minAccountAgeDays ?? 0)) return;
+
+      // Check transaction count
+      final txCount = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(_uid)
+          .collection('transactions')
+          .count()
+          .get()
+          .then((v) => v.count);
+
+      if ((txCount ?? 0) < (config.minTransactions ?? 0)) return;
+    }
+
+    if (mounted) _showSurveySheet();
+  }
+
+  void _showSurveySheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const ExperienceSurveySheet(),
+    );
   }
 
   void _showBudgetDialog() {
