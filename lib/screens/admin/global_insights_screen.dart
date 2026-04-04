@@ -11,7 +11,6 @@ import 'ai_trend_analysis_screen.dart';
 import '../../utils/ui_helper.dart';
 
 import '../../models/survey_config_model.dart';
-import '../../models/feedback_model.dart';
 import '../../services/ai_service.dart';
 import 'app_config_screen.dart';
 
@@ -1251,9 +1250,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
             } catch (e) {
               if (context.mounted) {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Error preparing AI data: $e')),
-                );
+                UIHelper.showErrorSnackBar(context, 'Error preparing AI data: $e');
               }
             }
           },
@@ -1702,11 +1699,8 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
               const SizedBox(height: 24),
               ElevatedButton.icon(
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text(
-                            'Silakan hubungi tim IT atau buka Firebase Console untuk mengaktifkan indeks.')),
-                  );
+                  UIHelper.showInfoSnackBar(context,
+                      'Silakan hubungi tim IT atau buka Firebase Console untuk mengaktifkan indeks.');
                 },
                 icon: const Icon(Icons.bolt_rounded, size: 18),
                 label: const Text('AKTIFKAN ANALYTICS',

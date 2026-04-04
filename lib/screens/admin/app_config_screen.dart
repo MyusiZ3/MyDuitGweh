@@ -264,9 +264,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
       if (mounted) _showSuccessSheet();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal menyimpan: $e')),
-        );
+        UIHelper.showErrorSnackBar(context, 'Gagal menyimpan: $e');
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -288,8 +286,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
         if (isSingle) {
           await singleDoc.delete();
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Item histori dihapus.')));
+            UIHelper.showSuccessSnackBar(context, 'Item histori dihapus.');
           }
         } else {
           final snapshot = await _firestore
@@ -307,14 +304,12 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
           }
           await batch.commit();
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Semua histori dihapus.')));
+            UIHelper.showSuccessSnackBar(context, 'Semua histori dihapus.');
           }
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Gagal menghapus histori: $e')));
+          UIHelper.showErrorSnackBar(context, 'Gagal menghapus histori: $e');
         }
       }
     }

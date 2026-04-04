@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import '../../utils/app_theme.dart';
 import 'dart:ui';
+import '../../utils/ui_helper.dart';
 
 class AdminLogsScreen extends StatefulWidget {
   const AdminLogsScreen({super.key});
@@ -330,9 +331,8 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
                         icon: Icons.code_rounded,
                         onPressed: () {
                           // Info for user that link is in terminal
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                              content: Text(
-                                  'Cek terminal VS Code / Log untuk link pembuatan indeks otomatis.')));
+                          UIHelper.showInfoSnackBar(context,
+                              'Cek terminal VS Code / Log untuk link pembuatan indeks otomatis.');
                         },
                         isPrimary: false,
                       ),

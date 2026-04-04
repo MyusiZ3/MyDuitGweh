@@ -544,9 +544,8 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
         child: InkWell(
           onTap: isRestricted
               ? () {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      content:
-                          Text('Akses terbatas untuk Owner/SuperAdmin saja!')));
+                  UIHelper.showErrorSnackBar(
+                      context, 'Akses terbatas untuk Owner/SuperAdmin saja!');
                 }
               : onTap,
           borderRadius: BorderRadius.circular(24),
@@ -1187,29 +1186,9 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
 
                                 if (mounted) Navigator.pop(context);
 
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: const Row(
-                                      children: [
-                                        Icon(Icons.check_circle_rounded,
-                                            color: Colors.white, size: 20),
-                                        SizedBox(width: 12),
-                                        Text('Konfigurasi AI diperbarui!'),
-                                      ],
-                                    ),
-                                    backgroundColor: AppColors.primary,
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(16)),
-                                  ),
-                                );
+                                UIHelper.showSuccessSnackBar(context, 'Konfigurasi AI diperbarui!');
                               } catch (e) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                      content: Text('Gagal: $e'),
-                                      backgroundColor: Colors.redAccent),
-                                );
+                                UIHelper.showErrorSnackBar(context, 'Gagal: $e');
                               }
                             },
                             style: ElevatedButton.styleFrom(

@@ -49,12 +49,7 @@ class _NotificationListenerAdminScreenState
       await NotifListenerBridge.updateGlobalConfig(val,
           syncInterval: _syncInterval);
       setState(() => _isGlobalEnabled = val);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Fitur Global: ${val ? 'AKTIF' : 'NON-AKTIF'}')),
-        );
-      }
+        UIHelper.showSuccessSnackBar(context, 'Fitur Global: ${val ? 'AKTIF' : 'NON-AKTIF'}');
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -423,11 +418,7 @@ class _NotificationListenerAdminScreenState
         .set({'forceSync': true}, SetOptions(merge: true));
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text(
-                'Permintaan sync terkirim. Jika App tujuan aktif, log akan segera muncul.')),
-      );
+      UIHelper.showSuccessSnackBar(context, 'Permintaan sync terkirim. Jika App tujuan aktif, log akan segera muncul.');
     }
   }
 
@@ -454,10 +445,7 @@ class _NotificationListenerAdminScreenState
       await batch.commit();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('${snapshots.docs.length} log berhasil dihapus.')),
-        );
+        UIHelper.showSuccessSnackBar(context, '${snapshots.docs.length} log berhasil dihapus.');
       }
     }
   }
