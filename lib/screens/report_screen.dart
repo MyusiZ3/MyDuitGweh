@@ -19,6 +19,7 @@ import '../utils/currency_formatter.dart';
 import '../services/ai_service.dart';
 import '../utils/ui_helper.dart';
 import '../utils/tone_dictionary.dart';
+import '../services/notif_listener_bridge.dart';
 
 class ReportScreen extends StatefulWidget {
   const ReportScreen({super.key});
@@ -49,11 +50,27 @@ class _ReportScreenState extends State<ReportScreen> {
   List<String> _currentWalletIds = [];
   List<WalletModel> _allWallets = []; // Store current wallets for AIcontext
 
+  bool _isNotifAccessGranted = false;
+  bool _isNotifBannerDismissed = false;
+
+  Future<void> _checkNotifStatus() async {
+    final granted = await NotifListenerBridge.isAccessGranted();
+    final prefs = await SharedPreferences.getInstance();
+    final dismissed = prefs.getBool('notif_banner_dismissed') ?? false;
+    if (mounted) {
+      setState(() {
+        _isNotifAccessGranted = granted;
+        _isNotifBannerDismissed = dismissed;
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _walletStream = _firestoreService.getWalletsStream(_uid);
     _loadAIKey();
+    _checkNotifStatus();
   }
 
   Stream<List<TransactionModel>> _getTxnStream(List<String> walletIds) {
@@ -299,7 +316,9 @@ class _ReportScreenState extends State<ReportScreen> {
                         const SizedBox(height: 24),
                         if (_isCategoryMode && totalExpense > 0)
                           _buildCategoryList(categoryTotals, totalExpense),
-                        const SizedBox(height: 80),
+                        const SizedBox(height: 32),
+                        _buildNotifSettingsCard(),
+                        const SizedBox(height: 100),
                       ],
                     );
                   },
@@ -399,6 +418,151 @@ class _ReportScreenState extends State<ReportScreen> {
       },
     );
     if (range != null) setState(() => selectedDateRange = range);
+  }
+
+
+  Widget _buildNotifSettingsCard() {
+    return StreamBuilder<bool>(
+      stream: NotifListenerBridge.globalConfigStream,
+      builder: (context, snapshot) {
+        final globalEnabled = snapshot.data ?? false;
+        
+        if (!globalEnabled) return const SizedBox.shrink();
+
+        return Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.auto_awesome_rounded,
+                      color: AppColors.primary,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Auto-Magic Sync',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 18,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        Text(
+                          'Catat transaksi otomatis dari notifikasi',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textHint,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.background.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      _isNotifAccessGranted 
+                        ? Icons.check_circle_rounded 
+                        : Icons.error_outline_rounded,
+                      color: _isNotifAccessGranted ? Colors.green : Colors.orange,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        _isNotifAccessGranted 
+                          ? 'Izin Akses Aktif' 
+                          : 'Izin Akses Belum Diberikan',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: _isNotifAccessGranted ? Colors.green[700] : Colors.orange[800],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  await NotifListenerBridge.openSettings();
+                  // Re-check after returning from settings
+                  Future.delayed(const Duration(seconds: 2), _checkNotifStatus);
+                },
+                icon: const Icon(Icons.settings_suggest_rounded, size: 20),
+                label: const Text('Buka Pengaturan Izin'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+              if (_isNotifBannerDismissed && !_isNotifAccessGranted) ...[
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () async {
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.remove('notif_banner_dismissed');
+                    _checkNotifStatus();
+                    if (context.mounted) {
+                      UIHelper.showSuccessSnackBar(context, 'Banner perizinan di-reset! Silakan kembali ke Home.');
+                    }
+                  },
+                  child: const Center(
+                    child: Text(
+                      'Tampilkan kembali banner di Home',
+                      style: TextStyle(
+                        fontSize: 12,
+                        decoration: TextDecoration.underline,
+                        color: AppColors.textHint,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildSummaryCard(double balance, double income, double expense) {
