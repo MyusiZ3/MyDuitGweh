@@ -1,4 +1,4 @@
-package com.myduitgweh.my_duit_gweh
+package com.arch.myduitgweh
 
 import android.content.ComponentName
 import android.util.Log // Tambah log

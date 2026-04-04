@@ -1,4 +1,4 @@
-package com.myduitgweh.my_duit_gweh
+package com.arch.myduitgweh
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
