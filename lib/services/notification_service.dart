@@ -56,7 +56,7 @@ class NotificationService {
     }
 
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('notif_icon');
 
     const DarwinInitializationSettings initializationSettingsIOS =
         DarwinInitializationSettings(
@@ -103,6 +103,7 @@ class NotificationService {
             fullScreenIntent: true,
             category: AndroidNotificationCategory.reminder,
             visibility: NotificationVisibility.public,
+            icon: 'notif_icon', // Pakai icon custom
           ),
           iOS: DarwinNotificationDetails(
             presentAlert: true,
@@ -130,6 +131,7 @@ class NotificationService {
             channelDescription: 'Notifikasi pengingat jurnal harian keuangan',
             importance: Importance.defaultImportance,
             priority: Priority.defaultPriority,
+            icon: 'notif_icon', // Tambah icon di sini juga
           ),
         ),
       );
@@ -176,6 +178,7 @@ class NotificationService {
         priority: Priority.max,
         showWhen: true,
         playSound: true,
+        icon: 'notif_icon', // Tambah icon untuk broadcast
       );
 
       const iosDetails = DarwinNotificationDetails(
