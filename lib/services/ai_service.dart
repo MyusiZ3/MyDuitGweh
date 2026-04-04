@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../models/feedback_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter/material.dart';
@@ -1151,6 +1152,243 @@ INSTRUKSI SINGKAT:
     } catch (e) {
       debugPrint('Error getAdvisorAnalysis: $e');
       return 'Terjadi kerusakan pada koneksi server kesehatan.';
+    }
+  }
+
+  // === EAGLE EYE AI TREND ANALYSIS ===
+  static Future<String> getEagleEyeAnalysis({
+    required List<TransactionModel> transactions,
+    required DateTimeRange dateRange,
+    required int walletCount,
+    required int userCount,
+    required double totalLiquidity,
+  }) async {
+    try {
+      final config = await getGlobalConfig();
+      final String provider = config['advisor_provider'] ?? 'gemini';
+      final List<String> geminiKeys =
+          List<String>.from(config['advisor_gemini_keys'] ?? []);
+      final List<String> groqKeys =
+          List<String>.from(config['advisor_groq_keys'] ?? []);
+
+      final String legacyKey =
+          (config['advisor_api_key'] ?? '').toString().trim();
+      if (legacyKey.isNotEmpty) {
+        if (legacyKey.startsWith('gsk_') && !groqKeys.contains(legacyKey)) {
+          groqKeys.add(legacyKey);
+        } else if (legacyKey.startsWith('AIza') &&
+            !geminiKeys.contains(legacyKey)) {
+          geminiKeys.add(legacyKey);
+        }
+      }
+
+      if (geminiKeys.isEmpty && groqKeys.isEmpty) {
+        return '**AI Analysis Error:** Konfigurasi API Kosong. Anda harus memasukkannya di panel Server Admin.';
+      }
+
+      final summary = AIService()
+          ._generateDataSummary(transactions, dateRange);
+
+      final systemPrompt = '''
+Kamu adalah "Eagle Eye Insight", analis makroekonomi khusus untuk performa agregat pengguna aplikasi keuangan.
+Tugasmu adalah menyajikan laporan tren keuangan seluruh pengguna dalam bentuk Markdown interaktif.
+
+DATA PLATFORM (AGGREGATED):
+- Total Akun Pengguna Data Ini: $userCount
+- Total Wallet Aktif: $walletCount
+- Total Uang Beredar (Liquidity): Rp ${totalLiquidity.toStringAsFixed(0)}
+
+$summary
+
+INSTRUKSI:
+1. Buat laporan yang sangat profesional, layaknya diberikan kepada jajaran Direksi (SuperAdmin).
+2. Sorot tiga hal utama: Status Cash Flow Ekosistem, Kategori Paling Menyedot Dana, dan Insight Unik.
+3. Gunakan formatting Markdown penuh: teks tebal, daftar (bullets), serta emoji relevan untuk memudahkan _scanning_ informasi.
+4. JANGAN SEBUT "Sample 20 item" atau rahasia struktural data. Berpura-puralah kau menganalisis jutaan titik data secara instan.
+''';
+
+      final userQuery = 'Tolang analisis data global pengguna ini dan sebutkan 3 insight kuncinya.';
+
+      Future<String?> tryGroqList() async {
+        final List<String> fallbackModels = [
+          'llama-3.3-70b-versatile',
+          'llama-3.1-8b-instant',
+        ];
+
+        for (String k in groqKeys) {
+          for (String m in fallbackModels) {
+            try {
+              final res = await _callGroqApi(
+                apiKey: k.trim(),
+                model: m,
+                systemPrompt: systemPrompt,
+                userQuery: userQuery,
+                maxTokens: 2500,
+              );
+              if (res != null && res.isNotEmpty) return res;
+            } catch (e) {
+              continue;
+            }
+          }
+        }
+        return null;
+      }
+
+      Future<String?> tryGeminiList() async {
+        final List<String> fallbackModels = [
+          'gemini-3.1-pro-preview',
+          'gemini-2.5-flash',
+        ];
+
+        for (String k in geminiKeys) {
+          for (String m in fallbackModels) {
+            try {
+              final model = GenerativeModel(
+                model: m,
+                apiKey: k.trim(),
+                systemInstruction: Content.system(systemPrompt),
+                generationConfig: GenerationConfig(maxOutputTokens: 2500),
+              );
+              final res =
+                  await model.generateContent([Content.text(userQuery)]);
+              if (res.text != null && res.text!.isNotEmpty) return res.text;
+            } catch (e) {
+              final errStr = e.toString().toLowerCase();
+              if (!errStr.contains('quota') &&
+                  !errStr.contains('429') &&
+                  !errStr.contains('limit') &&
+                  !errStr.contains('not found')) {
+                break;
+              }
+              continue;
+            }
+          }
+        }
+        return null;
+      }
+
+      String? finalAnalysis;
+
+      if (provider == 'groq') {
+        finalAnalysis = await tryGroqList() ?? await tryGeminiList();
+      } else {
+        finalAnalysis = await tryGeminiList() ?? await tryGroqList();
+      }
+
+      return finalAnalysis ??
+          'Sistem Gagal. Semua API AI limit atau error. Server Data macet.';
+    } catch (e) {
+      debugPrint('Error getEagleEyeAnalysis: $e');
+      return 'Terjadi kerusakan pada koneksi server kesehatan: $e';
+    }
+  }
+
+  // ══════════════════════════════════════════════════
+  // FASE 4: AI SENTIMENT AGGREGATOR
+  // ══════════════════════════════════════════════════
+
+  Future<String> analyzeFeedbackSentiment(List<FeedbackModel> feedbacks) async {
+    if (feedbacks.isEmpty) return "Belum ada feedback yang masuk untuk dianalisis.";
+
+    final config = await getAIConfig();
+    final groqKeys = List<String>.from(config['groq_keys'] ?? []);
+    final geminiKeys = List<String>.from(config['gemini_keys'] ?? []);
+    final provider = config['provider'] ?? 'gemini';
+
+    if (groqKeys.isEmpty && geminiKeys.isEmpty) {
+      return "Gagal menganalisis: API Key AI tidak ditemukan di konfigurasi.";
+    }
+
+    // Format data feedback untuk prompt
+    final String feedbackList = feedbacks.map((f) => 
+      "- [Rating ${f.rating.toInt()}/5] [Kategori: ${f.category}]: ${f.comment}"
+    ).join("\n");
+
+    final systemPrompt = """
+Kamu adalah Archen Analytics, asisten strategis SuperAdmin MyDuitGweh.
+Tugasmu adalah merangkum feedback user berikut menjadi insight tajam dan action plan konkret.
+
+DATA FEEDBACK:
+$feedbackList
+
+RESPON HARUS DALAM FORMAT JSON SEPERTI INI SAJA (TANPA PERLU MARKDOWN ```json):
+{
+  "sentiment_score": "Sangat Positif / Positif / Netral / Negatif / Sangat Negatif",
+  "summary": "Ringkasan tajam dari keseluruhan feedback user (max 100 kata)",
+  "top_feature_requests": [
+    "Fitur X sering diminta",
+    "Perbaikan Y"
+  ]
+}
+
+PENTING: PASTIKAN OUTPUT HANYA STRING JSON MURNI YANG BISA DIPARSE OLEH SISTEM (TIDAK ADA TEKS LAIN SEBELUM DAN SESUDAH KURUNG KURAWAL).
+""";
+
+    final userQuery = "Analisis feedback ini sekarang.";
+
+    Future<String?> tryGroqList() async {
+      final List<String> fallbackModels = [
+        'llama-3.3-70b-versatile',
+        'llama-3.1-8b-instant',
+        'allam-2-7b',
+        'groq/compound',
+        'groq/compound-mini'
+      ];
+      for (String k in groqKeys) {
+        for (String m in fallbackModels) {
+          try {
+            final res = await _callGroqApi(
+              apiKey: k.trim(),
+              model: m,
+              systemPrompt: systemPrompt,
+              userQuery: userQuery,
+              maxTokens: 1500,
+            );
+            if (res != null && res.isNotEmpty) return res;
+          } catch (e) {
+            continue;
+          }
+        }
+      }
+      return null;
+    }
+
+    Future<String?> tryGeminiList() async {
+      final List<String> fallbackModels = [
+        'gemini-3.1-pro-preview',
+        'gemini-2.5-flash',
+        'gemini-2.0-flash'
+      ];
+      for (String k in geminiKeys) {
+        for (String m in fallbackModels) {
+          try {
+            final model = GenerativeModel(
+              model: m,
+              apiKey: k.trim(),
+              systemInstruction: Content.system(systemPrompt),
+              generationConfig: GenerationConfig(maxOutputTokens: 1500),
+            );
+            final res = await model.generateContent([Content.text(userQuery)]);
+            if (res.text != null && res.text!.isNotEmpty) return res.text;
+          } catch (e) {
+            continue;
+          }
+        }
+      }
+      return null;
+    }
+
+    try {
+      String? finalAnalysis;
+      if (provider == 'groq') {
+        finalAnalysis = await tryGroqList() ?? await tryGeminiList();
+      } else {
+        finalAnalysis = await tryGeminiList() ?? await tryGroqList();
+      }
+      return finalAnalysis ?? "Gagal mendapatkan respon analisis. Semua limit telah tercapai.";
+    } catch (e) {
+      debugPrint('Error analyzeFeedbackSentiment: $e');
+      return "Terjadi kesalahan saat analisis AI: $e";
     }
   }
 }
