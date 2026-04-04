@@ -73,24 +73,26 @@ class AuthGate extends StatefulWidget {
 
 class _AuthGateState extends State<AuthGate> {
   late Stream<User?> _authStream;
+  late final Future<bool> _isSafeFuture;
 
   @override
   void initState() {
     super.initState();
     _authStream = FirebaseAuth.instance.authStateChanges();
+    // Cache the slow safety check so it only runs once per app start
+    _isSafeFuture = SecurityService.isDeviceSafe();
   }
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<bool>(
-      future: SecurityService.isDeviceSafe(),
+      future: _isSafeFuture,
       builder: (context, safetySnapshot) {
         if (safetySnapshot.connectionState == ConnectionState.waiting) {
-          return const SplashView(); // While checking safety
+          return const SplashView();
         }
 
-        final isSafe = safetySnapshot.data ?? true;
-        if (!isSafe) {
+        if (safetySnapshot.data == false) {
           return const SecurityGateScreen();
         }
 
@@ -99,21 +101,24 @@ class _AuthGateState extends State<AuthGate> {
           // CRITICAL: Provide initialData so hot reload doesn't lose current state
           initialData: FirebaseAuth.instance.currentUser,
           builder: (context, snapshot) {
-            // DEBUG LOG
-            debugPrint('--- AUTH GATE STATE: ${snapshot.connectionState} ---');
-            debugPrint(
-                '--- HAS USER: ${snapshot.hasData} | UID: ${snapshot.data?.uid} ---');
+            final user = snapshot.data;
+            debugPrint('--- AUTH GATE LOG: user=$user, connState=${snapshot.connectionState} ---');
 
             if (snapshot.connectionState == ConnectionState.waiting &&
-                snapshot.data == null) {
+                user == null) {
               return const SplashView();
             }
 
-            final user = snapshot.data;
+            // Jika user null, langsung ke LoginScreen tanpa perlu nunggu onboarding check lagi
+            // (LoginScreen biasanya sudah kencang di-render ulang)
+            if (user == null) {
+              debugPrint('--- NAVIGATING TO LOGIN SCREEN (Instant) ---');
+              return const LoginScreen();
+            }
 
             return FutureBuilder<bool>(
-              // Use a unique key to force rebuild of FutureBuilder when user changes
-              key: ValueKey(user?.uid ?? 'logged-out'),
+              // Only check onboarding check if we have a user
+              key: ValueKey(user.uid),
               future: _checkOnboarding(),
               builder: (context, onbSnapshot) {
                 if (onbSnapshot.connectionState == ConnectionState.waiting) {
@@ -121,19 +126,12 @@ class _AuthGateState extends State<AuthGate> {
                 }
 
                 final onboardingDone = onbSnapshot.data ?? false;
-                debugPrint('--- ONBOARDING DONE: $onboardingDone ---');
-
                 if (!onboardingDone) {
                   return const OnboardingScreen();
                 }
 
-                if (user != null) {
-                  debugPrint('--- NAVIGATING TO MAINTENANCE WRAPPER ---');
-                  return MaintenanceGateWrapper(user: user);
-                } else {
-                  debugPrint('--- NAVIGATING TO LOGIN SCREEN ---');
-                  return const LoginScreen();
-                }
+                debugPrint('--- NAVIGATING TO MAINTENANCE WRAPPER ---');
+                return MaintenanceGateWrapper(user: user);
               },
             );
           },
@@ -143,8 +141,12 @@ class _AuthGateState extends State<AuthGate> {
   }
 
   Future<bool> _checkOnboarding() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool('onboarding_completed') ?? false;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool('onboarding_completed') ?? false;
+    } catch (_) {
+      return false;
+    }
   }
 }
 
@@ -182,10 +184,16 @@ class _MaintenanceGateWrapperState extends State<MaintenanceGateWrapper> {
           return const SplashView();
         }
 
-        // Jika error atau dokumen tidak ada, langsung masuk
+        // Jika error atau dokumen tidak ada, kita harus hati-hati
         if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
+          final error = snapshot.error?.toString().toLowerCase() ?? '';
+          if (error.contains('permission-denied') || error.contains('not find document')) {
+            debugPrint('--- MAINTENANCE GATE: Auth/Permission issue detected. Staying in safe zone. ---');
+            return const SplashView(); 
+          }
+          
           debugPrint(
-              '--- MAINTENANCE GATE: No config doc or error, going to MainNav ---');
+              '--- MAINTENANCE GATE: Fallback to MainNav (error: $error) ---');
           return const MainNav();
         }
 

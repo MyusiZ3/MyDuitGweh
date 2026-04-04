@@ -147,6 +147,7 @@ class AuthService {
 
   Future<void> signOut() async {
     try {
+      clearCache();
       await _auth.signOut();
       await _googleSignIn.signOut();
       await _googleSignIn.disconnect();

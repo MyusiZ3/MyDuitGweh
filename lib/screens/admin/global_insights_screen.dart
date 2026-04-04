@@ -2118,20 +2118,27 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            _buildSentimentBadge(sentiment),
-            const Spacer(),
-            Text(
-                'BERDASARKAN ' +
-                    _aiSentimentResult!['sample_size'].toString() +
-                    ' FEEDBACK',
-                style: const TextStyle(
-                    color: Colors.white38,
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1)),
-          ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            return Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 12,
+              runSpacing: 10,
+              children: [
+                _buildSentimentBadge(sentiment),
+                Text(
+                    'BERDASARKAN ' +
+                        _aiSentimentResult!['sample_size'].toString() +
+                        ' FEEDBACK',
+                    style: const TextStyle(
+                        color: Colors.white38,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1)),
+              ],
+            );
+          },
         ),
         const SizedBox(height: 20),
         Text(summary,
@@ -2179,6 +2186,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
     }
 
     return Container(
+      constraints: const BoxConstraints(maxWidth: 200),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: color.withOpacity(0.15),
@@ -2190,9 +2198,13 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
         children: [
           Icon(icon, color: color, size: 16),
           const SizedBox(width: 8),
-          Text(score,
-              style: TextStyle(
-                  color: color, fontWeight: FontWeight.bold, fontSize: 12)),
+          Flexible(
+            child: Text(score,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+                style: TextStyle(
+                    color: color, fontWeight: FontWeight.bold, fontSize: 12)),
+          ),
         ],
       ),
     );

@@ -22,7 +22,6 @@ import 'main_nav.dart';
 import 'edit_profile_screen.dart';
 import 'help_screen.dart';
 import 'about_screen.dart';
-import 'login_screen.dart';
 import 'notifications_screen.dart';
 import 'admin/admin_tools_screen.dart';
 import '../widgets/bottom_sheets/experience_survey_sheet.dart';
@@ -57,6 +56,9 @@ class _HomeScreenState extends State<HomeScreen> {
   int _unreadBroadcasts = 0;
   List<Map<String, dynamic>> _currentActiveBroadcasts = [];
 
+  bool _isCheckingSurvey = false;
+  bool _isSurveyOpen = false;
+
   @override
   void initState() {
     super.initState();
@@ -67,26 +69,25 @@ class _HomeScreenState extends State<HomeScreen> {
     _checkAdminRole();
     _walletsStream = _firestoreService.getWalletsStream(_uid);
     _initSurveyListener();
-    
-    // Auto-trigger survey check after minor delay
-    Future.delayed(const Duration(seconds: 5), () => _checkAndShowSurvey(autoTrigger: true));
   }
 
   StreamSubscription? _surveyConfigSub;
   SurveyConfigModel? _currentSurveyConfig;
 
   void _initSurveyListener() {
-    _surveyConfigSub = _firestoreService.getSurveyConfigStream().listen((config) {
+    _surveyConfigSub =
+        _firestoreService.getSurveyConfigStream().listen((config) {
       if (!mounted) return;
-      
+
       // If status changed from inactive to active, and we are not in admin mode
-      if (_currentSurveyConfig != null && 
-          !_currentSurveyConfig!.isAvailable && 
-          config.isAvailable && 
+      if (_currentSurveyConfig != null &&
+          !_currentSurveyConfig!.isAvailable &&
+          config.isAvailable &&
           !_isAdmin) {
-        UIHelper.showSuccessSnackBar(context, '📣 Survei Kepuasan Baru tersedia! Cek di profil ya.');
+        UIHelper.showSuccessSnackBar(
+            context, '📣 Survei Kepuasan Baru tersedia! Cek di profil ya.');
       }
-      
+
       setState(() => _currentSurveyConfig = config);
     });
   }
@@ -1141,17 +1142,17 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) => Container(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.8,
-            ),
-            padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).padding.bottom + 24),
-            decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.8,
+          ),
+          padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).padding.bottom + 24),
+          decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
               const SizedBox(height: 12),
               Container(
                   width: 40,
@@ -1231,204 +1232,224 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-              if (_isAdmin)
-                _buildProfileMenuItem(
-                  icon: Icons.auto_fix_high_rounded,
-                  label: 'Admin Control Tools',
-                  subtitle: 'Maintenance & Broadcast',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const AdminToolsScreen()));
-                  },
-                  trailing: const Icon(Icons.arrow_forward_ios_rounded,
-                      size: 16, color: AppColors.primary),
-                ),
-              _buildProfileMenuItem(
-                icon: Icons.shield_outlined,
-                label: 'Kunci Sidik Jari/Wajah',
-                onTap: () async {
-                  final newVal = !_isBiometricEnabled;
-                  final canAuth = await _securityService.isBiometricAvailable();
-                  if (!canAuth) return;
-                  final authSuccess = await _securityService.authenticate();
-                  if (authSuccess) {
-                    await _securityService.setBiometricEnabled(newVal);
-                    setModalState(() => _isBiometricEnabled = newVal);
-                    setState(() => _isBiometricEnabled = newVal);
-                  }
-                },
-                trailing: Switch(
-                  value: _isBiometricEnabled,
-                  onChanged: (val) async {
-                    final canAuth =
-                        await _securityService.isBiometricAvailable();
-                    if (!canAuth) return;
-                    final authSuccess = await _securityService.authenticate();
-                    if (authSuccess) {
-                      await _securityService.setBiometricEnabled(val);
-                      setModalState(() => _isBiometricEnabled = val);
-                      setState(() => _isBiometricEnabled = val);
-                    }
-                  },
-                  activeColor: AppColors.primary,
-                  activeTrackColor: AppColors.primary.withOpacity(0.4),
-                ),
-              ),
-              _buildProfileMenuItem(
-                icon: Icons.track_changes_rounded,
-                label: 'Target Budget Bulanan',
-                onTap: () {
-                  Navigator.pop(context);
-                  _showBudgetDialog();
-                },
-                trailing: Text(
-                    _monthlyBudget > 0
-                        ? CurrencyFormatter.formatCurrency(_monthlyBudget)
-                        : 'Atur',
-                    style: const TextStyle(
-                        color: AppColors.primary, fontWeight: FontWeight.bold)),
-              ),
-              _buildProfileMenuItem(
-                icon: Icons.notifications_none_rounded,
-                label: 'Pengingat Jurnal Harian',
-                subtitle: _isNotificationEnabled
-                    ? 'Ingatkan setiap pukul ${_reminderTime.format(context)}'
-                    : 'Ketuk untuk aktifkan',
-                onTap: () async {
-                  final prefs = await SharedPreferences.getInstance();
-                  if (!_isNotificationEnabled) {
-                    final pickedTime = await showTimePicker(
-                        context: context, initialTime: _reminderTime);
-                    if (pickedTime != null) {
-                      await prefs.setBool('use_notifications', true);
-                      await prefs.setInt('reminder_hour', pickedTime.hour);
-                      await prefs.setInt('reminder_minute', pickedTime.minute);
+                      if (_isAdmin)
+                        _buildProfileMenuItem(
+                          icon: Icons.auto_fix_high_rounded,
+                          label: 'Admin Control Tools',
+                          subtitle: 'Maintenance & Broadcast',
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const AdminToolsScreen()));
+                          },
+                          trailing: const Icon(Icons.arrow_forward_ios_rounded,
+                              size: 16, color: AppColors.primary),
+                        ),
+                      _buildProfileMenuItem(
+                        icon: Icons.shield_outlined,
+                        label: 'Kunci Sidik Jari/Wajah',
+                        onTap: () async {
+                          final newVal = !_isBiometricEnabled;
+                          final canAuth =
+                              await _securityService.isBiometricAvailable();
+                          if (!canAuth) return;
+                          final authSuccess =
+                              await _securityService.authenticate();
+                          if (authSuccess) {
+                            await _securityService.setBiometricEnabled(newVal);
+                            setModalState(() => _isBiometricEnabled = newVal);
+                            setState(() => _isBiometricEnabled = newVal);
+                          }
+                        },
+                        trailing: Switch(
+                          value: _isBiometricEnabled,
+                          onChanged: (val) async {
+                            final canAuth =
+                                await _securityService.isBiometricAvailable();
+                            if (!canAuth) return;
+                            final authSuccess =
+                                await _securityService.authenticate();
+                            if (authSuccess) {
+                              await _securityService.setBiometricEnabled(val);
+                              setModalState(() => _isBiometricEnabled = val);
+                              setState(() => _isBiometricEnabled = val);
+                            }
+                          },
+                          activeColor: AppColors.primary,
+                          activeTrackColor: AppColors.primary.withOpacity(0.4),
+                        ),
+                      ),
+                      _buildProfileMenuItem(
+                        icon: Icons.track_changes_rounded,
+                        label: 'Target Budget Bulanan',
+                        onTap: () {
+                          Navigator.pop(context);
+                          _showBudgetDialog();
+                        },
+                        trailing: Text(
+                            _monthlyBudget > 0
+                                ? CurrencyFormatter.formatCurrency(
+                                    _monthlyBudget)
+                                : 'Atur',
+                            style: const TextStyle(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.bold)),
+                      ),
+                      _buildProfileMenuItem(
+                        icon: Icons.notifications_none_rounded,
+                        label: 'Pengingat Jurnal Harian',
+                        subtitle: _isNotificationEnabled
+                            ? 'Ingatkan setiap pukul ${_reminderTime.format(context)}'
+                            : 'Ketuk untuk aktifkan',
+                        onTap: () async {
+                          final prefs = await SharedPreferences.getInstance();
+                          if (!_isNotificationEnabled) {
+                            final pickedTime = await showTimePicker(
+                                context: context, initialTime: _reminderTime);
+                            if (pickedTime != null) {
+                              await prefs.setBool('use_notifications', true);
+                              await prefs.setInt(
+                                  'reminder_hour', pickedTime.hour);
+                              await prefs.setInt(
+                                  'reminder_minute', pickedTime.minute);
 
-                      try {
-                        await _notificationService.init();
-                        await _notificationService.scheduleDailyReminder(
-                            hour: pickedTime.hour, minute: pickedTime.minute);
-                        setModalState(() {
-                          _isNotificationEnabled = true;
-                          _reminderTime = pickedTime;
-                        });
-                        setState(() {
-                          _isNotificationEnabled = true;
-                          _reminderTime = pickedTime;
-                        });
-                      } catch (e) {
-                        debugPrint('Notification fail: $e');
-                      }
-                    }
-                  } else {
-                    await prefs.setBool('use_notifications', false);
-                    await _notificationService.cancelAll();
-                    setModalState(() => _isNotificationEnabled = false);
-                    setState(() => _isNotificationEnabled = false);
-                  }
-                },
-                trailing: Switch(
-                  value: _isNotificationEnabled,
-                  onChanged: (val) async {
-                    // This will trigger the same logic as onTap
-                    if (val && !_isNotificationEnabled) {
-                      final pickedTime = await showTimePicker(
-                          context: context, initialTime: _reminderTime);
-                      if (pickedTime != null) {
-                        final prefs = await SharedPreferences.getInstance();
-                        await prefs.setBool('use_notifications', true);
-                        await prefs.setInt('reminder_hour', pickedTime.hour);
-                        await prefs.setInt(
-                            'reminder_minute', pickedTime.minute);
-                        await _notificationService.init();
-                        await _notificationService.scheduleDailyReminder(
-                            hour: pickedTime.hour, minute: pickedTime.minute);
-                        setModalState(() {
-                          _isNotificationEnabled = true;
-                          _reminderTime = pickedTime;
-                        });
-                        setState(() {
-                          _isNotificationEnabled = true;
-                          _reminderTime = pickedTime;
-                        });
-                      }
-                    } else if (!val && _isNotificationEnabled) {
-                      final prefs = await SharedPreferences.getInstance();
-                      await prefs.setBool('use_notifications', false);
-                      await _notificationService.cancelAll();
-                      setModalState(() => _isNotificationEnabled = false);
-                      setState(() => _isNotificationEnabled = false);
-                    }
-                  },
-                  activeColor: AppColors.primary,
-                  activeTrackColor: AppColors.primary.withOpacity(0.3),
-                ),
-              ),
-              const Divider(),
-              _buildProfileMenuItem(
-                icon: Icons.language_rounded,
-                label: ToneManager.t('profile_tone'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _showToneSelector();
-                },
-                trailing: Text(ToneManager.notifier.value.name.toUpperCase(),
-                    style: const TextStyle(
-                        color: AppColors.primary, fontWeight: FontWeight.bold)),
-              ),
-              _buildProfileMenuItem(
-                  icon: Icons.person_outline,
-                  label: 'Edit Profil',
-                  onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const EditProfileScreen()))),
-              _buildProfileMenuItem(
-                  icon: Icons.help_outline,
-                  label: 'Bantuan',
-                  onTap: () => Navigator.push(context,
-                      MaterialPageRoute(builder: (_) => const HelpScreen()))),
-              _buildProfileMenuItem(
-                  icon: Icons.info_outline_rounded,
-                  label: 'Tentang Aplikasi',
-                  onTap: () => Navigator.push(context,
-                      MaterialPageRoute(builder: (_) => const AboutScreen()))),
-              _buildProfileMenuItem(
-                icon: Icons.rate_review_outlined,
-                label: 'Survei Kepuasan',
-                onTap: () {
-                  Navigator.pop(context);
-                  _checkAndShowSurvey();
-                },
-              ),
-              _buildProfileMenuItem(
-                  icon: Icons.logout,
-                  label: ToneManager.t('profile_logout'),
-                  iconColor: AppColors.expense,
-                  textColor: AppColors.expense,
-                  onTap: () async {
-                    final confirm = await UIHelper.showConfirmDialog(
-                      context: context,
-                      title: ToneManager.t('dialog_logout_title'),
-                      message: ToneManager.t('dialog_logout_msg'),
-                      confirmText: ToneManager.t('dialog_yes'),
-                      cancelText: ToneManager.t('dialog_no'),
-                      isDangerous: false, // Logout isn't scary like a deletion
-                    );
-                    if (confirm == true) {
-                      Navigator.pop(context);
-                      await _authService.signOut();
-                      if (mounted)
-                        Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const LoginScreen()),
-                            (r) => false);
-                    }
-                  }),
+                              try {
+                                await _notificationService.init();
+                                await _notificationService
+                                    .scheduleDailyReminder(
+                                        hour: pickedTime.hour,
+                                        minute: pickedTime.minute);
+                                setModalState(() {
+                                  _isNotificationEnabled = true;
+                                  _reminderTime = pickedTime;
+                                });
+                                setState(() {
+                                  _isNotificationEnabled = true;
+                                  _reminderTime = pickedTime;
+                                });
+                              } catch (e) {
+                                debugPrint('Notification fail: $e');
+                              }
+                            }
+                          } else {
+                            await prefs.setBool('use_notifications', false);
+                            await _notificationService.cancelAll();
+                            setModalState(() => _isNotificationEnabled = false);
+                            setState(() => _isNotificationEnabled = false);
+                          }
+                        },
+                        trailing: Switch(
+                          value: _isNotificationEnabled,
+                          onChanged: (val) async {
+                            // This will trigger the same logic as onTap
+                            if (val && !_isNotificationEnabled) {
+                              final pickedTime = await showTimePicker(
+                                  context: context, initialTime: _reminderTime);
+                              if (pickedTime != null) {
+                                final prefs =
+                                    await SharedPreferences.getInstance();
+                                await prefs.setBool('use_notifications', true);
+                                await prefs.setInt(
+                                    'reminder_hour', pickedTime.hour);
+                                await prefs.setInt(
+                                    'reminder_minute', pickedTime.minute);
+                                await _notificationService.init();
+                                await _notificationService
+                                    .scheduleDailyReminder(
+                                        hour: pickedTime.hour,
+                                        minute: pickedTime.minute);
+                                setModalState(() {
+                                  _isNotificationEnabled = true;
+                                  _reminderTime = pickedTime;
+                                });
+                                setState(() {
+                                  _isNotificationEnabled = true;
+                                  _reminderTime = pickedTime;
+                                });
+                              }
+                            } else if (!val && _isNotificationEnabled) {
+                              final prefs =
+                                  await SharedPreferences.getInstance();
+                              await prefs.setBool('use_notifications', false);
+                              await _notificationService.cancelAll();
+                              setModalState(
+                                  () => _isNotificationEnabled = false);
+                              setState(() => _isNotificationEnabled = false);
+                            }
+                          },
+                          activeColor: AppColors.primary,
+                          activeTrackColor: AppColors.primary.withOpacity(0.3),
+                        ),
+                      ),
+                      const Divider(),
+                      _buildProfileMenuItem(
+                        icon: Icons.language_rounded,
+                        label: ToneManager.t('profile_tone'),
+                        onTap: () {
+                          Navigator.pop(context);
+                          _showToneSelector();
+                        },
+                        trailing: Text(
+                            ToneManager.notifier.value.name.toUpperCase(),
+                            style: const TextStyle(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.bold)),
+                      ),
+                      _buildProfileMenuItem(
+                          icon: Icons.person_outline,
+                          label: 'Edit Profil',
+                          onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const EditProfileScreen()))),
+                      _buildProfileMenuItem(
+                          icon: Icons.help_outline,
+                          label: 'Bantuan',
+                          onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const HelpScreen()))),
+                      _buildProfileMenuItem(
+                          icon: Icons.info_outline_rounded,
+                          label: 'Tentang Aplikasi',
+                          onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const AboutScreen()))),
+                      _buildProfileMenuItem(
+                        icon: Icons.rate_review_outlined,
+                        label: 'Survei Kepuasan',
+                        onTap: () {
+                          Navigator.pop(context);
+                          _checkAndShowSurvey();
+                        },
+                      ),
+                      _buildProfileMenuItem(
+                          icon: Icons.logout,
+                          label: ToneManager.t('profile_logout'),
+                          iconColor: AppColors.expense,
+                          textColor: AppColors.expense,
+                          onTap: () async {
+                            final confirm = await UIHelper.showConfirmDialog(
+                              context: context,
+                              title: ToneManager.t('dialog_logout_title'),
+                              message: ToneManager.t('dialog_logout_msg'),
+                              confirmText: ToneManager.t('dialog_yes'),
+                              cancelText: ToneManager.t('dialog_no'),
+                              isDangerous:
+                                  false, // Logout isn't scary like a deletion
+                            );
+                            if (confirm == true) {
+                              if (Navigator.canPop(context)) {
+                                Navigator.pop(context);
+                              }
+                              debugPrint('LOGOUT: Memulai proses sign out...');
+                              await _authService.signOut();
+                              debugPrint('LOGOUT: Sign out selesai.');
+                            }
+                          }),
                     ],
                   ),
                 ),
@@ -1444,98 +1465,101 @@ class _HomeScreenState extends State<HomeScreen> {
     UIHelper.showToneSelector(context);
   }
 
-  Future<void> _checkAndShowSurvey({bool autoTrigger = false}) async {
-    // 1. Get current config (use cached if available)
-    final config = _currentSurveyConfig ?? await FirebaseFirestore.instance
-        .collection('app_config')
-        .doc('survey')
-        .get()
-        .then((doc) => doc.exists 
-            ? SurveyConfigModel.fromJson(doc.data()!) 
-            : SurveyConfigModel(isAvailable: true, minTransactions: 0, minAccountAgeDays: 0));
+  Future<void> _checkAndShowSurvey() async {
+    if (_isCheckingSurvey || _isSurveyOpen) return;
+    
+    _isCheckingSurvey = true;
 
-    if (config == null || !config.isAvailable) {
-      if (!autoTrigger && mounted) {
-        UIHelper.showInfoDialog(
-          context, 
-          'Survei Ditutup', 
-          'Maaf banget, survei saat ini sedang ditutup oleh Archen. Ditunggu jadwal berikutnya ya! 🙏'
-        );
-      }
-      return;
+    if (mounted) {
+      UIHelper.showLoadingDialog(context, message: 'Memeriksa kriteria...');
     }
 
-    // 2. Fetch User Data for Criteria Check
-    final userDoc = await FirebaseFirestore.instance.collection('users').doc(_uid).get();
-    if (!userDoc.exists) return;
-    
-    final userData = userDoc.data()!;
-    final bool alreadyDone = userData['surveyDone'] ?? false;
-    
-    // If auto-triggering, don't show if already done
-    if (autoTrigger && alreadyDone) return;
-    
-    // If manually clicking and already done, show info
-    if (!autoTrigger && alreadyDone) {
+    try {
+      final results = await Future.wait([
+        _currentSurveyConfig != null 
+            ? Future.value(_currentSurveyConfig) 
+            : FirebaseFirestore.instance.collection('app_config').doc('survey').get().then((doc) => 
+                doc.exists ? SurveyConfigModel.fromJson(doc.data()!) : null),
+        FirebaseFirestore.instance.collection('users').doc(_uid).get(),
+        FirebaseFirestore.instance.collection('transactions').where('createdBy', isEqualTo: _uid).count().get(),
+      ]);
+
+      final config = results[0] as SurveyConfigModel?;
+      final userDoc = results[1] as DocumentSnapshot;
+      final txCountResult = results[2] as AggregateQuerySnapshot;
+
+      if (mounted) Navigator.pop(context);
+
+      if (config == null || !config.isAvailable) {
+        if (mounted) {
+          UIHelper.showInfoDialog(context, 'Survei Ditutup', 
+              'Maaf banget, survei saat ini sedang ditutup oleh Archen. Ditunggu jadwal berikutnya ya! 🙏');
+        }
+        return;
+      }
+
+      if (!userDoc.exists) return;
+      final userData = userDoc.data() as Map<String, dynamic>;
+      final bool alreadyDone = userData['surveyDone'] ?? false;
+      
+      if (alreadyDone) {
+        if (mounted) {
+          UIHelper.showInfoDialog(context, 'Sudah Berpartisipasi', 
+              'Kamu sudah mengisi survei ini sebelumnya. Terima kasih banyak atas masukannya! ❤️');
+        }
+        return;
+      }
+
+      DateTime createdAt = (userData['createdAt'] as Timestamp?)?.toDate() ?? 
+                           FirebaseAuth.instance.currentUser?.metadata.creationTime ?? 
+                           DateTime.now();
+      final accountAgeDays = (DateTime.now().difference(createdAt).inHours / 24).ceil();
+      final minAge = config.minAccountAgeDays ?? 0;
+
+      if (accountAgeDays < minAge) {
+        if (mounted) {
+          UIHelper.showInfoDialog(context, 'Belum Memenuhi Syarat', 
+              'Maaf, Anda perlu menggunakan aplikasi minimal selama $minAge hari untuk memberikan feedback. (Akun Anda: $accountAgeDays hari)');
+        }
+        return;
+      }
+
+      final txCount = txCountResult.count ?? 0;
+      final minTx = config.minTransactions ?? 0;
+
+      if (txCount < minTx) {
+        if (mounted) {
+          UIHelper.showInfoDialog(
+            context, 
+            'Belum Memenuhi Syarat', 
+            'Anda perlu memiliki minimal $minTx transaksi sukses untuk memberikan feedback. (Saat ini: $txCount transaksi)'
+          );
+        }
+        return;
+      }
+
+      if (mounted) _showSurveySheet();
+    } catch (e) {
       if (mounted) {
-        UIHelper.showInfoDialog(context, 'Sudah Berpartisipasi', 'Kamu sudah mengisi survei ini sebelumnya. Terima kasih banyak atas masukannya! ❤️');
+        if (Navigator.canPop(context)) Navigator.pop(context);
+        UIHelper.showErrorSnackBar(context, 'Gagal memuat kriteria: $e');
       }
-      return;
+      debugPrint('SURVEY ERROR: $e');
+    } finally {
+      _isCheckingSurvey = false;
     }
-
-    // 3. Check Account Age
-    // Ambil dari Firestore, tapi jika null gunakan metadata asli dari Firebase Auth (waktu daftar pertama)
-    DateTime createdAt = (userData['createdAt'] as Timestamp?)?.toDate() ?? 
-                         FirebaseAuth.instance.currentUser?.metadata.creationTime ?? 
-                         DateTime.now();
-    
-    // Hitung Hari (Ceil agar 1 jam terhitung 1 hari, 25 jam terhitung 2 hari)
-    final accountAgeDays = (DateTime.now().difference(createdAt).inHours / 24).ceil();
-    final minAge = config.minAccountAgeDays ?? 0;
-    
-    if (accountAgeDays < minAge) {
-      if (!autoTrigger && mounted) {
-        UIHelper.showInfoDialog(
-          context, 
-          'Belum Memenuhi Syarat', 
-          'Maaf, kamu perlu menggunakan aplikasi minimal selama $minAge hari untuk memberikan feedback. (Sekarang: $accountAgeDays hari)'
-        );
-      }
-      return;
-    }
-
-    // 4. Check Transaction Count
-    final txCountResult = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(_uid)
-        .collection('transactions')
-        .count()
-        .get();
-    final txCount = txCountResult.count ?? 0;
-    final minTx = config.minTransactions ?? 0;
-
-    if (txCount < minTx) {
-      if (!autoTrigger && mounted) {
-        UIHelper.showInfoDialog(
-          context, 
-          'Belum Memenuhi Syarat', 
-          'Kamu perlu memiliki minimal $minTx transaksi tercatat untuk memberikan feedback. (Sekarang: $txCount transaksi)'
-        );
-      }
-      return;
-    }
-
-    // 5. Success -> Show Sheet
-    if (mounted) _showSurveySheet();
   }
 
   void _showSurveySheet() {
+    if (_isSurveyOpen) return;
+    _isSurveyOpen = true;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => const ExperienceSurveySheet(),
-    );
+    ).then((_) => _isSurveyOpen = false);
   }
 
   void _showBudgetDialog() {
@@ -1551,7 +1575,8 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: Colors.transparent,
         body: Center(
           child: Padding(
-            padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+            padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom),
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 32),
               decoration: BoxDecoration(
@@ -1629,10 +1654,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                 onTap: () => Navigator.pop(ctx),
                                 borderRadius: BorderRadius.circular(16),
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(color: Colors.grey[300]!),
+                                    border:
+                                        Border.all(color: Colors.grey[300]!),
                                   ),
                                   child: const Center(
                                     child: Text('Batal',
@@ -1647,21 +1674,26 @@ class _HomeScreenState extends State<HomeScreen> {
                             Expanded(
                               child: InkWell(
                                 onTap: () async {
-                                  final budget = double.tryParse(controller.text) ?? 0.0;
-                                  final prefs = await SharedPreferences.getInstance();
-                                  await prefs.setDouble('monthly_budget', budget);
+                                  final budget =
+                                      double.tryParse(controller.text) ?? 0.0;
+                                  final prefs =
+                                      await SharedPreferences.getInstance();
+                                  await prefs.setDouble(
+                                      'monthly_budget', budget);
                                   setState(() => _monthlyBudget = budget);
                                   if (ctx.mounted) Navigator.pop(ctx);
                                 },
                                 borderRadius: BorderRadius.circular(16),
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
                                   decoration: BoxDecoration(
                                     color: AppColors.primary,
                                     borderRadius: BorderRadius.circular(16),
                                     boxShadow: [
                                       BoxShadow(
-                                          color: AppColors.primary.withOpacity(0.3),
+                                          color: AppColors.primary
+                                              .withOpacity(0.3),
                                           blurRadius: 10,
                                           offset: const Offset(0, 4))
                                     ],

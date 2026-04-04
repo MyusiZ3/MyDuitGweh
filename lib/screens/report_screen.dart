@@ -79,6 +79,7 @@ class _ReportScreenState extends State<ReportScreen> {
 
   Future<void> _loadAIKey() async {
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     setState(() {
       _aiApiKey = prefs.getString('user_ai_api_key');
       _aiApiPlatform = prefs.getString('user_ai_api_platform') ?? 'gemini';
@@ -115,17 +116,21 @@ class _ReportScreenState extends State<ReportScreen> {
     if (trimmedKey.isNotEmpty) {
       final entry = '$trimmedKey|$platform';
       if (!_allApiKeys.contains(entry)) {
-        setState(() {
-          _allApiKeys = [entry, ..._allApiKeys];
-        });
+        if (mounted) {
+          setState(() {
+            _allApiKeys = [entry, ..._allApiKeys];
+          });
+        }
         await prefs.setStringList('user_all_api_keys_v2', _allApiKeys);
       }
     }
 
-    setState(() {
-      _aiApiKey = trimmedKey;
-      _aiApiPlatform = platform;
-    });
+    if (mounted) {
+      setState(() {
+        _aiApiKey = trimmedKey;
+        _aiApiPlatform = platform;
+      });
+    }
   }
 
   Future<void> _deleteStoredKey(String entry) async {
@@ -142,17 +147,21 @@ class _ReportScreenState extends State<ReportScreen> {
       await prefs.remove('user_ai_api_key');
       await prefs.remove('user_ai_api_platform');
     }
-    setState(() {});
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   Future<void> _removeAIKey() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('user_ai_api_key');
     await prefs.remove('user_ai_api_platform');
-    setState(() {
-      _aiApiKey = null;
-      _aiApiPlatform = null;
-    });
+    if (mounted) {
+      setState(() {
+        _aiApiKey = null;
+        _aiApiPlatform = null;
+      });
+    }
   }
 
   @override
@@ -213,15 +222,17 @@ class _ReportScreenState extends State<ReportScreen> {
             child: StreamBuilder<List<WalletModel>>(
               stream: _walletStream,
               builder: (context, walletSnapshot) {
-                if (walletSnapshot.connectionState == ConnectionState.waiting)
+                if (walletSnapshot.connectionState == ConnectionState.waiting) {
                   return const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 24),
                       child: ShimmerTransactionList());
+                }
 
                 final wallets = walletSnapshot.data ?? [];
-                if (wallets.isEmpty)
+                if (wallets.isEmpty) {
                   return _buildNoData(
                       'Belum ada dompet', 'Buat dompet dulu yuk!');
+                }
 
                 final walletIds = wallets.map((w) => w.id).toList();
                 WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -241,15 +252,18 @@ class _ReportScreenState extends State<ReportScreen> {
                 return StreamBuilder<List<TransactionModel>>(
                   stream: _getTxnStream(walletIds),
                   builder: (context, txnSnapshot) {
-                    if (txnSnapshot.connectionState == ConnectionState.waiting)
+                    if (txnSnapshot.connectionState ==
+                        ConnectionState.waiting) {
                       return const Padding(
                           padding: EdgeInsets.symmetric(horizontal: 24),
                           child: ShimmerTransactionList());
+                    }
 
                     final transactions = txnSnapshot.data ?? [];
-                    if (transactions.isEmpty)
+                    if (transactions.isEmpty) {
                       return _buildNoData('Belum ada transaksi',
                           'Tidak ada catatan di periode ini.');
+                    }
 
                     double totalIncome = 0;
                     double totalExpense = 0;
@@ -298,16 +312,16 @@ class _ReportScreenState extends State<ReportScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           if (_isCheckingAi) return;
-          
+
           setState(() {
             _isCheckingAi = true;
           });
-          
+
           // Check if AI is globally enabled
           final isEnabled = await AIService.isGlobalAiEnabled();
-          
+
           if (!context.mounted) return;
-          
+
           setState(() {
             _isCheckingAi = false;
           });
@@ -345,10 +359,11 @@ class _ReportScreenState extends State<ReportScreen> {
                   strokeWidth: 2,
                 ),
               )
-            : const Text('Tanya AI',
-                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-        icon: _isCheckingAi 
-            ? const SizedBox.shrink() 
+            : const Text('Arch AI',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold, color: Colors.white)),
+        icon: _isCheckingAi
+            ? const SizedBox.shrink()
             : const Icon(Icons.auto_awesome_rounded, color: Colors.white),
         backgroundColor: AppColors.primary,
         elevation: 4,
@@ -639,10 +654,11 @@ class _ReportScreenState extends State<ReportScreen> {
     for (var txn in transactions) {
       final dayKey = DateFormat('dd/MM').format(txn.date);
       if (incomeByDay.containsKey(dayKey)) {
-        if (txn.isIncome)
+        if (txn.isIncome) {
           incomeByDay[dayKey] = (incomeByDay[dayKey] ?? 0) + txn.amount;
-        else
+        } else {
           expenseByDay[dayKey] = (expenseByDay[dayKey] ?? 0) + txn.amount;
+        }
       }
     }
 
@@ -887,10 +903,11 @@ class _ReportScreenState extends State<ReportScreen> {
                         return InkWell(
                           onTap: () {
                             setSheetState(() {
-                              if (isSelected)
+                              if (isSelected) {
                                 selectedCategories.remove(cat);
-                              else
+                              } else {
                                 selectedCategories.add(cat);
+                              }
                             });
                           },
                           borderRadius: BorderRadius.circular(12),
@@ -1045,10 +1062,11 @@ class _ReportScreenState extends State<ReportScreen> {
     double totalIncome = 0;
     double totalExpense = 0;
     for (var txn in filteredTxns) {
-      if (txn.isIncome)
+      if (txn.isIncome) {
         totalIncome += txn.amount;
-      else
+      } else {
         totalExpense += txn.amount;
+      }
     }
 
     if (isPdf) {
@@ -1477,8 +1495,13 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                                   _localApiKey = textKey;
                                                   _localApiPlatform =
                                                       selectedPlatform;
-                                                  _localAllApiKeys = List.from(
-                                                      widget.allApiKeys);
+                                                  final newEntry =
+                                                      '$textKey|$selectedPlatform';
+                                                  if (!_localAllApiKeys
+                                                      .contains(newEntry)) {
+                                                    _localAllApiKeys.insert(
+                                                        0, newEntry);
+                                                  }
                                                   _apiStatus[textKey] = 'ok';
                                                   controller.clear();
                                                   isCheckingKey = false;
@@ -1747,15 +1770,21 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
 
                                                 await widget.onDeleteKey(key);
                                                 setDialogState(() {
-                                                  if (_localApiKey == key)
+                                                  if (_localApiKey == key) {
                                                     _localApiKey = null;
+                                                  }
                                                   _apiStatus.remove(key);
-                                                  _localAllApiKeys = List.from(
-                                                      widget.allApiKeys);
+                                                  _localAllApiKeys.removeWhere(
+                                                      (item) =>
+                                                          item
+                                                              .split('|')
+                                                              .first ==
+                                                          key);
                                                 });
                                                 setState(() {
-                                                  if (_localApiKey == key)
+                                                  if (_localApiKey == key) {
                                                     _localApiKey = null;
+                                                  }
                                                 });
                                                 if (context.mounted) {
                                                   UIHelper.showErrorSnackBar(
@@ -2131,8 +2160,8 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                         children: [
                           Icon(Icons.info_outline_rounded,
                               color: Colors.blue, size: 20),
-                          const SizedBox(width: 12),
-                          const Expanded(
+                          SizedBox(width: 12),
+                          Expanded(
                             child: Text(
                               'API Key Gemini (Free Tier) gratis untuk penggunaan personal.',
                               style:
@@ -2331,10 +2360,11 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
           double expense = 0;
           if (snapshot.hasData) {
             for (var txn in snapshot.data!) {
-              if (txn.isIncome)
+              if (txn.isIncome) {
                 income += txn.amount;
-              else
+              } else {
                 expense += txn.amount;
+              }
             }
           }
 
@@ -2347,9 +2377,9 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
             double savingsRate = (income - expense) / income;
             score = (savingsRate * 100).clamp(0, 100);
 
-            if (score > 80)
+            if (score > 80) {
               status = "Sangat Sehat";
-            else if (score > 50)
+            } else if (score > 50)
               status = "Cukup Sehat";
             else if (score > 20)
               status = "Waspada";
@@ -3139,9 +3169,9 @@ class _AnimatedHeartbeatState extends State<AnimatedHeartbeat>
 
   void _updateSpeed() {
     int durationMs = 800;
-    if (widget.score >= 80)
+    if (widget.score >= 80) {
       durationMs = 1200; // Calm heartbeat
-    else if (widget.score < 50) durationMs = 400; // Panic heartbeat
+    } else if (widget.score < 50) durationMs = 400; // Panic heartbeat
 
     _controller.duration = Duration(milliseconds: durationMs);
     _controller.repeat(reverse: true);
