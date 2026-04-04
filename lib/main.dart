@@ -81,13 +81,21 @@ class AuthGate extends StatefulWidget {
 class _AuthGateState extends State<AuthGate> {
   late Stream<User?> _authStream;
   late final Future<bool> _isSafeFuture;
+  Future<bool>? _onboardingFuture;
 
   @override
   void initState() {
     super.initState();
     _authStream = FirebaseAuth.instance.authStateChanges();
-    // Cache the slow safety check so it only runs once per app start
     _isSafeFuture = SecurityService.isDeviceSafe();
+    _onboardingFuture = _checkOnboarding();
+  }
+
+  /// Dipanggil oleh OnboardingScreen saat user selesai onboarding
+  void _onOnboardingComplete() {
+    setState(() {
+      _onboardingFuture = Future.value(true);
+    });
   }
 
   @override
@@ -103,38 +111,38 @@ class _AuthGateState extends State<AuthGate> {
           return const SecurityGateScreen();
         }
 
-        return StreamBuilder<User?>(
-          stream: _authStream,
-          // CRITICAL: Provide initialData so hot reload doesn't lose current state
-          initialData: FirebaseAuth.instance.currentUser,
-          builder: (context, snapshot) {
-            final user = snapshot.data;
-            debugPrint('--- AUTH GATE LOG: user=$user, connState=${snapshot.connectionState} ---');
-
-            if (snapshot.connectionState == ConnectionState.waiting &&
-                user == null) {
+        // STEP 1: Cek onboarding DULU sebelum cek auth
+        return FutureBuilder<bool>(
+          future: _onboardingFuture,
+          builder: (context, onbSnapshot) {
+            if (onbSnapshot.connectionState == ConnectionState.waiting) {
               return const SplashView();
             }
 
-            // Jika user null, langsung ke LoginScreen tanpa perlu nunggu onboarding check lagi
-            // (LoginScreen biasanya sudah kencang di-render ulang)
-            if (user == null) {
-              debugPrint('--- NAVIGATING TO LOGIN SCREEN (Instant) ---');
-              return const LoginScreen();
+            final onboardingDone = onbSnapshot.data ?? false;
+            if (!onboardingDone) {
+              debugPrint('--- NAVIGATING TO ONBOARDING ---');
+              return OnboardingScreen(
+                onComplete: _onOnboardingComplete,
+              );
             }
 
-            return FutureBuilder<bool>(
-              // Only check onboarding check if we have a user
-              key: ValueKey(user.uid),
-              future: _checkOnboarding(),
-              builder: (context, onbSnapshot) {
-                if (onbSnapshot.connectionState == ConnectionState.waiting) {
+            // STEP 2: Onboarding selesai, baru cek auth
+            return StreamBuilder<User?>(
+              stream: _authStream,
+              initialData: FirebaseAuth.instance.currentUser,
+              builder: (context, snapshot) {
+                final user = snapshot.data;
+                debugPrint('--- AUTH GATE LOG: user=$user, connState=${snapshot.connectionState} ---');
+
+                if (snapshot.connectionState == ConnectionState.waiting &&
+                    user == null) {
                   return const SplashView();
                 }
 
-                final onboardingDone = onbSnapshot.data ?? false;
-                if (!onboardingDone) {
-                  return const OnboardingScreen();
+                if (user == null) {
+                  debugPrint('--- NAVIGATING TO LOGIN SCREEN ---');
+                  return const LoginScreen();
                 }
 
                 debugPrint('--- NAVIGATING TO MAINTENANCE WRAPPER ---');
@@ -250,15 +258,15 @@ class SplashView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
+            SizedBox(
               width: 80,
               height: 80,
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(20),
+              child: Image.asset(
+                'assets/images/logo_loading.png',
+                width: 60,
+                height: 60,
+                fit: BoxFit.contain,
               ),
-              child: const Icon(Icons.account_balance_wallet_rounded,
-                  size: 40, color: Colors.white),
             ),
             const SizedBox(height: 24),
             const CircularProgressIndicator(color: AppColors.primary),

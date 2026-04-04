@@ -90,15 +90,13 @@ class _LoginScreenState extends State<LoginScreen>
         await _authService.signInWithEmail(email, password);
         if (mounted) {
           UIHelper.showSuccessSnackBar(context, 'Berhasil Masuk!');
-          // Clear any pushed routes (like from Onboarding) so AuthGate can render root
-          Navigator.of(context).popUntil((route) => route.isFirst);
+          // AuthGate mendengar authStateChanges dan otomatis navigasi ke Home
         }
       } else {
         await _authService.signUpWithEmail(email, password, name);
         if (mounted) {
           UIHelper.showSuccessSnackBar(context, 'Akun berhasil dibuat!');
-          // Clear any pushed routes
-          Navigator.of(context).popUntil((route) => route.isFirst);
+          // AuthGate mendengar authStateChanges dan otomatis navigasi ke Home
         }
       }
     } catch (e) {
@@ -114,8 +112,7 @@ class _LoginScreenState extends State<LoginScreen>
       final user = await _authService.signInWithGoogle();
       if (user != null && mounted) {
         UIHelper.showSuccessSnackBar(context, 'Login Google Berhasil!');
-        // Clear any pushed routes
-        Navigator.of(context).popUntil((route) => route.isFirst);
+        // AuthGate mendengar authStateChanges dan otomatis navigasi ke Home
       }
     } catch (e) {
       if (mounted) {
@@ -244,7 +241,7 @@ class _LoginScreenState extends State<LoginScreen>
               end: Alignment.bottomRight,
               colors: [Color(0xFF007AFF), Color(0xFF5856D6)],
             ),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
                 color: const Color(0xFF007AFF).withOpacity(0.3),
@@ -253,8 +250,17 @@ class _LoginScreenState extends State<LoginScreen>
               ),
             ],
           ),
-          child: const Icon(Icons.account_balance_wallet_rounded,
-              size: 28, color: Colors.white),
+          child: Center(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Image.asset(
+                'assets/images/logo_app.png',
+                width: 36,
+                height: 36,
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
         ),
         const SizedBox(height: 28),
         AnimatedSwitcher(
