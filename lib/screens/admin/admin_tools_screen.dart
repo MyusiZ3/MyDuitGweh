@@ -14,6 +14,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
 import '../../services/ai_service.dart';
 import '../../utils/ui_helper.dart';
+import 'notification_listener_admin_screen.dart';
 
 class AdminToolsScreen extends StatefulWidget {
   const AdminToolsScreen({super.key});
@@ -256,6 +257,23 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                                   ),
                                 ),
                                 const SizedBox(height: 12),
+                                // ─── Notification Listener Card ─────────
+                                SizedBox(
+                                  height: 140,
+                                  width: double.infinity,
+                                  child: _buildCommandCard(
+                                    title: 'Notification Listener',
+                                    subtitle: 'Capture & Sync Notif Sosmed',
+                                    icon: Icons.notifications_active_rounded,
+                                    color: const Color(0xFF7C3AED),
+                                    onTap: () => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (_) =>
+                                                const NotificationListenerAdminScreen())),
+                                    isRestricted: !_isSuperAdmin,
+                                  ),
+                                ),
                               ],
                             );
                           }),
