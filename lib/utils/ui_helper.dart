@@ -357,6 +357,62 @@ class UIHelper {
         ));
   }
 
+  static void showLoadingDialog(BuildContext context, {String? message}) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierLabel: '',
+      barrierColor: Colors.black.withOpacity(0.5),
+      transitionDuration: const Duration(milliseconds: 200),
+      pageBuilder: (context, anim1, anim2) => Center(
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(32),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: CircularProgressIndicator(
+                    color: AppColors.primary,
+                    strokeWidth: 4,
+                  ),
+                ),
+                if (message != null) ...[
+                  const SizedBox(height: 24),
+                  Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.black,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+      transitionBuilder: (context, anim1, anim2, child) => FadeTransition(
+        opacity: anim1,
+        child: ScaleTransition(
+          scale: Tween<double>(begin: 0.8, end: 1.0).animate(
+              CurvedAnimation(parent: anim1, curve: Curves.easeOutBack)),
+          child: child,
+        ),
+      ),
+    );
+  }
+
   static Future<void> showAiMaintenanceDialog(BuildContext context) {
     return showPremiumDialog(
         context: context,
