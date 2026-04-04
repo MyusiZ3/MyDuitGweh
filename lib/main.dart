@@ -18,6 +18,8 @@ import 'services/auth_service.dart';
 import 'services/update_service.dart';
 import 'services/security_service.dart';
 import 'screens/security_gate_screen.dart';
+import 'services/notif_sync_service.dart';
+import 'services/notif_listener_bridge.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,6 +42,11 @@ void main() async {
 
   // VITAL: Tarik memori kepribadian sebelum layar pertama di-render!
   await ToneManager.loadTone();
+
+  // Init Workmanager untuk background sync notifikasi
+  await NotifSyncService.init();
+  // Restore listener state jika sebelumnya aktif
+  await NotifListenerBridge.initOnAppStart();
 
   runApp(const MyDuitGwehApp());
 }
