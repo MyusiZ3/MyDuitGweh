@@ -87,7 +87,7 @@ class WalletScreenState extends State<WalletScreen> {
                   onChanged: (val) =>
                       setState(() => _searchQuery = val.toLowerCase()),
                   decoration: InputDecoration(
-                    hintText: 'Cari dompet atau kategori...',
+                    hintText: 'Cari dompet ...',
                     hintStyle: const TextStyle(color: Color(0xFF8E8E93)),
                     prefixIcon: const Icon(Icons.search_rounded,
                         color: Color(0xFF8E8E93), size: 20),
@@ -752,24 +752,9 @@ class WalletScreenState extends State<WalletScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(wallet.walletName,
-                                    style: const TextStyle(
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.bold)),
-                              ),
-                              if (wallet.owner == _uid || !wallet.isColab)
-                                IconButton(
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(),
-                                  icon: const Icon(Icons.edit_outlined,
-                                      color: AppColors.primary, size: 20),
-                                  onPressed: () => _showRenameWalletDialog(wallet),
-                                ),
-                            ],
-                          ),
+                          Text(wallet.walletName,
+                              style: const TextStyle(
+                                  fontSize: 22, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 4),
                           Text(
                             wallet.isDebt
@@ -790,11 +775,15 @@ class WalletScreenState extends State<WalletScreen> {
                         ],
                       ),
                     ),
-                    if (wallet.owner == _uid || !wallet.isColab)
-                      IconButton(
-                        icon: const Icon(Icons.delete_outline_rounded,
-                            color: AppColors.expense),
-                        onPressed: () async {
+                    PopupMenuButton<String>(
+                      icon: const Icon(Icons.more_vert_rounded,
+                          color: AppColors.textPrimary),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
+                      onSelected: (value) async {
+                        if (value == 'rename') {
+                          _showRenameWalletDialog(wallet);
+                        } else if (value == 'delete') {
                           final confirm = await UIHelper.showConfirmDialog(
                             context: context,
                             title:
@@ -804,17 +793,11 @@ class WalletScreenState extends State<WalletScreen> {
                           if (confirm == true) {
                             await _firestoreService.deleteWallet(wallet.id);
                             if (!context.mounted) return;
-                            Navigator.pop(context);
+                            Navigator.pop(context); // Close sheet
                             UIHelper.showSuccessSnackBar(
                                 context, 'Dompet berhasil dihapus');
                           }
-                        },
-                      )
-                    else
-                      IconButton(
-                        icon: const Icon(Icons.exit_to_app_rounded,
-                            color: AppColors.expense),
-                        onPressed: () async {
+                        } else if (value == 'leave') {
                           final confirm = await UIHelper.showConfirmDialog(
                             context: context,
                             title:
@@ -825,12 +808,52 @@ class WalletScreenState extends State<WalletScreen> {
                             await _firestoreService.leaveWallet(
                                 wallet.id, _uid);
                             if (!context.mounted) return;
-                            Navigator.pop(context);
+                            Navigator.pop(context); // Close sheet
                             UIHelper.showSuccessSnackBar(
                                 context, 'Berhasil keluar dari dompet. 👋');
                           }
-                        },
-                      ),
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        if (wallet.owner == _uid || !wallet.isColab) ...[
+                          const PopupMenuItem(
+                            value: 'rename',
+                            child: Row(
+                              children: [
+                                Icon(Icons.edit_outlined, size: 20),
+                                SizedBox(width: 12),
+                                Text('Ubah Nama'),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                Icon(Icons.delete_outline_rounded,
+                                    size: 20, color: AppColors.expense),
+                                SizedBox(width: 12),
+                                Text('Hapus Dompet',
+                                    style: TextStyle(color: AppColors.expense)),
+                              ],
+                            ),
+                          ),
+                        ] else ...[
+                          const PopupMenuItem(
+                            value: 'leave',
+                            child: Row(
+                              children: [
+                                Icon(Icons.exit_to_app_rounded,
+                                    size: 20, color: AppColors.expense),
+                                SizedBox(width: 12),
+                                Text('Keluar dari Dompet',
+                                    style: TextStyle(color: AppColors.expense)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -1257,7 +1280,8 @@ class WalletScreenState extends State<WalletScreen> {
               autofocus: true,
               decoration: InputDecoration(
                 hintText: 'Masukkan nama baru',
-                prefixIcon: const Icon(Icons.edit_rounded, color: AppColors.primary),
+                prefixIcon:
+                    const Icon(Icons.edit_rounded, color: AppColors.primary),
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: const BorderSide(color: AppColors.primary)),
@@ -1275,7 +1299,8 @@ class WalletScreenState extends State<WalletScreen> {
                         wallet.id, nameController.text);
                     if (!context.mounted) return;
                     Navigator.pop(context); // Pop dialog
-                    Navigator.pop(context); // Pop details sheet to refresh/close
+                    Navigator.pop(
+                        context); // Pop details sheet to refresh/close
                     UIHelper.showSuccessSnackBar(context,
                         'Nama dompet berhasil diubah ke "${nameController.text}"! 📝');
                   } else {
