@@ -207,8 +207,9 @@ class ReceiptOCRService {
                     String mainPart = val
                         .substring(0, val.length - 3)
                         .replaceAll(RegExp(r'[^0-9]'), '');
-                    if (mainPart.isNotEmpty)
+                    if (mainPart.isNotEmpty) {
                       parsedAmount = double.tryParse(mainPart);
+                    }
                   } else {
                     // Regular number, just strip all non-digits
                     String clean = val.replaceAll(RegExp(r'[^0-9]'), '');
@@ -221,8 +222,9 @@ class ReceiptOCRService {
                         parsedAmount < 10000000 &&
                         val.length <= 11) {
                       // Reject if it looks like a year (e.g., 2024, 2025)
-                      if (parsedAmount == 2024 || parsedAmount == 2025)
+                      if (parsedAmount == 2024 || parsedAmount == 2025) {
                         continue;
+                      }
 
                       candidates.add((
                         amount: parsedAmount,
@@ -256,8 +258,9 @@ class ReceiptOCRService {
       debugPrint('OCR: Fallback to largest number in bottom region...');
       double maxY = 0;
       for (TextBlock block in recognizedText.blocks) {
-        if (block.boundingBox.center.dy > maxY)
+        if (block.boundingBox.center.dy > maxY) {
           maxY = block.boundingBox.center.dy;
+        }
       }
 
       List<({double amount, double y})> fallbackCandidates = [];
