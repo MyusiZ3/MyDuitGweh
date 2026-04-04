@@ -144,7 +144,8 @@ class _NotificationPermissionFloatingCardState
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Row(
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         'Auto-Magic Sync!',
@@ -155,7 +156,7 @@ class _NotificationPermissionFloatingCardState
                                           letterSpacing: -0.3,
                                         ),
                                       ),
-                                      const SizedBox(width: 8),
+                                      const SizedBox(height: 6),
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                         decoration: BoxDecoration(

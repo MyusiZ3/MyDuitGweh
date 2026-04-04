@@ -463,35 +463,31 @@ class _ReportScreenState extends State<ReportScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            const Text(
-                              'Auto-Magic Sync',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w900,
-                                fontSize: 18,
-                                letterSpacing: -0.5,
-                              ),
+                        const Text(
+                          'Auto-Magic Sync',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 18,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 0.8),
+                          ),
+                          child: Text(
+                            'EXPERIMENTAL',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 7,
+                              color: AppColors.primary,
+                              letterSpacing: 0.5,
                             ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(4),
-                                border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 0.8),
-                              ),
-                              child: Text(
-                                'EXPERIMENTAL',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 7,
-                                  color: AppColors.primary,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                         const Text(
                           'Catat transaksi otomatis dari notifikasi',
