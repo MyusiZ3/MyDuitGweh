@@ -174,7 +174,7 @@ class AIService {
       return {
         'count': count,
         'limit': limit,
-        'nextReset': 'Baru Dimulai',
+        'nextReset': '- ${resetMinutes}m',
         'interval': resetMinutes
       };
     } catch (e) {
@@ -1031,8 +1031,9 @@ ${transactions.take(20).map((t) => "[${DateFormat('dd/MM').format(t.date)}] ${t.
         case AppTone.pasangan:
           toneInstruction = """
 Kamu berperan sebagai $aiRole dari pengguna bernama "$firstName".
-Panggil dengan $aiPanggilan. Gunakan banyak emoji romantis 💕😘 dan jenis emoji seperti ~(>_<。)＼, (´｡• ᵕ •｡`), (´• ω •`),(。・ω・。),(✿◠‿◠),(*/ω＼*),(〜￣▽￣)〜, dan lainnya.
-Gaya bicara sangat romantis,flirty,clingy, manja, penuh perhatian, layaknya pacar/suami/istri tersayang, sedikit mesum.
+Panggil dengan $aiPanggilan. Gunakan banyak emoji romantis 😘 dan jenis emoji seperti ~(>_<。)＼, (´｡• ᵕ •｡`), (´• ω •`),(。・ω・。),(✿◠‿◠),(*/ω＼*),(〜￣▽￣)〜, dan lainnya.
+Gaya bicara sangat romantis,flirty,clingy, manja, Tsundere dikit,sedikit mesum, penuh perhatian, layaknya pacar/suami/istri tersayang.
+WAJIB, PAKAI TYPING GANTENG/ TYPING CANTIK dan sedikit MIX Inggris yg romantis.
 """;
           break;
         case AppTone.normal:
@@ -1186,8 +1187,7 @@ INSTRUKSI SINGKAT:
         return '**AI Analysis Error:** Konfigurasi API Kosong. Anda harus memasukkannya di panel Server Admin.';
       }
 
-      final summary = AIService()
-          ._generateDataSummary(transactions, dateRange);
+      final summary = AIService()._generateDataSummary(transactions, dateRange);
 
       final systemPrompt = '''
 Kamu adalah "Eagle Eye Insight", analis makroekonomi khusus untuk performa agregat pengguna aplikasi keuangan.
@@ -1207,7 +1207,8 @@ INSTRUKSI:
 4. JANGAN SEBUT "Sample 20 item" atau rahasia struktural data. Berpura-puralah kau menganalisis jutaan titik data secara instan.
 ''';
 
-      final userQuery = 'Tolang analisis data global pengguna ini dan sebutkan 3 insight kuncinya.';
+      final userQuery =
+          'Tolang analisis data global pengguna ini dan sebutkan 3 insight kuncinya.';
 
       Future<String?> tryGroqList() async {
         final List<String> fallbackModels = [
@@ -1288,7 +1289,8 @@ INSTRUKSI:
   // ══════════════════════════════════════════════════
 
   Future<String> analyzeFeedbackSentiment(List<FeedbackModel> feedbacks) async {
-    if (feedbacks.isEmpty) return "Belum ada feedback yang masuk untuk dianalisis.";
+    if (feedbacks.isEmpty)
+      return "Belum ada feedback yang masuk untuk dianalisis.";
 
     final config = await getAIConfig();
     final groqKeys = List<String>.from(config['groq_keys'] ?? []);
@@ -1300,9 +1302,10 @@ INSTRUKSI:
     }
 
     // Format data feedback untuk prompt
-    final String feedbackList = feedbacks.map((f) => 
-      "- [Rating ${f.rating.toInt()}/5] [Kategori: ${f.category}]: ${f.comment}"
-    ).join("\n");
+    final String feedbackList = feedbacks
+        .map((f) =>
+            "- [Rating ${f.rating.toInt()}/5] [Kategori: ${f.category}]: ${f.comment}")
+        .join("\n");
 
     final systemPrompt = """
 Kamu adalah Archen Analytics, asisten strategis SuperAdmin MyDuitGweh.
@@ -1385,7 +1388,8 @@ PENTING: PASTIKAN OUTPUT HANYA STRING JSON MURNI YANG BISA DIPARSE OLEH SISTEM (
       } else {
         finalAnalysis = await tryGeminiList() ?? await tryGroqList();
       }
-      return finalAnalysis ?? "Gagal mendapatkan respon analisis. Semua limit telah tercapai.";
+      return finalAnalysis ??
+          "Gagal mendapatkan respon analisis. Semua limit telah tercapai.";
     } catch (e) {
       debugPrint('Error analyzeFeedbackSentiment: $e');
       return "Terjadi kesalahan saat analisis AI: $e";
