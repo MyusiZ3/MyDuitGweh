@@ -420,13 +420,12 @@ class _ReportScreenState extends State<ReportScreen> {
     if (range != null) setState(() => selectedDateRange = range);
   }
 
-
   Widget _buildNotifSettingsCard() {
     return StreamBuilder<bool>(
       stream: NotifListenerBridge.globalConfigStream,
       builder: (context, snapshot) {
         final globalEnabled = snapshot.data ?? false;
-        
+
         if (!globalEnabled) return const SizedBox.shrink();
 
         return Container(
@@ -460,19 +459,41 @@ class _ReportScreenState extends State<ReportScreen> {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Auto-Magic Sync',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 18,
-                            letterSpacing: -0.5,
-                          ),
+                        Row(
+                          children: [
+                            const Text(
+                              'Auto-Magic Sync',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 18,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 0.8),
+                              ),
+                              child: Text(
+                                'EXPERIMENTAL',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 7,
+                                  color: AppColors.primary,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        Text(
+                        const Text(
                           'Catat transaksi otomatis dari notifikasi',
                           style: TextStyle(
                             fontSize: 12,
@@ -494,22 +515,25 @@ class _ReportScreenState extends State<ReportScreen> {
                 child: Row(
                   children: [
                     Icon(
-                      _isNotifAccessGranted 
-                        ? Icons.check_circle_rounded 
-                        : Icons.error_outline_rounded,
-                      color: _isNotifAccessGranted ? Colors.green : Colors.orange,
+                      _isNotifAccessGranted
+                          ? Icons.check_circle_rounded
+                          : Icons.error_outline_rounded,
+                      color:
+                          _isNotifAccessGranted ? Colors.green : Colors.orange,
                       size: 20,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        _isNotifAccessGranted 
-                          ? 'Izin Akses Aktif' 
-                          : 'Izin Akses Belum Diberikan',
+                        _isNotifAccessGranted
+                            ? 'Izin Akses Aktif'
+                            : 'Izin Akses Belum Diberikan',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: _isNotifAccessGranted ? Colors.green[700] : Colors.orange[800],
+                          color: _isNotifAccessGranted
+                              ? Colors.green[700]
+                              : Colors.orange[800],
                         ),
                       ),
                     ),
@@ -523,7 +547,8 @@ class _ReportScreenState extends State<ReportScreen> {
                   // Re-check after returning from settings
                   Future.delayed(const Duration(seconds: 2), _checkNotifStatus);
                 },
-                icon: const Icon(Icons.settings_suggest_rounded, size: 20),
+                icon: const Icon(Icons.settings_suggest_rounded,
+                    color: Colors.white, size: 20),
                 label: const Text('Buka Pengaturan Izin'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
@@ -543,7 +568,8 @@ class _ReportScreenState extends State<ReportScreen> {
                     await prefs.remove('notif_banner_dismissed');
                     _checkNotifStatus();
                     if (context.mounted) {
-                      UIHelper.showSuccessSnackBar(context, 'Banner perizinan di-reset! Silakan kembali ke Home.');
+                      UIHelper.showSuccessSnackBar(context,
+                          'Banner perizinan di-reset! Silakan kembali ke Home.');
                     }
                   },
                   child: const Center(
