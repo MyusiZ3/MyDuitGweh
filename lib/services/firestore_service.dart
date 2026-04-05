@@ -122,12 +122,16 @@ class FirestoreService {
         _firestore.collection('wallets').doc(transaction.walletId);
     final transactionRef =
         _firestore.collection('transactions').doc(customTxId);
+    final userRef = _firestore.collection('users').doc(transaction.createdBy);
 
     batch.set(transactionRef, transaction.copyWith(id: customTxId).toJson());
 
     final incrementVal =
         transaction.isIncome ? transaction.amount : -transaction.amount;
     batch.update(walletRef, {'balance': FieldValue.increment(incrementVal)});
+
+    // Update lastTransactionAt for rate limiting in Security Rules
+    batch.update(userRef, {'lastTransactionAt': FieldValue.serverTimestamp()});
 
     await batch.commit();
   }

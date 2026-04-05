@@ -84,17 +84,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     if (amountText.isEmpty ||
         _selectedCategory == null ||
         _selectedWalletId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Lengkapi semua field ya!'),
-          backgroundColor: AppColors.expense,
-          behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      );
+      UIHelper.showErrorSnackBar(context, 'Lengkapi semua field yaa!');
       return;
     }
+
+    if (_isLoading) return;
 
     setState(() => _isLoading = true);
 
@@ -121,15 +115,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal: ${e.toString()}'),
-            backgroundColor: AppColors.expense,
-            behavior: SnackBarBehavior.floating,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        );
+        UIHelper.showErrorSnackBar(context, 'Gagal simpan: ${e.toString()} ❌');
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -199,7 +185,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
               onTap: _showCategoryPicker,
               borderRadius: BorderRadius.circular(16),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
                   color: AppColors.surfaceVariant,
                   borderRadius: BorderRadius.circular(16),
@@ -209,8 +196,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                     Icon(
                       _selectedCategory == null
                           ? Icons.category_outlined
-                          : TransactionCategory.getIconForCategory(_selectedCategory!),
-                      color: _selectedCategory == null ? AppColors.textHint : AppColors.primary,
+                          : TransactionCategory.getIconForCategory(
+                              _selectedCategory!),
+                      color: _selectedCategory == null
+                          ? AppColors.textHint
+                          : AppColors.primary,
                       size: 20,
                     ),
                     const SizedBox(width: 12),
@@ -218,13 +208,17 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                       child: Text(
                         _selectedCategory ?? 'Pilih Kategori',
                         style: TextStyle(
-                          color: _selectedCategory == null ? AppColors.textHint : AppColors.textPrimary,
+                          color: _selectedCategory == null
+                              ? AppColors.textHint
+                              : AppColors.textPrimary,
                         ),
                       ),
                     ),
-                    const Icon(Icons.search_rounded, size: 20, color: AppColors.textHint),
+                    const Icon(Icons.search_rounded,
+                        size: 20, color: AppColors.textHint),
                     const SizedBox(width: 4),
-                    const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textHint),
+                    const Icon(Icons.keyboard_arrow_down_rounded,
+                        color: AppColors.textHint),
                   ],
                 ),
               ),
@@ -346,7 +340,12 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           child: Column(
             children: [
               const SizedBox(height: 12),
-              Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+              Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2))),
               const SizedBox(height: 20),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -361,18 +360,22 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                             icon: const Icon(Icons.clear),
                             onPressed: () {
                               searchController.clear();
-                              setModalState(() => filteredCategories = categories);
+                              setModalState(
+                                  () => filteredCategories = categories);
                             },
                           )
                         : null,
                     filled: true,
                     fillColor: AppColors.surfaceVariant,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none),
                   ),
                   onChanged: (val) {
                     setModalState(() {
                       filteredCategories = categories
-                          .where((c) => c.toLowerCase().contains(val.toLowerCase()))
+                          .where((c) =>
+                              c.toLowerCase().contains(val.toLowerCase()))
                           .toList();
                     });
                   },
@@ -390,23 +393,33 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                       leading: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.grey[100],
+                          color: isSelected
+                              ? AppColors.primary.withOpacity(0.1)
+                              : Colors.grey[100],
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
                           TransactionCategory.getIconForCategory(category),
-                          color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                          color: isSelected
+                              ? AppColors.primary
+                              : AppColors.textSecondary,
                           size: 20,
                         ),
                       ),
                       title: Text(
                         category,
                         style: TextStyle(
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                          color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                          fontWeight:
+                              isSelected ? FontWeight.bold : FontWeight.normal,
+                          color: isSelected
+                              ? AppColors.primary
+                              : AppColors.textPrimary,
                         ),
                       ),
-                      trailing: isSelected ? const Icon(Icons.check_circle, color: AppColors.primary) : null,
+                      trailing: isSelected
+                          ? const Icon(Icons.check_circle,
+                              color: AppColors.primary)
+                          : null,
                       onTap: () {
                         setState(() => _selectedCategory = category);
                         Navigator.pop(context);
