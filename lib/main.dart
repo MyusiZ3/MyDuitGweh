@@ -20,6 +20,7 @@ import 'services/security_service.dart';
 import 'screens/security_gate_screen.dart';
 import 'services/notif_sync_service.dart';
 import 'services/notif_listener_bridge.dart';
+import 'screens/suspension_gate_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -145,8 +146,8 @@ class _AuthGateState extends State<AuthGate> {
                   return const LoginScreen();
                 }
 
-                debugPrint('--- NAVIGATING TO MAINTENANCE WRAPPER ---');
-                return MaintenanceGateWrapper(user: user);
+                debugPrint('--- NAVIGATING TO USER STATUS WRAPPER ---');
+                return UserGateWrapper(user: user);
               },
             );
           },
@@ -162,6 +163,65 @@ class _AuthGateState extends State<AuthGate> {
     } catch (_) {
       return false;
     }
+  }
+}
+
+class UserGateWrapper extends StatefulWidget {
+  final User user;
+  const UserGateWrapper({super.key, required this.user});
+
+  @override
+  State<UserGateWrapper> createState() => _UserGateWrapperState();
+}
+
+class _UserGateWrapperState extends State<UserGateWrapper> {
+  late final Stream<DocumentSnapshot> _userStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _userStream = FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.user.uid)
+        .snapshots();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<DocumentSnapshot>(
+      stream: _userStream,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SplashView();
+        }
+
+        if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
+          return MaintenanceGateWrapper(user: widget.user);
+        }
+
+        final data = snapshot.data!.data() as Map<String, dynamic>;
+        final isDeactivated = data['isDeactivated'] ?? false;
+        final untilTimestamp = data['deactivatedUntil'] as Timestamp?;
+        final reason =
+            data['deactivatedReason'] ?? 'Melanggar Kebijakan Platform.';
+
+        if (isDeactivated) {
+          if (untilTimestamp != null) {
+            final DateTime until = untilTimestamp.toDate();
+            if (DateTime.now().isAfter(until)) {
+              return MaintenanceGateWrapper(user: widget.user);
+            }
+          }
+
+          return SuspensionGateScreen(
+            reason: reason,
+            until: untilTimestamp?.toDate(),
+          );
+        }
+
+        return MaintenanceGateWrapper(user: widget.user);
+      },
+    );
   }
 }
 
@@ -218,9 +278,9 @@ class _MaintenanceGateWrapperState extends State<MaintenanceGateWrapper> {
             'Aplikasi sedang dalam pemeliharaan rutin.';
             
         if (!isMaintenance) {
-          // Check for updates if not in maintenance
+          // Check for updates if not in maintenance using real-time sync
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            UpdateService.checkAndShowUpdateDialog(context);
+            UpdateService.syncUpdateDialog(context, data);
           });
           return const MainNav();
         }

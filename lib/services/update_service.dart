@@ -7,42 +7,49 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:open_file_plus/open_file_plus.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import '../utils/ui_helper.dart';
+import '../utils/app_theme.dart';
 
 class UpdateService {
   static final ValueNotifier<double> downloadProgress = ValueNotifier(0);
   static final ValueNotifier<bool> isDownloading = ValueNotifier(false);
+  static bool _isUpdateDialogOpen = false;
+  static BuildContext? _currentDialogContext;
 
-  /// Menghitung apakah versi saat ini sudah yang terbaru
-  static Future<void> checkAndShowUpdateDialog(BuildContext context) async {
+  /// Fungsi sinkronisasi real-time untuk menutup/membuka dialog berdasarkan data Firestore
+  static void syncUpdateDialog(BuildContext context, Map<String, dynamic> config) async {
     try {
       final packageInfo = await PackageInfo.fromPlatform();
       final currentVersion = packageInfo.version;
 
-      final config = await FirebaseFirestore.instance
-          .collection('app_config')
-          .doc('global')
-          .get();
+      final latestVersion = config['latestVersion'] ?? currentVersion;
+      final minVersion = config['minVersion'] ?? currentVersion;
+      final downloadUrl = config['downloadUrl'] ?? '';
+      final isForceUpdate = config['isForceUpdate'] ?? false;
 
-      if (!config.exists) return;
+      final bool isUpdateNeeded = _isVersionLower(currentVersion, latestVersion) && downloadUrl.isNotEmpty;
+      final bool isForce = isForceUpdate || _isVersionLower(currentVersion, minVersion);
 
-      final latestVersion = config.data()?['latestVersion'] ?? currentVersion;
-      final minVersion = config.data()?['minVersion'] ?? currentVersion;
-      final downloadUrl = config.data()?['downloadUrl'] ?? '';
-      final isForceUpdate = config.data()?['isForceUpdate'] ?? false;
-
-      if (_isVersionLower(currentVersion, latestVersion) &&
-          downloadUrl.isNotEmpty) {
-        if (context.mounted) {
-          _showUpdateDialog(context, latestVersion, downloadUrl,
-              isForce:
-                  isForceUpdate || _isVersionLower(currentVersion, minVersion));
+      if (isUpdateNeeded) {
+        if (!_isUpdateDialogOpen) {
+          if (context.mounted) {
+            _showUpdateDialog(context, latestVersion, downloadUrl, isForce: isForce);
+          }
+        }
+      } else {
+        // Jika update tidak lagi dibutuhkan (admin menarik/disable update), tutup dialog bila sedang terbuka
+        if (_isUpdateDialogOpen && _currentDialogContext != null && _currentDialogContext!.mounted) {
+          Navigator.of(_currentDialogContext!).pop();
+          _isUpdateDialogOpen = false;
+          _currentDialogContext = null;
         }
       }
     } catch (e) {
-      debugPrint('Check update failed: $e');
+      debugPrint('Sync update failed: $e');
     }
   }
 
+  /// Menghitung apakah versi saat ini sudah yang terbaru (Legacy Check)
   static bool _isVersionLower(String current, String latest) {
     if (current == latest) return false;
     List<int> c = current.split('.').map((e) => int.tryParse(e) ?? 0).toList();
@@ -56,15 +63,23 @@ class UpdateService {
   }
 
   /// Memulai proses download & install APK
-  static Future<void> startUpdate(String url) async {
+  static Future<void> startUpdate(BuildContext context, String url) async {
     if (isDownloading.value) return;
 
     try {
       // 1. Request izin install dari sumber tak dikenal (Khusus Android)
       if (Platform.isAndroid) {
-        var status = await Permission.requestInstallPackages.request();
-        if (!status.isGranted) {
-          debugPrint('Permission denied for install packages');
+        var status = await Permission.requestInstallPackages.status;
+        if (status.isDenied) {
+          status = await Permission.requestInstallPackages.request();
+        }
+
+        if (status.isPermanentlyDenied) {
+          if (context.mounted) {
+            UIHelper.showErrorSnackBar(context,
+                'Izin instalasi ditolak. Silakan aktifkan di Pengaturan.');
+            openAppSettings();
+          }
           return;
         }
       }
@@ -72,27 +87,51 @@ class UpdateService {
       isDownloading.value = true;
       downloadProgress.value = 0;
 
-      final directory = await getExternalStorageDirectory();
-      final savePath = '${directory!.path}/update_duit_gweh.apk';
+      // Gunakan Temporary Directory agar lebih bersih dan aman di Android 11+
+      final directory = await getTemporaryDirectory();
+      final savePath = '${directory.path}/myduitgweh_update.apk';
+
+      // Hapus file lama jika ada agar tidak konflik
+      final oldFile = File(savePath);
+      if (await oldFile.exists()) {
+        await oldFile.delete();
+      }
 
       final dio = Dio();
+      // Tambahkan cache breaker agar tidak mengambil file lama dari cache CDN
+      final downloadUrl = url.contains('?') ? '$url&t=${DateTime.now().millisecondsSinceEpoch}' : '$url?t=${DateTime.now().millisecondsSinceEpoch}';
+      
       await dio.download(
-        url,
+        downloadUrl,
         savePath,
         onReceiveProgress: (received, total) {
           if (total != -1) {
             downloadProgress.value = received / total;
+          } else {
+            // Jika total tidak diketahui (-1), kirim nilai negatif sebagai sinyal indeterminate
+            // atau kirim nilai received dalam bentuk format tertentu
+            downloadProgress.value = -1.0; 
           }
         },
       );
 
       isDownloading.value = false;
 
-      // 2. Buka Installer
+      // 2. Buka Installer secara langsung
       final result = await OpenFile.open(savePath);
-      debugPrint('Install triggered: ${result.message}');
+
+      if (result.type != ResultType.done) {
+        if (context.mounted) {
+          UIHelper.showErrorSnackBar(
+              context, 'Gagal membuka instalasi: ${result.message}');
+        }
+      }
     } catch (e) {
       isDownloading.value = false;
+      if (context.mounted) {
+        UIHelper.showErrorSnackBar(context,
+            'Gagal mengunduh pembaruan. Pastikan koneksi internet stabil.');
+      }
       debugPrint('Update failed: $e');
     }
   }
@@ -100,6 +139,7 @@ class UpdateService {
   static void _showUpdateDialog(
       BuildContext context, String version, String url,
       {bool isForce = false}) {
+    _isUpdateDialogOpen = true;
     showGeneralDialog(
       context: context,
       barrierDismissible: false,
@@ -189,23 +229,62 @@ class UpdateService {
                                 builder: (context, progress, child) {
                                   return Column(
                                     children: [
-                                      LinearProgressIndicator(
-                                        value: progress,
-                                        backgroundColor:
-                                            Colors.blue.withOpacity(0.1),
-                                        valueColor:
-                                            const AlwaysStoppedAnimation<Color>(
-                                                Colors.blue),
-                                        borderRadius: BorderRadius.circular(10),
-                                        minHeight: 8,
+                                      Stack(
+                                        alignment: Alignment.center,
+                                        children: [
+                                          SizedBox(
+                                            height: 12,
+                                            child: ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                              child: LinearProgressIndicator(
+                                                value: progress < 0 ? null : progress, // null membuat loading jalan terus (indeterminate)
+                                                backgroundColor: AppColors
+                                                    .primary
+                                                    .withOpacity(0.1),
+                                                valueColor:
+                                                    const AlwaysStoppedAnimation<
+                                                            Color>(
+                                                        AppColors.primary),
+                                                minHeight: 12,
+                                              ),
+                                            ),
+                                          ),
+                                          // Shimmer reflection effect on the progress bar could be here
+                                        ],
                                       ),
-                                      const SizedBox(height: 12),
-                                      Text(
-                                        '${(progress * 100).toStringAsFixed(0)}%',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.blue,
-                                        ),
+                                      const SizedBox(height: 16),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            progress < 0 ? 'MENGUNDUH...' : 'PERSENTASE',
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w900,
+                                              letterSpacing: 1.5,
+                                              color: Colors.grey[500],
+                                            ),
+                                          ),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 10, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.primary,
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                            ),
+                                            child: Text(
+                                              progress < 0 ? '...' : '${(progress * 100).toStringAsFixed(0)}%',
+                                              style: const TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w900,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   );
@@ -215,36 +294,69 @@ class UpdateService {
                               children: [
                                 if (!isForce) ...[
                                   Expanded(
-                                    child: TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: Text(
-                                        'Nanti Saja',
-                                        style: TextStyle(
-                                            color: Colors.grey[600],
-                                            fontWeight: FontWeight.bold),
+                                    child: InkWell(
+                                      onTap: () => Navigator.pop(context),
+                                      borderRadius: BorderRadius.circular(16),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 16),
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(16),
+                                          border: Border.all(
+                                              color:
+                                                  Colors.grey.withOpacity(0.2)),
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            'NANTI SAJA',
+                                            style: TextStyle(
+                                              color: Colors.grey[600],
+                                              fontWeight: FontWeight.w900,
+                                              fontSize: 12,
+                                              letterSpacing: 0.5,
+                                            ),
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ),
                                   const SizedBox(width: 12),
                                 ],
                                 Expanded(
-                                  child: ElevatedButton(
-                                    onPressed: () => startUpdate(url),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor:
-                                          isForce ? Colors.red : Colors.blue,
-                                      foregroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
+                                  child: InkWell(
+                                    onTap: () => startUpdate(context, url),
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: Container(
                                       padding: const EdgeInsets.symmetric(
                                           vertical: 16),
-                                    ),
-                                    child: Text(
-                                      isForce ? 'PERBARUI' : 'UPDATE',
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.w900,
-                                          fontSize: 13),
+                                      decoration: BoxDecoration(
+                                        color: isForce
+                                            ? AppColors.expense
+                                            : AppColors.primary,
+                                        borderRadius: BorderRadius.circular(16),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: (isForce
+                                                    ? AppColors.expense
+                                                    : AppColors.primary)
+                                                .withOpacity(0.3),
+                                            blurRadius: 15,
+                                            offset: const Offset(0, 8),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          isForce ? 'PERBARUI' : 'UPDATE',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w900,
+                                            fontSize: 12,
+                                            letterSpacing: 0.5,
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -260,10 +372,16 @@ class UpdateService {
           ),
         ),
       ),
-      transitionBuilder: (context, anim1, anim2, child) => ScaleTransition(
-        scale: CurvedAnimation(parent: anim1, curve: Curves.easeOutBack),
-        child: FadeTransition(opacity: anim1, child: child),
-      ),
-    );
+      transitionBuilder: (context, anim1, anim2, child) {
+        _currentDialogContext = context;
+        return ScaleTransition(
+          scale: CurvedAnimation(parent: anim1, curve: Curves.easeOutBack),
+          child: FadeTransition(opacity: anim1, child: child),
+        );
+      },
+    ).then((_) {
+      _isUpdateDialogOpen = false;
+      _currentDialogContext = null;
+    });
   }
 }

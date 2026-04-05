@@ -98,12 +98,19 @@ class NotifListenerService : NotificationListenerService() {
             // Skip jika title dan text kosong atau hanya notif kosong
             if (title.isBlank() && text.isBlank()) return
 
+            // Gunakan postTime asli dari notifikasi agar jamnya akurat (bukan jam saat ini)
+            val postTime = sbn.postTime
+            
+            // Build ID yang benar-benar unik agar tidak menimpa di Firestore
+            // Format: package_id_postTime
+            val uniqueId = "${packageName}_${sbn.id}_$postTime"
+
             val data = mapOf(
                 "package" to packageName,
                 "title" to title,
                 "text" to text,
-                "timestamp" to System.currentTimeMillis(),
-                "id" to "${sbn.id}_${sbn.postTime}"
+                "timestamp" to postTime,
+                "id" to uniqueId
             )
 
             // Kirim ke Flutter via EventChannel (main thread)

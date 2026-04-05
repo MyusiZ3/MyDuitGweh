@@ -10,6 +10,8 @@ import 'colab_screen.dart';
 import 'report_screen.dart';
 import 'receipt_scanner_screen.dart';
 import '../utils/ui_helper.dart';
+import '../widgets/notification_permission_floating_card.dart';
+
 
 class MainNav extends StatefulWidget {
   const MainNav({super.key});
@@ -115,49 +117,55 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          IndexedStack(
-            index: _currentIndex,
-            children: _screens,
-          ),
+    return Stack(
+      children: [
+        Scaffold(
+          body: Stack(
+            children: [
+              IndexedStack(
+                index: _currentIndex,
+                children: _screens,
+              ),
 
-          // Action Buttons (Speed Dial Overlay)
-          if (_isExpanded) ...[
-            _buildSpeedDialBackdrop(),
-            _buildSpeedDialMenu(),
-          ],
-        ],
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 20,
-              offset: const Offset(0, -4),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildNavItem(Icons.home_rounded, 'Home', 0),
-                _buildNavItem(
-                    Icons.account_balance_wallet_outlined, 'Wallet', 1),
-                _buildAddButton(),
-                _buildNavItem(Icons.group_outlined, 'Colab', 3),
-                _buildNavItem(Icons.bar_chart_rounded, 'Report', 4),
+              // Action Buttons (Speed Dial Overlay)
+              if (_isExpanded) ...[
+                _buildSpeedDialBackdrop(),
+                _buildSpeedDialMenu(),
+              ],
+            ],
+          ),
+          bottomNavigationBar: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 20,
+                  offset: const Offset(0, -4),
+                ),
               ],
             ),
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildNavItem(Icons.home_rounded, 'Home', 0),
+                    _buildNavItem(
+                        Icons.account_balance_wallet_outlined, 'Wallet', 1),
+                    _buildAddButton(),
+                    _buildNavItem(Icons.group_outlined, 'Colab', 3),
+                    _buildNavItem(Icons.bar_chart_rounded, 'Report', 4),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
-      ),
+        // Overlays everything including BottomNavigationBar
+        const NotificationPermissionFloatingCard(),
+      ],
     );
   }
 

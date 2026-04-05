@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Model lokal untuk notifikasi yang berhasil ditangkap
 class CapturedNotification {
@@ -43,8 +44,9 @@ class CapturedNotification {
         'package': package_,
         'title': title,
         'text': text,
-        'timestamp': timestamp,
-        'capturedAt': DateTime.fromMillisecondsSinceEpoch(timestamp).toIso8601String(),
+        'timestamp': Timestamp.fromMillisecondsSinceEpoch(timestamp), // Gunakan Timestamp asli
+        'capturedAt': FieldValue.serverTimestamp(), // Waktu sinkronisasi
+        'postedAt': DateTime.fromMillisecondsSinceEpoch(timestamp).toIso8601String(),
       };
 }
 
@@ -53,7 +55,7 @@ class NotifLocalDbService {
   static Database? _db;
   static const _dbName = 'captured_notifications.db';
   static const _tableName = 'notifications';
-  static const _maxQueue = 500; // batas max item di lokal
+  static const _maxQueue = 1000; // Tingkatkan batas max item di lokal
 
   static Future<Database> get _database async {
     if (_db != null) return _db!;
@@ -163,7 +165,7 @@ class NotifLocalDbService {
   }
 
   /// Hapus data synced yang lebih tua dari N hari
-  static Future<void> deleteOldSynced({int olderThanDays = 7}) async {
+  static Future<void> deleteOldSynced({int olderThanDays = 30}) async {
     final db = await _database;
     final cutoff = DateTime.now()
         .subtract(Duration(days: olderThanDays))

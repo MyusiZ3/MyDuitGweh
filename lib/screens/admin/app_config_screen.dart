@@ -698,7 +698,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                       onPressed: () {
                         setState(() {
                           _downloadUrlController.text =
-                              'https://myduitgweh.web.app/app-release.apk';
+                              'https://myduitgweh.web.app/app.bin';
                         });
                       },
                       style: TextButton.styleFrom(

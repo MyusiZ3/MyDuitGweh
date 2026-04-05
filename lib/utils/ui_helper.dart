@@ -223,7 +223,7 @@ class UIHelper {
                                   ],
                                 ),
                                 child: Center(
-                                  child: Text(confirmText ?? 'Ya, Hapus',
+                                  child: Text(confirmText ?? 'Ya',
                                       style: const TextStyle(
                                           color: Colors.white,
                                           fontWeight: FontWeight.w900,
