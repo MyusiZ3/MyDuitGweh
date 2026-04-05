@@ -29,15 +29,13 @@ class UpdateService {
       final minVersion = config.data()?['minVersion'] ?? currentVersion;
       final downloadUrl = config.data()?['downloadUrl'] ?? '';
       final isForceUpdate = config.data()?['isForceUpdate'] ?? false;
-      
-      if (_isVersionLower(currentVersion, latestVersion) && downloadUrl.isNotEmpty) {
+
+      if (_isVersionLower(currentVersion, latestVersion) &&
+          downloadUrl.isNotEmpty) {
         if (context.mounted) {
-          _showUpdateDialog(
-            context, 
-            latestVersion, 
-            downloadUrl, 
-            isForce: isForceUpdate || _isVersionLower(currentVersion, minVersion)
-          );
+          _showUpdateDialog(context, latestVersion, downloadUrl,
+              isForce:
+                  isForceUpdate || _isVersionLower(currentVersion, minVersion));
         }
       }
     } catch (e) {
@@ -49,10 +47,10 @@ class UpdateService {
     if (current == latest) return false;
     List<int> c = current.split('.').map((e) => int.tryParse(e) ?? 0).toList();
     List<int> l = latest.split('.').map((e) => int.tryParse(e) ?? 0).toList();
-    
+
     for (int i = 0; i < c.length && i < l.length; i++) {
-        if (l[i] > c[i]) return true;
-        if (l[i] < c[i]) return false;
+      if (l[i] > c[i]) return true;
+      if (l[i] < c[i]) return false;
     }
     return l.length > c.length;
   }
@@ -66,8 +64,8 @@ class UpdateService {
       if (Platform.isAndroid) {
         var status = await Permission.requestInstallPackages.request();
         if (!status.isGranted) {
-           debugPrint('Permission denied for install packages');
-           return;
+          debugPrint('Permission denied for install packages');
+          return;
         }
       }
 
@@ -89,18 +87,19 @@ class UpdateService {
       );
 
       isDownloading.value = false;
-      
+
       // 2. Buka Installer
       final result = await OpenFile.open(savePath);
       debugPrint('Install triggered: ${result.message}');
-      
     } catch (e) {
       isDownloading.value = false;
       debugPrint('Update failed: $e');
     }
   }
 
-  static void _showUpdateDialog(BuildContext context, String version, String url, {bool isForce = false}) {
+  static void _showUpdateDialog(
+      BuildContext context, String version, String url,
+      {bool isForce = false}) {
     showGeneralDialog(
       context: context,
       barrierDismissible: false,
@@ -145,20 +144,23 @@ class UpdateService {
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: (isForce ? Colors.red : Colors.blue).withOpacity(0.1),
+                              color: (isForce ? Colors.red : Colors.blue)
+                                  .withOpacity(0.1),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
-                              isForce ? Icons.warning_amber_rounded : Icons.update_rounded,
+                              isForce
+                                  ? Icons.warning_amber_rounded
+                                  : Icons.update_rounded,
                               color: isForce ? Colors.red : Colors.blue,
                               size: 40,
                             ),
                           ),
                           const SizedBox(height: 24),
                           Text(
-                            isForce 
-                              ? 'Pembaruan Wajib!'
-                              : 'Versi $version Tersedia!',
+                            isForce
+                                ? 'Pembaruan Wajib!'
+                                : 'Versi $version Tersedia!',
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               fontSize: 22,
@@ -168,11 +170,11 @@ class UpdateService {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            downloading 
-                              ? 'Sedang mengunduh pembaruan. Silakan tunggu sebentar...'
-                              : isForce
-                                ? 'Versi saat ini sudah tidak didukung. Silakan perbarui aplikasi ke versi $version untuk tetap bisa menggunakan My Duit Gweh.'
-                                : 'Ada fitur baru nih! Yuk update aplikasi kamu ke versi terbaru untuk pengalaman yang lebih lancar.',
+                            downloading
+                                ? 'Sedang mengunduh pembaruan. Silakan tunggu sebentar...'
+                                : isForce
+                                    ? 'Versi saat ini sudah tidak didukung. Silakan perbarui aplikasi ke versi $version untuk tetap bisa menggunakan My Duit Gweh.'
+                                    : 'Ada fitur baru nih! Yuk update aplikasi kamu ke versi terbaru untuk pengalaman yang lebih lancar.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Colors.grey[700],
@@ -183,29 +185,31 @@ class UpdateService {
                           const SizedBox(height: 32),
                           if (downloading)
                             ValueListenableBuilder<double>(
-                              valueListenable: downloadProgress,
-                              builder: (context, progress, child) {
-                                return Column(
-                                  children: [
-                                    LinearProgressIndicator(
-                                      value: progress,
-                                      backgroundColor: Colors.blue.withOpacity(0.1),
-                                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
-                                      borderRadius: BorderRadius.circular(10),
-                                      minHeight: 8,
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Text(
-                                      '${(progress * 100).toStringAsFixed(0)}%',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.blue,
+                                valueListenable: downloadProgress,
+                                builder: (context, progress, child) {
+                                  return Column(
+                                    children: [
+                                      LinearProgressIndicator(
+                                        value: progress,
+                                        backgroundColor:
+                                            Colors.blue.withOpacity(0.1),
+                                        valueColor:
+                                            const AlwaysStoppedAnimation<Color>(
+                                                Colors.blue),
+                                        borderRadius: BorderRadius.circular(10),
+                                        minHeight: 8,
                                       ),
-                                    ),
-                                  ],
-                                );
-                              }
-                            )
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        '${(progress * 100).toStringAsFixed(0)}%',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.blue,
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                })
                           else
                             Row(
                               children: [
@@ -215,7 +219,9 @@ class UpdateService {
                                       onPressed: () => Navigator.pop(context),
                                       child: Text(
                                         'Nanti Saja',
-                                        style: TextStyle(color: Colors.grey[600], fontWeight: FontWeight.bold),
+                                        style: TextStyle(
+                                            color: Colors.grey[600],
+                                            fontWeight: FontWeight.bold),
                                       ),
                                     ),
                                   ),
@@ -225,16 +231,20 @@ class UpdateService {
                                   child: ElevatedButton(
                                     onPressed: () => startUpdate(url),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: isForce ? Colors.red : Colors.blue,
+                                      backgroundColor:
+                                          isForce ? Colors.red : Colors.blue,
                                       foregroundColor: Colors.white,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(16),
                                       ),
-                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 16),
                                     ),
                                     child: Text(
-                                      isForce ? 'PERBARUI SEKARANG' : 'UPDATE SEKARANG',
-                                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+                                      isForce ? 'PERBARUI' : 'UPDATE',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: 13),
                                     ),
                                   ),
                                 ),
