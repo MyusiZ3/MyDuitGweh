@@ -30,8 +30,8 @@ class NotificationService {
 
       // Bikin channel dengan importance MAX agar muncul heads-up / pop-up
       const AndroidNotificationChannel channel = AndroidNotificationChannel(
-        'daily_reminder_channel',
-        'Pengingat Harian',
+        'daily_reminder_channel_v2', // Ganti ID agar sistem reset settingan importance
+        'Pengingat Jurnal',
         description: 'Notifikasi pengingat jurnal harian keuangan',
         importance: Importance.max,
         playSound: true,
@@ -92,18 +92,19 @@ class NotificationService {
         scheduledDate,
         const NotificationDetails(
           android: AndroidNotificationDetails(
-            'daily_reminder_channel',
-            'Pengingat Harian',
+            'daily_reminder_channel_v2',
+            'Pengingat Jurnal',
             channelDescription: 'Notifikasi pengingat jurnal harian keuangan',
             importance: Importance.max,
             priority: Priority.max,
+            ticker: 'Waktunya mencatat!', // Tambahkan ticker
             playSound: true,
             enableVibration: true,
             showWhen: true,
-            fullScreenIntent: true,
+            // HAPUS fullScreenIntent agar muncul sebagai pop-up biasa di atas layar
             category: AndroidNotificationCategory.reminder,
             visibility: NotificationVisibility.public,
-            icon: 'notif_icon', // Pakai icon custom
+            icon: 'notif_icon',
           ),
           iOS: DarwinNotificationDetails(
             presentAlert: true,
@@ -126,12 +127,13 @@ class NotificationService {
         'Kamu akan diingetin tiap hari jam $jamStr. (〜￣▽￣)〜',
         const NotificationDetails(
           android: AndroidNotificationDetails(
-            'daily_reminder_channel',
-            'Pengingat Harian',
+            'daily_reminder_channel_v2',
+            'Pengingat Jurnal',
             channelDescription: 'Notifikasi pengingat jurnal harian keuangan',
-            importance: Importance.defaultImportance,
-            priority: Priority.defaultPriority,
-            icon: 'notif_icon', // Tambah icon di sini juga
+            importance: Importance.max,
+            priority: Priority.max,
+            ticker: 'Pengingat Aktif',
+            icon: 'notif_icon',
           ),
         ),
       );

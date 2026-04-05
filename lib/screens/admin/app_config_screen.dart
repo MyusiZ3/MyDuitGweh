@@ -45,6 +45,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
   DateTime? _startTime;
   DateTime? _endTime;
   bool _isSaving = false;
+  bool _isForceUpdate = false;
 
   @override
   void initState() {
@@ -91,6 +92,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
           _minVersionController.text = data['minVersion'] ?? currentAppVersion;
           _latestVersionController.text = data['latestVersion'] ?? currentAppVersion;
           _downloadUrlController.text = data['downloadUrl'] ?? '';
+          _isForceUpdate = data['isForceUpdate'] ?? false;
 
           // AI Advisor Config
           _advisorEnabled = data['is_advisor_enabled'] ?? true;
@@ -198,6 +200,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
         'minVersion': _minVersionController.text,
         'latestVersion': _latestVersionController.text,
         'downloadUrl': _downloadUrlController.text,
+        'isForceUpdate': _isForceUpdate,
         'maintenanceMessage': _maintenanceMsgController.text,
         'maintenanceStartTime':
             _startTime != null ? Timestamp.fromDate(_startTime!) : null,
@@ -712,6 +715,65 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
                               color: Colors.black87)),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: _isForceUpdate
+                          ? Colors.red.withOpacity(0.05)
+                          : Colors.black.withOpacity(0.03),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: _isForceUpdate
+                            ? Colors.red.withOpacity(0.2)
+                            : Colors.transparent,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          _isForceUpdate
+                              ? Icons.error_outline_rounded
+                              : Icons.info_outline_rounded,
+                          color: _isForceUpdate ? Colors.red : Colors.black54,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Paksa Update (Force)',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: _isForceUpdate
+                                      ? Colors.red
+                                      : Colors.black87,
+                                ),
+                              ),
+                              Text(
+                                _isForceUpdate
+                                    ? 'User tidak bisa mengabaikan update ini'
+                                    : 'User masih bisa memilih "Nanti Saja"',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.black54,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Switch(
+                          value: _isForceUpdate,
+                          onChanged: (v) => setState(() => _isForceUpdate = v),
+                          activeColor: Colors.red,
+                        ),
+                      ],
                     ),
                   ),
                 ],

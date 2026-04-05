@@ -26,11 +26,18 @@ class UpdateService {
       if (!config.exists) return;
 
       final latestVersion = config.data()?['latestVersion'] ?? currentVersion;
+      final minVersion = config.data()?['minVersion'] ?? currentVersion;
       final downloadUrl = config.data()?['downloadUrl'] ?? '';
+      final isForceUpdate = config.data()?['isForceUpdate'] ?? false;
       
       if (_isVersionLower(currentVersion, latestVersion) && downloadUrl.isNotEmpty) {
         if (context.mounted) {
-          _showUpdateDialog(context, latestVersion, downloadUrl);
+          _showUpdateDialog(
+            context, 
+            latestVersion, 
+            downloadUrl, 
+            isForce: isForceUpdate || _isVersionLower(currentVersion, minVersion)
+          );
         }
       }
     } catch (e) {
@@ -93,7 +100,7 @@ class UpdateService {
     }
   }
 
-  static void _showUpdateDialog(BuildContext context, String version, String url) {
+  static void _showUpdateDialog(BuildContext context, String version, String url, {bool isForce = false}) {
     showGeneralDialog(
       context: context,
       barrierDismissible: false,
@@ -138,18 +145,20 @@ class UpdateService {
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.blue.withOpacity(0.1),
+                              color: (isForce ? Colors.red : Colors.blue).withOpacity(0.1),
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(
-                              Icons.update_rounded,
-                              color: Colors.blue,
+                            child: Icon(
+                              isForce ? Icons.warning_amber_rounded : Icons.update_rounded,
+                              color: isForce ? Colors.red : Colors.blue,
                               size: 40,
                             ),
                           ),
                           const SizedBox(height: 24),
                           Text(
-                            'Versi $version Tersedia!',
+                            isForce 
+                              ? 'Pembaruan Wajib!'
+                              : 'Versi $version Tersedia!',
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               fontSize: 22,
@@ -161,7 +170,9 @@ class UpdateService {
                           Text(
                             downloading 
                               ? 'Sedang mengunduh pembaruan. Silakan tunggu sebentar...'
-                              : 'Ada fitur baru nih! Yuk update aplikasi kamu ke versi terbaru untuk pengalaman yang lebih lancar.',
+                              : isForce
+                                ? 'Versi saat ini sudah tidak didukung. Silakan perbarui aplikasi ke versi $version untuk tetap bisa menggunakan My Duit Gweh.'
+                                : 'Ada fitur baru nih! Yuk update aplikasi kamu ke versi terbaru untuk pengalaman yang lebih lancar.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Colors.grey[700],
@@ -198,30 +209,32 @@ class UpdateService {
                           else
                             Row(
                               children: [
-                                Expanded(
-                                  child: TextButton(
-                                    onPressed: () => Navigator.pop(context),
-                                    child: Text(
-                                      'Nanti Saja',
-                                      style: TextStyle(color: Colors.grey[600], fontWeight: FontWeight.bold),
+                                if (!isForce) ...[
+                                  Expanded(
+                                    child: TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: Text(
+                                        'Nanti Saja',
+                                        style: TextStyle(color: Colors.grey[600], fontWeight: FontWeight.bold),
+                                      ),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 12),
+                                  const SizedBox(width: 12),
+                                ],
                                 Expanded(
                                   child: ElevatedButton(
                                     onPressed: () => startUpdate(url),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.blue,
+                                      backgroundColor: isForce ? Colors.red : Colors.blue,
                                       foregroundColor: Colors.white,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(16),
                                       ),
                                       padding: const EdgeInsets.symmetric(vertical: 16),
                                     ),
-                                    child: const Text(
-                                      'UPDATE SEKARANG',
-                                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+                                    child: Text(
+                                      isForce ? 'PERBARUI SEKARANG' : 'UPDATE SEKARANG',
+                                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
                                     ),
                                   ),
                                 ),
