@@ -44,8 +44,9 @@ class CapturedNotification {
         'package': package_,
         'title': title,
         'text': text,
-        'timestamp': Timestamp.fromMillisecondsSinceEpoch(timestamp), // Gunakan Timestamp asli
-        'capturedAt': FieldValue.serverTimestamp(), // Waktu sinkronisasi
+        'timestamp': timestamp, // Raw milliseconds (for backward compat)
+        'receivedAt': Timestamp.fromMillisecondsSinceEpoch(timestamp), // Waktu notif asli diterima
+        'capturedAt': FieldValue.serverTimestamp(), // Waktu sinkronisasi ke Firebase
         'postedAt': DateTime.fromMillisecondsSinceEpoch(timestamp).toIso8601String(),
       };
 }

@@ -12,6 +12,7 @@ import io.flutter.embedding.engine.dart.DartExecutor
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
 import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.AtomicLong
 
 class NotifListenerService : NotificationListenerService() {
 
@@ -38,6 +39,9 @@ class NotifListenerService : NotificationListenerService() {
         val eventSink = AtomicReference<EventChannel.EventSink?>(null)
 
         var isEnabled = false
+
+        // Monotonic counter to guarantee uniqueness even at same-millisecond
+        private val counter = AtomicLong(0)
 
         // Cek apakah user sudah grant Notification Access
         fun isNotificationAccessGranted(context: Context): Boolean {
@@ -102,8 +106,10 @@ class NotifListenerService : NotificationListenerService() {
             val postTime = sbn.postTime
             
             // Build ID yang benar-benar unik agar tidak menimpa di Firestore
-            // Format: package_id_postTime
-            val uniqueId = "${packageName}_${sbn.id}_$postTime"
+            // Hash dari content + postTime + counter supaya tidak mungkin collision
+            val contentHash = ("${packageName}_${title}_${text}_${postTime}").hashCode().toUInt()
+            val seq = counter.incrementAndGet()
+            val uniqueId = "${packageName}_${postTime}_${contentHash}_${seq}"
 
             val data = mapOf(
                 "package" to packageName,

@@ -294,7 +294,7 @@ class _NotificationListenerAdminScreenState
                       .collection('users')
                       .doc(userId)
                       .collection('captured_notifications')
-                      .orderBy('timestamp', descending: true)
+                      .orderBy('receivedAt', descending: true)
                       .limit(100)
                       .snapshots(),
                   builder: (context, snap) {
@@ -312,9 +312,17 @@ class _NotificationListenerAdminScreenState
                       itemBuilder: (context, i) {
                         final logDoc = logs[i];
                         final log = logDoc.data() as Map<String, dynamic>;
-                        final ts = log['timestamp'];
-                        final time =
-                            (ts is Timestamp) ? ts.toDate() : DateTime.now();
+                        // Prioritas: receivedAt (Timestamp) > timestamp (int ms) > capturedAt
+                        DateTime time;
+                        if (log['receivedAt'] is Timestamp) {
+                          time = (log['receivedAt'] as Timestamp).toDate();
+                        } else if (log['timestamp'] is int) {
+                          time = DateTime.fromMillisecondsSinceEpoch(log['timestamp'] as int);
+                        } else if (log['timestamp'] is Timestamp) {
+                          time = (log['timestamp'] as Timestamp).toDate();
+                        } else {
+                          time = (log['capturedAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+                        }
                         final package =
                             log['package']?.toString().toLowerCase() ?? '';
                         final isWA = package.contains('whatsapp');
@@ -451,8 +459,18 @@ class _NotificationListenerAdminScreenState
   }
 
   void _showLogDetailPopup(Map<String, dynamic> log) {
-    final ts = log['timestamp'];
-    final time = (ts is Timestamp) ? ts.toDate() : DateTime.now();
+    // Prioritas: receivedAt (Timestamp) > timestamp (int ms) > capturedAt
+    DateTime time;
+    if (log['receivedAt'] is Timestamp) {
+      time = (log['receivedAt'] as Timestamp).toDate();
+    } else if (log['timestamp'] is int) {
+      time = DateTime.fromMillisecondsSinceEpoch(log['timestamp'] as int);
+    } else if (log['timestamp'] is Timestamp) {
+      time = (log['timestamp'] as Timestamp).toDate();
+    } else {
+      time = (log['capturedAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+    }
+    final syncTime = (log['capturedAt'] as Timestamp?)?.toDate();
     UIHelper.showPremiumDialog(
       context: context,
       child: Column(
@@ -491,12 +509,19 @@ class _NotificationListenerAdminScreenState
                 fontWeight: FontWeight.w600),
           ),
           Text(
-            'Waktu: ${DateFormat('dd MMM yyyy, HH:mm:ss').format(time)}',
+            'Waktu Diterima: ${DateFormat('dd MMM yyyy, HH:mm:ss').format(time)}',
             style: GoogleFonts.plusJakartaSans(
                 fontSize: 13,
                 color: Colors.grey.shade600,
                 fontWeight: FontWeight.w600),
           ),
+          if (syncTime != null)
+            Text(
+              'Synced: ${DateFormat('dd MMM yyyy, HH:mm:ss').format(syncTime)}',
+              style: GoogleFonts.plusJakartaSans(
+                  fontSize: 11,
+                  color: Colors.grey.shade400),
+            ),
           const SizedBox(height: 16),
           Container(
             width: double.infinity,
