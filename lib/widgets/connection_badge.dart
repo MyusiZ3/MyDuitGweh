@@ -73,9 +73,10 @@ class _ConnectionBadgeState extends State<ConnectionBadge> {
       }
     } catch (_) {
       // Timeout atau error
-      if (mounted)
+      if (mounted) {
         setState(
             () => _quality = ConnectionQuality.disconnected); // Merah/Putus
+      }
     }
   }
 
