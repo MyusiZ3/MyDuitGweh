@@ -1,0 +1,28 @@
+﻿*   21512a5 Merge branch 'admin-screen' into master - resolved conflict in GeneratedPluginRegistrant.swift (keeping it gitignored/deleted)
+|\  
+| * 293d1ff docs: update license and contributor name to Muhamad Sidik
+| * c3390b9 docs: change license to Apache 2.0
+| * f72f7b3 docs: add MIT License and update README
+| * 9f3ca5e feat: comprehensive doc update, in-app update stabilization, and UI polish
+| * 2342db4 feat: upgrade version to 1.0.6+6 and add GitHub release helper buttons in config screen
+| *   85e6ce6 Merge branch 'feat/main_features' of https://github.com/MyusiZ3/MyDuitGweh into feat/main_features
+| |\  
+| | * d916fdf feat(infrastructure): setup firebase project mapping
+| * | 53a2580 chore(version): bump app version to 1.0.6+6
+| * | 1288c70 refactor(ui): clean up code and refine ui components
+| * | 890d8ef feat(landing): implement professional bento grid landing page
+| * | 2be846d feat(automation): migrate deployment to github releases
+| * | 2ce12f0 feat(infrastructure): setup firebase project mapping
+| |/  
+| * 77e4faa chore: rename Eagle Eye to Archen Eye and improve code formatting in admin screens
+| * 7bc6af6 fix: update broadcast notification title to use dynamic content from Firestore
+| * f5efec3 feat: integrate AI receipt scanner and refine main navigation UI/UX
+| * 5f73f6c Tone dict
+| * 07598db refactor(admin): general admin dashboard improvements and minor UI refinements
+| * 321fe39 style(localization): refine tone dictionary for 'pasangan' mode
+| * 27c49ca feat(wallet): add searchable contact picker for debt categories
+| * e51f53f fix(notifications): implement unique ID generation and accurate receivedAt tracking
+| * 1869220 feat: Implement account suspension system with real-time gate and professional admin UI (clean)
+| * 94083a9 refactor: improve update service logic and dialog UI formatting
+| * b49a6be ui: implement pull-to-refresh throttling and survey eligibility fixes in home screen
+| * bbc0c24 feat: implement atomic batch writes and anti-spam guard for transactions
