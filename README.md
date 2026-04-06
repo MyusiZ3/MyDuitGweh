@@ -617,9 +617,11 @@ Edit `deploy_app.ps1` sesuai setup kamu:
 ## 🗂️ Kategori Transaksi
 
 ### Pemasukan
+
 `Gaji` · `Bonus` · `Investasi` · `Freelance` · `Hadiah` · `Penjualan` · `Transfer Masuk` · `Lainnya`
 
 ### Pengeluaran
+
 `Makanan` · `Transportasi` · `Belanja` · `Cicilan` · `Hutang` · `Tagihan` · `Kesehatan` · `Pendidikan` · `Hobi` · `Pajak` · `Asuransi` · `Zakat/Donasi` · `Langganan` · `Hiburan` · `Transfer Keluar` · `Lainnya`
 
 ---
@@ -664,7 +666,7 @@ Edit `deploy_app.ps1` sesuai setup kamu:
 
 ## 🌐 Infrastruktur Firebase
 
-```
+```text
 Firebase Project
 ├── Authentication     → Email/Password + Google Sign-In
 ├── Cloud Firestore    → Database utama (users, wallets, transactions, config)
@@ -739,7 +741,8 @@ Firebase Project
 
 ## 📄 Lisensi
 
-Proyek ini bersifat **private** dan tidak tersedia untuk distribusi publik. Seluruh kode sumber dan aset dilindungi hak cipta.
+Proyek ini dilisensikan di bawah **MIT License**. Lihat file [LICENSE](LICENSE) untuk detail lebih lanjut.
+
 
 ---
 
