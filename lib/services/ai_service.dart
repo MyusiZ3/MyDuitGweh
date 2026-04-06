@@ -11,6 +11,31 @@ import '../models/wallet_model.dart';
 import '../utils/tone_dictionary.dart';
 import 'package:intl/intl.dart';
 
+class ReceiptData {
+  final double? amount;
+  final String? merchant;
+  final DateTime? date;
+  final String? category;
+
+  ReceiptData({this.amount, this.merchant, this.date, this.category});
+
+  Map<String, dynamic> toJson() => {
+        'amount': amount,
+        'merchant': merchant,
+        'date': date?.toIso8601String(),
+        'category': category,
+      };
+
+  factory ReceiptData.fromJson(Map<String, dynamic> json) {
+    return ReceiptData(
+      amount: json['amount']?.toDouble(),
+      merchant: json['merchant'],
+      date: json['date'] != null ? DateTime.tryParse(json['date']) : null,
+      category: json['category'],
+    );
+  }
+}
+
 class AIService {
   static const String _modelName = 'gemini-3.1-pro-preview';
   static final ValueNotifier<String> statusNotifier = ValueNotifier("ok");
@@ -385,79 +410,116 @@ class AIService {
   // but provide a more detailed check method.
 
   Future<Map<String, dynamic>> checkKeyStatus(String apiKey) async {
-    try {
-      // 3. Fallback Gemini Models (Updated for 2026)
-      final fallbackModels = [
-        'gemini-3.1-pro-preview',
-        'gemini-2.5-flash',
-        'gemini-2.0-flash'
-      ];
-      final model =
-          GenerativeModel(model: fallbackModels.first, apiKey: apiKey);
-      // Use a more standard prompt, 2.5-flash might reject 'hi' as low-entropy or test Junk
-      debugPrint('>>> Checking Gemini Key: ${apiKey.substring(0, 5)}...');
-      await model.generateContent(
-          [Content.text('Halo, tes koneksi API. Biarkan ini tetap singkat.')]);
-      return {
-        'isValid': true,
-        'status': 'ok',
-        'message': 'API Key bekerja dengan baik!'
-      };
-    } catch (e) {
-      final errorStr = e.toString().toLowerCase();
-      debugPrint('>>> API KEY CHECK ERROR DETAILS: $e');
+    final modelsToTry = [
+      'gemini-1.5-flash', // Most common/reliable
+      'gemini-1.5-pro',
+      'gemini-2.0-flash',
+      'gemini-3.1-pro-preview',
+    ];
 
-      if (errorStr.contains('quota') ||
-          errorStr.contains('429') ||
-          errorStr.contains('exhausted') ||
-          errorStr.contains('limit:') ||
-          errorStr.contains('limit reached')) {
-        return {
-          'isValid': true,
-          'status': 'limit',
-          'message':
-              'API Key valid, tapi sedang mencapai limit per detik/menit (Quota Exceeded).'
-        };
-      }
+    Exception? lastErr;
 
-      if (errorStr.contains('leaked')) {
-        return {
-          'isValid': false,
-          'status': 'error',
-          'message': 'API Key diblokir oleh Google krn terekspos (Leaked).'
-        };
-      }
-
-      if (errorStr.contains('invalid') ||
-          errorStr.contains('not valid') ||
-          errorStr.contains('expired') ||
-          errorStr.contains('forbidden')) {
-        return {
-          'isValid': false,
-          'status': 'invalid',
-          'message': 'API Key tidak valid atau salah.'
-        };
-      }
-
-      if (errorStr.contains('not found') ||
-          errorStr.contains('unhandled format') ||
-          errorStr.contains('role: model') ||
-          errorStr.contains('content: {role: model}')) {
-        debugPrint(
-            '>>> SUCCESS BYPASS: Detected SDK format error but treating as OK (key works)');
+    for (var mName in modelsToTry) {
+      try {
+        final model = GenerativeModel(model: mName, apiKey: apiKey);
+        debugPrint('>>> Verifying Gemini Key with $mName...');
+        await model.generateContent([
+          Content.text('Hi, verify connectivity. Short reply.')
+        ]).timeout(const Duration(seconds: 5));
         return {
           'isValid': true,
           'status': 'ok',
-          'message': 'API Key bekerja (melewati bug format SDK).'
+          'message': 'API Key bekerja dengan baik!'
         };
-      }
+      } catch (e) {
+        lastErr = e is Exception ? e : Exception(e.toString());
+        final errorStr = e.toString().toLowerCase();
 
+        // If it's a quota issue, it IS valid, just limited
+        if (errorStr.contains('quota') ||
+            errorStr.contains('429') ||
+            errorStr.contains('exhausted') ||
+            errorStr.contains('limit')) {
+          return {
+            'isValid': true,
+            'status': 'limit',
+            'message': 'API Key valid, tapi mencapai limit (Quota Exceeded).'
+          };
+        }
+
+        // If it's specifically "model not found", try next model
+        if (errorStr.contains('not found') || errorStr.contains('404')) {
+          continue;
+        }
+
+        // If it's an invalid key error, no need to try other models
+        if (errorStr.contains('invalid') ||
+            errorStr.contains('expired') ||
+            errorStr.contains('api key not valid')) {
+          break;
+        }
+      }
+    }
+
+    final e = lastErr;
+    if (e == null) {
       return {
         'isValid': false,
         'status': 'error',
-        'message': 'Gagal verifikasi: ${e.toString().split('\n').first}'
+        'message': 'Gagal verifikasi: Hubungi support.'
       };
     }
+
+    final errorStr = e.toString().toLowerCase();
+    debugPrint('>>> API KEY CHECK ERROR DETAILS: $e');
+
+    if (errorStr.contains('quota') ||
+        errorStr.contains('429') ||
+        errorStr.contains('exhausted') ||
+        errorStr.contains('limitReached') ||
+        errorStr.contains('limit:')) {
+      return {
+        'isValid': true,
+        'status': 'limit',
+        'message':
+            'API Key valid, tapi sedang mencapai limit per detik/menit (Quota Exceeded).'
+      };
+    }
+
+    if (errorStr.contains('leaked')) {
+      return {
+        'isValid': false,
+        'status': 'error',
+        'message': 'API Key diblokir oleh Google krn terekspos (Leaked).'
+      };
+    }
+
+    if (errorStr.contains('invalid') ||
+        errorStr.contains('not valid') ||
+        errorStr.contains('expired') ||
+        errorStr.contains('forbidden')) {
+      return {
+        'isValid': false,
+        'status': 'invalid',
+        'message': 'API Key tidak valid atau salah.'
+      };
+    }
+
+    if (errorStr.contains('not found') ||
+        errorStr.contains('unhandled format') ||
+        errorStr.contains('role: model')) {
+      return {
+        'isValid': true,
+        'status': 'ok',
+        'message': 'API Key bekerja (bypass format SDK error).'
+      };
+    }
+
+    return {
+      'isValid': false,
+      'status': 'error',
+      'message': 'Gagal verifikasi: ${e.toString().split('\n').first}'
+    };
   }
 
   Future<String> getDetailedStatus(String apiKey) async {
@@ -548,53 +610,59 @@ class AIService {
   }
 
   Future<Map<String, dynamic>> checkGroqKeyStatus(String apiKey) async {
-    try {
-      final response = await http.post(
-        Uri.parse('https://api.groq.com/openai/v1/chat/completions'),
-        headers: {
-          'Authorization': 'Bearer $apiKey',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'model': 'llama-3.3-70b-versatile',
-          'messages': [
-            {'role': 'user', 'content': 'Test. Reply OK.'}
-          ],
-          'max_tokens': 5,
-        }),
-      );
-      if (response.statusCode == 200) {
-        return {
-          'isValid': true,
-          'status': 'ok',
-          'message': 'Groq API Key bekerja!'
-        };
-      } else if (response.statusCode == 429) {
-        return {
-          'isValid': true,
-          'status': 'limit',
-          'message': 'Key valid, rate limit tercapai.'
-        };
-      } else if (response.statusCode == 401) {
-        return {
-          'isValid': false,
-          'status': 'invalid',
-          'message': 'API Key tidak valid.'
-        };
-      } else {
-        return {
-          'isValid': false,
-          'status': 'error',
-          'message': 'Error: HTTP ${response.statusCode}'
-        };
+    final modelsToTry = [
+      'llama-3.3-70b-versatile',
+      'llama-3.1-8b-instant',
+    ];
+
+    for (var mName in modelsToTry) {
+      try {
+        final response = await http
+            .post(
+              Uri.parse('https://api.groq.com/openai/v1/chat/completions'),
+              headers: {
+                'Authorization': 'Bearer $apiKey',
+                'Content-Type': 'application/json',
+              },
+              body: jsonEncode({
+                'model': mName,
+                'messages': [
+                  {'role': 'user', 'content': 'Test. Reply OK.'}
+                ],
+                'max_tokens': 5,
+              }),
+            )
+            .timeout(const Duration(seconds: 5));
+
+        if (response.statusCode == 200) {
+          return {
+            'isValid': true,
+            'status': 'ok',
+            'message': 'Groq API Key bekerja!'
+          };
+        } else if (response.statusCode == 429) {
+          return {
+            'isValid': true,
+            'status': 'limit',
+            'message': 'Key valid, rate limit tercapai.'
+          };
+        } else if (response.statusCode == 401) {
+          return {
+            'isValid': false,
+            'status': 'invalid',
+            'message': 'API Key tidak valid.'
+          };
+        }
+      } catch (e) {
+        continue;
       }
-    } catch (e) {
-      return {
-        'isValid': false,
-        'status': 'error',
-        'message': 'Gagal: ${e.toString().split('\n').first}'
-      };
     }
+
+    return {
+      'isValid': false,
+      'status': 'error',
+      'message': 'Gagal verifikasi atau API sedang down.'
+    };
   }
 
   Future<String> getFinancialAdvice({
@@ -1044,18 +1112,20 @@ WAJIB, PAKAI TYPING GANTENG/ TYPING CANTIK dan sedikit MIX Inggris yg romantis.
       }
 
       final systemPrompt = '''
-Kamu adalah "Archen Advisor", pakar analisis keuangan yang tajam dan solutif.
-Tugasmu adalah memberikan 1-2 kalimat analisis singkat berdasarkan data keuangan dan skor kesehatan pengguna.
+Kamu adalah "Archen Advisor", pakar analisis keuangan yang tajam, solutif, dan sangat perhatian.
+Tugasmu adalah memberikan analisis kesehatan keuangan yang mendalam namun tetap to-the-point berdasarkan data dan skor pengguna.
 
 DATA PENGGUNA:
 - Skor Kesehatan: $score/100 (Status: $status)
 - Ringkasan Data: $summary
 
-INSTRUKSI SINGKAT:
-1. Berikan analisis dalam 1-2 kalimat saja (MAKSIMAL 20   KATA !!).
-2. FOKUS PADA HAL PALING KRUSIAL dari data (pemasukan vs pengeluaran, atau kategori paling boros) JANGAN TULISKAN NOMINAL YANG TIDAK PERLU !!!.
-3. GAYA BAHASA WAJIB: $toneInstruction
-4. Awali jawabanmu HANYA dengan format TEPAT seperti ini:**Archen (´･ω･`):** [spasi] [enter] [spasi]
+INSTRUKSI ANALISIS:
+1. Berikan analisis dalam 2-4 kalimat yang padat (MAKSIMAL 25 KATA).
+2. FOKUS PADA HAL PALING KRUSIAL: Identifikasi pola pemborosan, bandingkan pemasukan vs pengeluaran secara logis, atau puji penghematan yang dilakukan.
+3. Berikan pesan yang MEMOTIVASI dan ACTIONABLE (saran konkret apa yang harus dilakukan).
+4. JANGAN hanya menuliskan angka nominal yang sudah ada di data kecuali sangat perlu untuk penekanan.
+5. GAYA BAHASA WAJIB: $toneInstruction
+6. Awali jawabanmu HANYA dengan format TEPAT seperti ini:**Archen (´･ω･`):** [spasi] [enter] [spasi]
    Pastikan tidak ada teks lain di depan atau di dalam kurung.
 ''';
 
@@ -1067,6 +1137,7 @@ INSTRUKSI SINGKAT:
         final List<String> fallbackModels = [
           'llama-3.3-70b-versatile',
           'llama-3.1-8b-instant',
+          'qwen/qwen3-32b',
           'allam-2-7b',
           'groq/compound',
           'groq/compound-mini'
@@ -1080,7 +1151,7 @@ INSTRUKSI SINGKAT:
                 model: m,
                 systemPrompt: systemPrompt,
                 userQuery: userQuery,
-                maxTokens: 150,
+                maxTokens: 200,
               );
               if (res != null && res.isNotEmpty) return res;
             } catch (e) {
@@ -1097,7 +1168,10 @@ INSTRUKSI SINGKAT:
         final List<String> fallbackModels = [
           'gemini-3.1-pro-preview',
           'gemini-2.5-flash',
-          'gemini-2.0-flash'
+          'gemini-2.5-pro',
+          'gemini-2.0-flash',
+          'gemini-2.5-flash-lite',
+          'gemini-2.0-flash-lite'
         ];
 
         for (String k in geminiKeys) {
@@ -1107,7 +1181,7 @@ INSTRUKSI SINGKAT:
                 model: m,
                 apiKey: k.trim(),
                 systemInstruction: Content.system(systemPrompt),
-                generationConfig: GenerationConfig(maxOutputTokens: 150),
+                generationConfig: GenerationConfig(maxOutputTokens: 500),
               );
               final res =
                   await model.generateContent([Content.text(userQuery)]);
@@ -1192,7 +1266,7 @@ INSTRUKSI SINGKAT:
 
       final systemPrompt = '''
 Kamu adalah "Eagle Eye Insight", analis makroekonomi khusus untuk performa agregat pengguna aplikasi keuangan.
-Tugasmu adalah menyajikan laporan tren keuangan seluruh pengguna dalam bentuk Markdown interaktif.
+Tugasmu adalah menyajikan laporan tren keuangan seluruh pengguna dalam bentuk Markdown yang lengkap.
 
 DATA PLATFORM (AGGREGATED):
 - Total Akun Pengguna Data Ini: $userCount
@@ -1201,19 +1275,22 @@ DATA PLATFORM (AGGREGATED):
 
 $summary
 
-INSTRUKSI:
-1. Buat laporan yang sangat profesional, layaknya diberikan kepada jajaran Direksi (SuperAdmin).
-2. Sorot tiga hal utama: Status Cash Flow Ekosistem, Kategori Paling Menyedot Dana, dan Insight Unik.
-3. Gunakan formatting Markdown penuh: teks tebal, daftar (bullets), serta emoji relevan untuk memudahkan _scanning_ informasi.
-4. JANGAN SEBUT "Sample 20 item" atau rahasia struktural data. Berpura-puralah kau menganalisis jutaan titik data secara instan.
+INSTRUKSI FORMAT OUTPUT:
+1. Buat laporan profesional layaknya diberikan kepada jajaran Direksi (SuperAdmin).
+2. Sorot tiga hal utama: **Status Cash Flow Ekosistem**, **Kategori Paling Menyedot Dana**, dan **Insight Unik**.
+3. Gunakan formatting Markdown penuh: heading (##), teks tebal, daftar (bullets), serta emoji relevan.
+4. JANGAN SEBUT "Sample 20 item" atau rahasia struktural data. Berpura-puralah kau menganalisis jutaan titik data.
+5. PENTING: Laporan HARUS LENGKAP, maksimal 400 kata. SELALU akhiri dengan bagian "## 📌 Kesimpulan" berisi 2-3 kalimat penutup.
+6. JANGAN PERNAH memotong laporan di tengah kalimat. Pastikan setiap bagian memiliki penutup yang jelas.
 ''';
 
       final userQuery =
-          'Tolang analisis data global pengguna ini dan sebutkan 3 insight kuncinya.';
+          'Analisis data global pengguna ini dan sebutkan 3 insight kunci. Pastikan laporan LENGKAP hingga bagian Kesimpulan.';
 
       Future<String?> tryGroqList() async {
         final List<String> fallbackModels = [
           'llama-3.3-70b-versatile',
+          'qwen/qwen3-32b',
           'llama-3.1-8b-instant',
         ];
 
@@ -1225,7 +1302,7 @@ INSTRUKSI:
                 model: m,
                 systemPrompt: systemPrompt,
                 userQuery: userQuery,
-                maxTokens: 2500,
+                maxTokens: 4096,
               );
               if (res != null && res.isNotEmpty) return res;
             } catch (e) {
@@ -1240,6 +1317,10 @@ INSTRUKSI:
         final List<String> fallbackModels = [
           'gemini-3.1-pro-preview',
           'gemini-2.5-flash',
+          'gemini-2.5-pro',
+          'gemini-2.0-flash',
+          'gemini-2.5-flash-lite',
+          'gemini-2.0-flash-lite'
         ];
 
         for (String k in geminiKeys) {
@@ -1249,7 +1330,7 @@ INSTRUKSI:
                 model: m,
                 apiKey: k.trim(),
                 systemInstruction: Content.system(systemPrompt),
-                generationConfig: GenerationConfig(maxOutputTokens: 2500),
+                generationConfig: GenerationConfig(maxOutputTokens: 4096),
               );
               final res =
                   await model.generateContent([Content.text(userQuery)]);
@@ -1285,6 +1366,57 @@ INSTRUKSI:
     }
   }
 
+  /// Specialized method for Receipt OCR Refinement
+  static Future<ReceiptData?> extractReceiptData(String rawText,
+      {String? customApiKey}) async {
+    final List<String> keys = [];
+    if (customApiKey != null && customApiKey.isNotEmpty) keys.add(customApiKey);
+    final integrated = await getIntegratedApiKeysAsync();
+    keys.addAll(integrated);
+
+    final String systemPrompt = '''
+Ekstrak data dari teks struk belanja mentah di bawah ini.
+Return HANYA dalam format JSON murni tanpa markdown code blocks:
+{
+  "merchant": "Nama Toko (Uppercase)",
+  "amount": angka_total_bayar (hanya angka, tanpa titik/koma ribuan),
+  "date": "YYYY-MM-DD",
+  "category": "Kategori (Belanja, Makanan, Transportasi, Kesehatan, Hiburan, Lainnya)"
+}
+
+INSTRUKSI KHUSUS:
+- Jika "merchant" tidak jelas, tebak dari kata kunci yang ada.
+- "amount" haruslah TOTAL BAYAR akhir (Grand Total). Abaikan diskon, pajak, kembalian (change), atau poin.
+- "date" gunakan format ISO-8601 (YYYY-MM-DD). Jika tidak ada tahun, gunakan tahun 2024 atau 2025 (terdekat).
+- Jika ada nominal ribuan yang dipisah titik/koma (contoh: 15.000), jadikan angka murni 15000.
+''';
+
+    for (String key in keys) {
+      try {
+        final model = GenerativeModel(
+          model: 'gemini-1.5-flash',
+          apiKey: key,
+          systemInstruction: Content.system(systemPrompt),
+          generationConfig: GenerationConfig(
+            temperature: 0.1,
+            responseMimeType: 'application/json',
+          ),
+        );
+
+        final response = await model.generateContent([Content.text(rawText)]);
+        final String? text = response.text;
+        if (text != null && text.isNotEmpty) {
+          final Map<String, dynamic> data = jsonDecode(text);
+          return ReceiptData.fromJson(data);
+        }
+      } catch (e) {
+        debugPrint('OCR Refine Error with key ${key.substring(0, 10)}: $e');
+        continue;
+      }
+    }
+    return null;
+  }
+
   // ══════════════════════════════════════════════════
   // FASE 4: AI SENTIMENT AGGREGATOR
   // ══════════════════════════════════════════════════
@@ -1302,10 +1434,16 @@ INSTRUKSI:
       return "Gagal menganalisis: API Key AI tidak ditemukan di konfigurasi.";
     }
 
-    // Format data feedback untuk prompt
+    // Sanitize feedback text to prevent JSON-breaking chars
     final String feedbackList = feedbacks
-        .map((f) =>
-            "- [Rating ${f.rating.toInt()}/5] [Kategori: ${f.category}]: ${f.comment}")
+        .map((f) {
+          final cleanComment = f.comment
+              .replaceAll('"', "'")
+              .replaceAll('\n', ' ')
+              .replaceAll('\r', ' ')
+              .replaceAll('\\', ' ');
+          return "- [Rating ${f.rating.toInt()}/5] [Kategori: ${f.category}]: $cleanComment";
+        })
         .join("\n");
 
     final systemPrompt = """
@@ -1315,20 +1453,25 @@ Tugasmu adalah merangkum feedback user berikut menjadi insight tajam dan action 
 DATA FEEDBACK:
 $feedbackList
 
-RESPON HARUS DALAM FORMAT JSON SEPERTI INI SAJA (TANPA PERLU MARKDOWN ```json):
+RESPON HARUS DALAM FORMAT JSON SEPERTI INI SAJA (TANPA MARKDOWN ```json):
 {
   "sentiment_score": "Sangat Positif / Positif / Netral / Negatif / Sangat Negatif",
-  "summary": "Ringkasan tajam dari keseluruhan feedback user (max 100 kata)",
+  "summary": "Ringkasan tajam dari keseluruhan feedback user (max 80 kata, satu paragraf tanpa newline)",
   "top_feature_requests": [
     "Fitur X sering diminta",
     "Perbaikan Y"
   ]
 }
 
-PENTING: PASTIKAN OUTPUT HANYA STRING JSON MURNI YANG BISA DIPARSE OLEH SISTEM (TIDAK ADA TEKS LAIN SEBELUM DAN SESUDAH KURUNG KURAWAL).
+ATURAN KETAT:
+1. Output HANYA JSON murni, TANPA teks lain sebelum/sesudah kurung kurawal.
+2. JANGAN gunakan karakter newline (\\n) di dalam value string JSON.
+3. JANGAN gunakan kutip ganda di dalam value string (gunakan kutip tunggal jika perlu).
+4. Pastikan setiap string di JSON TERTUTUP SEMPURNA (tidak terpotong).
+5. Array top_feature_requests maksimal 5 item, setiap item max 15 kata.
 """;
 
-    final userQuery = "Analisis feedback ini sekarang.";
+    final userQuery = "Analisis feedback ini sekarang. Pastikan JSON output lengkap dan valid.";
 
     Future<String?> tryGroqList() async {
       final List<String> fallbackModels = [
@@ -1361,7 +1504,9 @@ PENTING: PASTIKAN OUTPUT HANYA STRING JSON MURNI YANG BISA DIPARSE OLEH SISTEM (
       final List<String> fallbackModels = [
         'gemini-3.1-pro-preview',
         'gemini-2.5-flash',
-        'gemini-2.0-flash'
+        'gemini-2.0-flash',
+        'gemini-2.5-flash-lite',
+        'gemini-2.0-flash-lite'
       ];
       for (String k in geminiKeys) {
         for (String m in fallbackModels) {

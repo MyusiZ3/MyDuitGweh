@@ -639,7 +639,7 @@ class UIHelper {
                                             children: [
                                               Text(
                                                 isMyBini
-                                                    ? 'MY BINI'
+                                                    ? 'PASANGAN'
                                                     : t.name.toUpperCase(),
                                                 style: TextStyle(
                                                   fontWeight: FontWeight.w800,

@@ -177,7 +177,8 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                           onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (_) => GlobalInsightsScreen(isSuperAdmin: _isSuperAdmin))),
+                                  builder: (_) => GlobalInsightsScreen(
+                                      isSuperAdmin: _isSuperAdmin))),
                         ),
                       ],
                     ),
@@ -274,9 +275,11 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                                     isRestricted: !_isSuperAdmin,
                                   ),
                                 ),
+                                const SizedBox(height: 16),
                               ],
                             );
                           }),
+                      const SizedBox(height: 24),
                       StreamBuilder<QuerySnapshot>(
                           stream: FirebaseFirestore.instance
                               .collection('app_config')
@@ -387,6 +390,14 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                                         icon = Icons.key_off_rounded;
                                         color = Colors.red;
                                         title = 'API Key Dihapus';
+                                      } else if (action == 'GROQ_KEY_ADDED') {
+                                        icon = Icons.bolt_rounded;
+                                        color = const Color(0xFFF55036);
+                                        title = 'Groq Key Ditambahkan';
+                                      } else if (action == 'GROQ_KEY_REMOVED') {
+                                        icon = Icons.bolt_rounded;
+                                        color = Colors.red;
+                                        title = 'Groq Key Dihapus';
                                       } else if (action == 'AI_QUOTA_UPDATE') {
                                         icon = Icons.psychology_rounded;
                                         color = const Color(0xFF8B5CF6);
@@ -1186,9 +1197,11 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
 
                                 if (mounted) Navigator.pop(context);
 
-                                UIHelper.showSuccessSnackBar(context, 'Konfigurasi AI diperbarui!');
+                                UIHelper.showSuccessSnackBar(
+                                    context, 'Konfigurasi AI diperbarui!');
                               } catch (e) {
-                                UIHelper.showErrorSnackBar(context, 'Gagal: $e');
+                                UIHelper.showErrorSnackBar(
+                                    context, 'Gagal: $e');
                               }
                             },
                             style: ElevatedButton.styleFrom(
@@ -1266,8 +1279,7 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                 ),
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 24),
-                  child: Text(
-                      'Validasi status Gemini & Groq API secara real-time.',
+                  child: Text('Validasi status API key chat secara real-time.',
                       style: TextStyle(color: Colors.grey, fontSize: 13)),
                 ),
                 const SizedBox(height: 16),
@@ -1369,6 +1381,24 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                                               .collection('app_settings')
                                               .doc('ai_config')
                                               .update({keyField: allKeys});
+
+                                          // Log to global history
+                                          await FirebaseFirestore.instance
+                                              .collection('app_config')
+                                              .doc('global')
+                                              .collection('history')
+                                              .add({
+                                            'updatedBy': FirebaseAuth
+                                                    .instance
+                                                    .currentUser
+                                                    ?.uid ??
+                                                'system',
+                                            'updatedAt': FieldValue
+                                                .serverTimestamp(),
+                                            'action': isGroq
+                                                ? 'GROQ_KEY_REMOVED'
+                                                : 'AI_KEY_REMOVED',
+                                          });
                                         }
                                       },
                                     ),

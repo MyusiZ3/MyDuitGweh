@@ -2,15 +2,8 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/foundation.dart';
-
-class ReceiptData {
-  final double? amount;
-  final String? merchant;
-  final DateTime? date;
-  final String? category;
-
-  ReceiptData({this.amount, this.merchant, this.date, this.category});
-}
+import 'ai_service.dart';
+export 'ai_service.dart' show ReceiptData; // Export model so callers don't need extra import
 
 class ReceiptOCRService {
   final TextRecognizer _textRecognizer =
@@ -77,12 +70,40 @@ class ReceiptOCRService {
           await _textRecognizer.processImage(inputImage);
       debugPrint('OCR: Recognition finished.');
 
-      final result = _parseReceipt(recognizedText);
+      ReceiptData? result = _parseReceipt(recognizedText);
+
+      // --- HYBRID LOGIC: Check if we need AI Refinement ---
+      if (_isDataSuspicious(result)) {
+        debugPrint('OCR: Local parsing unreliable. Calling AI Refinement...');
+        final aiResult =
+            await AIService.extractReceiptData(recognizedText.text);
+        if (aiResult != null) {
+          debugPrint('OCR: AI Refinement Success!');
+          result = aiResult;
+        } else {
+          debugPrint('OCR: AI Refinement failed or returned null.');
+        }
+      } else {
+        debugPrint('OCR: Local parsing seems reliable.');
+      }
+
       return result;
     } catch (e) {
       debugPrint('OCR: Error during file process: $e');
       rethrow;
     }
+  }
+
+  bool _isDataSuspicious(ReceiptData? data) {
+    if (data == null) return true;
+    // If amount is missing or suspiciously low/high, it's suspicious
+    if (data.amount == null || data.amount! <= 0) return true;
+    // If merchant is not detected
+    if (data.merchant == null || data.merchant!.isEmpty) return true;
+    // If date is missing
+    if (data.date == null) return true;
+
+    return false;
   }
 
   ReceiptData _parseReceipt(RecognizedText recognizedText) {

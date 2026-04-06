@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
+
 import '../../utils/app_theme.dart';
 import '../../utils/ui_helper.dart';
 import '../../services/auth_service.dart';
+import '../../services/ai_service.dart';
 
 class AppConfigScreen extends StatefulWidget {
   const AppConfigScreen({super.key});
@@ -80,7 +81,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
     try {
       final configDoc =
           await _firestore.collection('app_config').doc('global').get();
-      
+
       // Ambil versi dari pubspec.yaml buat default kalau di firestore masih null
       final packageInfo = await PackageInfo.fromPlatform();
       final currentAppVersion = packageInfo.version;
@@ -90,7 +91,8 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
         setState(() {
           _maintenanceMode = data['isMaintenance'] ?? false;
           _minVersionController.text = data['minVersion'] ?? currentAppVersion;
-          _latestVersionController.text = data['latestVersion'] ?? currentAppVersion;
+          _latestVersionController.text =
+              data['latestVersion'] ?? currentAppVersion;
           _downloadUrlController.text = data['downloadUrl'] ?? '';
           _isForceUpdate = data['isForceUpdate'] ?? false;
 
@@ -719,8 +721,8 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                   ),
                   const SizedBox(height: 16),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
                       color: _isForceUpdate
                           ? Colors.red.withOpacity(0.05)
@@ -781,7 +783,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
             ),
             const SizedBox(height: 32),
             _buildSectionHeader(
-                'AI Financial Advisor', Icons.psychology_rounded, Colors.black),
+                'AI Global Advisor', Icons.psychology_rounded, Colors.black),
             _buildPremiumCard(
               child: Column(
                 children: [
@@ -1424,6 +1426,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
   void _showAdvisorKeysManager() {
     final TextEditingController newKeyController = TextEditingController();
     bool isAdding = false;
+    bool isVerifying = false;
     String addType = 'gemini'; // 'gemini' or 'groq'
 
     showModalBottomSheet(
@@ -1472,46 +1475,40 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                             ),
                             child: Column(
                               children: [
-                                Row(
+                                Column(
                                   children: [
-                                    Expanded(
-                                      child: DropdownButtonFormField<String>(
-                                        value: addType,
-                                        decoration: InputDecoration(
-                                          labelText: 'Tipe Key',
-                                          filled: true,
-                                          fillColor: Colors.white,
-                                          border: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                              borderSide: BorderSide.none),
-                                        ),
-                                        items: const [
-                                          DropdownMenuItem(
-                                              value: 'gemini',
-                                              child: Text('Gemini')),
-                                          DropdownMenuItem(
-                                              value: 'groq',
-                                              child: Text('Groq')),
-                                        ],
-                                        onChanged: (v) =>
-                                            setModalState(() => addType = v!),
+                                    DropdownButtonFormField<String>(
+                                      value: addType,
+                                      decoration: InputDecoration(
+                                        labelText: 'Tipe Key',
+                                        filled: true,
+                                        fillColor: Colors.white,
+                                        border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                            borderSide: BorderSide.none),
                                       ),
+                                      items: const [
+                                        DropdownMenuItem(
+                                            value: 'gemini',
+                                            child: Text('Gemini')),
+                                        DropdownMenuItem(
+                                            value: 'groq', child: Text('Groq')),
+                                      ],
+                                      onChanged: (v) =>
+                                          setModalState(() => addType = v!),
                                     ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      flex: 2,
-                                      child: TextField(
-                                        controller: newKeyController,
-                                        decoration: InputDecoration(
-                                          labelText: 'API Key',
-                                          filled: true,
-                                          fillColor: Colors.white,
-                                          border: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                              borderSide: BorderSide.none),
-                                        ),
+                                    const SizedBox(height: 12),
+                                    TextField(
+                                      controller: newKeyController,
+                                      decoration: InputDecoration(
+                                        labelText: 'API Key',
+                                        filled: true,
+                                        fillColor: Colors.white,
+                                        border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                            borderSide: BorderSide.none),
                                       ),
                                     ),
                                   ],
@@ -1532,24 +1529,50 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                                     ),
                                     const SizedBox(width: 8),
                                     ElevatedButton(
-                                      onPressed: () {
-                                        final k = newKeyController.text.trim();
-                                        if (k.isNotEmpty) {
-                                          setState(() {
-                                            if (addType == 'gemini' &&
-                                                !_geminiKeys.contains(k)) {
-                                              _geminiKeys.add(k);
-                                            } else if (addType == 'groq' &&
-                                                !_groqKeys.contains(k)) {
-                                              _groqKeys.add(k);
-                                            }
-                                          });
-                                          setModalState(() {
-                                            isAdding = false;
-                                            newKeyController.clear();
-                                          });
-                                        }
-                                      },
+                                      onPressed: isVerifying
+                                          ? null
+                                          : () async {
+                                              final k =
+                                                  newKeyController.text.trim();
+                                              if (k.isNotEmpty) {
+                                                setModalState(
+                                                    () => isVerifying = true);
+                                                final res = addType == 'gemini'
+                                                    ? await _testGemini(k)
+                                                    : await _testGroq(k);
+
+                                                if (res.success) {
+                                                  setState(() {
+                                                    if (addType == 'gemini' &&
+                                                        !_geminiKeys
+                                                            .contains(k)) {
+                                                      _geminiKeys.add(k);
+                                                    } else if (addType ==
+                                                            'groq' &&
+                                                        !_groqKeys
+                                                            .contains(k)) {
+                                                      _groqKeys.add(k);
+                                                    }
+                                                  });
+                                                  await _firestore.collection('app_config').doc('global').update({
+                                                    'advisor_gemini_keys': _geminiKeys,
+                                                    'advisor_groq_keys': _groqKeys,
+                                                  });
+                                                  setModalState(() {
+                                                    isVerifying = false;
+                                                    isAdding = false;
+                                                    newKeyController.clear();
+                                                  });
+                                                } else {
+                                                  setModalState(() =>
+                                                      isVerifying = false);
+                                                  if (mounted)
+                                                    UIHelper.showErrorSnackBar(
+                                                        context,
+                                                        'Key tidak valid: ${res.message}');
+                                                }
+                                              }
+                                            },
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Colors.black,
                                         foregroundColor: Colors.white,
@@ -1557,7 +1580,14 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                                             borderRadius:
                                                 BorderRadius.circular(12)),
                                       ),
-                                      child: const Text('Simpan Key'),
+                                      child: isVerifying
+                                          ? const SizedBox(
+                                              width: 16,
+                                              height: 16,
+                                              child: CircularProgressIndicator(
+                                                  color: Colors.white,
+                                                  strokeWidth: 2))
+                                          : const Text('Simpan Key'),
                                     ),
                                   ],
                                 ),
@@ -1594,11 +1624,27 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                         if (_geminiKeys.isEmpty)
                           const Text('Belum ada data.',
                               style: TextStyle(color: Colors.grey)),
-                        ..._geminiKeys
-                            .map((key) => _buildKeyItem(key, 'gemini', () {
-                                  setState(() => _geminiKeys.remove(key));
-                                  setModalState(() {});
-                                })),
+                        ..._geminiKeys.asMap().entries.map(
+                                    (entry) => _buildKeyItem(entry.value, 'gemini', entry.key, () async {
+                                          final confirm = await UIHelper.showConfirmDialog(
+                                              context: context,
+                                              title: 'Hapus API Key?',
+                                              message:
+                                                  'Kamu yakin ingin menghapus API key ini?');
+                                          if (confirm != true) return;
+
+                                          final index = entry.key;
+                                          
+                                          setState(() => _geminiKeys.removeAt(index));
+                                          await _firestore.collection('app_config').doc('global').update({
+                                            'advisor_gemini_keys': _geminiKeys
+                                          });
+                                          
+                                          if (mounted) {
+                                            UIHelper.showSuccessSnackBar(context, 'API Key Gemini berhasil dihapus');
+                                          }
+                                          setModalState(() {});
+                                        })),
                         const SizedBox(height: 24),
                         const Text('Groq API Keys',
                             style: TextStyle(
@@ -1607,11 +1653,26 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                         if (_groqKeys.isEmpty)
                           const Text('Belum ada data.',
                               style: TextStyle(color: Colors.grey)),
-                        ..._groqKeys
-                            .map((key) => _buildKeyItem(key, 'groq', () {
-                                  setState(() => _groqKeys.remove(key));
-                                  setModalState(() {});
-                                })),
+                        ..._groqKeys.asMap().entries
+                                .map((entry) => _buildKeyItem(entry.value, 'groq', entry.key, () async {
+                                      final confirm = await UIHelper.showConfirmDialog(
+                                          context: context,
+                                          title: 'Hapus API Key?',
+                                          message:
+                                              'Kamu yakin ingin menghapus API key ini?');
+                                      if (confirm != true) return;
+
+                                      final index = entry.key;
+                                      setState(() => _groqKeys.removeAt(index));
+                                      await _firestore.collection('app_config').doc('global').update({
+                                        'advisor_groq_keys': _groqKeys
+                                      });
+                                      
+                                      if (mounted) {
+                                        UIHelper.showSuccessSnackBar(context, 'API Key Groq berhasil dihapus');
+                                      }
+                                      setModalState(() {});
+                                    })),
                         const SizedBox(height: 100),
                       ]))
                 ],
@@ -1621,175 +1682,169 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
         });
   }
 
-  Widget _buildKeyItem(String apiKey, String type, VoidCallback onDelete) {
-    bool isTesting = false;
-    String testResult = '';
-    Color testColor = Colors.grey;
+  Widget _buildKeyItem(String apiKey, String type, int index, VoidCallback onDelete) {
+    String testResult = 'Tap TEST to verify';
+    String status = 'unknown'; // 'unknown', 'checking', 'ok', 'error'
+
+    final isGroq = type == 'groq';
+    final keyColor = isGroq ? const Color(0xFFF55036) : const Color.fromRGBO(0, 122, 255, 1);
+    final keyIcon = isGroq ? Icons.bolt_rounded : Icons.vpn_key_rounded;
+    final obscuredKey = apiKey.length > 12 ? "${apiKey.substring(0, 6)}...${apiKey.substring(apiKey.length - 4)}" : apiKey;
 
     return StatefulBuilder(builder: (context, setItemState) {
-      return Card(
-        margin: const EdgeInsets.only(bottom: 8),
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: BorderSide(color: Colors.grey.withOpacity(0.3)),
+      return Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.black.withOpacity(0.04)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
-        child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                        child: Text(
-                      apiKey,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w600, fontSize: 13),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    )),
-                    IconButton(
-                      icon:
-                          const Icon(Icons.delete, color: Colors.red, size: 20),
-                      onPressed: onDelete,
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                  ],
+        child: Column(
+          children: [
+            ListTile(
+              contentPadding: const EdgeInsets.fromLTRB(20, 10, 10, 10),
+              leading: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: keyColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    if (isTesting)
-                      const SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    else if (testResult.isNotEmpty)
-                      Expanded(
-                        child: Text(
-                          testResult,
-                          style: TextStyle(
-                              color: testColor,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold),
+                child: Icon(keyIcon, color: keyColor, size: 20),
+              ),
+              title: Text(
+                obscuredKey,
+                style: const TextStyle(
+                  fontFamily: 'Monospace',
+                  fontWeight: FontWeight.w900,
+                  fontSize: 14,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              subtitle: Text(
+                '${isGroq ? "Groq" : "Gemini"} Config #${index + 1}',
+                style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+              ),
+              trailing: IconButton(
+                icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 22),
+                onPressed: onDelete,
+              ),
+            ),
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              height: 1,
+              color: Colors.black.withOpacity(0.03),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 12, 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: status == 'ok'
+                                ? Colors.green
+                                : (status == 'error' ? Colors.red : Colors.grey[400]),
+                            shape: BoxShape.circle,
+                          ),
                         ),
-                      )
-                    else
-                      const Flexible(
-                          child: Text('Belum dites',
-                              style:
-                                  TextStyle(color: Colors.grey, fontSize: 12))),
-                    SizedBox(
-                      height: 30,
-                      child: TextButton(
-                        onPressed: isTesting
-                            ? null
-                            : () async {
-                                setItemState(() {
-                                  isTesting = true;
-                                  testResult = 'Menghubungkan...';
-                                  testColor = Colors.grey;
-                                });
-
-                                bool success = false;
-                                String msg = '';
-                                if (type == 'gemini') {
-                                  final res = await _testGemini(apiKey);
-                                  success = res.success;
-                                  msg = res.message;
-                                } else {
-                                  final res = await _testGroq(apiKey);
-                                  success = res.success;
-                                  msg = res.message;
-                                }
-
-                                setItemState(() {
-                                  isTesting = false;
-                                  testResult =
-                                      success ? 'Normal / Active' : msg;
-                                  testColor =
-                                      success ? Colors.green : Colors.red;
-                                });
-                              },
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            status == 'checking' ? 'Validating...' : testResult,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -0.2,
+                              color: status == 'ok'
+                                  ? Colors.green[800]
+                                  : (status == 'unknown' ? AppColors.textHint : Colors.red[800]),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                        child: const Text('Cek Koneksi',
-                            style: TextStyle(fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  SizedBox(
+                    height: 38,
+                    child: ElevatedButton(
+                      onPressed: status == 'checking'
+                          ? null
+                          : () async {
+                              setItemState(() {
+                                status = 'checking';
+                              });
+
+                              bool success = false;
+                              String msg = '';
+                              if (type == 'gemini') {
+                                final res = await _testGemini(apiKey);
+                                success = res.success;
+                                msg = res.message;
+                              } else {
+                                final res = await _testGroq(apiKey);
+                                success = res.success;
+                                msg = res.message;
+                              }
+
+                              setItemState(() {
+                                status = success ? 'ok' : 'error';
+                                testResult = success ? 'Normal / Active' : msg;
+                              });
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary.withOpacity(0.1),
+                        foregroundColor: AppColors.primary,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
-                    )
-                  ],
-                )
-              ],
-            )),
+                      child: status == 'checking'
+                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Text('TEST', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, letterSpacing: -0.5)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       );
     });
   }
 
   Future<({bool success, String message})> _testGemini(String key) async {
-    final fallbackModels = [
-      'gemini-3.1-pro-preview',
-      'gemini-2.5-flash',
-      'gemini-2.0-flash'
-    ];
-
-    for (String m in fallbackModels) {
-      try {
-        final model = GenerativeModel(model: m, apiKey: key);
-        await model.generateContent([Content.text('test')]);
-        return (success: true, message: 'Valid ($m)');
-      } catch (e) {
-        final errStr = e.toString().toLowerCase();
-        bool isNotFound =
-            errStr.contains('not found') || errStr.contains('404');
-        if (isNotFound) continue; // Try next fallback model
-
-        if (errStr.contains('api key not valid'))
-          return (success: false, message: 'Invalid Key');
-        if (errStr.contains('quota'))
-          return (success: false, message: 'Quota Exceeded');
-        if (errStr.contains('exhausted'))
-          return (success: false, message: 'API Limit Exhausted');
-        return (
-          success: false,
-          message: 'Error: ${e.toString().split('\n').first}'
-        );
-      }
+    try {
+      final statusMap = await AIService().checkKeyStatus(key);
+      return (
+        success: statusMap['isValid'] == true,
+        message: statusMap['message'] as String? ?? 'Unknown error'
+      );
+    } catch (e) {
+      return (success: false, message: 'Failed to connect');
     }
-    return (success: false, message: 'Models Not Found / API Limit');
   }
 
   Future<({bool success, String message})> _testGroq(String key) async {
     try {
-      final res = await http.post(
-        Uri.parse('https://api.groq.com/openai/v1/chat/completions'),
-        headers: {
-          'Authorization': 'Bearer $key',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          "model": "llama-3.3-70b-versatile",
-          "messages": [
-            {"role": "user", "content": "hi"}
-          ],
-          "max_tokens": 10
-        }), // very small max_tokens
+      final statusMap = await AIService().checkGroqKeyStatus(key);
+      return (
+        success: statusMap['isValid'] == true,
+        message: statusMap['message'] as String? ?? 'Unknown error'
       );
-
-      if (res.statusCode == 200) {
-        return (success: true, message: 'Valid');
-      } else {
-        final err = jsonDecode(res.body);
-        if (err['error']?['code'] == 'invalid_api_key')
-          return (success: false, message: 'Invalid Key');
-        if (res.statusCode == 429)
-          return (success: false, message: 'Rate Limit / Quota Exceeded');
-        return (success: false, message: 'Error \${res.statusCode}');
-      }
     } catch (e) {
       return (success: false, message: 'Failed to connect');
     }

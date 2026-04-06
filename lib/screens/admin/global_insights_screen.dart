@@ -284,41 +284,8 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
 
                   const SizedBox(height: 32),
 
-                  // FITUR #4: AI Trend Analysis (SuperAdmin Only) - Moved to top
-                  if (widget.isSuperAdmin) ...[
-                    _buildSectionTitle(
-                        'AI Macros Analysis', Icons.auto_awesome_rounded),
-                    const SizedBox(height: 16),
-                    _buildAiAnalysisButton(context),
-                    const SizedBox(height: 32),
-
-                    // Leaderboard - Moved below AI Macros Analysis
-                    _buildSectionTitle(
-                        'Leaderboard', Icons.emoji_events_rounded),
-                    const SizedBox(height: 16),
-                    _buildLeaderboard(),
-                    const SizedBox(height: 32),
-
-                    // NEW: Survey Control & AI Insights
-                    _buildSectionTitle(
-                        'User Voice & AI Insights', Icons.psychology_rounded),
-                    const SizedBox(height: 16),
-                    _buildSurveyControlPanel(),
-                    const SizedBox(height: 16),
-                    _buildAiFeedbackInsights(),
-                    const SizedBox(height: 32),
-                  ] else ...[
-                    _buildLockedSection(
-                      title: '💰 Leaderboard & AI',
-                      reason:
-                          'Data finansial mendalam bersifat rahasia. Hanya SuperAdmin/Owner yang dapat mengakses.',
-                      icon: Icons.lock_rounded,
-                    ),
-                    const SizedBox(height: 32),
-                  ],
-
                   // ═══════════════════════════════════════
-                  // EAGLE EYE ANALYTICS (Non-Realtime, Period Filtered)
+                  // ALL TX-DEPENDENT WIDGETS (wrapped in StatefulBuilder)
                   // ═══════════════════════════════════════
                   StatefulBuilder(
                     builder: (context, setTxState) {
@@ -326,6 +293,22 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // FITUR #4: AI Trend Analysis (SuperAdmin Only)
+                          if (widget.isSuperAdmin) ...[
+                            _buildSectionTitle(
+                                'AI Macros Analysis', Icons.auto_awesome_rounded),
+                            const SizedBox(height: 16),
+                            _buildAiAnalysisButton(context),
+                            const SizedBox(height: 32),
+
+                            // Leaderboard
+                            _buildSectionTitle(
+                                'Leaderboard', Icons.emoji_events_rounded),
+                            const SizedBox(height: 16),
+                            _buildLeaderboard(),
+                            const SizedBox(height: 32),
+                          ],
+
                           _buildPeriodFilter(),
                           const SizedBox(height: 24),
                           
@@ -353,6 +336,25 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                       );
                     },
                   ),
+
+                  // Survey Control & AI Insights (not TX-dependent)
+                  if (widget.isSuperAdmin) ...[
+                    _buildSectionTitle(
+                        'User Voice & AI Insights', Icons.psychology_rounded),
+                    const SizedBox(height: 16),
+                    _buildSurveyControlPanel(),
+                    const SizedBox(height: 16),
+                    _buildAiFeedbackInsights(),
+                    const SizedBox(height: 32),
+                  ] else ...[
+                    _buildLockedSection(
+                      title: '💰 Leaderboard & AI',
+                      reason:
+                          'Data finansial mendalam bersifat rahasia. Hanya SuperAdmin/Owner yang dapat mengakses.',
+                      icon: Icons.lock_rounded,
+                    ),
+                    const SizedBox(height: 32),
+                  ],
 
                   // FITUR #6: New User Growth Chart
                   _buildSectionTitle(
@@ -2217,9 +2219,43 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
 
       final result = await _aiService.analyzeFeedbackSentiment(feedbacks);
       
+      // Robust JSON parsing with sanitization
+      String cleanResult = result
+          .replaceAll('```json', '')
+          .replaceAll('```', '')
+          .trim();
+      
+      // Extract only the JSON object between first { and last }
+      final startIdx = cleanResult.indexOf('{');
+      final endIdx = cleanResult.lastIndexOf('}');
+      
+      if (startIdx == -1 || endIdx == -1 || endIdx <= startIdx) {
+        throw 'AI mengembalikan format yang tidak valid. Coba lagi.';
+      }
+      
+      cleanResult = cleanResult.substring(startIdx, endIdx + 1);
+      
+      // Sanitize common AI JSON issues
+      // Remove trailing commas before ] or }
+      cleanResult = cleanResult.replaceAll(RegExp(r',\s*]'), ']');
+      cleanResult = cleanResult.replaceAll(RegExp(r',\s*}'), '}');
+      
+      // Try parsing, if it fails try once more with the AI
+      Map<String, dynamic>? parsedResult;
+      try {
+        parsedResult = jsonDecode(cleanResult) as Map<String, dynamic>;
+      } catch (parseErr) {
+        debugPrint('JSON parse failed: $parseErr, raw: $cleanResult');
+        // Provide a fallback structure from the raw text
+        parsedResult = {
+          'sentiment_score': 'Netral',
+          'summary': result.length > 200 ? result.substring(0, 200) : result,
+          'top_feature_requests': ['Analisis perlu di-refresh (format error)'],
+        };
+      }
+
       setState(() {
-        String cleanResult = result.replaceAll('```json', '').replaceAll('```', '').trim();
-        _aiSentimentResult = jsonDecode(cleanResult) as Map<String, dynamic>?;
+        _aiSentimentResult = parsedResult;
         _aiSentimentResult?['sample_size'] = feedbacks.length;
         _isAnalyzingFeedback = false;
       });

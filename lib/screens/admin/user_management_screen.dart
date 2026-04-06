@@ -75,11 +75,11 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     color: Colors.grey[300],
                     borderRadius: BorderRadius.circular(2))),
             const SizedBox(height: 24),
-            Text('Atur Kasta ${name.split(' ')[0]}',
+            Text('Atur Role untuk ${name.split(' ')[0]}',
                 style:
                     const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
             const SizedBox(height: 8),
-            Text('Pilih peran baru untuk pengguna ini',
+            Text('Pilih role baru untuk pengguna ini',
                 style: TextStyle(color: Colors.grey[600], fontSize: 13)),
             const SizedBox(height: 24),
             ...List.generate(roles.length, (index) {
@@ -778,7 +778,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 Icon(Icons.theater_comedy_rounded,
                     size: 20, color: Colors.blue[700]),
                 const SizedBox(width: 12),
-                const Text('Ubah Kasta Akun', style: TextStyle(fontSize: 13)),
+                const Text('Ubah Role Akun', style: TextStyle(fontSize: 13)),
               ],
             ),
           ),
