@@ -73,8 +73,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 .orderBy('timestamp', descending: true)
                 .snapshots(),
             builder: (context, notifSnap) {
-              if (notifSnap.connectionState == ConnectionState.waiting)
+              if (notifSnap.connectionState == ConnectionState.waiting) {
                 return const Center(child: LoadingWidget());
+              }
 
               // Combine and sort
               List<Map<String, dynamic>> allNotifications = [];
