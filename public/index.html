@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Duit Gweh - Professional Financial Ecosystem</title>
+    <!-- Tailwind Play CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['"Plus Jakarta Sans"', "sans-serif"],
+            },
+            colors: {
+              "primary-bg": "#f8f9fa",
+              "border-subtle": "#e2e2e7",
+            },
+            borderRadius: {
+              "3xl": "24px",
+            },
+          },
+        },
+      };
+    </script>
+    <style type="text/tailwindcss">
+      @layer components {
+        .bento-card {
+          @apply bg-white p-8 rounded-3xl border border-border-subtle flex flex-col justify-between transition-all duration-300 relative overflow-hidden;
+        }
+        .bento-card:hover {
+          @apply -translate-y-1 shadow-2xl shadow-black/5;
+        }
+        .icon-circle {
+          @apply w-11 h-11 rounded-xl bg-zinc-100 text-black flex items-center justify-center mb-5 border border-zinc-200;
+        }
+        .floating-pill {
+          @apply absolute bg-white text-black px-4 py-2 rounded-full text-xs font-bold shadow-lg flex items-center gap-1.5 z-10 transition-all;
+        }
+      }
+
+      /* Keep custom animations for ultra-smooth feel */
+      @keyframes float-main {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-12px);
+        }
+      }
+      @keyframes float-top {
+        0%,
+        100% {
+          transform: translate(0, 0);
+        }
+        50% {
+          transform: translate(8px, -15px);
+        }
+      }
+      @keyframes float-bottom {
+        0%,
+        100% {
+          transform: translate(0, 0);
+        }
+        50% {
+          transform: translate(-5px, 20px);
+        }
+      }
+      @keyframes float-side {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        50% {
+          transform: translateX(10px);
+        }
+      }
+
+      .animate-float-main {
+        animation: float-main 6s ease-in-out infinite;
+      }
+      .animate-float-top {
+        animation: float-top 7s ease-in-out infinite;
+      }
+      .animate-float-bottom {
+        animation: float-bottom 5s ease-in-out infinite;
+      }
+      .animate-float-side {
+        animation: float-side 8s linear infinite;
+      }
+    </style>
+  </head>
+  <body class="bg-primary-bg text-black px-6 flex flex-col items-center">
+    <!-- Navbar -->
+    <nav
+      class="fixed top-5 w-[calc(100%-48px)] max-w-[1000px] h-14 bg-white/85 backdrop-blur-xl border border-border-subtle rounded-full flex justify-between items-center px-4 z-[1000] shadow-sm"
+    >
+      <a href="#" class="flex items-center gap-2.5 no-underline px-3">
+        <div
+          class="w-8 h-8 bg-black rounded-lg flex items-center justify-center"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="white"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="w-4 h-4"
+          >
+            <path
+              d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4"
+            />
+            <path d="M21 10h-4a2 2 0 0 0 0 4h4" />
+          </svg>
+        </div>
+        <span class="font-extrabold text-sm tracking-tight text-black"
+          >My Duit Gweh</span
+        >
+      </a>
+      <div class="flex items-center pr-2">
+        <div
+          class="bg-black text-white px-3.5 py-1.5 rounded-full text-[10px] font-bold"
+        >
+          Build v1.0.5
+        </div>
+      </div>
+    </nav>
+
+    <div class="max-w-[1000px] w-full flex flex-col gap-4 mt-24">
+      <!-- Bento Grid -->
+      <div
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 grid-rows-none lg:grid-rows-[repeat(4,200px)] gap-4"
+      >
+        <!-- Hero Card (Large) -->
+        <div
+          class="lg:col-span-3 lg:row-span-2 bento-card bg-black text-white border-none flex flex-row items-center justify-between p-10"
+        >
+          <div class="max-w-[400px]">
+            <span
+              class="text-[10px] font-extrabold uppercase tracking-widest text-white/40"
+              >Advanced Management</span
+            >
+            <h1
+              class="text-4xl md:text-5xl font-extrabold leading-[1.05] tracking-tighter mt-1 mb-3"
+            >
+              Smart Finance,<br />Bold Design.
+            </h1>
+            <p class="text-base opacity-60 font-medium">
+              Experience ultra-sharp financial tracking designed for absolute
+              clarity and high-resolution wealth management.
+            </p>
+            <a
+              href="https://github.com/MyusiZ3/MyDuitGweh/releases/download/v1.0.5/app-release.apk"
+              target="_blank"
+              class="bg-white text-black px-7 py-3.5 rounded-xl no-underline font-bold inline-flex items-center gap-2.5 mt-6 transition-transform hover:scale-105 active:scale-95"
+            >
+              <span>Get APP v1.0.5</span>
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M7 13l5 5 5-5M12 18V6" />
+              </svg>
+            </a>
+          </div>
+
+          <div
+            class="hidden lg:flex flex-1 justify-center items-center relative h-full"
+          >
+            <!-- Main Wallet Card -->
+            <div
+              class="bg-white/10 backdrop-blur-2xl border border-white/10 p-6 rounded-3xl w-60 shadow-2xl animate-float-main z-[5]"
+            >
+              <div class="text-[10px] opacity-50 font-bold">Active Balance</div>
+              <div class="text-2xl font-extrabold mt-2 mb-2 tracking-tight">
+                Rp xxx................
+              </div>
+              <div class="h-1 w-2/3 bg-white rounded-full my-2"></div>
+              <div class="h-1 w-full bg-white/10 rounded-full my-2"></div>
+              <div class="h-1 w-1/3 bg-white/10 rounded-full my-2"></div>
+            </div>
+
+            <!-- Floating Components -->
+            <div class="floating-pill top-[15%] right-[10px] animate-float-top">
+              <svg
+                width="10"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+              >
+                <path d="M22 6L11 17L2 8" />
+              </svg>
+              <span>Insight +15%</span>
+            </div>
+            <div
+              class="floating-pill bottom-[20%] -right-5 bg-black text-white border border-white/20 animate-float-bottom"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+              >
+                <path d="M20 6L9 17L4 12" />
+              </svg>
+              <span>Secured</span>
+            </div>
+            <div
+              class="floating-pill top-[65%] -left-5 bg-emerald-500/20 text-emerald-500 backdrop-blur-md animate-float-side"
+            >
+              <span class="text-lg">✨</span>
+              <span>AI Active</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Install QR Card (Tall) -->
+        <div
+          class="lg:col-span-1 lg:row-span-2 bento-card bg-black text-white border-none text-center flex flex-col items-center"
+        >
+          <div class="w-full">
+            <span
+              class="text-[10px] font-extrabold uppercase tracking-widest text-white/40"
+              >Quick Install</span
+            >
+            <h3 class="text-xl font-extrabold mt-1">Connect Now</h3>
+          </div>
+          <div
+            class="bg-white p-2.5 rounded-2xl inline-block my-5 shadow-inner"
+          >
+            <img
+              src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=https://github.com/MyusiZ3/MyDuitGweh/releases/download/v1.0.5/app-release.apk"
+              alt="QR"
+              class="w-[120px] h-[120px]"
+            />
+          </div>
+          <p class="text-[10px] opacity-40 font-bold uppercase tracking-wider">
+            v1.0.5 Stable Build
+          </p>
+        </div>
+
+        <!-- Archen AI (Wide) -->
+        <div class="lg:col-span-2 bento-card">
+          <div>
+            <div class="icon-circle">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="w-5 h-5"
+              >
+                <path
+                  d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1 0-4.12 2.5 2.5 0 0 1 0-4.88 2.5 2.5 0 0 1 2.46-3.06zM14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 0-4.12 2.5 2.5 0 0 0 0-4.88A2.5 2.5 0 0 0 14.5 2z"
+                />
+              </svg>
+            </div>
+            <h3 class="text-xl font-extrabold text-black">Archen AI</h3>
+            <p class="text-sm text-zinc-500 leading-relaxed font-medium mt-1">
+              Hyper-focused analytical feedback designed to optimize your
+              spending pattern instantly.
+            </p>
+          </div>
+        </div>
+
+        <!-- Health (Square) -->
+        <div class="bento-card">
+          <div>
+            <div class="icon-circle">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="w-5 h-5"
+              >
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+              </svg>
+            </div>
+            <h3 class="text-base font-extrabold text-black">Health</h3>
+            <p class="text-[10px] font-bold uppercase text-zinc-400">
+              Pro Diagnostic
+            </p>
+          </div>
+        </div>
+
+        <!-- Protection (Square) -->
+        <div class="bento-card">
+          <div>
+            <div class="icon-circle">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="w-5 h-5"
+              >
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </div>
+            <h3 class="text-base font-extrabold text-black">Protection</h3>
+            <p class="text-[10px] font-bold uppercase text-zinc-400">
+              Deep Encryption
+            </p>
+          </div>
+        </div>
+
+        <!-- OCR Scan (Wide) -->
+        <div class="lg:col-span-2 bento-card">
+          <div>
+            <div class="icon-circle">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="w-5 h-5"
+              >
+                <path
+                  d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
+                />
+                <circle cx="12" cy="13" r="4" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-extrabold text-black">Smart OCR Scan</h3>
+            <p class="text-sm text-zinc-500 leading-relaxed font-medium mt-1">
+              Capture, extract, and categorize. Powered by machine vision for
+              absolute speed.
+            </p>
+          </div>
+        </div>
+
+        <!-- Wealth Trajectory (Wide) -->
+        <div class="lg:col-span-2 bento-card">
+          <div>
+            <div class="icon-circle">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="w-5 h-5"
+              >
+                <path d="M12 20V10M18 20V4M6 20v-4" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-extrabold text-black">Wealth Trajectory</h3>
+            <p class="text-sm text-zinc-500 leading-relaxed font-medium mt-1">
+              Visualize your assets and project your financial independence with
+              Pro metrics.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <footer class="mt-20 w-full pt-16 pb-12 border-t border-border-subtle">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
+          <!-- Column 1: Brand -->
+          <div class="flex flex-col gap-4">
+            <div class="flex items-center gap-2">
+              <div
+                class="w-6 h-6 bg-black rounded flex items-center justify-center"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="white"
+                  stroke-width="2.5"
+                  class="w-3 h-3"
+                >
+                  <path
+                    d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4"
+                  />
+                  <path d="M21 10h-4a2 2 0 0 0 0 4h4" />
+                </svg>
+              </div>
+              <span class="font-bold text-sm text-black">MyDuitGweh</span>
+            </div>
+            <p
+              class="text-xs text-zinc-500 font-medium leading-relaxed max-w-[200px]"
+            >
+              A modern financial ecosystem engineered for absolute clarity and
+              high-fidelity wealth management.
+            </p>
+          </div>
+
+          <!-- Column 2: Developer & Socials -->
+          <div class="flex flex-col gap-4">
+            <h4
+              class="text-[10px] font-extrabold uppercase tracking-widest text-zinc-400"
+            >
+              Core Developer
+            </h4>
+            <div class="flex items-center gap-4">
+              <a
+                href="https://github.com/MyusiZ3"
+                target="_blank"
+                class="text-zinc-400 hover:text-black transition-colors"
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"
+                  ></path>
+                </svg>
+              </a>
+              <a
+                href="https://www.instagram.com/imyusi_/"
+                target="_blank"
+                class="text-zinc-400 hover:text-black transition-colors"
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                  <path
+                    d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"
+                  ></path>
+                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                </svg>
+              </a>
+              <a
+                href="https://www.linkedin.com/in/muhamad-sidik-a6757b25b/"
+                target="_blank"
+                class="text-zinc-400 hover:text-black transition-colors"
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"
+                  ></path>
+                  <rect x="2" y="9" width="4" height="12"></rect>
+                  <circle cx="4" cy="4" r="2"></circle>
+                </svg>
+              </a>
+            </div>
+          </div>
+
+          <!-- Column 3: Contact -->
+          <div class="flex flex-col gap-4">
+            <h4
+              class="text-[10px] font-extrabold uppercase tracking-widest text-zinc-400"
+            >
+              Connect & Support
+            </h4>
+            <a
+              href="mailto:support.myduitgweh@gmail.com"
+              target="_blank"
+              class="text-xs font-bold text-black border-b border-black w-fit hover:opacity-60 transition-opacity"
+            >
+              support.myduitgweh@gmail.com
+            </a>
+          </div>
+        </div>
+
+        <div
+          class="flex justify-between items-center pt-8 border-t border-zinc-100"
+        >
+          <p
+            class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest"
+          >
+            &copy; 2026 MyDuitGweh | Arch.
+          </p>
+          <p
+            class="text-[10px] font-bold text-zinc-300 uppercase tracking-widest"
+          >
+            Proudly Crafted in Indonesia
+          </p>
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>
