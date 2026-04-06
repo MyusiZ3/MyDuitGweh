@@ -50,7 +50,7 @@ class ToneManager {
       AppTone.genZ: 'Riwayat Terakhir',
       AppTone.milenial: 'Recent Transactions',
       AppTone.boomer: 'Buku Kas Terakhir',
-      AppTone.pasangan: 'Jejak Belanja Kita',
+      AppTone.pasangan: 'Riwayat Terakhir',
     },
     'home_empty_title': {
       AppTone.normal: 'Satu catatan, satu perubahan!',
@@ -64,21 +64,21 @@ class ToneManager {
       AppTone.genZ: 'Sepi amat, belom jajan ya? Click + yuk!',
       AppTone.milenial: 'No transactions yet. Start tracking your cashflow!',
       AppTone.boomer: 'Hari ini tidak ada pengumuman belanja.',
-      AppTone.pasangan: 'Yuk catat belanja kita hari ini 💗',
+      AppTone.pasangan: 'Yuk catat belanja kita hari ini ^_^',
     },
     'greeting_pagi': {
       AppTone.normal: 'Selamat Pagi',
       AppTone.genZ: 'Pagi Skid',
       AppTone.milenial: 'Morning vibes',
       AppTone.boomer: 'Selamat Pagi',
-      AppTone.pasangan: 'Meowning ^_^',
+      AppTone.pasangan: 'Meowniing ^_^',
     },
     'greeting_siang': {
       AppTone.normal: 'Selamat Siang',
       AppTone.genZ: 'Siang Kak',
       AppTone.milenial: 'Happy Lunch Time',
       AppTone.boomer: 'Selamat Siang',
-      AppTone.pasangan: 'Siang Sayang..',
+      AppTone.pasangan: 'Siang Sayaang..',
     },
     'greeting_sore': {
       AppTone.normal: 'Selamat Sore',
@@ -92,7 +92,7 @@ class ToneManager {
       AppTone.genZ: 'Malem Kak',
       AppTone.milenial: 'Good Evening',
       AppTone.boomer: 'Selamat Malam',
-      AppTone.pasangan: 'Met Malemm..',
+      AppTone.pasangan: 'Met Maleem..',
     },
 
     // ---------------------------------------------------------
@@ -171,7 +171,7 @@ class ToneManager {
       AppTone.genZ: 'Beneran Luhh?',
       AppTone.milenial: 'Sign Out?',
       AppTone.boomer: 'Ingin Keluar Akun?',
-      AppTone.pasangan: 'Mau Pergi Dulu? 🥺',
+      AppTone.pasangan: 'Mau Pergi? ಥ_ಥ',
     },
     'dialog_logout_msg': {
       AppTone.normal:
@@ -187,7 +187,7 @@ class ToneManager {
       AppTone.genZ: 'Mau Hapus',
       AppTone.milenial: 'Delete Wallet',
       AppTone.boomer: 'Hapus Dompet',
-      AppTone.pasangan: 'Hapus Dompet Kita? 😢',
+      AppTone.pasangan: 'Hapus Dompet? ＞︿＜',
     },
     'dialog_del_wallet_msg': {
       AppTone.normal:
@@ -206,7 +206,7 @@ class ToneManager {
       AppTone.genZ: 'Cabut Circle',
       AppTone.milenial: 'Leave Wallet',
       AppTone.boomer: 'Keluar Dari',
-      AppTone.pasangan: 'Tinggalin ?',
+      AppTone.pasangan: 'Tinggalin? ＞︿＜',
     },
     'dialog_leave_wallet_msg': {
       AppTone.normal:
@@ -218,7 +218,7 @@ class ToneManager {
       AppTone.boomer:
           'Anda tidak akan bisa melihat catatan di sini lagi setelah keluar.',
       AppTone.pasangan:
-          'Kamu gak bisa lihat dompet ini lagi lho sayang, beneran nih? ~(>_<。)＼',
+          'Kamu gak bisa lihat dompet ini lagi lho sayang, beneran nih? ~(>_<。)',
     },
     'dialog_del_tx_title': {
       AppTone.normal: 'Hapus Transaksi?',
@@ -241,7 +241,7 @@ class ToneManager {
       AppTone.genZ: 'Buang Chat Ini?',
       AppTone.milenial: 'Delete Chat?',
       AppTone.boomer: 'Hapus Percakapan?',
-      AppTone.pasangan: 'Hapus Obrolan Kita? 💬',
+      AppTone.pasangan: 'Hapus Obrolan Kita? ಥ_ಥ',
     },
     'dialog_del_chat_msg': {
       AppTone.normal:
@@ -314,7 +314,7 @@ class ToneManager {
     },
     'snack_api_saved': {
       AppTone.normal: 'API Key berhasil disimpan!',
-      AppTone.genZ: 'Key udah masuk, gass pol!',
+      AppTone.genZ: 'Key udah masuk, ikuzooo!',
       AppTone.milenial: 'API Key saved successfully.',
       AppTone.boomer: 'Kunci API sudah tersimpan dengan aman.',
       AppTone.pasangan: 'Udah tersimpan yahh..!',
@@ -336,7 +336,7 @@ class ToneManager {
     },
     'snack_tx_success': {
       AppTone.normal: 'Transaksi berhasil disimpan!',
-      AppTone.genZ: 'Tersimpan mantap poll bosqu!',
+      AppTone.genZ: 'Tersimpan mantap kak!',
       AppTone.milenial: 'Done! Transaksi on-track',
       AppTone.boomer: 'Alhamdulillah sudah tercatat ya',
       AppTone.pasangan: 'Udah tercatat ya sayangku! Pinter deh :3',
@@ -350,17 +350,20 @@ class ToneManager {
     },
     'dialog_kick_member_title': {
       AppTone.normal: 'Keluarkan Anggota?',
-      AppTone.genZ: 'Kick Member Ini?',
+      AppTone.genZ: 'Kick Ni Orang?',
       AppTone.milenial: 'Remove member?',
       AppTone.boomer: 'Keluarkan orang ini?',
-      AppTone.pasangan: 'Keluarkan dia sayang? 🥺',
+      AppTone.pasangan: 'Keluarin dia sayang? ≡(▔﹏▔)≡',
     },
     'dialog_kick_member_msg': {
       AppTone.normal: 'Anggota ini tidak akan bisa lagi mengakses dompet ini.',
-      AppTone.genZ: 'Beneran mau kick? Dia nggak bakal bisa liat dompet ini lagi.',
-      AppTone.milenial: 'This member will lose access to this wallet permanently.',
+      AppTone.genZ:
+          'Beneran mau kick? Dia nggak bakal bisa liat dompet ini lagi.',
+      AppTone.milenial:
+          'This member will lose access to this wallet permanently.',
       AppTone.boomer: 'Orang ini tidak akan bisa melihat catatan di sini lagi.',
-      AppTone.pasangan: 'Dia gak bakal bisa join lagi lho sayang, beneran? ~(>_<)',
+      AppTone.pasangan:
+          'Dia gak bakal bisa join lagi lho sayang, beneran? ~(>_<)',
     },
     // ---------------------------------------------------------
     // WALLET SCREEN EMPTY STATES
@@ -370,35 +373,43 @@ class ToneManager {
       AppTone.genZ: 'Dompet Lu Masih Kosong Melompong',
       AppTone.milenial: 'No Wallets Yet',
       AppTone.boomer: 'Dompet Masih Kosong',
-      AppTone.pasangan: 'Belum Ada Dompet Kita 🥺',
+      AppTone.pasangan: 'Belum Ada Dompet ＞︿＜',
     },
     'wallet_empty_msg': {
       AppTone.normal: 'Yuk buat dompet pertama kamu untuk mulai mencatat!',
       AppTone.genZ: 'Bikin dompet dulu skid, biar kaga boncos mulu!',
-      AppTone.milenial: 'Create your first wallet to start tracking financial health.',
-      AppTone.boomer: 'Silakan buat dompet dulu untuk mencatat rezeki hari ini.',
-      AppTone.pasangan: 'Sayang, buat dompet dulu yuk biar kita bisa nabung bareng~ 💖',
+      AppTone.milenial:
+          'Create your first wallet to start tracking financial health.',
+      AppTone.boomer:
+          'Silakan buat dompet dulu untuk mencatat rezeki hari ini.',
+      AppTone.pasangan:
+          'Sayang, buat dompet dulu yuk biar kita bisa nabung bareng~ (✿◠‿◠)',
     },
     'colab_empty_title': {
       AppTone.normal: 'Belum ada dompet kolaborasi',
       AppTone.genZ: 'Circle Lu Belum Punya Brankas',
       AppTone.milenial: 'No Collaborative Wallets',
       AppTone.boomer: 'Belum Ada Dompet Bersama',
-      AppTone.pasangan: 'Belum Ada Brankas Cinta Kita 💖',
+      AppTone.pasangan: 'Belum Ada Nihh..',
     },
     'colab_empty_msg': {
-      AppTone.normal: 'Buat dompet colab di tab Wallet untuk patungan bareng teman!',
-      AppTone.genZ: 'Ajak sirkel lu patungan di sini, biar kaga ada yang ngutang mulu!',
-      AppTone.milenial: 'Collaborate with items or partners here. Create one in Wallet tab!',
-      AppTone.boomer: 'Silakan buat dompet bersama untuk keperluan keluarga di menu Dompet.',
-      AppTone.pasangan: 'Cari brankas kita di sini ya sayang, biar rahasia keuangan kita aman~ 💑',
+      AppTone.normal:
+          'Buat dompet colab di tab Wallet untuk patungan bareng teman!',
+      AppTone.genZ:
+          'Ajak sirkel lu patungan di sini, biar kaga ada yang ngutang mulu!',
+      AppTone.milenial:
+          'Collaborate with items or partners here. Create one in Wallet tab!',
+      AppTone.boomer:
+          'Silakan buat dompet bersama untuk keperluan keluarga di menu Dompet.',
+      AppTone.pasangan:
+          'Cari brankas kita di sini ya sayang, biar rahasia keuangan kita aman~ (✿◠‿◠)',
     },
     'error_not_creator_delete': {
-      AppTone.normal: 'Kamu hanya bisa menghapus transaksimu sendiri! 🚫',
-      AppTone.genZ: 'Eits, bukan lu yang input ini! Jangan main apus aja! 😡',
+      AppTone.normal: 'Kamu hanya bisa menghapus transaksimu sendiri!',
+      AppTone.genZ: 'Eits, bukan lu yang input ini! Jangan main apus aja!',
       AppTone.milenial: 'You can only delete transactions you created.',
       AppTone.boomer: 'Hanya bisa menghapus catatan milik sendiri ya.',
-      AppTone.pasangan: 'Jangan hapus punya aku dong sayang.. ihh 😠',
+      AppTone.pasangan: 'Jangan hapus punya aku dong sayang.. ihh ￣へ￣',
     },
   };
 
