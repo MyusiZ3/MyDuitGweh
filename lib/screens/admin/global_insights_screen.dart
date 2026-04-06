@@ -295,8 +295,8 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                         children: [
                           // FITUR #4: AI Trend Analysis (SuperAdmin Only)
                           if (widget.isSuperAdmin) ...[
-                            _buildSectionTitle(
-                                'AI Macros Analysis', Icons.auto_awesome_rounded),
+                            _buildSectionTitle('AI Macros Analysis',
+                                Icons.auto_awesome_rounded),
                             const SizedBox(height: 16),
                             _buildAiAnalysisButton(context),
                             const SizedBox(height: 32),
@@ -311,21 +311,21 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
 
                           _buildPeriodFilter(),
                           const SizedBox(height: 24),
-                          
+
                           // FITUR #1: Cash Flow Chart
                           _buildSectionTitle(
                               'Tren Keuangan Global', Icons.show_chart_rounded),
                           const SizedBox(height: 16),
                           _buildCashFlowChart(),
                           const SizedBox(height: 32),
-                          
+
                           // FITUR #2: Top Spending Categories
                           _buildSectionTitle(
                               'Distribusi Platform', Icons.pie_chart_rounded),
                           const SizedBox(height: 16),
                           _buildCategoryPieChart(),
                           const SizedBox(height: 32),
-                          
+
                           // FITUR #5: User Activity Heatmap
                           _buildSectionTitle(
                               'Aktivitas User', Icons.calendar_month_rounded),
@@ -1252,7 +1252,8 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
             } catch (e) {
               if (context.mounted) {
                 Navigator.pop(context);
-                UIHelper.showErrorSnackBar(context, 'Error preparing AI data: $e');
+                UIHelper.showErrorSnackBar(
+                    context, 'Error preparing AI data: $e');
               }
             }
           },
@@ -1624,7 +1625,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                     fontSize: 24)),
             Text(
                 widget.isSuperAdmin
-                    ? 'EAGLE EYE — FULL ACCESS'
+                    ? 'ARCHEN EYE — FULL ACCESS'
                     : 'REAL-TIME SYSTEM MONITOR',
                 style: TextStyle(
                     color: widget.isSuperAdmin
@@ -1947,11 +1948,15 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: isAvailable ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                      color: isAvailable
+                          ? Colors.green.withOpacity(0.1)
+                          : Colors.red.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      isAvailable ? Icons.check_circle_rounded : Icons.cancel_rounded,
+                      isAvailable
+                          ? Icons.check_circle_rounded
+                          : Icons.cancel_rounded,
                       color: isAvailable ? Colors.green : Colors.red,
                       size: 20,
                     ),
@@ -1962,14 +1967,18 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          isAvailable ? 'Survei Sedang Aktif' : 'Survei Nonaktif',
-                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+                          isAvailable
+                              ? 'Survei Sedang Aktif'
+                              : 'Survei Nonaktif',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w900, fontSize: 16),
                         ),
                         Text(
-                          isAvailable 
-                            ? 'User dapat mengisi survei kepuasan.' 
-                            : 'Fitur survei ditutup untuk sementara.',
-                          style: const TextStyle(color: Colors.grey, fontSize: 11),
+                          isAvailable
+                              ? 'User dapat mengisi survei kepuasan.'
+                              : 'Fitur survei ditutup untuk sementara.',
+                          style:
+                              const TextStyle(color: Colors.grey, fontSize: 11),
                         ),
                       ],
                     ),
@@ -1978,9 +1987,11 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
               ),
               const Divider(height: 32),
               if (config != null) ...[
-                _buildStatusRow('Min. Transaksi', '${config.minTransactions} Transaksi'),
+                _buildStatusRow(
+                    'Min. Transaksi', '${config.minTransactions} Transaksi'),
                 const SizedBox(height: 12),
-                _buildStatusRow('Min. Umur Akun', '${config.minAccountAgeDays} Hari'),
+                _buildStatusRow(
+                    'Min. Umur Akun', '${config.minAccountAgeDays} Hari'),
                 const SizedBox(height: 20),
               ],
               SizedBox(
@@ -1989,17 +2000,20 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const AppConfigScreen()),
+                      MaterialPageRoute(
+                          builder: (_) => const AppConfigScreen()),
                     );
                   },
                   icon: const Icon(Icons.settings_suggest_rounded, size: 18),
-                  label: const Text('UBAH KONFIGURASI DI APP SETTINGS', 
-                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11)),
+                  label: const Text('UBAH KONFIGURASI DI APP SETTINGS',
+                      style:
+                          TextStyle(fontWeight: FontWeight.w900, fontSize: 11)),
                   style: TextButton.styleFrom(
                     foregroundColor: Colors.indigo,
                     backgroundColor: Colors.indigo.withOpacity(0.05),
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
               ),
@@ -2014,8 +2028,14 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600)),
-        Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.black87)),
+        Text(label,
+            style: const TextStyle(
+                fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600)),
+        Text(value,
+            style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+                color: Colors.black87)),
       ],
     );
   }
@@ -2218,28 +2238,26 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
       }
 
       final result = await _aiService.analyzeFeedbackSentiment(feedbacks);
-      
+
       // Robust JSON parsing with sanitization
-      String cleanResult = result
-          .replaceAll('```json', '')
-          .replaceAll('```', '')
-          .trim();
-      
+      String cleanResult =
+          result.replaceAll('```json', '').replaceAll('```', '').trim();
+
       // Extract only the JSON object between first { and last }
       final startIdx = cleanResult.indexOf('{');
       final endIdx = cleanResult.lastIndexOf('}');
-      
+
       if (startIdx == -1 || endIdx == -1 || endIdx <= startIdx) {
         throw 'AI mengembalikan format yang tidak valid. Coba lagi.';
       }
-      
+
       cleanResult = cleanResult.substring(startIdx, endIdx + 1);
-      
+
       // Sanitize common AI JSON issues
       // Remove trailing commas before ] or }
       cleanResult = cleanResult.replaceAll(RegExp(r',\s*]'), ']');
       cleanResult = cleanResult.replaceAll(RegExp(r',\s*}'), '}');
-      
+
       // Try parsing, if it fails try once more with the AI
       Map<String, dynamic>? parsedResult;
       try {

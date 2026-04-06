@@ -38,7 +38,7 @@ class _AiTrendAnalysisScreenState extends State<AiTrendAnalysisScreen> {
   Future<void> _loadCacheOrFetch() async {
     final prefs = await SharedPreferences.getInstance();
     final cached = prefs.getString('cached_trend_analysis');
-    
+
     if (cached != null) {
       if (mounted) {
         setState(() {
@@ -71,7 +71,7 @@ class _AiTrendAnalysisScreenState extends State<AiTrendAnalysisScreen> {
           _analysisResult = result;
           _isLoading = false;
         });
-        
+
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('cached_trend_analysis', result);
       }
@@ -130,7 +130,7 @@ class _AiTrendAnalysisScreenState extends State<AiTrendAnalysisScreen> {
           ),
           const SizedBox(height: 24),
           const Text(
-            'Eagle Eye AI sedang menganalisis...',
+            'Archen Eye AI sedang menganalisis...',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
@@ -223,7 +223,7 @@ class _AiTrendAnalysisScreenState extends State<AiTrendAnalysisScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Eagle Eye AI Insight',
+                        'Archen Eye AI Insight',
                         style: TextStyle(
                             color: Colors.white,
                             fontSize: 16,
