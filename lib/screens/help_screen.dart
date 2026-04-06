@@ -6,7 +6,7 @@ class HelpScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color _primary = AppColors.primary;
+    const Color primary = AppColors.primary;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -59,8 +59,8 @@ class HelpScreen extends StatelessWidget {
               icon: const Icon(Icons.email_outlined),
               label: const Text('Kirim Email ke Support'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: _primary,
-                side: const BorderSide(color: _primary),
+                foregroundColor: primary,
+                side: const BorderSide(color: primary),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16)),
               ),

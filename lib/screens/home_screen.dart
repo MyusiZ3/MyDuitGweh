@@ -22,9 +22,11 @@ import 'main_nav.dart';
 import 'edit_profile_screen.dart';
 import 'help_screen.dart';
 import 'about_screen.dart';
-import 'login_screen.dart';
 import 'notifications_screen.dart';
 import 'admin/admin_tools_screen.dart';
+import '../widgets/bottom_sheets/experience_survey_sheet.dart';
+import '../models/survey_config_model.dart';
+import '../utils/debouncer.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -38,6 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final AuthService _authService = AuthService();
   final SecurityService _securityService = SecurityService();
   final NotificationService _notificationService = NotificationService();
+  final RefreshThrottle _refreshThrottle = RefreshThrottle();
   final String _uid = FirebaseAuth.instance.currentUser!.uid;
 
   bool _isBiometricEnabled = false;
@@ -55,14 +58,40 @@ class _HomeScreenState extends State<HomeScreen> {
   int _unreadBroadcasts = 0;
   List<Map<String, dynamic>> _currentActiveBroadcasts = [];
 
+  bool _isCheckingSurvey = false;
+  bool _isSurveyOpen = false;
+
   @override
   void initState() {
     super.initState();
+    _notificationService.init(); // Inisiasi & Minta Izin Notifikasi awal
     _loadSettings();
     _checkAppLock();
     _initNotificationListener();
     _checkAdminRole();
     _walletsStream = _firestoreService.getWalletsStream(_uid);
+    _initSurveyListener();
+  }
+
+  StreamSubscription? _surveyConfigSub;
+  SurveyConfigModel? _currentSurveyConfig;
+
+  void _initSurveyListener() {
+    _surveyConfigSub =
+        _firestoreService.getSurveyConfigStream().listen((config) {
+      if (!mounted) return;
+
+      // If status changed from inactive to active, and we are not in admin mode
+      if (_currentSurveyConfig != null &&
+          !_currentSurveyConfig!.isAvailable &&
+          config.isAvailable &&
+          !_isAdmin) {
+        UIHelper.showSuccessSnackBar(
+            context, '📣 Survei Kepuasan Baru tersedia! Cek di profil ya.');
+      }
+
+      setState(() => _currentSurveyConfig = config);
+    });
   }
 
   void _initNotificationListener() {
@@ -113,6 +142,25 @@ class _HomeScreenState extends State<HomeScreen> {
           broadcasts.where((b) => b['status'] == 'ongoing').toList();
       _currentActiveBroadcasts = activeBroadcasts;
 
+      // Local Schedule for Pending Broadcasts
+      final pendingBroadcasts =
+          broadcasts.where((b) => b['status'] == 'pending').toList();
+      for (var b in pendingBroadcasts) {
+        if (b['scheduledTime'] != null) {
+          try {
+            final time = (b['scheduledTime'] as Timestamp).toDate();
+            _notificationService.scheduleBroadcast(
+              id: b['id'].hashCode,
+              title: b['title'] ?? 'Pengumuman',
+              body: b['message'] ?? 'Ada info penting nih!',
+              scheduledTime: time,
+            );
+          } catch(e) {
+            print('Error scheduling locally: $e');
+          }
+        }
+      }
+
       // Unread = active + not yet SEEN by user (not dismissed)
       final unseenCount = activeBroadcasts
           .where((b) => !_seenBroadcasts.contains(b['id']))
@@ -128,15 +176,18 @@ class _HomeScreenState extends State<HomeScreen> {
         if (latestId != lastNotifiedId) {
           _notificationService.showInstant(
             id: latestId.hashCode,
-            title: '📣 PENGUMUMAN BARU',
-            body: latest['title'] ?? '',
+            title: latest['title'] ?? '📣 MyDuitGweh Update',
+            body: latest['message'] ?? 'Ada info menarik nih buat kamu!',
           );
           await prefs.setString('last_notified_broadcast_id', latestId);
 
           // Premium In-App Dialog for Broadcast
           if (mounted) {
             _showPremiumBroadcast(
-                null, latest['title'] ?? 'PENGUMUMAN', latest['message'] ?? '');
+              null,
+              latest['title'] ?? 'PENGUMUMAN',
+              latest['message'] ?? 'Ada info menarik nih buat kamu!',
+            );
           }
         }
       }
@@ -297,6 +348,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _notifListener?.cancel();
     _broadcastSub?.cancel();
+    _surveyConfigSub?.cancel();
     super.dispose();
   }
 
@@ -326,6 +378,18 @@ class _HomeScreenState extends State<HomeScreen> {
       final savedMinute = prefs.getInt('reminder_minute') ?? 0;
       _reminderTime = TimeOfDay(hour: savedHour, minute: savedMinute);
     });
+
+    // Re-schedule notification on startup to ensure latest channel settings are applied
+    if (_isNotificationEnabled) {
+      try {
+        await _notificationService.scheduleDailyReminder(
+          hour: _reminderTime.hour,
+          minute: _reminderTime.minute,
+        );
+      } catch (e) {
+        debugPrint('Auto-schedule notification failed: $e');
+      }
+    }
   }
 
   Future<void> _saveDismissedBroadcast(String id) async {
@@ -358,6 +422,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _handleRefresh() async {
+    if (!_refreshThrottle.canRefresh) {
+      UIHelper.showInfoSnackBar(
+          context, 'Tunggu sebentar sebelum refresh lagi!');
+      return;
+    }
+
+    // Mark as refreshed to start cooldown
+    _refreshThrottle.markRefreshed();
+
     // Karena menggunakan StreamBuilder, data otomatis terupdate.
     // Kita berikan delay kecil untuk estetika UX (memberi rasa 'loading').
     await Future.delayed(const Duration(milliseconds: 800));
@@ -368,11 +441,25 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String _getGreeting() {
-    var hour = DateTime.now().hour;
-    if (hour < 12) return 'Selamat Pagi';
-    if (hour < 15) return 'Selamat Siang';
-    if (hour < 18) return 'Selamat Sore';
-    return 'Selamat Malam';
+    final now = DateTime.now();
+    final hour = now.hour;
+    final minute = now.minute;
+    final totalMinutes = hour * 60 + minute;
+
+    // Pagi: 03:00 - 11:30
+    if (totalMinutes >= 180 && totalMinutes <= 690) {
+      return ToneManager.t('greeting_pagi');
+    }
+    // Siang: 11:31 - 14:30
+    if (totalMinutes >= 691 && totalMinutes <= 870) {
+      return ToneManager.t('greeting_siang');
+    }
+    // Sore: 14:31 - 17:59
+    if (totalMinutes >= 871 && totalMinutes <= 1079) {
+      return ToneManager.t('greeting_sore');
+    }
+    // Malam: 18:00 - 02:59
+    return ToneManager.t('greeting_malam');
   }
 
   @override
@@ -861,7 +948,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     _buildRecentTransactions(walletIds),
-                    const SliverPadding(padding: EdgeInsets.only(bottom: 110)),
                   ],
                 ),
               );
@@ -994,17 +1080,18 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.receipt_long_outlined,
-                      color: AppColors.textHint.withOpacity(0.3), size: 32),
+                  const Icon(Icons.history_toggle_off_rounded,
+                      color: AppColors.textHint, size: 40),
                   const SizedBox(height: 12),
-                  const Text('Satu catatan, satu perubahan!',
-                      style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700)),
-                  Text(ToneManager.t('home_empty'),
+                  Text(ToneManager.t('home_empty_title'),
                       style: const TextStyle(
-                          color: AppColors.textHint, fontSize: 11)),
+                          color: AppColors.textPrimary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 4),
+                  Text(ToneManager.t('home_empty_msg'),
+                      style: const TextStyle(
+                          color: AppColors.textHint, fontSize: 12)),
                 ],
               ),
             ),
@@ -1099,6 +1186,9 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) => Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.8,
+          ),
           padding: EdgeInsets.only(
               bottom: MediaQuery.of(context).padding.bottom + 24),
           decoration: const BoxDecoration(
@@ -1181,196 +1271,235 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              if (_isAdmin)
-                _buildProfileMenuItem(
-                  icon: Icons.auto_fix_high_rounded,
-                  label: 'Admin Control Tools',
-                  subtitle: 'Maintenance & Broadcast',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const AdminToolsScreen()));
-                  },
-                  trailing: const Icon(Icons.arrow_forward_ios_rounded,
-                      size: 16, color: AppColors.primary),
-                ),
-              _buildProfileMenuItem(
-                icon: Icons.shield_outlined,
-                label: 'Kunci Sidik Jari/Wajah',
-                onTap: () async {
-                  final newVal = !_isBiometricEnabled;
-                  final canAuth = await _securityService.isBiometricAvailable();
-                  if (!canAuth) return;
-                  final authSuccess = await _securityService.authenticate();
-                  if (authSuccess) {
-                    await _securityService.setBiometricEnabled(newVal);
-                    setModalState(() => _isBiometricEnabled = newVal);
-                    setState(() => _isBiometricEnabled = newVal);
-                  }
-                },
-                trailing: Switch(
-                  value: _isBiometricEnabled,
-                  onChanged: (val) async {
-                    final canAuth =
-                        await _securityService.isBiometricAvailable();
-                    if (!canAuth) return;
-                    final authSuccess = await _securityService.authenticate();
-                    if (authSuccess) {
-                      await _securityService.setBiometricEnabled(val);
-                      setModalState(() => _isBiometricEnabled = val);
-                      setState(() => _isBiometricEnabled = val);
-                    }
-                  },
-                  activeColor: AppColors.primary,
-                  activeTrackColor: AppColors.primary.withOpacity(0.4),
-                ),
-              ),
-              _buildProfileMenuItem(
-                icon: Icons.track_changes_rounded,
-                label: 'Target Budget Bulanan',
-                onTap: () {
-                  Navigator.pop(context);
-                  _showBudgetDialog();
-                },
-                trailing: Text(
-                    _monthlyBudget > 0
-                        ? CurrencyFormatter.formatCurrency(_monthlyBudget)
-                        : 'Atur',
-                    style: const TextStyle(
-                        color: AppColors.primary, fontWeight: FontWeight.bold)),
-              ),
-              _buildProfileMenuItem(
-                icon: Icons.notifications_none_rounded,
-                label: 'Pengingat Jurnal Harian',
-                subtitle: _isNotificationEnabled
-                    ? 'Ingatkan setiap pukul ${_reminderTime.format(context)}'
-                    : 'Ketuk untuk aktifkan',
-                onTap: () async {
-                  final prefs = await SharedPreferences.getInstance();
-                  if (!_isNotificationEnabled) {
-                    final pickedTime = await showTimePicker(
-                        context: context, initialTime: _reminderTime);
-                    if (pickedTime != null) {
-                      await prefs.setBool('use_notifications', true);
-                      await prefs.setInt('reminder_hour', pickedTime.hour);
-                      await prefs.setInt('reminder_minute', pickedTime.minute);
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_isAdmin)
+                        _buildProfileMenuItem(
+                          icon: Icons.auto_fix_high_rounded,
+                          label: 'Admin Control Tools',
+                          subtitle: 'Maintenance & Broadcast',
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const AdminToolsScreen()));
+                          },
+                          trailing: const Icon(Icons.arrow_forward_ios_rounded,
+                              size: 16, color: AppColors.primary),
+                        ),
+                      _buildProfileMenuItem(
+                        icon: Icons.shield_outlined,
+                        label: 'Kunci Sidik Jari/Wajah',
+                        onTap: () async {
+                          final newVal = !_isBiometricEnabled;
+                          final canAuth =
+                              await _securityService.isBiometricAvailable();
+                          if (!canAuth) return;
+                          final authSuccess =
+                              await _securityService.authenticate();
+                          if (authSuccess) {
+                            await _securityService.setBiometricEnabled(newVal);
+                            setModalState(() => _isBiometricEnabled = newVal);
+                            setState(() => _isBiometricEnabled = newVal);
+                          }
+                        },
+                        trailing: Switch(
+                          value: _isBiometricEnabled,
+                          onChanged: (val) async {
+                            final canAuth =
+                                await _securityService.isBiometricAvailable();
+                            if (!canAuth) return;
+                            final authSuccess =
+                                await _securityService.authenticate();
+                            if (authSuccess) {
+                              await _securityService.setBiometricEnabled(val);
+                              setModalState(() => _isBiometricEnabled = val);
+                              setState(() => _isBiometricEnabled = val);
+                            }
+                          },
+                          activeColor: AppColors.primary,
+                          activeTrackColor: AppColors.primary.withOpacity(0.4),
+                        ),
+                      ),
+                      _buildProfileMenuItem(
+                        icon: Icons.track_changes_rounded,
+                        label: 'Target Budget Bulanan',
+                        onTap: () {
+                          Navigator.pop(context);
+                          _showBudgetDialog();
+                        },
+                        trailing: Text(
+                            _monthlyBudget > 0
+                                ? CurrencyFormatter.formatCurrency(
+                                    _monthlyBudget)
+                                : 'Atur',
+                            style: const TextStyle(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.bold)),
+                      ),
+                      _buildProfileMenuItem(
+                        icon: Icons.notifications_none_rounded,
+                        label: 'Pengingat Jurnal Harian',
+                        subtitle: _isNotificationEnabled
+                            ? 'Ingatkan setiap pukul ${_reminderTime.format(context)}'
+                            : 'Ketuk untuk aktifkan',
+                        onTap: () async {
+                          final prefs = await SharedPreferences.getInstance();
+                          if (!_isNotificationEnabled) {
+                            final pickedTime = await showTimePicker(
+                                context: context, initialTime: _reminderTime);
+                            if (pickedTime != null) {
+                              await prefs.setBool('use_notifications', true);
+                              await prefs.setInt(
+                                  'reminder_hour', pickedTime.hour);
+                              await prefs.setInt(
+                                  'reminder_minute', pickedTime.minute);
 
-                      try {
-                        await _notificationService.init();
-                        await _notificationService.scheduleDailyReminder(
-                            hour: pickedTime.hour, minute: pickedTime.minute);
-                        setModalState(() {
-                          _isNotificationEnabled = true;
-                          _reminderTime = pickedTime;
-                        });
-                        setState(() {
-                          _isNotificationEnabled = true;
-                          _reminderTime = pickedTime;
-                        });
-                      } catch (e) {
-                        debugPrint('Notification fail: $e');
-                      }
-                    }
-                  } else {
-                    await prefs.setBool('use_notifications', false);
-                    await _notificationService.cancelAll();
-                    setModalState(() => _isNotificationEnabled = false);
-                    setState(() => _isNotificationEnabled = false);
-                  }
-                },
-                trailing: Switch(
-                  value: _isNotificationEnabled,
-                  onChanged: (val) async {
-                    // This will trigger the same logic as onTap
-                    if (val && !_isNotificationEnabled) {
-                      final pickedTime = await showTimePicker(
-                          context: context, initialTime: _reminderTime);
-                      if (pickedTime != null) {
-                        final prefs = await SharedPreferences.getInstance();
-                        await prefs.setBool('use_notifications', true);
-                        await prefs.setInt('reminder_hour', pickedTime.hour);
-                        await prefs.setInt(
-                            'reminder_minute', pickedTime.minute);
-                        await _notificationService.init();
-                        await _notificationService.scheduleDailyReminder(
-                            hour: pickedTime.hour, minute: pickedTime.minute);
-                        setModalState(() {
-                          _isNotificationEnabled = true;
-                          _reminderTime = pickedTime;
-                        });
-                        setState(() {
-                          _isNotificationEnabled = true;
-                          _reminderTime = pickedTime;
-                        });
-                      }
-                    } else if (!val && _isNotificationEnabled) {
-                      final prefs = await SharedPreferences.getInstance();
-                      await prefs.setBool('use_notifications', false);
-                      await _notificationService.cancelAll();
-                      setModalState(() => _isNotificationEnabled = false);
-                      setState(() => _isNotificationEnabled = false);
-                    }
-                  },
-                  activeColor: AppColors.primary,
-                  activeTrackColor: AppColors.primary.withOpacity(0.3),
+                              try {
+                                await _notificationService.init();
+                                await _notificationService
+                                    .scheduleDailyReminder(
+                                        hour: pickedTime.hour,
+                                        minute: pickedTime.minute,
+                                        showConfirmation: true);
+                                setModalState(() {
+                                  _isNotificationEnabled = true;
+                                  _reminderTime = pickedTime;
+                                });
+                                setState(() {
+                                  _isNotificationEnabled = true;
+                                  _reminderTime = pickedTime;
+                                });
+                              } catch (e) {
+                                debugPrint('Notification fail: $e');
+                              }
+                            }
+                          } else {
+                            await prefs.setBool('use_notifications', false);
+                            await _notificationService.cancelAll();
+                            setModalState(() => _isNotificationEnabled = false);
+                            setState(() => _isNotificationEnabled = false);
+                          }
+                        },
+                        trailing: Switch(
+                          value: _isNotificationEnabled,
+                          onChanged: (val) async {
+                            // This will trigger the same logic as onTap
+                            if (val && !_isNotificationEnabled) {
+                              final pickedTime = await showTimePicker(
+                                  context: context, initialTime: _reminderTime);
+                              if (pickedTime != null) {
+                                final prefs =
+                                    await SharedPreferences.getInstance();
+                                await prefs.setBool('use_notifications', true);
+                                await prefs.setInt(
+                                    'reminder_hour', pickedTime.hour);
+                                await prefs.setInt(
+                                    'reminder_minute', pickedTime.minute);
+                                await _notificationService.init();
+                                await _notificationService
+                                    .scheduleDailyReminder(
+                                        hour: pickedTime.hour,
+                                        minute: pickedTime.minute,
+                                        showConfirmation: true);
+                                setModalState(() {
+                                  _isNotificationEnabled = true;
+                                  _reminderTime = pickedTime;
+                                });
+                                setState(() {
+                                  _isNotificationEnabled = true;
+                                  _reminderTime = pickedTime;
+                                });
+                              }
+                            } else if (!val && _isNotificationEnabled) {
+                              final prefs =
+                                  await SharedPreferences.getInstance();
+                              await prefs.setBool('use_notifications', false);
+                              await _notificationService.cancelAll();
+                              setModalState(
+                                  () => _isNotificationEnabled = false);
+                              setState(() => _isNotificationEnabled = false);
+                            }
+                          },
+                          activeColor: AppColors.primary,
+                          activeTrackColor: AppColors.primary.withOpacity(0.3),
+                        ),
+                      ),
+                      const Divider(),
+                      _buildProfileMenuItem(
+                        icon: Icons.language_rounded,
+                        label: ToneManager.t('profile_tone'),
+                        onTap: () {
+                          Navigator.pop(context);
+                          _showToneSelector();
+                        },
+                        trailing: Text(
+                            ToneManager.notifier.value.name.toUpperCase(),
+                            style: const TextStyle(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.bold)),
+                      ),
+                      _buildProfileMenuItem(
+                          icon: Icons.person_outline,
+                          label: 'Edit Profil',
+                          onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const EditProfileScreen()))),
+                      _buildProfileMenuItem(
+                          icon: Icons.help_outline,
+                          label: 'Bantuan',
+                          onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const HelpScreen()))),
+                      _buildProfileMenuItem(
+                          icon: Icons.info_outline_rounded,
+                          label: 'Tentang Aplikasi',
+                          onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const AboutScreen()))),
+                      _buildProfileMenuItem(
+                        icon: Icons.rate_review_outlined,
+                        label: 'Survei Kepuasan',
+                        onTap: () {
+                          Navigator.pop(context);
+                          _checkAndShowSurvey();
+                        },
+                      ),
+                      _buildProfileMenuItem(
+                          icon: Icons.logout,
+                          label: ToneManager.t('profile_logout'),
+                          iconColor: AppColors.expense,
+                          textColor: AppColors.expense,
+                          onTap: () async {
+                            final confirm = await UIHelper.showConfirmDialog(
+                              context: context,
+                              title: ToneManager.t('dialog_logout_title'),
+                              message: ToneManager.t('dialog_logout_msg'),
+                              confirmText: ToneManager.t('dialog_yes'),
+                              cancelText: ToneManager.t('dialog_no'),
+                              isDangerous:
+                                  false, // Logout isn't scary like a deletion
+                            );
+                            if (confirm == true) {
+                              if (Navigator.canPop(context)) {
+                                Navigator.pop(context);
+                              }
+                              debugPrint('LOGOUT: Memulai proses sign out...');
+                              await _authService.signOut();
+                              debugPrint('LOGOUT: Sign out selesai.');
+                            }
+                          }),
+                    ],
+                  ),
                 ),
               ),
-              const Divider(),
-              _buildProfileMenuItem(
-                icon: Icons.language_rounded,
-                label: ToneManager.t('profile_tone'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _showToneSelector();
-                },
-                trailing: Text(ToneManager.notifier.value.name.toUpperCase(),
-                    style: const TextStyle(
-                        color: AppColors.primary, fontWeight: FontWeight.bold)),
-              ),
-              _buildProfileMenuItem(
-                  icon: Icons.person_outline,
-                  label: 'Edit Profil',
-                  onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const EditProfileScreen()))),
-              _buildProfileMenuItem(
-                  icon: Icons.help_outline,
-                  label: 'Bantuan',
-                  onTap: () => Navigator.push(context,
-                      MaterialPageRoute(builder: (_) => const HelpScreen()))),
-              _buildProfileMenuItem(
-                  icon: Icons.info_outline_rounded,
-                  label: 'Tentang Aplikasi',
-                  onTap: () => Navigator.push(context,
-                      MaterialPageRoute(builder: (_) => const AboutScreen()))),
-              _buildProfileMenuItem(
-                  icon: Icons.logout,
-                  label: ToneManager.t('profile_logout'),
-                  iconColor: AppColors.expense,
-                  textColor: AppColors.expense,
-                  onTap: () async {
-                    final confirm = await UIHelper.showConfirmDialog(
-                      context: context,
-                      title: ToneManager.t('dialog_logout_title'),
-                      message: ToneManager.t('dialog_logout_msg'),
-                      confirmText: ToneManager.t('dialog_yes'),
-                      cancelText: ToneManager.t('dialog_no'),
-                      isDangerous: false, // Logout isn't scary like a deletion
-                    );
-                    if (confirm == true) {
-                      Navigator.pop(context);
-                      await _authService.signOut();
-                      if (mounted)
-                        Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const LoginScreen()),
-                            (r) => false);
-                    }
-                  }),
             ],
           ),
         ),
@@ -1379,97 +1508,269 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showToneSelector() {
+    UIHelper.showToneSelector(context);
+  }
+
+  Future<void> _checkAndShowSurvey() async {
+    if (_isCheckingSurvey || _isSurveyOpen) return;
+
+    _isCheckingSurvey = true;
+
+    if (mounted) {
+      UIHelper.showLoadingDialog(context, message: 'Memeriksa kriteria...');
+    }
+
+    try {
+      final results = await Future.wait([
+        _currentSurveyConfig != null
+            ? Future.value(_currentSurveyConfig)
+            : FirebaseFirestore.instance
+                .collection('app_config')
+                .doc('survey')
+                .get()
+                .then((doc) => doc.exists
+                    ? SurveyConfigModel.fromJson(doc.data()!)
+                    : null),
+        FirebaseFirestore.instance.collection('users').doc(_uid).get(),
+        FirebaseFirestore.instance
+            .collection('transactions')
+            .where('createdBy', isEqualTo: _uid)
+            .count()
+            .get(),
+      ]);
+
+      final config = results[0] as SurveyConfigModel?;
+      final userDoc = results[1] as DocumentSnapshot;
+      final txCountResult = results[2] as AggregateQuerySnapshot;
+
+      if (mounted) Navigator.pop(context);
+
+      if (config == null || !config.isAvailable) {
+        if (mounted) {
+          UIHelper.showInfoDialog(context, 'Survei Ditutup',
+              'Maaf banget, survei saat ini sedang ditutup oleh Archen. Ditunggu jadwal berikutnya ya! 🙏');
+        }
+        return;
+      }
+
+      if (!userDoc.exists) return;
+      final userData = userDoc.data() as Map<String, dynamic>;
+      final bool alreadyDone = userData['surveyDone'] ?? false;
+
+      if (alreadyDone) {
+        if (mounted) {
+          UIHelper.showInfoDialog(context, 'Sudah Berpartisipasi',
+              'Kamu sudah mengisi survei ini sebelumnya. Terima kasih banyak atas masukannya! ❤️');
+        }
+        return;
+      }
+
+      DateTime createdAt = (userData['createdAt'] as Timestamp?)?.toDate() ??
+          FirebaseAuth.instance.currentUser?.metadata.creationTime ??
+          DateTime.now();
+      final accountAgeDays =
+          (DateTime.now().difference(createdAt).inHours / 24).ceil();
+      final minAge = config.minAccountAgeDays ?? 0;
+
+      if (accountAgeDays < minAge) {
+        if (mounted) {
+          UIHelper.showInfoDialog(context, 'Belum Memenuhi Syarat',
+              'Maaf, Anda perlu menggunakan aplikasi minimal selama $minAge hari untuk memberikan feedback. (Akun Anda: $accountAgeDays hari)');
+        }
+        return;
+      }
+
+      final txCount = txCountResult.count ?? 0;
+      final minTx = config.minTransactions ?? 0;
+
+      if (txCount < minTx) {
+        if (mounted) {
+          UIHelper.showInfoDialog(context, 'Belum Memenuhi Syarat',
+              'Anda perlu memiliki minimal $minTx transaksi sukses untuk memberikan feedback. (Saat ini: $txCount transaksi)');
+        }
+        return;
+      }
+
+      if (mounted) _showSurveySheet();
+    } catch (e) {
+      if (mounted) {
+        if (Navigator.canPop(context)) Navigator.pop(context);
+        UIHelper.showErrorSnackBar(context, 'Gagal memuat kriteria: $e');
+      }
+      debugPrint('SURVEY ERROR: $e');
+    } finally {
+      _isCheckingSurvey = false;
+    }
+  }
+
+  void _showSurveySheet() {
+    if (_isSurveyOpen) return;
+    _isSurveyOpen = true;
+
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.only(top: 16, bottom: 40),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2))),
-            const SizedBox(height: 24),
-            const Text('Vibe Bahasa (App Tone)',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            ...AppTone.values.map((t) => ListTile(
-                  leading: Icon(
-                    t == AppTone.genZ
-                        ? Icons.rocket_launch
-                        : t == AppTone.milenial
-                            ? Icons.coffee
-                            : t == AppTone.boomer
-                                ? Icons.elderly
-                                : t == AppTone.pasangan
-                                    ? Icons.favorite_rounded
-                                    : Icons.notes,
-                    color: ToneManager.notifier.value == t
-                        ? (t == AppTone.pasangan
-                            ? const Color(0xFFFF2D55)
-                            : AppColors.primary)
-                        : Colors.grey,
-                  ),
-                  title: Text(
-                      t == AppTone.pasangan ? 'MY BINI' : t.name.toUpperCase(),
-                      style: TextStyle(
-                        fontWeight: ToneManager.notifier.value == t
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                        color: ToneManager.notifier.value == t
-                            ? (t == AppTone.pasangan
-                                ? const Color(0xFFFF2D55)
-                                : AppColors.primary)
-                            : Colors.black87,
-                      )),
-                  trailing: ToneManager.notifier.value == t
-                      ? Icon(Icons.check_circle,
-                          color: t == AppTone.pasangan
-                              ? const Color(0xFFFF2D55)
-                              : AppColors.primary)
-                      : null,
-                  onTap: () async {
-                    await ToneManager.setTone(t);
-                    if (mounted) Navigator.pop(ctx);
-                  },
-                )),
-          ],
-        ),
-      ),
-    );
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const ExperienceSurveySheet(),
+    ).then((_) => _isSurveyOpen = false);
   }
 
   void _showBudgetDialog() {
     final controller = TextEditingController(
         text: _monthlyBudget == 0 ? '' : _monthlyBudget.toStringAsFixed(0));
-    showDialog(
+    showGeneralDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Target Budget'),
-        content: TextField(
-            controller: controller,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(prefixText: 'Rp ')),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Batal')),
-          ElevatedButton(
-            onPressed: () async {
-              final budget = double.tryParse(controller.text) ?? 0.0;
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.setDouble('monthly_budget', budget);
-              setState(() => _monthlyBudget = budget);
-              Navigator.pop(context);
-            },
-            child: const Text('Simpan'),
+      barrierDismissible: true,
+      barrierLabel: '',
+      barrierColor: Colors.black.withOpacity(0.5),
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (ctx, anim1, anim2) => Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(
+          child: Padding(
+            padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom),
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 32),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(32),
+                boxShadow: [
+                  BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 40,
+                      offset: const Offset(0, 10))
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(32),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.9),
+                      border: Border.all(color: Colors.white.withOpacity(0.5)),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.track_changes_rounded,
+                              color: AppColors.primary, size: 32),
+                        ),
+                        const SizedBox(height: 20),
+                        const Text('Target Budget',
+                            style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -0.5)),
+                        const SizedBox(height: 8),
+                        Text('Atur batas pengeluaran bulananmu.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                fontSize: 13, color: Colors.grey[600])),
+                        const SizedBox(height: 24),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: TextField(
+                            controller: controller,
+                            keyboardType: TextInputType.number,
+                            style: const TextStyle(
+                                fontSize: 20, fontWeight: FontWeight.w800),
+                            decoration: InputDecoration(
+                              prefixText: 'Rp ',
+                              prefixStyle: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.black54),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 16),
+                              hintText: '0',
+                              hintStyle: TextStyle(color: Colors.grey[400]),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: InkWell(
+                                onTap: () => Navigator.pop(ctx),
+                                borderRadius: BorderRadius.circular(16),
+                                child: Container(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(16),
+                                    border:
+                                        Border.all(color: Colors.grey[300]!),
+                                  ),
+                                  child: const Center(
+                                    child: Text('Batal',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14)),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: InkWell(
+                                onTap: () async {
+                                  final budget =
+                                      double.tryParse(controller.text) ?? 0.0;
+                                  final prefs =
+                                      await SharedPreferences.getInstance();
+                                  await prefs.setDouble(
+                                      'monthly_budget', budget);
+                                  setState(() => _monthlyBudget = budget);
+                                  if (ctx.mounted) Navigator.pop(ctx);
+                                },
+                                borderRadius: BorderRadius.circular(16),
+                                child: Container(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary,
+                                    borderRadius: BorderRadius.circular(16),
+                                    boxShadow: [
+                                      BoxShadow(
+                                          color: AppColors.primary
+                                              .withOpacity(0.3),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 4))
+                                    ],
+                                  ),
+                                  child: const Center(
+                                    child: Text('Simpan',
+                                        style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14)),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
-        ],
+        ),
       ),
     );
   }

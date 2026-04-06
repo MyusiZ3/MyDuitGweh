@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'login_screen.dart';
 import '../utils/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({super.key});
+  final VoidCallback? onComplete;
+  const OnboardingScreen({super.key, this.onComplete});
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -78,16 +78,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     await prefs.setBool('onboarding_completed', true);
 
     if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        PageRouteBuilder(
-          transitionDuration: const Duration(milliseconds: 600),
-          pageBuilder: (context, anim, secondAnim) => const LoginScreen(),
-          transitionsBuilder: (context, anim, secondAnim, child) {
-            return FadeTransition(opacity: anim, child: child);
-          },
-        ),
-      );
+      // Beritahu AuthGate bahwa onboarding sudah selesai
+      // AuthGate akan otomatis rebuild dan menampilkan LoginScreen
+      widget.onComplete?.call();
     }
   }
 

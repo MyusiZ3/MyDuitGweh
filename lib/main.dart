@@ -15,6 +15,12 @@ import 'screens/main_nav.dart';
 import 'screens/maintenance_gate_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'services/auth_service.dart';
+import 'services/update_service.dart';
+import 'services/security_service.dart';
+import 'screens/security_gate_screen.dart';
+import 'services/notif_sync_service.dart';
+import 'services/notif_listener_bridge.dart';
+import 'screens/suspension_gate_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,6 +43,11 @@ void main() async {
 
   // VITAL: Tarik memori kepribadian sebelum layar pertama di-render!
   await ToneManager.loadTone();
+
+  // Init Workmanager untuk background sync notifikasi
+  await NotifSyncService.init();
+  // Restore listener state jika sebelumnya aktif
+  await NotifListenerBridge.initOnAppStart();
 
   runApp(const MyDuitGwehApp());
 }
@@ -70,55 +81,75 @@ class AuthGate extends StatefulWidget {
 
 class _AuthGateState extends State<AuthGate> {
   late Stream<User?> _authStream;
+  late final Future<bool> _isSafeFuture;
+  Future<bool>? _onboardingFuture;
 
   @override
   void initState() {
     super.initState();
     _authStream = FirebaseAuth.instance.authStateChanges();
+    _isSafeFuture = SecurityService.isDeviceSafe();
+    _onboardingFuture = _checkOnboarding();
+  }
+
+  /// Dipanggil oleh OnboardingScreen saat user selesai onboarding
+  void _onOnboardingComplete() {
+    setState(() {
+      _onboardingFuture = Future.value(true);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: _authStream,
-      // CRITICAL: Provide initialData so hot reload doesn't lose current state
-      initialData: FirebaseAuth.instance.currentUser,
-      builder: (context, snapshot) {
-        // DEBUG LOG
-        debugPrint('--- AUTH GATE STATE: ${snapshot.connectionState} ---');
-        debugPrint(
-            '--- HAS USER: ${snapshot.hasData} | UID: ${snapshot.data?.uid} ---');
-
-        if (snapshot.connectionState == ConnectionState.waiting &&
-            snapshot.data == null) {
+    return FutureBuilder<bool>(
+      future: _isSafeFuture,
+      builder: (context, safetySnapshot) {
+        if (safetySnapshot.connectionState == ConnectionState.waiting) {
           return const SplashView();
         }
 
-        final user = snapshot.data;
+        if (safetySnapshot.data == false) {
+          return const SecurityGateScreen();
+        }
 
+        // STEP 1: Cek onboarding DULU sebelum cek auth
         return FutureBuilder<bool>(
-          // Use a unique key to force rebuild of FutureBuilder when user changes
-          key: ValueKey(user?.uid ?? 'logged-out'),
-          future: _checkOnboarding(),
+          future: _onboardingFuture,
           builder: (context, onbSnapshot) {
             if (onbSnapshot.connectionState == ConnectionState.waiting) {
               return const SplashView();
             }
 
             final onboardingDone = onbSnapshot.data ?? false;
-            debugPrint('--- ONBOARDING DONE: $onboardingDone ---');
-
             if (!onboardingDone) {
-              return const OnboardingScreen();
+              debugPrint('--- NAVIGATING TO ONBOARDING ---');
+              return OnboardingScreen(
+                onComplete: _onOnboardingComplete,
+              );
             }
 
-            if (user != null) {
-              debugPrint('--- NAVIGATING TO MAINTENANCE WRAPPER ---');
-              return MaintenanceGateWrapper(user: user);
-            } else {
-              debugPrint('--- NAVIGATING TO LOGIN SCREEN ---');
-              return const LoginScreen();
-            }
+            // STEP 2: Onboarding selesai, baru cek auth
+            return StreamBuilder<User?>(
+              stream: _authStream,
+              initialData: FirebaseAuth.instance.currentUser,
+              builder: (context, snapshot) {
+                final user = snapshot.data;
+                debugPrint('--- AUTH GATE LOG: user=$user, connState=${snapshot.connectionState} ---');
+
+                if (snapshot.connectionState == ConnectionState.waiting &&
+                    user == null) {
+                  return const SplashView();
+                }
+
+                if (user == null) {
+                  debugPrint('--- NAVIGATING TO LOGIN SCREEN ---');
+                  return const LoginScreen();
+                }
+
+                debugPrint('--- NAVIGATING TO USER STATUS WRAPPER ---');
+                return UserGateWrapper(user: user);
+              },
+            );
           },
         );
       },
@@ -126,8 +157,71 @@ class _AuthGateState extends State<AuthGate> {
   }
 
   Future<bool> _checkOnboarding() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool('onboarding_completed') ?? false;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool('onboarding_completed') ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+}
+
+class UserGateWrapper extends StatefulWidget {
+  final User user;
+  const UserGateWrapper({super.key, required this.user});
+
+  @override
+  State<UserGateWrapper> createState() => _UserGateWrapperState();
+}
+
+class _UserGateWrapperState extends State<UserGateWrapper> {
+  late final Stream<DocumentSnapshot> _userStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _userStream = FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.user.uid)
+        .snapshots();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<DocumentSnapshot>(
+      stream: _userStream,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SplashView();
+        }
+
+        if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
+          return MaintenanceGateWrapper(user: widget.user);
+        }
+
+        final data = snapshot.data!.data() as Map<String, dynamic>;
+        final isDeactivated = data['isDeactivated'] ?? false;
+        final untilTimestamp = data['deactivatedUntil'] as Timestamp?;
+        final reason =
+            data['deactivatedReason'] ?? 'Melanggar Kebijakan Platform.';
+
+        if (isDeactivated) {
+          if (untilTimestamp != null) {
+            final DateTime until = untilTimestamp.toDate();
+            if (DateTime.now().isAfter(until)) {
+              return MaintenanceGateWrapper(user: widget.user);
+            }
+          }
+
+          return SuspensionGateScreen(
+            reason: reason,
+            until: untilTimestamp?.toDate(),
+          );
+        }
+
+        return MaintenanceGateWrapper(user: widget.user);
+      },
+    );
   }
 }
 
@@ -165,10 +259,16 @@ class _MaintenanceGateWrapperState extends State<MaintenanceGateWrapper> {
           return const SplashView();
         }
 
-        // Jika error atau dokumen tidak ada, langsung masuk
+        // Jika error atau dokumen tidak ada, kita harus hati-hati
         if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
+          final error = snapshot.error?.toString().toLowerCase() ?? '';
+          if (error.contains('permission-denied') || error.contains('not find document')) {
+            debugPrint('--- MAINTENANCE GATE: Auth/Permission issue detected. Staying in safe zone. ---');
+            return const SplashView(); 
+          }
+          
           debugPrint(
-              '--- MAINTENANCE GATE: No config doc or error, going to MainNav ---');
+              '--- MAINTENANCE GATE: Fallback to MainNav (error: $error) ---');
           return const MainNav();
         }
 
@@ -176,8 +276,12 @@ class _MaintenanceGateWrapperState extends State<MaintenanceGateWrapper> {
         final isMaintenance = data['isMaintenance'] ?? false;
         final maintenanceMsg = data['maintenanceMessage'] ??
             'Aplikasi sedang dalam pemeliharaan rutin.';
-
+            
         if (!isMaintenance) {
+          // Check for updates if not in maintenance using real-time sync
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            UpdateService.syncUpdateDialog(context, data);
+          });
           return const MainNav();
         }
 
@@ -214,15 +318,15 @@ class SplashView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
+            SizedBox(
               width: 80,
               height: 80,
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(20),
+              child: Image.asset(
+                'assets/images/logo_loading.png',
+                width: 60,
+                height: 60,
+                fit: BoxFit.contain,
               ),
-              child: const Icon(Icons.account_balance_wallet_rounded,
-                  size: 40, color: Colors.white),
             ),
             const SizedBox(height: 24),
             const CircularProgressIndicator(color: AppColors.primary),

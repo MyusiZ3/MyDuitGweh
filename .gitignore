@@ -50,3 +50,10 @@ app.*.map.json
 /macos/Flutter/GeneratedPluginRegistrant.swift
 /ios/Flutter/GeneratedPluginRegistrant.h
 /ios/Flutter/GeneratedPluginRegistrant.m
+
+# Firebase Hosting
+public/*.apk
+/public/app.bin
+.firebase/
+firebase-debug.log
+fireauth.log

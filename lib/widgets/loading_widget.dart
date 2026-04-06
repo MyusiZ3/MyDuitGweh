@@ -35,14 +35,15 @@ class _LoadingWidgetState extends State<LoadingWidget>
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           // Logo MyDuitGweh Look
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
-              shape: BoxShape.circle,
+          SizedBox(
+            width: 80,
+            height: 80,
+            child: Image.asset(
+              'assets/images/logo_loading.png',
+              width: 60,
+              height: 60,
+              fit: BoxFit.contain,
             ),
-            child: const Icon(Icons.account_balance_wallet_rounded,
-                size: 50, color: AppColors.primary),
           ),
           const SizedBox(height: 24),
           const Text(

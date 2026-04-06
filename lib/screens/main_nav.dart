@@ -10,6 +10,8 @@ import 'colab_screen.dart';
 import 'report_screen.dart';
 import 'receipt_scanner_screen.dart';
 import '../utils/ui_helper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../widgets/notification_permission_floating_card.dart';
 
 class MainNav extends StatefulWidget {
   const MainNav({super.key});
@@ -26,6 +28,11 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
   bool _isExpanded = false;
   late AnimationController _fabController;
   late Animation<double> _expandAnimation;
+
+  // Keys to communicate with Screens
+  final GlobalKey<WalletScreenState> _walletKey =
+      GlobalKey<WalletScreenState>();
+  final GlobalKey<ColabScreenState> _colabKey = GlobalKey<ColabScreenState>();
 
   @override
   void initState() {
@@ -70,11 +77,11 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
     });
   }
 
-  final List<Widget> _screens = [
+  late final List<Widget> _screens = [
     const HomeScreen(),
-    const WalletScreen(),
+    WalletScreen(key: _walletKey),
     const SizedBox(), // placeholder for Add button
-    const ColabScreen(),
+    ColabScreen(key: _colabKey),
     const ReportScreen(),
   ];
 
@@ -83,6 +90,15 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
       _toggleFAB();
       return;
     }
+
+    // Reset screen search if we are leaving them
+    if (_currentIndex == 1 && index != 1) {
+      _walletKey.currentState?.resetSearch();
+    }
+    if (_currentIndex == 3 && index != 3) {
+      _colabKey.currentState?.resetSearch();
+    }
+
     setState(() {
       _currentIndex = index;
       _isExpanded = false;
@@ -101,49 +117,55 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          IndexedStack(
-            index: _currentIndex,
-            children: _screens,
-          ),
+    return Stack(
+      children: [
+        Scaffold(
+          body: Stack(
+            children: [
+              IndexedStack(
+                index: _currentIndex,
+                children: _screens,
+              ),
 
-          // Action Buttons (Speed Dial Overlay)
-          if (_isExpanded) ...[
-            _buildSpeedDialBackdrop(),
-            _buildSpeedDialMenu(),
-          ],
-        ],
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 20,
-              offset: const Offset(0, -4),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildNavItem(Icons.home_rounded, 'Home', 0),
-                _buildNavItem(
-                    Icons.account_balance_wallet_outlined, 'Wallet', 1),
-                _buildAddButton(),
-                _buildNavItem(Icons.group_outlined, 'Colab', 3),
-                _buildNavItem(Icons.bar_chart_rounded, 'Report', 4),
+              // Action Buttons (Speed Dial Overlay)
+              if (_isExpanded) ...[
+                _buildSpeedDialBackdrop(),
+                _buildSpeedDialMenu(),
+              ],
+            ],
+          ),
+          bottomNavigationBar: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 20,
+                  offset: const Offset(0, -4),
+                ),
               ],
             ),
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildNavItem(Icons.home_rounded, 'Home', 0),
+                    _buildNavItem(
+                        Icons.account_balance_wallet_outlined, 'Wallet', 1),
+                    _buildAddButton(),
+                    _buildNavItem(Icons.group_outlined, 'Colab', 3),
+                    _buildNavItem(Icons.bar_chart_rounded, 'Report', 4),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
-      ),
+        // Overlays everything including BottomNavigationBar
+        const NotificationPermissionFloatingCard(),
+      ],
     );
   }
 
@@ -211,7 +233,7 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
         children: [
           _buildSpeedDialItem(
             icon: Icons.qr_code_scanner_rounded,
-            label: 'Scan Struk (AI)',
+            label: 'Scan Struk (OCR)',
             color: AppColors.primary,
             onTap: () {
               _toggleFAB();
@@ -318,30 +340,34 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
         animation: _fabController,
         builder: (context, child) {
           return Container(
-            width: 65,
-            height: 65,
+            width: 58,
+            height: 58,
+            transform: Matrix4.translationValues(
+                0, -8, 0), // Lift slightly above nav bar edge
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
+                  AppColors.primary.withOpacity(0.85),
                   AppColors.primary,
-                  AppColors.primary.withAlpha(200),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              shape: BoxShape.circle,
+              borderRadius: BorderRadius.circular(20), // iOS squircle shape
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withOpacity(0.3),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 12,
+                  spreadRadius: 0,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
             child: Transform.scale(
               scale: 1.0 + (_fabController.value * 0.1), // Slight pulse
               child: Transform.rotate(
-                angle: _expandAnimation.value * (3.14159 / 4), // Rotate 45deg
+                angle: _expandAnimation.value *
+                    (3.14159 / 4), // Rotate to forms an 'X'
                 child: const Icon(
                   Icons.add_rounded,
                   color: Colors.white,
@@ -357,26 +383,92 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
 
   Future<void> _startOCRScan() async {
     // Navigate to our custom scanner lens
-    final XFile? imageFile = await Navigator.push<XFile>(
+    final dynamic result = await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const ReceiptScannerScreen()),
     );
+
+    if (result == null) return;
+
+    XFile? imageFile;
+    bool useAi = true;
+
+    if (result is Map) {
+      imageFile = result['image'] as XFile?;
+      useAi = result['useAi'] ?? true;
+    } else if (result is XFile) {
+      imageFile = result;
+    }
 
     if (imageFile == null) return;
 
     // Show a loading dialog/overlay while processing
     if (!mounted) return;
 
+    // Load AI Config
+    final prefs = await SharedPreferences.getInstance();
+    final String? customApiKey = prefs.getString('user_ai_api_key');
+    final String? apiPlatform = prefs.getString('user_ai_api_platform');
+
     // We can reuse the AddTransactionScreen logic or call OCR here
     // Let's show a loading state
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(
-        child: Card(
-          child: Padding(
-            padding: EdgeInsets.all(24.0),
-            child: CircularProgressIndicator(),
+      builder: (_) => Center(
+        child: Material(
+          // Ensure styles from the theme carry through
+          color: Colors.transparent,
+          child: Container(
+            width: 280,
+            padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.12),
+                  blurRadius: 30,
+                  offset: const Offset(0, 15),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(
+                  width: 44,
+                  height: 44,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 3.5,
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(AppColors.primary),
+                  ),
+                ),
+                const SizedBox(height: 28),
+                Text(
+                  'Menganalisa Struk...',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.grey[800],
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'Sistem sedang merapikan data nota kamu secara otomatis ⚡',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                    color: Colors.grey[500],
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -384,7 +476,12 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
 
     try {
       final ocrService = ReceiptOCRService();
-      final data = await ocrService.scanReceiptFromFile(imageFile);
+      final data = await ocrService.scanReceiptFromFile(
+        imageFile,
+        useAi: useAi,
+        customApiKey: customApiKey,
+        apiPlatform: apiPlatform,
+      );
 
       if (!mounted) return;
       Navigator.pop(context); // close loader

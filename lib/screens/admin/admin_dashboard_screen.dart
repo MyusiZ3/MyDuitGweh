@@ -130,7 +130,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         onTap: () => Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (_) => GlobalInsightsScreen())),
+                                builder: (_) => GlobalInsightsScreen(isSuperAdmin: _isSuper))),
                       ),
                       _buildMenuCard(
                         context,

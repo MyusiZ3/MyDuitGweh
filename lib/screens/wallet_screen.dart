@@ -17,15 +17,14 @@ class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
 
   @override
-  State<WalletScreen> createState() => _WalletScreenState();
+  WalletScreenState createState() => WalletScreenState();
 }
 
-class _WalletScreenState extends State<WalletScreen> {
+class WalletScreenState extends State<WalletScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   final String _uid = FirebaseAuth.instance.currentUser!.uid;
 
   // Search State
-  bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
 
@@ -35,6 +34,16 @@ class _WalletScreenState extends State<WalletScreen> {
     super.dispose();
   }
 
+  // Method to reset search when leaving screen
+  void resetSearch() {
+    if (mounted) {
+      setState(() {
+        _searchController.clear();
+        _searchQuery = "";
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -42,144 +51,162 @@ class _WalletScreenState extends State<WalletScreen> {
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
-          title: _isSearching
-              ? TextField(
-                  controller: _searchController,
-                  autofocus: true,
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.w600),
-                  decoration: const InputDecoration(
-                    hintText: 'Cari nama dompet...',
-                    border: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    contentPadding: EdgeInsets.zero,
-                    hintStyle: TextStyle(
-                        color: AppColors.textHint, fontWeight: FontWeight.w400),
-                  ),
-                  onChanged: (val) =>
-                      setState(() => _searchQuery = val.toLowerCase()),
-                )
-              : const Text('Dompet Saya'),
+          title: const Text('Dompet Saya',
+              style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 22,
+                  letterSpacing: -0.5)),
           backgroundColor: AppColors.background,
           elevation: 0,
-          bottom: const TabBar(
-            indicatorColor: AppColors.primary,
-            labelColor: AppColors.primary,
-            unselectedLabelColor: AppColors.textHint,
-            tabs: [
-              Tab(text: 'Pribadi'),
-              Tab(text: 'Bersama'),
-              Tab(text: 'Hutang'),
-            ],
-          ),
+          titleSpacing: 24,
+          toolbarHeight: 70,
           actions: [
-            IconButton(
-              onPressed: () {
-                setState(() {
-                  _isSearching = !_isSearching;
-                  if (!_isSearching) {
-                    _searchController.clear();
-                    _searchQuery = "";
-                  }
-                });
-              },
-              icon: Icon(
-                  _isSearching ? Icons.close_rounded : Icons.search_rounded,
-                  color: AppColors.primary),
-            ),
             IconButton(
               onPressed: _showCreateWalletDialog,
               icon: const Icon(Icons.add_circle_outline_rounded,
                   color: AppColors.primary),
             ),
+            const SizedBox(width: 8),
           ],
         ),
-        body: StreamBuilder<List<WalletModel>>(
-          stream: _firestoreService.getWalletsStream(_uid),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return TabBarView(
-                physics: const NeverScrollableScrollPhysics(),
-                children: List.generate(
-                    3,
-                    (index) => ListView.builder(
+        body: Column(
+          children: [
+            const SizedBox(height: 12),
+            // Search Bar
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF767680).withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  style: const TextStyle(fontSize: 16),
+                  onChanged: (val) =>
+                      setState(() => _searchQuery = val.toLowerCase()),
+                  decoration: InputDecoration(
+                    hintText: 'Cari dompet ...',
+                    hintStyle: const TextStyle(color: Color(0xFF8E8E93)),
+                    prefixIcon: const Icon(Icons.search_rounded,
+                        color: Color(0xFF8E8E93), size: 20),
+                    suffixIcon: _searchQuery.isEmpty
+                        ? null
+                        : GestureDetector(
+                            onTap: () {
+                              _searchController.clear();
+                              setState(() => _searchQuery = "");
+                            },
+                            child: const Icon(Icons.cancel_rounded,
+                                color: Color(0xFF8E8E93), size: 18),
+                          ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // iOS Style Segmented Control
+            Container(
+              margin: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE3E3E8),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: TabBar(
+                indicatorSize: TabBarIndicatorSize.tab,
+                dividerColor: Colors.transparent,
+                indicator: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                labelColor: Colors.black,
+                unselectedLabelColor: const Color(0xFF8E8E93),
+                labelStyle:
+                    const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                unselectedLabelStyle:
+                    const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                tabs: const [
+                  Tab(text: 'Pribadi'),
+                  Tab(text: 'Bersama'),
+                  Tab(text: 'Hutang'),
+                ],
+              ),
+            ),
+            Expanded(
+              child: StreamBuilder<List<WalletModel>>(
+                stream: _firestoreService.getWalletsStream(_uid),
+                builder: (context, snapshot) {
+                  // Only show shimmer if we are waiting for initial data and there is no data yet
+                  if (snapshot.connectionState == ConnectionState.waiting &&
+                      !snapshot.hasData) {
+                    return TabBarView(
+                      physics: const NeverScrollableScrollPhysics(),
+                      children: List.generate(
+                        3,
+                        (index) => ListView.builder(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 16),
-                          physics: const NeverScrollableScrollPhysics(),
+                              horizontal: 24, vertical: 0),
+                          physics: const BouncingScrollPhysics(),
                           itemCount: 4,
                           itemBuilder: (context, _) =>
                               const ShimmerWalletCard(),
-                        )),
-              );
-            }
-
-            final wallets = snapshot.data ?? [];
-
-            // Filter wallets by search query
-            final filteredWallets = wallets.where((w) {
-              return w.walletName.toLowerCase().contains(_searchQuery);
-            }).toList();
-
-            final personalWallets =
-                filteredWallets.where((w) => w.isPersonal).toList();
-            final colabWallets =
-                filteredWallets.where((w) => w.isColab).toList();
-            final debtWallets = filteredWallets.where((w) => w.isDebt).toList();
-
-            return TabBarView(
-              physics: const BouncingScrollPhysics(),
-              children: [
-                // Tab 1: Pribadi
-                personalWallets.isEmpty
-                    ? _buildEmptyState()
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 16),
-                        physics: const BouncingScrollPhysics(),
-                        itemCount: personalWallets.length,
-                        itemBuilder: (context, index) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: _WalletCard(
-                                wallet: personalWallets[index],
-                                onTap: () => _showWalletDetails(
-                                    personalWallets[index]))),
+                        ),
                       ),
+                    );
+                  }
 
-                // Tab 2: Bersama
-                colabWallets.isEmpty
-                    ? _buildEmptyState()
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 16),
-                        physics: const BouncingScrollPhysics(),
-                        itemCount: colabWallets.length,
-                        itemBuilder: (context, index) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: _WalletCard(
-                                wallet: colabWallets[index],
-                                onTap: () =>
-                                    _showWalletDetails(colabWallets[index]))),
-                      ),
+                  final wallets = snapshot.data ?? [];
+                  final filteredWallets = wallets.where((w) {
+                    return w.walletName.toLowerCase().contains(_searchQuery);
+                  }).toList();
 
-                // Tab 3: Hutang
-                debtWallets.isEmpty
-                    ? _buildEmptyState()
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 16),
-                        physics: const BouncingScrollPhysics(),
-                        itemCount: debtWallets.length,
-                        itemBuilder: (context, index) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: _WalletCard(
-                                wallet: debtWallets[index],
-                                onTap: () =>
-                                    _showWalletDetails(debtWallets[index]))),
-                      ),
-              ],
-            );
-          },
+                  final personalWallets =
+                      filteredWallets.where((w) => w.isPersonal).toList();
+                  final colabWallets =
+                      filteredWallets.where((w) => w.isColab).toList();
+                  final debtWallets =
+                      filteredWallets.where((w) => w.isDebt).toList();
+
+                  return TabBarView(
+                    physics: const BouncingScrollPhysics(),
+                    children: [
+                      _buildWalletList(personalWallets),
+                      _buildWalletList(colabWallets),
+                      _buildWalletList(debtWallets),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWalletList(List<WalletModel> wallets) {
+    if (wallets.isEmpty) return _buildEmptyState();
+    return ListView.builder(
+      padding: const EdgeInsets.only(left: 24, right: 24, top: 8, bottom: 24),
+      physics: const BouncingScrollPhysics(),
+      itemCount: wallets.length,
+      itemBuilder: (context, index) => Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: _WalletCard(
+          wallet: wallets[index],
+          onTap: () => _showWalletDetails(wallets[index]),
         ),
       ),
     );
@@ -327,72 +354,209 @@ class _WalletScreenState extends State<WalletScreen> {
                                             await Permission.contacts.request();
                                       }
                                       if (status.isGranted) {
-                                        final contacts =
+                                        final allContacts =
                                             await FlutterContacts.getContacts(
                                                 withProperties: true);
                                         if (!context.mounted) return;
+
                                         showModalBottomSheet(
-                                            context: context,
-                                            builder: (ctx) => ListView.builder(
-                                                itemCount: contacts.length,
-                                                itemBuilder: (ctx, i) =>
-                                                    ListTile(
-                                                      leading: CircleAvatar(
-                                                        backgroundColor:
-                                                            AppColors
-                                                                .primary
-                                                                .withOpacity(
-                                                                    0.1),
-                                                        child: Text(
-                                                            contacts[i]
-                                                                    .displayName
-                                                                    .isNotEmpty
-                                                                ? contacts[i]
-                                                                        .displayName[
-                                                                    0]
-                                                                : '?',
-                                                            style: const TextStyle(
-                                                                color: AppColors
-                                                                    .primary,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold)),
+                                          context: context,
+                                          isScrollControlled: true,
+                                          backgroundColor: Colors.transparent,
+                                          builder: (ctx) {
+                                            String contactSearchQuery = "";
+                                            return StatefulBuilder(
+                                              builder: (ctx, setContactState) {
+                                                final filteredContacts =
+                                                    allContacts.where((c) {
+                                                  final name = c.displayName
+                                                      .toLowerCase();
+                                                  final phone = c
+                                                          .phones.isNotEmpty
+                                                      ? c.phones.first.number
+                                                          .replaceAll(' ', '')
+                                                      : "";
+                                                  return name.contains(
+                                                          contactSearchQuery
+                                                              .toLowerCase()) ||
+                                                      phone.contains(
+                                                          contactSearchQuery);
+                                                }).toList();
+
+                                                return Container(
+                                                  height: MediaQuery.of(context)
+                                                          .size
+                                                          .height *
+                                                      0.8,
+                                                  decoration:
+                                                      const BoxDecoration(
+                                                    color: Colors.white,
+                                                    borderRadius:
+                                                        BorderRadius.vertical(
+                                                            top:
+                                                                Radius.circular(
+                                                                    24)),
+                                                  ),
+                                                  child: Column(
+                                                    children: [
+                                                      const SizedBox(
+                                                          height: 12),
+                                                      Center(
+                                                        child: Container(
+                                                          width: 40,
+                                                          height: 4,
+                                                          decoration: BoxDecoration(
+                                                              color: Colors
+                                                                  .grey[300],
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          2)),
+                                                        ),
                                                       ),
-                                                      title: Text(contacts[i]
-                                                          .displayName),
-                                                      subtitle: Text(contacts[i]
-                                                              .phones
-                                                              .isNotEmpty
-                                                          ? contacts[i]
-                                                              .phones
-                                                              .first
-                                                              .number
-                                                          : 'Tanpa nomor HP'),
-                                                      onTap: () {
-                                                        setModalState(() {
-                                                          debtorNameController
-                                                                  .text =
-                                                              contacts[i]
-                                                                  .displayName;
-                                                          if (contacts[i]
-                                                              .phones
-                                                              .isNotEmpty) {
-                                                            debtorPhoneController
-                                                                    .text =
-                                                                contacts[i]
+                                                      Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .all(24),
+                                                        child: Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          children: [
+                                                            const Text(
+                                                                'Pilih Kontak',
+                                                                style: TextStyle(
+                                                                    fontSize:
+                                                                        20,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold)),
+                                                            const SizedBox(
+                                                                height: 16),
+                                                            Container(
+                                                              height: 48,
+                                                              decoration:
+                                                                  BoxDecoration(
+                                                                color: AppColors
+                                                                    .surfaceVariant,
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            12),
+                                                              ),
+                                                              child: TextField(
+                                                                onChanged:
+                                                                    (val) {
+                                                                  setContactState(
+                                                                      () {
+                                                                    contactSearchQuery =
+                                                                        val;
+                                                                  });
+                                                                },
+                                                                decoration:
+                                                                    const InputDecoration(
+                                                                  hintText:
+                                                                      'Cari nama atau nomor...',
+                                                                  prefixIcon:
+                                                                      Icon(Icons
+                                                                          .search_rounded),
+                                                                  border:
+                                                                      InputBorder
+                                                                          .none,
+                                                                  contentPadding:
+                                                                      EdgeInsets.symmetric(
+                                                                          vertical:
+                                                                              12,
+                                                                          horizontal:
+                                                                              16),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                      Expanded(
+                                                        child: ListView.builder(
+                                                          itemCount:
+                                                              filteredContacts
+                                                                  .length,
+                                                          itemBuilder:
+                                                              (ctx, i) =>
+                                                                  ListTile(
+                                                            leading:
+                                                                CircleAvatar(
+                                                              backgroundColor:
+                                                                  AppColors
+                                                                      .primary
+                                                                      .withOpacity(
+                                                                          0.1),
+                                                              child: Text(
+                                                                  filteredContacts[i]
+                                                                          .displayName
+                                                                          .isNotEmpty
+                                                                      ? filteredContacts[i]
+                                                                              .displayName[
+                                                                          0]
+                                                                      : '?',
+                                                                  style: const TextStyle(
+                                                                      color: AppColors
+                                                                          .primary,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold)),
+                                                            ),
+                                                            title: Text(
+                                                                filteredContacts[
+                                                                        i]
+                                                                    .displayName),
+                                                            subtitle: Text(filteredContacts[
+                                                                        i]
+                                                                    .phones
+                                                                    .isNotEmpty
+                                                                ? filteredContacts[
+                                                                        i]
                                                                     .phones
                                                                     .first
-                                                                    .number;
-                                                          }
-                                                          nameController
-                                                              .text = debtType ==
-                                                                  'payable'
-                                                              ? 'Hutang ke ${contacts[i].displayName}'
-                                                              : 'Piutang ${contacts[i].displayName}';
-                                                        });
-                                                        Navigator.pop(ctx);
-                                                      },
-                                                    )));
+                                                                    .number
+                                                                : 'Tanpa nomor HP'),
+                                                            onTap: () {
+                                                              setModalState(() {
+                                                                debtorNameController
+                                                                        .text =
+                                                                    filteredContacts[
+                                                                            i]
+                                                                        .displayName;
+                                                                if (filteredContacts[
+                                                                        i]
+                                                                    .phones
+                                                                    .isNotEmpty) {
+                                                                  debtorPhoneController
+                                                                          .text =
+                                                                      filteredContacts[
+                                                                              i]
+                                                                          .phones
+                                                                          .first
+                                                                          .number;
+                                                                }
+                                                                nameController
+                                                                    .text = debtType ==
+                                                                        'payable'
+                                                                    ? 'Hutang ke ${filteredContacts[i].displayName}'
+                                                                    : 'Piutang ${filteredContacts[i].displayName}';
+                                                              });
+                                                              Navigator.pop(
+                                                                  ctx);
+                                                            },
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                              },
+                                            );
+                                          },
+                                        );
                                       } else if (status.isPermanentlyDenied) {
                                         if (!context.mounted) return;
                                         UIHelper.showErrorSnackBar(context,
@@ -554,81 +718,140 @@ class _WalletScreenState extends State<WalletScreen> {
     final codeController = TextEditingController();
     bool isChecking = false;
 
-    showDialog(
+    showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: const Text('Gabung Dompet Bersama'),
-          content: SingleChildScrollView(
+        builder: (context, setModalState) => Container(
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 24,
+            bottom: MediaQuery.of(context).viewInsets.bottom +
+                MediaQuery.of(context).padding.bottom +
+                24,
+          ),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                    'Masukkan 6 digit kode undangan dari temanmu untuk mulai mencatat bersama.'),
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.textHint.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.08),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.group_add_rounded,
+                      color: AppColors.primary, size: 36),
+                ),
                 const SizedBox(height: 20),
+                const Text('Gabung Dompet Bersama',
+                    style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: -0.3)),
+                const SizedBox(height: 8),
+                Text(
+                  'Masukkan 6 digit kode undangan dari temanmu\nuntuk mulai mencatat bersama.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      color: AppColors.textHint, fontSize: 13, height: 1.5),
+                ),
+                const SizedBox(height: 24),
                 TextField(
                   controller: codeController,
                   maxLength: 6,
                   textCapitalization: TextCapitalization.characters,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 4),
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 8,
+                      color: AppColors.primary),
                   decoration: InputDecoration(
-                    hintText: 'ABCXYZ',
+                    hintText: '• • • • • •',
+                    hintStyle: TextStyle(
+                        fontSize: 28,
+                        letterSpacing: 8,
+                        color: AppColors.textHint.withOpacity(0.3)),
                     counterText: '',
                     filled: true,
                     fillColor: AppColors.surfaceVariant,
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide.none),
+                    focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                            color: AppColors.primary, width: 2)),
+                    contentPadding: const EdgeInsets.symmetric(
+                        vertical: 18, horizontal: 16),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: isChecking
+                        ? null
+                        : () async {
+                            if (codeController.text.length < 6) {
+                              UIHelper.showErrorSnackBar(
+                                  context, 'Kode harus 6 digit ya! (〜￣▽￣)〜');
+                              return;
+                            }
+                            setModalState(() => isChecking = true);
+                            final success = await _firestoreService
+                                .joinWalletByCode(codeController.text, _uid);
+                            if (!context.mounted) return;
+                            Navigator.pop(context);
+                            if (success) {
+                              UIHelper.showSuccessSnackBar(context,
+                                  'Berhasil bergabung! Selamat berkolaborasi 🎉');
+                            } else {
+                              UIHelper.showErrorSnackBar(context,
+                                  'Kode tidak valid atau kamu sudah bergabung ❌');
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
+                    ),
+                    child: isChecking
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2.5, color: Colors.white))
+                        : const Text('Gabung Sekarang',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Colors.white)),
                   ),
                 ),
               ],
             ),
           ),
-          actions: [
-            TextButton(
-                onPressed: isChecking ? null : () => Navigator.pop(context),
-                child: const Text('Batal',
-                    style: TextStyle(color: AppColors.textHint))),
-            ElevatedButton(
-              onPressed: isChecking
-                  ? null
-                  : () async {
-                      if (codeController.text.length == 6) {
-                        setDialogState(() => isChecking = true);
-                        final success = await _firestoreService
-                            .joinWalletByCode(codeController.text, _uid);
-                        if (!context.mounted) return;
-                        Navigator.pop(context); // Close dialog
-                        if (success) {
-                          UIHelper.showSuccessSnackBar(context,
-                              'Berhasil bergabung! Selamat berkolaborasi 🎉');
-                        } else {
-                          UIHelper.showErrorSnackBar(context,
-                              'Kode tidak valid atau kamu sudah bergabung ❌');
-                        }
-                      }
-                    },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-              ),
-              child: isChecking
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white))
-                  : const Text('Gabung Sekarang',
-                      style: TextStyle(color: Colors.white)),
-            ),
-          ],
         ),
       ),
     );
@@ -689,11 +912,15 @@ class _WalletScreenState extends State<WalletScreen> {
                         ],
                       ),
                     ),
-                    if (wallet.owner == _uid || !wallet.isColab)
-                      IconButton(
-                        icon: const Icon(Icons.delete_outline_rounded,
-                            color: AppColors.expense),
-                        onPressed: () async {
+                    PopupMenuButton<String>(
+                      icon: const Icon(Icons.more_vert_rounded,
+                          color: AppColors.textPrimary),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
+                      onSelected: (value) async {
+                        if (value == 'rename') {
+                          _showRenameWalletDialog(wallet);
+                        } else if (value == 'delete') {
                           final confirm = await UIHelper.showConfirmDialog(
                             context: context,
                             title:
@@ -703,17 +930,11 @@ class _WalletScreenState extends State<WalletScreen> {
                           if (confirm == true) {
                             await _firestoreService.deleteWallet(wallet.id);
                             if (!context.mounted) return;
-                            Navigator.pop(context);
+                            Navigator.pop(context); // Close sheet
                             UIHelper.showSuccessSnackBar(
                                 context, 'Dompet berhasil dihapus');
                           }
-                        },
-                      )
-                    else
-                      IconButton(
-                        icon: const Icon(Icons.exit_to_app_rounded,
-                            color: AppColors.expense),
-                        onPressed: () async {
+                        } else if (value == 'leave') {
                           final confirm = await UIHelper.showConfirmDialog(
                             context: context,
                             title:
@@ -724,12 +945,52 @@ class _WalletScreenState extends State<WalletScreen> {
                             await _firestoreService.leaveWallet(
                                 wallet.id, _uid);
                             if (!context.mounted) return;
-                            Navigator.pop(context);
+                            Navigator.pop(context); // Close sheet
                             UIHelper.showSuccessSnackBar(
                                 context, 'Berhasil keluar dari dompet. 👋');
                           }
-                        },
-                      ),
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        if (wallet.owner == _uid || !wallet.isColab) ...[
+                          const PopupMenuItem(
+                            value: 'rename',
+                            child: Row(
+                              children: [
+                                Icon(Icons.edit_outlined, size: 20),
+                                SizedBox(width: 12),
+                                Text('Ubah Nama'),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                Icon(Icons.delete_outline_rounded,
+                                    size: 20, color: AppColors.expense),
+                                SizedBox(width: 12),
+                                Text('Hapus Dompet',
+                                    style: TextStyle(color: AppColors.expense)),
+                              ],
+                            ),
+                          ),
+                        ] else ...[
+                          const PopupMenuItem(
+                            value: 'leave',
+                            child: Row(
+                              children: [
+                                Icon(Icons.exit_to_app_rounded,
+                                    size: 20, color: AppColors.expense),
+                                SizedBox(width: 12),
+                                Text('Keluar dari Dompet',
+                                    style: TextStyle(color: AppColors.expense)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -799,6 +1060,109 @@ class _WalletScreenState extends State<WalletScreen> {
                           ),
                         ),
                       ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Member List (only for colab)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('ANGGOTA',
+                          style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textHint,
+                              letterSpacing: 1)),
+                      const SizedBox(height: 12),
+                      ...wallet.members
+                          .map((memberUid) =>
+                              FutureBuilder<Map<String, dynamic>?>(
+                                future:
+                                    _firestoreService.getUserInfo(memberUid),
+                                builder: (context, snapshot) {
+                                  final name = snapshot.data?['displayName'] ??
+                                      'Memuat...';
+                                  final isOwner = memberUid == wallet.owner;
+                                  final isMe = memberUid == _uid;
+
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 8),
+                                    child: Row(
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 14,
+                                          backgroundColor: AppColors.primary
+                                              .withOpacity(0.1),
+                                          child: Text(
+                                              name.isNotEmpty
+                                                  ? name[0].toUpperCase()
+                                                  : '?',
+                                              style: const TextStyle(
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: AppColors.primary)),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            isMe ? '$name (Anda)' : name,
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: isMe
+                                                  ? FontWeight.w700
+                                                  : FontWeight.w500,
+                                              color: const Color(0xFF1C1C1E),
+                                            ),
+                                          ),
+                                        ),
+                                        if (isOwner)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.primary
+                                                  .withOpacity(0.1),
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                            ),
+                                            child: const Text('OWNER',
+                                                style: TextStyle(
+                                                    fontSize: 8,
+                                                    fontWeight: FontWeight.w800,
+                                                    color: AppColors.primary)),
+                                          )
+                                        else if (wallet.owner == _uid)
+                                          IconButton(
+                                            icon: const Icon(
+                                                Icons.person_remove_rounded,
+                                                color: AppColors.expense,
+                                                size: 18),
+                                            onPressed: () async {
+                                              final confirm = await UIHelper
+                                                  .showConfirmDialog(
+                                                context: context,
+                                                title: ToneManager.t(
+                                                    'dialog_kick_member_title'),
+                                                message: ToneManager.t(
+                                                    'dialog_kick_member_msg'),
+                                              );
+                                              if (confirm == true) {
+                                                await _firestoreService
+                                                    .kickMember(
+                                                        wallet.id, memberUid);
+                                                // No need to pop, StreamBuilder will update
+                                              }
+                                            },
+                                          ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ))
+                          .toList(),
                     ],
                   ),
                 ),
@@ -913,6 +1277,12 @@ class _WalletScreenState extends State<WalletScreen> {
                           key: Key(t.id),
                           direction: DismissDirection.endToStart,
                           confirmDismiss: (direction) async {
+                            // Restriction: only the creator can delete their transaction
+                            if (t.createdBy != _uid) {
+                              UIHelper.showErrorSnackBar(context,
+                                  ToneManager.t('error_not_creator_delete'));
+                              return false;
+                            }
                             return await UIHelper.showConfirmDialog(
                               context: context,
                               title: ToneManager.t('dialog_del_tx_title'),
@@ -920,10 +1290,12 @@ class _WalletScreenState extends State<WalletScreen> {
                             );
                           },
                           onDismissed: (direction) async {
-                            await _firestoreService.deleteTransaction(t);
-                            if (!context.mounted) return;
-                            UIHelper.showSuccessSnackBar(
-                                context, 'Transaksi berhasil dihapus');
+                            if (t.createdBy == _uid) {
+                              await _firestoreService.deleteTransaction(t);
+                              if (!context.mounted) return;
+                              UIHelper.showSuccessSnackBar(
+                                  context, 'Transaksi berhasil dihapus');
+                            }
                           },
                           background: Container(
                             alignment: Alignment.centerRight,
@@ -1001,36 +1373,140 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.account_balance_wallet_outlined,
-              size: 80, color: AppColors.textHint.withOpacity(0.3)),
-          const SizedBox(height: 20),
-          const Text('Belum ada dompet',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const Text('Ayo buat satu untuk mulai mencatat!',
-              style: TextStyle(color: AppColors.textHint)),
-          const SizedBox(height: 32),
-          SizedBox(
-            width: 220, // Give it a fixed width for better balance
-            height: 52,
-            child: ElevatedButton(
-              onPressed: _showCreateWalletDialog,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20)),
+  void _showRenameWalletDialog(WalletModel wallet) {
+    final nameController = TextEditingController(text: wallet.walletName);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: EdgeInsets.only(
+          left: 24,
+          right: 24,
+          top: 24,
+          bottom: MediaQuery.of(context).viewInsets.bottom +
+              MediaQuery.of(context).padding.bottom +
+              24,
+        ),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.textHint.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-              child: const Text('Buat Dompet',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
             ),
+            const SizedBox(height: 24),
+            const Text('Ubah Nama Dompet',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 20),
+            TextField(
+              controller: nameController,
+              textCapitalization: TextCapitalization.words,
+              autofocus: true,
+              decoration: InputDecoration(
+                hintText: 'Masukkan nama baru',
+                prefixIcon:
+                    const Icon(Icons.edit_rounded, color: AppColors.primary),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: AppColors.primary)),
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton(
+                onPressed: () async {
+                  if (nameController.text.isNotEmpty &&
+                      nameController.text != wallet.walletName) {
+                    await _firestoreService.renameWallet(
+                        wallet.id, nameController.text);
+                    if (!context.mounted) return;
+                    Navigator.pop(context); // Pop dialog
+                    Navigator.pop(
+                        context); // Pop details sheet to refresh/close
+                    UIHelper.showSuccessSnackBar(context,
+                        'Nama dompet berhasil diubah ke "${nameController.text}"! 📝');
+                  } else {
+                    Navigator.pop(context);
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                ),
+                child: const Text('Simpan Perubahan',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Colors.white)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return SingleChildScrollView(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.account_balance_wallet_outlined,
+                  size: 80, color: AppColors.textHint.withOpacity(0.3)),
+              const SizedBox(height: 20),
+              Text(
+                ToneManager.t('wallet_empty_title'),
+                textAlign: TextAlign.center,
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                ToneManager.t('wallet_empty_msg'),
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: AppColors.textHint),
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: 220,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: _showCreateWalletDialog,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20)),
+                  ),
+                  child: const Text('Buat Dompet',
+                      style:
+                          TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -1066,64 +1542,124 @@ class _WalletCard extends StatelessWidget {
           : '';
       return '$label$name';
     }
-    if (wallet.isColab) return 'Bersama (${wallet.members.length} anggota)';
-    return 'Pribadi';
+    if (wallet.isColab) return 'Bersama · ${wallet.members.length} anggota';
+    return 'Dompet Pribadi';
   }
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-                color: Colors.black.withOpacity(0.02),
-                blurRadius: 10,
-                offset: const Offset(0, 4))
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: _cardAccent.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Icon(_cardIcon, color: _cardAccent),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(wallet.walletName,
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.bold)),
-                  Text(
-                    _subtitle,
-                    style: TextStyle(
-                        fontSize: 12,
-                        color: _cardAccent,
-                        fontWeight: FontWeight.w600),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                // Icon Container
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: _cardAccent.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                ],
-              ),
+                  child: Icon(_cardIcon, color: _cardAccent, size: 24),
+                ),
+                const SizedBox(width: 16),
+                // Info
+                Expanded(
+                  flex: 3,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        wallet.walletName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.4,
+                          color: Color(0xFF1C1C1E),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF8E8E93),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Balance & Badge
+                Flexible(
+                  flex: 2,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        CurrencyFormatter.formatCurrency(wallet.balance),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.5,
+                          color: wallet.isDebt && wallet.debtType == 'payable'
+                              ? AppColors.expense
+                              : const Color(0xFF1C1C1E),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (wallet.isColab)
+                        Container(
+                          margin: const EdgeInsets.only(top: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: AppColors.deepBlue.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(100),
+                          ),
+                          child: const Text(
+                            'BERSAMA',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.deepBlue,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 4),
+                const Icon(Icons.chevron_right_rounded,
+                    color: Color(0xFFC7C7CC), size: 20),
+              ],
             ),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                CurrencyFormatter.formatCurrency(wallet.balance),
-                style:
-                    const TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

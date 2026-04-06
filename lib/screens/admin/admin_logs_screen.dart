@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import '../../utils/app_theme.dart';
 import 'dart:ui';
+import '../../utils/ui_helper.dart';
 
 class AdminLogsScreen extends StatefulWidget {
   const AdminLogsScreen({super.key});
@@ -29,11 +30,46 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
       'label': 'Akses',
       'icon': Icons.manage_accounts_rounded
     },
-    {'id': 'CONFIG_UPDATE', 'label': 'Config', 'icon': Icons.settings_rounded},
+    {'id': 'CONFIG_UPDATE', 'label': 'Konfigurasi', 'icon': Icons.settings_rounded},
+    {
+      'id': 'AI_STATUS_CHANGED',
+      'label': 'AI Status',
+      'icon': Icons.power_settings_new_rounded
+    },
     {
       'id': 'DELETE_USER',
       'label': 'Hapus User',
       'icon': Icons.person_remove_rounded
+    },
+    {
+      'id': 'AI_KEY_ADDED',
+      'label': 'API Key +',
+      'icon': Icons.vpn_key_rounded
+    },
+    {
+      'id': 'AI_KEY_REMOVED',
+      'label': 'API Key -',
+      'icon': Icons.key_off_rounded
+    },
+    {
+      'id': 'AI_QUOTA_UPDATE',
+      'label': 'AI Quota',
+      'icon': Icons.psychology_rounded
+    },
+    {
+      'id': 'SURVEY_TOGGLED',
+      'label': 'Survei',
+      'icon': Icons.thumbs_up_down_rounded
+    },
+    {
+      'id': 'GROQ_KEY_ADDED',
+      'label': 'Groq +',
+      'icon': Icons.bolt_rounded
+    },
+    {
+      'id': 'GROQ_KEY_REMOVED',
+      'label': 'Groq -',
+      'icon': Icons.bolt_rounded
     },
   ];
 
@@ -295,9 +331,8 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
                         icon: Icons.code_rounded,
                         onPressed: () {
                           // Info for user that link is in terminal
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                              content: Text(
-                                  'Cek terminal VS Code / Log untuk link pembuatan indeks otomatis.')));
+                          UIHelper.showInfoSnackBar(context,
+                              'Cek terminal VS Code / Log untuk link pembuatan indeks otomatis.');
                         },
                         isPrimary: false,
                       ),
@@ -419,10 +454,52 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
       title = 'Hapus Pengguna';
       subtitle = data['userEmail'] ?? 'User ID Dihapus';
     } else if (action == 'CONFIG_UPDATE') {
-      icon = Icons.settings_rounded;
-      color = Colors.teal;
-      title = 'Config Sistem';
-      subtitle = 'Parameter aplikasi diubah.';
+      icon = Icons.settings_suggest_rounded;
+      color = Colors.blueGrey;
+      title = 'Konfigurasi Sistem';
+      subtitle = 'Parameter aplikasi diperbarui.';
+    } else if (action == 'AI_STATUS_CHANGED') {
+      final isEnabled = data['enabled'] ?? false;
+      icon = isEnabled ? Icons.power_rounded : Icons.power_off_rounded;
+      color = isEnabled ? Colors.green : Colors.red;
+      title = 'AI Global Status';
+      subtitle = 'AI ${isEnabled ? 'DIAKTIFKAN' : 'DIMATIKAN'} secara global.';
+    } else if (action == 'SURVEY_TOGGLED') {
+      final isEnabled = data['enabled'] ?? false;
+      icon = Icons.thumbs_up_down_rounded;
+      color = isEnabled ? Colors.cyan : Colors.blueGrey;
+      title = 'Status Survei';
+      subtitle = 'Survei kepuasan ${isEnabled ? 'DIBUKA' : 'DITUTUP'}.';
+    } else if (action == 'AI_KEY_ADDED') {
+      icon = Icons.vpn_key_rounded;
+      color = Colors.green;
+      title = 'API Key Ditambahkan';
+      subtitle = 'Kunci AI baru ditambahkan ke rotasi.';
+    } else if (action == 'AI_KEY_REMOVED') {
+      icon = Icons.key_off_rounded;
+      color = Colors.red;
+      title = 'API Key Dihapus';
+      subtitle = 'Kunci AI dihapus dari rotasi.';
+    } else if (action == 'AI_QUOTA_UPDATE') {
+      icon = Icons.psychology_rounded;
+      color = const Color(0xFF8B5CF6);
+      title = 'AI Quota Diubah';
+      subtitle = 'Max: ${data['max_chats'] ?? '?'} chat, Interval: ${data['interval'] ?? '?'} menit';
+    } else if (action == 'MAINTENANCE_SCHEDULE') {
+      icon = Icons.schedule_rounded;
+      color = Colors.indigo;
+      title = 'Jadwal Maintenance';
+      subtitle = 'Waktu: ${data['time'] ?? 'N/A'}';
+    } else if (action == 'GROQ_KEY_ADDED') {
+      icon = Icons.bolt_rounded;
+      color = const Color(0xFFF55036);
+      title = 'Groq Key Ditambahkan';
+      subtitle = 'Kunci Groq AI baru ditambahkan ke rotasi.';
+    } else if (action == 'GROQ_KEY_REMOVED') {
+      icon = Icons.bolt_rounded;
+      color = Colors.red;
+      title = 'Groq Key Dihapus';
+      subtitle = 'Kunci Groq AI dihapus dari rotasi.';
     }
 
     return Container(
@@ -542,86 +619,101 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (ctx) => Container(
-        padding: EdgeInsets.fromLTRB(
-            24, 32, 24, MediaQuery.of(context).padding.bottom + 24),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      builder: (ctx) => ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.75,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(2)),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
+        child: Container(
+          padding: EdgeInsets.fromLTRB(
+              24, 32, 24, MediaQuery.of(context).padding.bottom + 24),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
                   decoration: BoxDecoration(
-                      color: color.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(16)),
-                  child: Icon(icon, color: color),
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(2)),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                        color: color.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(16)),
+                    child: Icon(icon, color: color),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(title,
+                            style: const TextStyle(
+                                fontSize: 20, fontWeight: FontWeight.w900)),
+                        Text('System Audit Detail',
+                            style: TextStyle(
+                                color: Colors.grey[500],
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 32),
+              Flexible(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title,
-                          style: const TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.w900)),
-                      Text('System Audit Detail',
+                      _buildDetailGrid(data),
+                      const Divider(height: 32),
+                      const Text('INTERNAL DATA',
                           style: TextStyle(
-                              color: Colors.grey[500],
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500)),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.grey,
+                              letterSpacing: 1)),
+                      const SizedBox(height: 12),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppColors.background,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.black.withOpacity(0.04)),
+                        ),
+                        child: SelectableText(
+                          data.entries
+                              .where((e) => !['updatedAt', 'updatedBy', 'action', 'type']
+                                  .contains(e.key))
+                              .map((e) => '${e.key}: ${e.value}')
+                              .join('\n'),
+                          style: const TextStyle(
+                              fontFamily: 'monospace',
+                              fontSize: 12,
+                              color: Colors.blueGrey,
+                              height: 1.5),
+                        ),
+                      ),
                     ],
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 32),
-            _buildDetailGrid(data),
-            const Divider(height: 32),
-            const Text('INTERNAL DATA',
-                style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.grey,
-                    letterSpacing: 1)),
-            const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.background,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.black.withOpacity(0.04)),
               ),
-              child: SelectableText(
-                data.entries
-                    .where((e) => !['updatedAt', 'updatedBy', 'action', 'type']
-                        .contains(e.key))
-                    .map((e) => '${e.key}: ${e.value}')
-                    .join('\n'),
-                style: const TextStyle(
-                    fontFamily: 'monospace',
-                    fontSize: 12,
-                    color: Colors.blueGrey,
-                    height: 1.5),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

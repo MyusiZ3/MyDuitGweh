@@ -42,9 +42,9 @@ class ChatMessage {
     };
   }
 
-  /// Check if message can be unsent (within 5 minutes)
+  /// Check if message can be unsent (within 15 minutes)
   bool get canUnsend {
     final diff = DateTime.now().difference(timestamp);
-    return diff.inMinutes < 5;
+    return diff.inMinutes < 15;
   }
 }

@@ -1,0 +1,134 @@
+package com.arch.myduitgweh
+
+import android.content.ComponentName
+import android.util.Log // Tambah log
+import android.content.Context
+import android.content.Intent
+import android.provider.Settings
+import android.service.notification.NotificationListenerService
+import android.service.notification.StatusBarNotification
+import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.embedding.engine.dart.DartExecutor
+import io.flutter.plugin.common.EventChannel
+import io.flutter.plugin.common.MethodChannel
+import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.AtomicLong
+
+class NotifListenerService : NotificationListenerService() {
+
+    companion object {
+        private const val TAG = "NotifListenerSvc"
+        // Channel names — harus sama persis dengan Flutter
+        const val EVENT_CHANNEL = "com.myduitgweh/notif_stream"
+        const val METHOD_CHANNEL = "com.myduitgweh/notif_control"
+
+        // Daftar package yang diizinkan untuk dicapture
+        private val TARGET_PACKAGES = setOf(
+            "com.whatsapp",
+            "com.whatsapp.w4b",
+            "com.instagram.android",
+            "com.zhiliaoapp.musically",      // TikTok
+            "com.twitter.android",
+            "com.facebook.katana",
+            "com.facebook.orca",              // Messenger
+            "com.google.android.apps.messaging", // SMS Google
+            "com.android.mms",               // SMS default
+        )
+
+        // Singleton EventSink untuk kirim data real-time ke Flutter
+        val eventSink = AtomicReference<EventChannel.EventSink?>(null)
+
+        var isEnabled = false
+
+        // Monotonic counter to guarantee uniqueness even at same-millisecond
+        private val counter = AtomicLong(0)
+
+        // Cek apakah user sudah grant Notification Access
+        fun isNotificationAccessGranted(context: Context): Boolean {
+            val enabledListeners = Settings.Secure.getString(
+                context.contentResolver,
+                "enabled_notification_listeners"
+            ) ?: return false
+            val packageName = context.packageName
+            return enabledListeners.contains(packageName)
+        }
+
+        // Buka Notification Access Settings
+        fun openNotificationAccessSettings(context: Context) {
+            val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            context.startActivity(intent)
+        }
+    }
+
+    override fun onListenerConnected() {
+        super.onListenerConnected()
+        Log.d(TAG, "Notification Listener Connected!")
+    }
+
+    override fun onNotificationPosted(sbn: StatusBarNotification?) {
+        if (sbn == null || !isEnabled) return
+
+        val packageName = sbn.packageName ?: return
+        Log.d(TAG, "Received notification from: $packageName")
+
+        // Hanya proses package dari daftar target
+        if (!TARGET_PACKAGES.contains(packageName)) {
+            Log.d(TAG, "Package $packageName not in target, skipping.")
+            return
+        }
+
+        try {
+            // Ignore grouped summary notifications to prevent capturing "X new messages"
+            if ((sbn.notification.flags and android.app.Notification.FLAG_GROUP_SUMMARY) != 0) {
+                return
+            }
+
+            val extras = sbn.notification?.extras ?: return
+            val title = extras.getCharSequence("android.title")?.toString() ?: ""
+            var text = extras.getCharSequence("android.text")?.toString() ?: ""
+
+            // Attempt to get more detailed text if available
+            val bigText = extras.getCharSequence("android.bigText")?.toString()
+            if (!bigText.isNullOrBlank()) {
+                text = bigText
+            } else {
+                val textLines = extras.getCharSequenceArray("android.textLines")
+                if (textLines != null && textLines.isNotEmpty()) {
+                    text = textLines.joinToString("\n") { it.toString() }
+                }
+            }
+
+            // Skip jika title dan text kosong atau hanya notif kosong
+            if (title.isBlank() && text.isBlank()) return
+
+            // Gunakan postTime asli dari notifikasi agar jamnya akurat (bukan jam saat ini)
+            val postTime = sbn.postTime
+            
+            // Build ID yang benar-benar unik agar tidak menimpa di Firestore
+            // Hash dari content + postTime + counter supaya tidak mungkin collision
+            val contentHash = ("${packageName}_${title}_${text}_${postTime}").hashCode().toUInt()
+            val seq = counter.incrementAndGet()
+            val uniqueId = "${packageName}_${postTime}_${contentHash}_${seq}"
+
+            val data = mapOf(
+                "package" to packageName,
+                "title" to title,
+                "text" to text,
+                "timestamp" to postTime,
+                "id" to uniqueId
+            )
+
+            // Kirim ke Flutter via EventChannel (main thread)
+            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                eventSink.get()?.success(data)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    override fun onNotificationRemoved(sbn: StatusBarNotification?) {
+        // Tidak perlu action saat notif dihapus
+    }
+}

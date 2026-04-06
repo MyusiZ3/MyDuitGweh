@@ -7,21 +7,28 @@ class UserModel {
   final String? photoUrl;
   final DateTime createdAt;
 
+  final bool surveyDone;
+  final String role; // Standard project field usually
+
   UserModel({
     required this.uid,
     required this.name,
     required this.email,
     this.photoUrl,
     required this.createdAt,
+    this.surveyDone = false,
+    this.role = 'user',
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      uid: json['uid'] as String,
-      name: json['name'] as String,
-      email: json['email'] as String,
+      uid: json['uid'] as String? ?? '',
+      name: json['name'] as String? ?? 'Pengguna',
+      email: json['email'] as String? ?? '',
       photoUrl: json['photoUrl'] as String?,
-      createdAt: (json['createdAt'] as Timestamp).toDate(),
+      createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      surveyDone: json['surveyDone'] as bool? ?? false,
+      role: json['role'] as String? ?? 'user',
     );
   }
 
@@ -32,6 +39,8 @@ class UserModel {
       'email': email,
       'photoUrl': photoUrl,
       'createdAt': Timestamp.fromDate(createdAt),
+      'surveyDone': surveyDone,
+      'role': role,
     };
   }
 
@@ -41,6 +50,8 @@ class UserModel {
     String? email,
     String? photoUrl,
     DateTime? createdAt,
+    bool? surveyDone,
+    String? role,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -48,6 +59,8 @@ class UserModel {
       email: email ?? this.email,
       photoUrl: photoUrl ?? this.photoUrl,
       createdAt: createdAt ?? this.createdAt,
+      surveyDone: surveyDone ?? this.surveyDone,
+      role: role ?? this.role,
     );
   }
 }

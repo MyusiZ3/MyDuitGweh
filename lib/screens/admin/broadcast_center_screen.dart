@@ -330,7 +330,7 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
                             'Sistem Diperbaiki',
                             'Kami sedang melakukan pemeliharaan rutin untuk kenyamanan Anda.'),
                         const SizedBox(width: 8),
-                         _buildTemplateChip(
+                        _buildTemplateChip(
                             '🤖 AI Advisor Limit',
                             '💡 Tips: AI Advisor Lancar Jaya!',
                             'Wah, jatah chat AI global lagi rame nih! Biar chat kamu tetep lancar tanpa antri limit, yuk masukkan **API Key Pribadi** kamu di menu **Kelola AI**. Gratis & Unlimited lho! 🚀'),
@@ -464,7 +464,8 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
                     : const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.rocket_launch_rounded, size: 20),
+                          Icon(Icons.rocket_launch_rounded,
+                              color: Colors.white, size: 20),
                           SizedBox(width: 12),
                           Text('LUNCURKAN PESAN',
                               style: TextStyle(
