@@ -354,72 +354,209 @@ class WalletScreenState extends State<WalletScreen> {
                                             await Permission.contacts.request();
                                       }
                                       if (status.isGranted) {
-                                        final contacts =
+                                        final allContacts =
                                             await FlutterContacts.getContacts(
                                                 withProperties: true);
                                         if (!context.mounted) return;
+
                                         showModalBottomSheet(
-                                            context: context,
-                                            builder: (ctx) => ListView.builder(
-                                                itemCount: contacts.length,
-                                                itemBuilder: (ctx, i) =>
-                                                    ListTile(
-                                                      leading: CircleAvatar(
-                                                        backgroundColor:
-                                                            AppColors
-                                                                .primary
-                                                                .withOpacity(
-                                                                    0.1),
-                                                        child: Text(
-                                                            contacts[i]
-                                                                    .displayName
-                                                                    .isNotEmpty
-                                                                ? contacts[i]
-                                                                        .displayName[
-                                                                    0]
-                                                                : '?',
-                                                            style: const TextStyle(
-                                                                color: AppColors
-                                                                    .primary,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold)),
+                                          context: context,
+                                          isScrollControlled: true,
+                                          backgroundColor: Colors.transparent,
+                                          builder: (ctx) {
+                                            String contactSearchQuery = "";
+                                            return StatefulBuilder(
+                                              builder: (ctx, setContactState) {
+                                                final filteredContacts =
+                                                    allContacts.where((c) {
+                                                  final name = c.displayName
+                                                      .toLowerCase();
+                                                  final phone = c
+                                                          .phones.isNotEmpty
+                                                      ? c.phones.first.number
+                                                          .replaceAll(' ', '')
+                                                      : "";
+                                                  return name.contains(
+                                                          contactSearchQuery
+                                                              .toLowerCase()) ||
+                                                      phone.contains(
+                                                          contactSearchQuery);
+                                                }).toList();
+
+                                                return Container(
+                                                  height: MediaQuery.of(context)
+                                                          .size
+                                                          .height *
+                                                      0.8,
+                                                  decoration:
+                                                      const BoxDecoration(
+                                                    color: Colors.white,
+                                                    borderRadius:
+                                                        BorderRadius.vertical(
+                                                            top:
+                                                                Radius.circular(
+                                                                    24)),
+                                                  ),
+                                                  child: Column(
+                                                    children: [
+                                                      const SizedBox(
+                                                          height: 12),
+                                                      Center(
+                                                        child: Container(
+                                                          width: 40,
+                                                          height: 4,
+                                                          decoration: BoxDecoration(
+                                                              color: Colors
+                                                                  .grey[300],
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          2)),
+                                                        ),
                                                       ),
-                                                      title: Text(contacts[i]
-                                                          .displayName),
-                                                      subtitle: Text(contacts[i]
-                                                              .phones
-                                                              .isNotEmpty
-                                                          ? contacts[i]
-                                                              .phones
-                                                              .first
-                                                              .number
-                                                          : 'Tanpa nomor HP'),
-                                                      onTap: () {
-                                                        setModalState(() {
-                                                          debtorNameController
-                                                                  .text =
-                                                              contacts[i]
-                                                                  .displayName;
-                                                          if (contacts[i]
-                                                              .phones
-                                                              .isNotEmpty) {
-                                                            debtorPhoneController
-                                                                    .text =
-                                                                contacts[i]
+                                                      Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .all(24),
+                                                        child: Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          children: [
+                                                            const Text(
+                                                                'Pilih Kontak',
+                                                                style: TextStyle(
+                                                                    fontSize:
+                                                                        20,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold)),
+                                                            const SizedBox(
+                                                                height: 16),
+                                                            Container(
+                                                              height: 48,
+                                                              decoration:
+                                                                  BoxDecoration(
+                                                                color: AppColors
+                                                                    .surfaceVariant,
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            12),
+                                                              ),
+                                                              child: TextField(
+                                                                onChanged:
+                                                                    (val) {
+                                                                  setContactState(
+                                                                      () {
+                                                                    contactSearchQuery =
+                                                                        val;
+                                                                  });
+                                                                },
+                                                                decoration:
+                                                                    const InputDecoration(
+                                                                  hintText:
+                                                                      'Cari nama atau nomor...',
+                                                                  prefixIcon:
+                                                                      Icon(Icons
+                                                                          .search_rounded),
+                                                                  border:
+                                                                      InputBorder
+                                                                          .none,
+                                                                  contentPadding:
+                                                                      EdgeInsets.symmetric(
+                                                                          vertical:
+                                                                              12,
+                                                                          horizontal:
+                                                                              16),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                      Expanded(
+                                                        child: ListView.builder(
+                                                          itemCount:
+                                                              filteredContacts
+                                                                  .length,
+                                                          itemBuilder:
+                                                              (ctx, i) =>
+                                                                  ListTile(
+                                                            leading:
+                                                                CircleAvatar(
+                                                              backgroundColor:
+                                                                  AppColors
+                                                                      .primary
+                                                                      .withOpacity(
+                                                                          0.1),
+                                                              child: Text(
+                                                                  filteredContacts[i]
+                                                                          .displayName
+                                                                          .isNotEmpty
+                                                                      ? filteredContacts[i]
+                                                                              .displayName[
+                                                                          0]
+                                                                      : '?',
+                                                                  style: const TextStyle(
+                                                                      color: AppColors
+                                                                          .primary,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold)),
+                                                            ),
+                                                            title: Text(
+                                                                filteredContacts[
+                                                                        i]
+                                                                    .displayName),
+                                                            subtitle: Text(filteredContacts[
+                                                                        i]
+                                                                    .phones
+                                                                    .isNotEmpty
+                                                                ? filteredContacts[
+                                                                        i]
                                                                     .phones
                                                                     .first
-                                                                    .number;
-                                                          }
-                                                          nameController
-                                                              .text = debtType ==
-                                                                  'payable'
-                                                              ? 'Hutang ke ${contacts[i].displayName}'
-                                                              : 'Piutang ${contacts[i].displayName}';
-                                                        });
-                                                        Navigator.pop(ctx);
-                                                      },
-                                                    )));
+                                                                    .number
+                                                                : 'Tanpa nomor HP'),
+                                                            onTap: () {
+                                                              setModalState(() {
+                                                                debtorNameController
+                                                                        .text =
+                                                                    filteredContacts[
+                                                                            i]
+                                                                        .displayName;
+                                                                if (filteredContacts[
+                                                                        i]
+                                                                    .phones
+                                                                    .isNotEmpty) {
+                                                                  debtorPhoneController
+                                                                          .text =
+                                                                      filteredContacts[
+                                                                              i]
+                                                                          .phones
+                                                                          .first
+                                                                          .number;
+                                                                }
+                                                                nameController
+                                                                    .text = debtType ==
+                                                                        'payable'
+                                                                    ? 'Hutang ke ${filteredContacts[i].displayName}'
+                                                                    : 'Piutang ${filteredContacts[i].displayName}';
+                                                              });
+                                                              Navigator.pop(
+                                                                  ctx);
+                                                            },
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                              },
+                                            );
+                                          },
+                                        );
                                       } else if (status.isPermanentlyDenied) {
                                         if (!context.mounted) return;
                                         UIHelper.showErrorSnackBar(context,
