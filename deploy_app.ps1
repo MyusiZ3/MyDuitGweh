@@ -14,22 +14,63 @@ if ($pubspec -match "version:\s*([0-9.]+)") {
     exit
 }
 
-# 2. Build APK (Hanya jika belum ada atau ingin paksa build)
+# 2. Build APK (Hanya jika belum ada atau versi berubah)
 Write-Host "--- Memeriksa Build APK ---" -ForegroundColor Yellow
-if (!(Test-Path "build\app\outputs\flutter-apk\app-release.apk")) {
-    Write-Host "🛠️ Memulai Build APK (Release) ---" -ForegroundColor Yellow
-    flutter build apk --release --obfuscate --split-debug-info=build/app/outputs/symbols
-} else {
-    Write-Host "[INFO] File Build terdeteksi, melewati proses build..." -ForegroundColor Gray
+$lastVersionFile = "build\app\outputs\flutter-apk\last_version.txt"
+$lastVersion = ""
+if (Test-Path $lastVersionFile) {
+    $lastVersion = Get-Content $lastVersionFile
 }
 
-# 3. Bersihkan Folder Public & Siapkan Download File
-Write-Host "--- Menyiapkan Download File (.bin) ---" -ForegroundColor Yellow
-if (!(Test-Path "public")) { New-Item -ItemType Directory -Path "public" }
-Copy-Item "build\app\outputs\flutter-apk\app-release.apk" "public\app.bin" -Force
+$apkPath = "build\app\outputs\flutter-apk\app-release.apk"
+$shouldBuild = $true
 
-# 4. Deploy ke Firebase Hosting
-Write-Host "--- Deploy ke Firebase Hosting ---" -ForegroundColor Yellow
+if (Test-Path $apkPath) {
+    if ($lastVersion -eq $versionName) {
+        Write-Host "[INFO] File Build v$versionName terdeteksi, melewati proses build..." -ForegroundColor Gray
+        $shouldBuild = $false
+    } else {
+        Write-Host "[INFO] Versi berubah ($lastVersion -> $versionName). Memaksa build ulang..." -ForegroundColor Cyan
+    }
+}
+
+if ($shouldBuild) {
+    if (Test-Path $apkPath) {
+        Write-Host "🗑️ Menghapus build lama..." -ForegroundColor Gray
+        Remove-Item $apkPath -Force
+    }
+    
+    Write-Host "🛠️ Memulai Build APK (Release v$versionName) ---" -ForegroundColor Yellow
+    flutter build apk --release --obfuscate --split-debug-info=build/app/outputs/symbols
+    
+    if ($LASTEXITCODE -eq 0) {
+        if (!(Test-Path "build\app\outputs\flutter-apk")) { New-Item -ItemType Directory -Path "build\app\outputs\flutter-apk" -Force }
+        $versionName | Out-File $lastVersionFile -NoNewline
+        Write-Host "[OK] Build v$versionName selesai!" -ForegroundColor Green
+    } else {
+        Write-Host "[ERROR] Build APK Gagal!" -ForegroundColor Red
+        exit
+    }
+}
+
+# 3. Bersihkan Folder Public (Jangan masukkan file apk/bin agar deploy tidak terblokir)
+Write-Host "--- Membersihkan file lama di folder public ---" -ForegroundColor Yellow
+if (!(Test-Path "public")) { New-Item -ItemType Directory -Path "public" }
+
+Remove-Item "public\MyDuitGweh_*.bin" -ErrorAction SilentlyContinue
+Remove-Item "public\*.apk" -ErrorAction SilentlyContinue
+Remove-Item "public\app.bin" -ErrorAction SilentlyContinue
+
+$apkSource = "build\app\outputs\flutter-apk\app-release.apk"
+
+# 4. Deploy ke Firebase Hosting (Otomatis upload index.html)
+Write-Host "--- Sinkronisasi Versi di Landing Page ---" -ForegroundColor Yellow
+$indexPath = "public\index.html"
+if (Test-Path $indexPath) {
+    (Get-Content $indexPath) -replace "{{VERSION}}", "$versionName" | Set-Content $indexPath
+}
+
+Write-Host "--- Deploy ke Firebase Hosting (Web Only) ---" -ForegroundColor Yellow
 firebase deploy --only hosting
 
 if ($LASTEXITCODE -ne 0) {
@@ -37,54 +78,35 @@ if ($LASTEXITCODE -ne 0) {
     exit
 }
 
-# 5. Update Config di Firestore via Node.js Mini Script
-$hostingUrl = "https://myduitgweh.web.app/app.bin"
-Write-Host "--- Sinkronisasi versi ke Firestore ---" -ForegroundColor Yellow
+# 5. Buat GitHub Release dan Upload File
+Write-Host "--- Membuat GitHub Release (v$versionName) ---" -ForegroundColor Yellow
 
-# Kita buat skrip Node.js sementara karena Firebase CLI tidak punya 'set' langsung
-$jsCode = @"
-const admin = require('firebase-admin');
-const serviceAccount = require('./android/app/google-services.json'); // Kita coba intip info project
-
-// Gunakan firebase-tools (internal auth) untuk update dokumen
-const { execSync } = require('child_process');
-try {
-    const data = JSON.stringify({
-        latestVersion: "$versionName",
-        downloadUrl: "$hostingUrl",
-        updatedAt: new Date().toISOString()
-    });
-    // Gunakan perintah Patch jika tersedia
-    console.log("Updating Firestore...");
-    // Cara paling aman jika CLI terbatas: Panggil Firestore patch via JSON file
-    const fs = require('fs');
-    fs.writeFileSync('temp_data.json', data);
-    console.log("Pushing updates...");
-} catch (e) {
-    console.error(e);
+# Pengecekan GH CLI
+if (Get-Command gh -ErrorAction SilentlyContinue) {
+    $ghPath = "gh"
+} else {
+    $ghPath = "C:\Program Files\GitHub CLI\gh.exe"
 }
-"@
 
-# Sebenarnya ada cara lebih simpel tanpa buat JS:
-# Kita gunakan Firebase CLI Firestore:set tapi dengan format yang benar.
-# Jika firestore:set gagal, kita gunakan command alternative:
+$binSource = "build\app\outputs\flutter-apk\app.bin"
+Copy-Item -Path $apkSource -Destination $binSource -Force
 
-Write-Host "Updating database config..." -ForegroundColor Yellow
+$notes = "Auto Deploy Release v$versionName`n- Build executed on $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
 
-# Coba gunakan Firestore Patch (Command resmi terbaru)
-# Jika ini gagal, kita buatkan data manual di Firestore Console.
-firebase firestore:databases:set "(default)" --project myduitgweh
-firebase firestore:set "app_config/global" "{`"latestVersion`":`"$versionName`",`"downloadUrl`":`"$hostingUrl`"}" --merge
+Write-Host "Menghapus tag lama (jika ada) via GitHub CLI..." -ForegroundColor Gray
+& $ghPath release delete "v$versionName" --cleanup-tag --yes 2>$null
+
+Write-Host "Mengunggah APK dan BIN ke repositori GitHub..." -ForegroundColor Cyan
+& $ghPath release create "v$versionName" $apkSource $binSource --title "MyDuitGweh v$versionName" --notes $notes
 
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "[WARN] Gagal update Firestore via CLI." -ForegroundColor Red
-    Write-Host "👉 Silakan buka Firestore Console dan ubah manual:" -ForegroundColor White
-    Write-Host "   Collection: app_config" -ForegroundColor Cyan
-    Write-Host "   Document: global" -ForegroundColor Cyan
-    Write-Host "   latestVersion: $versionName" -ForegroundColor Yellow
-    Write-Host "   downloadUrl: $hostingUrl" -ForegroundColor Yellow
+    Write-Host "[ERROR] Membuat GitHub Release Gagal!" -ForegroundColor Red
 } else {
-    Write-Host "[OK] Selesai! Aplikasi berhasil di-deploy ke v$versionName" -ForegroundColor DarkGreen
+    Write-Host "[OK] Berhasil upload ke GitHub Releases!" -ForegroundColor Green
 }
 
-Write-Host "`nLink Download Aktif: $hostingUrl" -ForegroundColor Cyan
+Write-Host "[OK] Selesai! Web di-deploy ke Hosting & file diunggah ke GitHub (v$versionName)" -ForegroundColor DarkGreen
+Write-Host "`nLink Host Aktif     : https://myduitgweh.web.app" -ForegroundColor Cyan
+Write-Host "Link Download Statis: https://github.com/MyusiZ3/MyDuitGweh/releases/download/v$versionName/app-release.apk" -ForegroundColor Cyan
+Write-Host "👉 Jangan lupa update manual di Firestore (Collection: app_config -> Document: global -> latestVersion) jika diperlukan." -ForegroundColor Gray
+
