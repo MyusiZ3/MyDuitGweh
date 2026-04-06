@@ -10,8 +10,8 @@ import 'colab_screen.dart';
 import 'report_screen.dart';
 import 'receipt_scanner_screen.dart';
 import '../utils/ui_helper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/notification_permission_floating_card.dart';
-
 
 class MainNav extends StatefulWidget {
   const MainNav({super.key});
@@ -383,15 +383,32 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
 
   Future<void> _startOCRScan() async {
     // Navigate to our custom scanner lens
-    final XFile? imageFile = await Navigator.push<XFile>(
+    final dynamic result = await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const ReceiptScannerScreen()),
     );
+
+    if (result == null) return;
+
+    XFile? imageFile;
+    bool useAi = true;
+
+    if (result is Map) {
+      imageFile = result['image'] as XFile?;
+      useAi = result['useAi'] ?? true;
+    } else if (result is XFile) {
+      imageFile = result;
+    }
 
     if (imageFile == null) return;
 
     // Show a loading dialog/overlay while processing
     if (!mounted) return;
+
+    // Load AI Config
+    final prefs = await SharedPreferences.getInstance();
+    final String? customApiKey = prefs.getString('user_ai_api_key');
+    final String? apiPlatform = prefs.getString('user_ai_api_platform');
 
     // We can reuse the AddTransactionScreen logic or call OCR here
     // Let's show a loading state
@@ -459,7 +476,12 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
 
     try {
       final ocrService = ReceiptOCRService();
-      final data = await ocrService.scanReceiptFromFile(imageFile);
+      final data = await ocrService.scanReceiptFromFile(
+        imageFile,
+        useAi: useAi,
+        customApiKey: customApiKey,
+        apiPlatform: apiPlatform,
+      );
 
       if (!mounted) return;
       Navigator.pop(context); // close loader

@@ -3,7 +3,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/foundation.dart';
 import 'ai_service.dart';
-export 'ai_service.dart' show ReceiptData; // Export model so callers don't need extra import
+export 'ai_service.dart'
+    show ReceiptData; // Export model so callers don't need extra import
 
 class ReceiptOCRService {
   final TextRecognizer _textRecognizer =
@@ -60,7 +61,12 @@ class ReceiptOCRService {
     }
   }
 
-  Future<ReceiptData?> scanReceiptFromFile(XFile image) async {
+  Future<ReceiptData?> scanReceiptFromFile(
+    XFile image, {
+    bool useAi = true,
+    String? customApiKey,
+    String? apiPlatform,
+  }) async {
     try {
       debugPrint('OCR: Processing image from file: ${image.path}');
       final inputImage = InputImage.fromFilePath(image.path);
@@ -73,13 +79,21 @@ class ReceiptOCRService {
       ReceiptData? result = _parseReceipt(recognizedText);
 
       // --- HYBRID LOGIC: Check if we need AI Refinement ---
-      if (_isDataSuspicious(result)) {
+      if (useAi && _isDataSuspicious(result)) {
         debugPrint('OCR: Local parsing unreliable. Calling AI Refinement...');
-        final aiResult =
-            await AIService.extractReceiptData(recognizedText.text);
+        final aiResult = await AIService.extractReceiptData(
+          recognizedText.text,
+          customApiKey: customApiKey,
+          apiPlatform: apiPlatform,
+        );
         if (aiResult != null) {
-          debugPrint('OCR: AI Refinement Success!');
-          result = aiResult;
+          if (aiResult.merchant == "BUKAN_STRUK") {
+            debugPrint('OCR: AI Determined this is NOT a receipt.');
+            result = null;
+          } else {
+            debugPrint('OCR: AI Refinement Success!');
+            result = aiResult;
+          }
         } else {
           debugPrint('OCR: AI Refinement failed or returned null.');
         }
@@ -116,6 +130,9 @@ class ReceiptOCRService {
       'TRANSMART': 'Belanja',
       'GRAB': 'Transportasi',
       'GOJEK': 'Transportasi',
+      'GOFOOD': 'Makanan',
+      'GRABFOOD': 'Makanan',
+      'SHOPEEFOOD': 'Makanan',
       'PERTAMINA': 'Transportasi',
       'SHELL': 'Transportasi',
       'STARBUCKS': 'Makanan',

@@ -2631,10 +2631,22 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                         ],
                       ),
                     ),
-                    Text(
-                        'Update: ${DateFormat('HH:mm').format(DateTime.now())}',
-                        style: const TextStyle(
-                            color: Colors.white70, fontSize: 10)),
+                    FutureBuilder<SharedPreferences>(
+                      future: SharedPreferences.getInstance(),
+                      builder: (context, prefsSnapshot) {
+                        String lastUpdateStr = '--:--';
+                        if (prefsSnapshot.hasData) {
+                          final storedTime = prefsSnapshot.data!.getString('advisor_last_update');
+                          if (storedTime != null) {
+                            lastUpdateStr = DateFormat('HH:mm').format(DateTime.parse(storedTime));
+                          }
+                        }
+                        return Text(
+                          'Update: $lastUpdateStr',
+                          style: const TextStyle(color: Colors.white70, fontSize: 10),
+                        );
+                      },
+                    ),
                   ],
                 ),
                 const SizedBox(height: 20),

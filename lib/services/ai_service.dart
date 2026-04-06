@@ -1368,12 +1368,7 @@ INSTRUKSI FORMAT OUTPUT:
 
   /// Specialized method for Receipt OCR Refinement
   static Future<ReceiptData?> extractReceiptData(String rawText,
-      {String? customApiKey}) async {
-    final List<String> keys = [];
-    if (customApiKey != null && customApiKey.isNotEmpty) keys.add(customApiKey);
-    final integrated = await getIntegratedApiKeysAsync();
-    keys.addAll(integrated);
-
+      {String? customApiKey, String? apiPlatform}) async {
     final String systemPrompt = '''
 Ekstrak data dari teks struk belanja mentah di bawah ini.
 Return HANYA dalam format JSON murni tanpa markdown code blocks:
@@ -1385,13 +1380,51 @@ Return HANYA dalam format JSON murni tanpa markdown code blocks:
 }
 
 INSTRUKSI KHUSUS:
+- PENTING: Evaluasi apakah teks ini MUNGKIN berasal dari sebuah struk belanja/nota/invoice. Jika teks ini adalah artikel, obrolan, layar komputer, menu makanan biasa, wajah, atau teks acak yang BUKAN transaksi nota, JANGAN diekstrak. Segera kembalikan persis isi JSON berikut: {"merchant": "BUKAN_STRUK", "amount": 0, "date": "1970-01-01", "category": "Lainnya"}
 - Jika "merchant" tidak jelas, tebak dari kata kunci yang ada.
 - "amount" haruslah TOTAL BAYAR akhir (Grand Total). Abaikan diskon, pajak, kembalian (change), atau poin.
-- "date" gunakan format ISO-8601 (YYYY-MM-DD). Jika tidak ada tahun, gunakan tahun 2024 atau 2025 (terdekat).
+- "date" gunakan format ISO-8601 (YYYY-MM-DD). Jika tidak ada tahun, gunakan tahun terdekat.
 - Jika ada nominal ribuan yang dipisah titik/koma (contoh: 15.000), jadikan angka murni 15000.
 ''';
 
-    for (String key in keys) {
+    // 1. Try Custom User API Key First
+    if (customApiKey != null && customApiKey.isNotEmpty) {
+      try {
+        if (apiPlatform == 'groq') {
+          final response = await _callGroqApi(
+            apiKey: customApiKey,
+            model: 'llama-3.3-70b-versatile',
+            systemPrompt: systemPrompt,
+            userQuery: rawText,
+          );
+          if (response != null && response.isNotEmpty) {
+            String cleaned =
+                response.replaceAll('```json', '').replaceAll('```', '').trim();
+            return ReceiptData.fromJson(jsonDecode(cleaned));
+          }
+        } else {
+          final model = GenerativeModel(
+            model: 'gemini-1.5-flash',
+            apiKey: customApiKey,
+            systemInstruction: Content.system(systemPrompt),
+            generationConfig: GenerationConfig(
+              temperature: 0.1,
+              responseMimeType: 'application/json',
+            ),
+          );
+          final res = await model.generateContent([Content.text(rawText)]);
+          if (res.text != null && res.text!.isNotEmpty) {
+            return ReceiptData.fromJson(jsonDecode(res.text!));
+          }
+        }
+      } catch (e) {
+        debugPrint('OCR Refine Error with User Custom Key: $e');
+      }
+    }
+
+    // 2. Fallback to Integrated Gemini Keys
+    final integrated = await getIntegratedApiKeysAsync();
+    for (String key in integrated) {
       try {
         final model = GenerativeModel(
           model: 'gemini-1.5-flash',
@@ -1402,18 +1435,35 @@ INSTRUKSI KHUSUS:
             responseMimeType: 'application/json',
           ),
         );
-
         final response = await model.generateContent([Content.text(rawText)]);
-        final String? text = response.text;
-        if (text != null && text.isNotEmpty) {
-          final Map<String, dynamic> data = jsonDecode(text);
-          return ReceiptData.fromJson(data);
+        if (response.text != null && response.text!.isNotEmpty) {
+          return ReceiptData.fromJson(jsonDecode(response.text!));
         }
       } catch (e) {
-        debugPrint('OCR Refine Error with key ${key.substring(0, 10)}: $e');
         continue;
       }
     }
+
+    // 3. Fallback to Integrated Groq Keys
+    final groqKeys = await getGroqApiKeysAsync();
+    for (String key in groqKeys) {
+      try {
+        final response = await _callGroqApi(
+          apiKey: key,
+          model: 'llama-3.3-70b-versatile',
+          systemPrompt: systemPrompt,
+          userQuery: rawText,
+        );
+        if (response != null && response.isNotEmpty) {
+          String cleaned =
+              response.replaceAll('```json', '').replaceAll('```', '').trim();
+          return ReceiptData.fromJson(jsonDecode(cleaned));
+        }
+      } catch (e) {
+        continue;
+      }
+    }
+
     return null;
   }
 
@@ -1435,16 +1485,14 @@ INSTRUKSI KHUSUS:
     }
 
     // Sanitize feedback text to prevent JSON-breaking chars
-    final String feedbackList = feedbacks
-        .map((f) {
-          final cleanComment = f.comment
-              .replaceAll('"', "'")
-              .replaceAll('\n', ' ')
-              .replaceAll('\r', ' ')
-              .replaceAll('\\', ' ');
-          return "- [Rating ${f.rating.toInt()}/5] [Kategori: ${f.category}]: $cleanComment";
-        })
-        .join("\n");
+    final String feedbackList = feedbacks.map((f) {
+      final cleanComment = f.comment
+          .replaceAll('"', "'")
+          .replaceAll('\n', ' ')
+          .replaceAll('\r', ' ')
+          .replaceAll('\\', ' ');
+      return "- [Rating ${f.rating.toInt()}/5] [Kategori: ${f.category}]: $cleanComment";
+    }).join("\n");
 
     final systemPrompt = """
 Kamu adalah Archen Analytics, asisten strategis SuperAdmin MyDuitGweh.
@@ -1471,7 +1519,8 @@ ATURAN KETAT:
 5. Array top_feature_requests maksimal 5 item, setiap item max 15 kata.
 """;
 
-    final userQuery = "Analisis feedback ini sekarang. Pastikan JSON output lengkap dan valid.";
+    final userQuery =
+        "Analisis feedback ini sekarang. Pastikan JSON output lengkap dan valid.";
 
     Future<String?> tryGroqList() async {
       final List<String> fallbackModels = [

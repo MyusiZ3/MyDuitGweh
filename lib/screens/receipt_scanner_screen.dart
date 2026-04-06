@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../utils/app_theme.dart';
 import '../utils/ui_helper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ReceiptScannerScreen extends StatefulWidget {
   const ReceiptScannerScreen({super.key});
@@ -23,6 +24,9 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
 
+  bool _useAiAnalysis = false;
+  bool _hasApiKey = false;
+
   late AnimationController _animationController;
   late Animation<double> _scanLineAnimation;
   late AnimationController _pulseController;
@@ -32,6 +36,7 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _loadApiConfig();
     _initializeCamera();
 
     _animationController = AnimationController(
@@ -71,12 +76,20 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
 
       _controller = CameraController(
         _cameras.first,
-        ResolutionPreset.high,
+        ResolutionPreset.ultraHigh, // Using UltraHigh for better detail
         enableAudio: false,
         imageFormatGroup: ImageFormatGroup.jpeg,
       );
 
       await _controller!.initialize();
+      try {
+        // Continuous focus helps keep the receipt sharp while moving
+        await _controller!.setFocusMode(FocusMode.locked);
+        await _controller!.setFocusMode(FocusMode.auto);
+      } catch (e) {
+        debugPrint('Focus Mode Error: $e');
+      }
+      
       if (mounted) setState(() => _isInitializing = false);
     } catch (e) {
       debugPrint('Camera Error: $e');
@@ -114,6 +127,18 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
     }
   }
 
+  Future<void> _loadApiConfig() async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = prefs.getString('user_ai_api_key');
+    if (mounted) {
+      setState(() {
+        _hasApiKey = key != null && key.isNotEmpty;
+        final savedState = prefs.getBool('receipt_scanner_use_ai_mode') ?? false;
+        _useAiAnalysis = _hasApiKey && savedState;
+      });
+    }
+  }
+
   Future<void> _takePicture() async {
     if (_controller == null ||
         !_controller!.value.isInitialized ||
@@ -125,7 +150,8 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
       HapticFeedback.mediumImpact();
 
       final image = await _controller!.takePicture();
-      if (mounted) Navigator.pop(context, image);
+      if (mounted)
+        Navigator.pop(context, {'image': image, 'useAi': _useAiAnalysis});
     } catch (e) {
       if (mounted) {
         setState(() => _isProcessing = false);
@@ -158,7 +184,7 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
       );
 
       if (image != null && mounted) {
-        Navigator.pop(context, image);
+        Navigator.pop(context, {'image': image, 'useAi': _useAiAnalysis});
       }
     } catch (e) {
       if (mounted) {
@@ -182,7 +208,22 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
         fit: StackFit.expand,
         children: [
           // 1. Camera Preview
-          CameraPreview(_controller!),
+          GestureDetector(
+            onTapDown: (TapDownDetails details) async {
+              if (_controller == null || !_controller!.value.isInitialized) return;
+              final screenSize = MediaQuery.of(context).size;
+              // Map tap coordinates to 0..1 range
+              final x = details.localPosition.dx / screenSize.width;
+              final y = details.localPosition.dy / screenSize.height;
+              try {
+                await _controller!.setFocusPoint(Offset(x, y));
+                await _controller!.setFocusMode(FocusMode.auto);
+              } catch (e) {
+                debugPrint('Tap to Focus Error: $e');
+              }
+            },
+            child: _buildCameraPreview(),
+          ),
 
           // 2. The Custom Overlay (Scanner Lens)
           _buildScannerOverlay(context),
@@ -208,6 +249,29 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCameraPreview() {
+    if (_controller == null || !_controller!.value.isInitialized) {
+      return Container(color: Colors.black);
+    }
+
+    final size = MediaQuery.of(context).size;
+    
+    return Container(
+      width: size.width,
+      height: size.height,
+      child: ClipRect(
+        child: FittedBox(
+          fit: BoxFit.cover,
+          child: SizedBox(
+            width: _controller!.value.previewSize!.height,
+            height: _controller!.value.previewSize!.width,
+            child: CameraPreview(_controller!),
+          ),
+        ),
       ),
     );
   }
@@ -504,6 +568,83 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
                 onTap: _pickFromGallery,
                 color: Colors.white12,
                 tooltip: "Galeri",
+              ),
+            ),
+
+            // AI Toggle (Bottom Left Corner)
+            Positioned(
+              left: 32,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    "AI Mode",
+                    style: TextStyle(
+                      color:
+                          _useAiAnalysis ? AppColors.primary : Colors.white54,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Switch(
+                    value: _useAiAnalysis,
+                    onChanged: (val) async {
+                      if (val) {
+                        if (!_hasApiKey) {
+                          UIHelper.showInfoDialog(context, 'API Key Belum Diatur', 'Waduh, fitur AI Mode membutuhkan API Key. Silakan atur terlebih dahulu melalui fitur Chat AI.');
+                          return;
+                        }
+                        
+                        final bool? confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            backgroundColor: Colors.grey[900],
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            title: const Text('Gunakan AI Mode?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                            content: const Text(
+                              'Analisis struk ini akan menggunakan API Key pribadi Anda yang telah disetel.\n\nProses ini dapat memotong limit kuota API pihak ketiga Anda. Lanjutkan?', 
+                              style: TextStyle(color: Colors.white70)
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, false),
+                                child: Text('Batal', style: TextStyle(color: Colors.grey[400])),
+                              ),
+                              ElevatedButton(
+                                onPressed: () => Navigator.pop(ctx, true),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                ),
+                                child: const Text('Lanjutkan', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                              )
+                            ]
+                          )
+                        );
+                        
+                        if (confirm == true && mounted) {
+                          setState(() => _useAiAnalysis = true);
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setBool('receipt_scanner_use_ai_mode', true);
+                        } else if (mounted) {
+                          setState(() => _useAiAnalysis = false);
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setBool('receipt_scanner_use_ai_mode', false);
+                        }
+                      } else {
+                        setState(() {
+                          _useAiAnalysis = false;
+                        });
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.setBool('receipt_scanner_use_ai_mode', false);
+                      }
+                    },
+                    activeColor: AppColors.primary,
+                    inactiveThumbColor: Colors.white70,
+                    inactiveTrackColor: Colors.white24,
+                  ),
+                ],
               ),
             ),
           ],
