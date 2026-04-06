@@ -686,6 +686,31 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                     icon: Icons.new_releases_rounded,
                     color: Colors.black,
                   ),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _latestVersionController.text = '1.0.6+6';
+                        });
+                      },
+                      style: TextButton.styleFrom(
+                        backgroundColor: Colors.black.withOpacity(0.05),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                      icon: const Icon(Icons.auto_awesome_rounded,
+                          size: 14, color: Colors.black54),
+                      label: const Text('Set to 1.0.6+6',
+                          style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87)),
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   _buildModernTextField(
                     controller: _downloadUrlController,
@@ -696,27 +721,54 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                   const SizedBox(height: 8),
                   Align(
                     alignment: Alignment.centerRight,
-                    child: TextButton.icon(
-                      onPressed: () {
-                        setState(() {
-                          _downloadUrlController.text =
-                              'https://myduitgweh.web.app/app.bin';
-                        });
-                      },
-                      style: TextButton.styleFrom(
-                        backgroundColor: Colors.black.withOpacity(0.05),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                      ),
-                      icon: const Icon(Icons.cloud_done_rounded,
-                          size: 14, color: Colors.black54),
-                      label: const Text('Use Firebase Hosting URL',
-                          style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87)),
+                    child: Wrap(
+                      spacing: 8,
+                      children: [
+                        TextButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              _downloadUrlController.text =
+                                  'https://github.com/muusiZ3/MyDuitGweh/releases/latest/download/app-release.apk';
+                            });
+                          },
+                          style: TextButton.styleFrom(
+                            backgroundColor: AppColors.primary.withOpacity(0.08),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 8),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                          ),
+                          icon: const Icon(Icons.rocket_launch_rounded,
+                              size: 14, color: AppColors.primary),
+                          label: const Text('Use GitHub Release (APK)',
+                              style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primary)),
+                        ),
+                        TextButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              _downloadUrlController.text =
+                                  'https://myduitgweh.web.app/app.bin';
+                            });
+                          },
+                          style: TextButton.styleFrom(
+                            backgroundColor: Colors.black.withOpacity(0.05),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 8),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                          ),
+                          icon: const Icon(Icons.cloud_done_rounded,
+                              size: 14, color: Colors.black54),
+                          label: const Text('Use Firebase Hosting',
+                              style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87)),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 16),

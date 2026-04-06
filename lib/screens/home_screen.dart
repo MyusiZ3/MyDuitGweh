@@ -359,6 +359,18 @@ class _HomeScreenState extends State<HomeScreen> {
       final savedMinute = prefs.getInt('reminder_minute') ?? 0;
       _reminderTime = TimeOfDay(hour: savedHour, minute: savedMinute);
     });
+
+    // Re-schedule notification on startup to ensure latest channel settings are applied
+    if (_isNotificationEnabled) {
+      try {
+        await _notificationService.scheduleDailyReminder(
+          hour: _reminderTime.hour,
+          minute: _reminderTime.minute,
+        );
+      } catch (e) {
+        debugPrint('Auto-schedule notification failed: $e');
+      }
+    }
   }
 
   Future<void> _saveDismissedBroadcast(String id) async {

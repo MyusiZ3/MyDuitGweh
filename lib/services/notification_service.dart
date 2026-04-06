@@ -1,4 +1,5 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'dart:ui';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart';
@@ -92,7 +93,7 @@ class NotificationService {
         scheduledDate,
         const NotificationDetails(
           android: AndroidNotificationDetails(
-            'daily_reminder_channel_v2',
+            'daily_jurnal_paling_penting_v3', // Match with the confirmation ID
             'Pengingat Jurnal',
             channelDescription: 'Notifikasi pengingat jurnal harian keuangan',
             importance: Importance.max,
@@ -127,14 +128,16 @@ class NotificationService {
         'Kamu akan diingetin tiap hari jam $jamStr. (〜￣▽￣)〜',
         const NotificationDetails(
           android: AndroidNotificationDetails(
-            'daily_reminder_channel_v2',
-            'Pengingat Jurnal',
-            channelDescription: 'Notifikasi pengingat jurnal harian keuangan',
-            importance: Importance.max,
-            priority: Priority.max,
-            ticker: 'Pengingat Aktif',
-            icon: 'notif_icon',
-          ),
+          'daily_jurnal_paling_penting_v3', // Final consistent ID for fresh channel
+          'Daily Reminder',
+          channelDescription: 'Reminds you to record transactions',
+          importance: Importance.max,
+          priority: Priority.max, // Changed to max for better popup chance
+          icon: 'notif_icon',
+          color: const Color(0xFF6200EE),
+          playSound: true,
+          enableVibration: true,
+        ),
         ),
       );
 
