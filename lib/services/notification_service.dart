@@ -31,9 +31,9 @@ class NotificationService {
 
       // Bikin channel dengan importance MAX agar muncul heads-up / pop-up
       const AndroidNotificationChannel channel = AndroidNotificationChannel(
-        'daily_reminder_channel_v2', // Ganti ID agar sistem reset settingan importance
+        'daily_jurnal_paling_penting_v3', // Match with the ID used in show/schedule
         'Pengingat Jurnal',
-        description: 'Notifikasi pengingat jurnal harian keuangan',
+        description: 'Notifikasi pengingat harian tercinta',
         importance: Importance.max,
         playSound: true,
         enableVibration: true,
@@ -44,7 +44,7 @@ class NotificationService {
 
       const AndroidNotificationChannel broadcastChannel =
           AndroidNotificationChannel(
-        'broadcast_channel',
+        'broadcast_channel_v2',
         'Pesan Broadcast',
         description: 'Notifikasi pesan penting dari admin',
         importance: Importance.max,
@@ -76,7 +76,7 @@ class NotificationService {
   }
 
   /// Jadwalkan notifikasi harian pada jam & menit tertentu
-  Future<void> scheduleDailyReminder({int hour = 20, int minute = 0}) async {
+  Future<void> scheduleDailyReminder({int hour = 20, int minute = 0, bool showConfirmation = false}) async {
     try {
       // Batalkan semua notifikasi lama dulu
       await _notificationsPlugin.cancelAll();
@@ -122,24 +122,26 @@ class NotificationService {
       // Tampilkan notifikasi konfirmasi langsung (opsional)
       final String jamStr =
           '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
-      await _notificationsPlugin.show(
-        100,
-        'Pengingat dah Aktif..!',
-        'Kamu akan diingetin tiap hari jam $jamStr. (〜￣▽￣)〜',
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-          'daily_jurnal_paling_penting_v3', // Final consistent ID for fresh channel
-          'Daily Reminder',
-          channelDescription: 'Reminds you to record transactions',
-          importance: Importance.max,
-          priority: Priority.max, // Changed to max for better popup chance
-          icon: 'notif_icon',
-          color: const Color(0xFF6200EE),
-          playSound: true,
-          enableVibration: true,
-        ),
-        ),
-      );
+      if (showConfirmation) {
+        await _notificationsPlugin.show(
+          100,
+          'Pengingat dah Aktif..!',
+          'Kamu akan diingetin tiap hari jam $jamStr. (〜￣▽￣)〜',
+          const NotificationDetails(
+            android: AndroidNotificationDetails(
+            'daily_jurnal_paling_penting_v3', // Final consistent ID for fresh channel
+            'Daily Reminder',
+            channelDescription: 'Reminds you to record transactions',
+            importance: Importance.max,
+            priority: Priority.max, // Changed to max for better popup chance
+            icon: 'notif_icon',
+            color: const Color(0xFF007AFF),
+            playSound: true,
+            enableVibration: true,
+          ),
+          ),
+        );
+      }
 
       print('Notification Scheduled Successfully for $jamStr');
     } catch (e) {
@@ -176,14 +178,14 @@ class NotificationService {
       {int id = 0, required String title, required String body}) async {
     try {
       const androidDetails = AndroidNotificationDetails(
-        'broadcast_channel',
+        'broadcast_channel_v2',
         'Pesan Broadcast',
         channelDescription: 'Notifikasi pesan penting dari admin',
         importance: Importance.max,
         priority: Priority.max,
         showWhen: true,
         playSound: true,
-        icon: 'notif_icon', // Tambah icon untuk broadcast
+        icon: 'notif_icon',
       );
 
       const iosDetails = DarwinNotificationDetails(
@@ -201,5 +203,73 @@ class NotificationService {
     } catch (e) {
       print('Error showing instant notification: $e');
     }
+  }
+
+  /// Jadwalkan notifikasi broadcast sekali pada waktu spesifik (Pending Broadcasts)
+  Future<void> scheduleBroadcast({
+    required int id,
+    required String title,
+    required String body,
+    required DateTime scheduledTime,
+  }) async {
+    try {
+      final tz.TZDateTime tzScheduledTime = tz.TZDateTime.from(scheduledTime, tz.local);
+      
+      // Jika waktu sudah terlewat, lewati
+      if (tzScheduledTime.isBefore(tz.TZDateTime.now(tz.local))) return;
+
+      const androidDetails = AndroidNotificationDetails(
+        'broadcast_channel_v2',
+        'Pesan Broadcast',
+        channelDescription: 'Notifikasi pesan penting dari admin',
+        importance: Importance.max,
+        priority: Priority.max,
+        showWhen: true,
+        playSound: true,
+        icon: 'notif_icon',
+      );
+
+      const iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      );
+
+      await _notificationsPlugin.zonedSchedule(
+        id,
+        title,
+        body,
+        tzScheduledTime,
+        const NotificationDetails(android: androidDetails, iOS: iosDetails),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+      );
+    } catch (e) {
+      print('Error scheduling broadcast: $e');
+    }
+  }
+
+  /// Uji coba notifikasi heads-up langsung
+  Future<void> testNotification() async {
+    await _notificationsPlugin.show(
+      999,
+      'TEST: Pop-up Çalışıyor! 🚀',
+      'Jika muncul ini sebagai pop-up di atas layar, artinya konfigurasi sudah benar!',
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'daily_jurnal_paling_penting_v3',
+          'Pengingat Jurnal',
+          channelDescription: 'Notifikasi pengingat harian tercinta',
+          importance: Importance.max,
+          priority: Priority.max,
+          ticker: 'Test running...',
+          playSound: true,
+          icon: 'notif_icon',
+          color: const Color(0xFF007AFF),
+          fullScreenIntent: false, 
+        ),
+      ),
+    );
   }
 }

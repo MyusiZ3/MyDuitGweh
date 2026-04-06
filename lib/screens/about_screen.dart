@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../utils/app_theme.dart';
+import '../services/update_service.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -110,17 +111,50 @@ class AboutScreen extends StatelessWidget {
                             future: PackageInfo.fromPlatform(),
                             builder: (context, snapshot) {
                               final version = snapshot.data?.version ?? '...';
-                              return FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Text(
-                                  version,
-                                  style: const TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w800,
-                                    color: Color(0xFF1C1C1E),
-                                    letterSpacing: -0.5,
+                              return Column(
+                                children: [
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      version,
+                                      style: const TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.w800,
+                                        color: Color(0xFF1C1C1E),
+                                        letterSpacing: -0.5,
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                  const SizedBox(height: 12),
+                                  InkWell(
+                                    onTap: () => UpdateService.checkUpdateManual(context),
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primary.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                                      ),
+                                      child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(CupertinoIcons.refresh, size: 14, color: AppColors.primary),
+                                          SizedBox(width: 6),
+                                          Text(
+                                            'Check',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w800,
+                                              color: AppColors.primary,
+                                              letterSpacing: 0.5,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               );
                             },
                           ),

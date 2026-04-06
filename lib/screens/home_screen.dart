@@ -142,6 +142,25 @@ class _HomeScreenState extends State<HomeScreen> {
           broadcasts.where((b) => b['status'] == 'ongoing').toList();
       _currentActiveBroadcasts = activeBroadcasts;
 
+      // Local Schedule for Pending Broadcasts
+      final pendingBroadcasts =
+          broadcasts.where((b) => b['status'] == 'pending').toList();
+      for (var b in pendingBroadcasts) {
+        if (b['scheduledTime'] != null) {
+          try {
+            final time = (b['scheduledTime'] as Timestamp).toDate();
+            _notificationService.scheduleBroadcast(
+              id: b['id'].hashCode,
+              title: b['title'] ?? 'Pengumuman',
+              body: b['message'] ?? 'Ada info penting nih!',
+              scheduledTime: time,
+            );
+          } catch(e) {
+            print('Error scheduling locally: $e');
+          }
+        }
+      }
+
       // Unread = active + not yet SEEN by user (not dismissed)
       final unseenCount = activeBroadcasts
           .where((b) => !_seenBroadcasts.contains(b['id']))
@@ -1345,7 +1364,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 await _notificationService
                                     .scheduleDailyReminder(
                                         hour: pickedTime.hour,
-                                        minute: pickedTime.minute);
+                                        minute: pickedTime.minute,
+                                        showConfirmation: true);
                                 setModalState(() {
                                   _isNotificationEnabled = true;
                                   _reminderTime = pickedTime;
@@ -1384,7 +1404,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 await _notificationService
                                     .scheduleDailyReminder(
                                         hour: pickedTime.hour,
-                                        minute: pickedTime.minute);
+                                        minute: pickedTime.minute,
+                                        showConfirmation: true);
                                 setModalState(() {
                                   _isNotificationEnabled = true;
                                   _reminderTime = pickedTime;

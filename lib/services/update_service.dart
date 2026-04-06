@@ -16,6 +16,47 @@ class UpdateService {
   static bool _isUpdateDialogOpen = false;
   static BuildContext? _currentDialogContext;
 
+  /// Cek update secara manual dari UI (misal: About Screen)
+  static Future<void> checkUpdateManual(BuildContext context) async {
+    UIHelper.showLoadingDialog(context, message: 'Memeriksa pembaruan...');
+    
+    try {
+      final doc = await FirebaseFirestore.instance.collection('app_config').doc('global').get();
+      if (!doc.exists) {
+        if (context.mounted) {
+          Navigator.pop(context); // close loading
+          UIHelper.showInfoSnackBar(context, 'Gagal terhubung ke server.');
+        }
+        return;
+      }
+
+      final config = doc.data()!;
+      final packageInfo = await PackageInfo.fromPlatform();
+      final currentVersion = packageInfo.version;
+      final latestVersion = config['latestVersion'] ?? currentVersion;
+      final downloadUrl = config['downloadUrl'] ?? '';
+
+      if (context.mounted) {
+        Navigator.pop(context); // close loading
+        
+        if (_isVersionLower(currentVersion, latestVersion) && downloadUrl.isNotEmpty) {
+          final minVersion = config['minVersion'] ?? currentVersion;
+          final isForceUpdate = config['isForceUpdate'] ?? false;
+          final bool isForce = isForceUpdate || _isVersionLower(currentVersion, minVersion);
+          
+          _showUpdateDialog(context, latestVersion, downloadUrl, isForce: isForce);
+        } else {
+          UIHelper.showSuccessSnackBar(context, 'Aplikasi sudah versi terbaru! ✨');
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context); // close loading
+        UIHelper.showErrorSnackBar(context, 'Terjadi kesalahan saat mengecek update.');
+      }
+    }
+  }
+
   /// Fungsi sinkronisasi real-time untuk menutup/membuka dialog berdasarkan data Firestore
   static void syncUpdateDialog(BuildContext context, Map<String, dynamic> config) async {
     try {

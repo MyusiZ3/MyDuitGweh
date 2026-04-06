@@ -15,6 +15,7 @@ import 'package:flutter/services.dart';
 import '../../services/ai_service.dart';
 import '../../utils/ui_helper.dart';
 import 'notification_listener_admin_screen.dart';
+import '../../services/notification_service.dart';
 
 class AdminToolsScreen extends StatefulWidget {
   const AdminToolsScreen({super.key});
@@ -272,6 +273,30 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                                         MaterialPageRoute(
                                             builder: (_) =>
                                                 const NotificationListenerAdminScreen())),
+                                    isRestricted: !_isSuperAdmin,
+                                  ),
+                                ),
+                                  const SizedBox(height: 12),
+                                // ─── Test Notification Card ─────────
+                                SizedBox(
+                                  height: 140,
+                                  width: double.infinity,
+                                  child: _buildCommandCard(
+                                    title: 'Test Notification',
+                                    subtitle: 'Immediate High-Priority Pop-up',
+                                    icon: Icons.notification_important_rounded,
+                                    color: const Color(0xFFF43F5E),
+                                    onTap: () async {
+                                      await NotificationService().testNotification();
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('Test notification sent! Check your status bar & pop-up.'),
+                                            backgroundColor: Colors.green,
+                                          ),
+                                        );
+                                      }
+                                    },
                                     isRestricted: !_isSuperAdmin,
                                   ),
                                 ),
