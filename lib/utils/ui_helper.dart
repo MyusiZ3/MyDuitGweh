@@ -698,9 +698,9 @@ class UIHelper {
       case AppTone.milenial:
         return 'Santuyy, ala-ala anak Jaksel.';
       case AppTone.boomer:
-        return 'Yahh gitulah ala-ala boomer yg bijak.';
+        return 'Tone ramah dan agamis.';
       case AppTone.pasangan:
-        return 'Inikah my bini gweh?';
+        return 'When yahhh, when yahhh.. :)';
       case AppTone.normal:
         return 'Profesional, singkat, dan padat.';
     }
