@@ -741,7 +741,8 @@ Firebase Project
 
 ## 📄 Lisensi
 
-Proyek ini dilisensikan di bawah **MIT License**. Lihat file [LICENSE](LICENSE) untuk detail lebih lanjut.
+Proyek ini dilisensikan di bawah **Apache License 2.0**. Lihat file [LICENSE](LICENSE) untuk detail lebih lanjut.
+
 
 
 ---
