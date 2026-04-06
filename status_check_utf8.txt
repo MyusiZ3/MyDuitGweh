@@ -1,0 +1,142 @@
+﻿interactive rebase in progress; onto a80a2fa
+Last commands done (24 commands done):
+   pick e3e2107 feat(ai): update Groq fallback model logic with new high-performance models ≡ƒñû
+   pick e3e2107 feat(ai): update Groq fallback model logic with new high-performance models ≡ƒñû
+  (see more in file .git/rebase-merge/done)
+Next commands to do (67 remaining commands):
+   pick e3e2107 feat(ai): update Groq fallback model logic with new high-performance models ≡ƒñû
+   pick ac01914 style(ui): refactor App Config with premium UI and refine maintenance gate text ≡ƒÄ¿
+  (use "git rebase --edit-todo" to view and edit)
+You are currently rebasing branch 'master' on 'a80a2fa'.
+  (all conflicts fixed: run "git rebase --continue")
+
+Changes to be committed:
+	modified:   .firebaserc
+	modified:   .gitignore
+	new file:   LICENSE
+	new file:   analyze_output.txt
+	modified:   android/app/build.gradle
+	modified:   android/app/google-services.json
+	new file:   android/app/proguard-rules.pro
+	modified:   android/app/src/main/AndroidManifest.xml
+	new file:   android/app/src/main/kotlin/com/arch/myduitgweh/MainActivity.kt
+	new file:   android/app/src/main/kotlin/com/arch/myduitgweh/NotifListenerService.kt
+	deleted:    android/app/src/main/kotlin/com/myduitgweh/my_duit_gweh/MainActivity.kt
+	new file:   android/app/src/main/res/drawable/notif_icon.png
+	new file:   android/app/src/main/res/mipmap-hdpi/launcher_icon.png
+	new file:   android/app/src/main/res/mipmap-mdpi/launcher_icon.png
+	new file:   android/app/src/main/res/mipmap-xhdpi/launcher_icon.png
+	new file:   android/app/src/main/res/mipmap-xxhdpi/launcher_icon.png
+	new file:   android/app/src/main/res/mipmap-xxxhdpi/launcher_icon.png
+	modified:   android/app/src/main/res/xml/file_paths.xml
+	new file:   assets/images/draft_notif_logo.png
+	new file:   assets/images/logo_app.png
+	new file:   assets/images/logo_loading.png
+	new file:   assets/images/notif_logo.png
+	new file:   deploy_app.ps1
+	new file:   docs/PREMIUM_UI_AND_SECURITY.md
+	new file:   docs/admin_superadmin_EAGLE_EYE_PLAN.md
+	new file:   docs/ai_financial_advisor_archen.md
+	new file:   docs/ai_receipt_scanner_ocr.md
+	new file:   docs/analytics_integration_plan.md
+	new file:   docs/auth_and_design_system.md
+	new file:   docs/auto_read_notif_to_wallet_plan.md
+	new file:   docs/build_flow.md
+	new file:   docs/core_budgeting_engine.md
+	new file:   docs/notification_listener_system_guide.md
+	new file:   docs/system_auto_magic_sync.md
+	new file:   docs/throotle_implementation_plan.md
+	modified:   firestore.rules
+	new file:   fix.ps1
+	new file:   fix_bracket.dart
+	new file:   fix_extra_bracket.dart
+	new file:   flutter_01.png
+	modified:   ios/Runner.xcodeproj/project.pbxproj
+	modified:   ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png
+	modified:   ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@1x.png
+	modified:   ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@2x.png
+	modified:   ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@3x.png
+	modified:   ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@1x.png
+	modified:   ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@2x.png
+	modified:   ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@3x.png
+	modified:   ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@1x.png
+	modified:   ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@2x.png
+	modified:   ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@3x.png
+	new file:   ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-50x50@1x.png
+	new file:   ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-50x50@2x.png
+	new file:   ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-57x57@1x.png
+	new file:   ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-57x57@2x.png
+	modified:   ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@2x.png
+	modified:   ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@3x.png
+	new file:   ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-72x72@1x.png
+	new file:   ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-72x72@2x.png
+	modified:   ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@1x.png
+	modified:   ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@2x.png
+	modified:   ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-83.5x83.5@2x.png
+	modified:   lib/main.dart
+	new file:   lib/models/feedback_model.dart
+	new file:   lib/models/survey_config_model.dart
+	modified:   lib/models/user_model.dart
+	modified:   lib/screens/about_screen.dart
+	modified:   lib/screens/add_transaction_screen.dart
+	modified:   lib/screens/admin/admin_dashboard_screen.dart
+	modified:   lib/screens/admin/admin_logs_screen.dart
+	modified:   lib/screens/admin/admin_tools_screen.dart
+	new file:   lib/screens/admin/ai_trend_analysis_screen.dart
+	modified:   lib/screens/admin/app_config_screen.dart
+	modified:   lib/screens/admin/global_insights_screen.dart
+	new file:   lib/screens/admin/notification_listener_admin_screen.dart
+	modified:   lib/screens/admin/user_management_screen.dart
+	modified:   lib/screens/help_screen.dart
+	modified:   lib/screens/home_screen.dart
+	modified:   lib/screens/login_screen.dart
+	modified:   lib/screens/main_nav.dart
+	modified:   lib/screens/maintenance_gate_screen.dart
+	modified:   lib/screens/notifications_screen.dart
+	modified:   lib/screens/onboarding_screen.dart
+	modified:   lib/screens/receipt_scanner_screen.dart
+	modified:   lib/screens/report_screen.dart
+	new file:   lib/screens/security_gate_screen.dart
+	new file:   lib/screens/suspension_gate_screen.dart
+	modified:   lib/screens/wallet_screen.dart
+	modified:   lib/services/ai_service.dart
+	modified:   lib/services/auth_service.dart
+	modified:   lib/services/firestore_service.dart
+	new file:   lib/services/notif_listener_bridge.dart
+	new file:   lib/services/notif_local_db_service.dart
+	new file:   lib/services/notif_recognition_service.dart
+	new file:   lib/services/notif_sync_service.dart
+	modified:   lib/services/notification_service.dart
+	modified:   lib/services/pdf_service.dart
+	modified:   lib/services/receipt_ocr_service.dart
+	modified:   lib/services/security_service.dart
+	modified:   lib/services/update_service.dart
+	new file:   lib/utils/debouncer.dart
+	modified:   lib/utils/tone_dictionary.dart
+	modified:   lib/utils/ui_helper.dart
+	new file:   lib/widgets/bottom_sheets/experience_survey_sheet.dart
+	modified:   lib/widgets/connection_badge.dart
+	modified:   lib/widgets/loading_widget.dart
+	new file:   lib/widgets/notification_permission_floating_card.dart
+	new file:   lib/widgets/notification_permission_sliver.dart
+	new file:   linux/flutter/generated_plugin_registrant.cc
+	new file:   linux/flutter/generated_plugins.cmake
+	new file:   macos/Flutter/GeneratedPluginRegistrant.swift
+	modified:   public/index.html
+	modified:   pubspec.lock
+	modified:   pubspec.yaml
+	new file:   windows/flutter/generated_plugin_registrant.cc
+	new file:   windows/flutter/generated_plugins.cmake
+	modified:   windows/runner/Runner.rc
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   linux/flutter/generated_plugin_registrant.h
+	modified:   windows/flutter/generated_plugin_registrant.h
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	status_check.txt
+	status_check_utf8.txt
+

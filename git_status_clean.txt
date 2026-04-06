@@ -1,0 +1,19 @@
+﻿On branch master
+Your branch and 'origin/master' have diverged,
+and have 91 and 1 different commits each, respectively.
+  (use "git pull" if you want to integrate the remote branch with yours)
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   linux/flutter/generated_plugin_registrant.h
+	modified:   windows/flutter/generated_plugin_registrant.h
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	git_log_utf8.txt
+	git_status_clean.txt
+	status_check.txt
+	status_check_utf8.txt
+
+no changes added to commit (use "git add" and/or "git commit -a")
