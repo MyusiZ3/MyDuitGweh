@@ -731,7 +731,7 @@ Firebase Project
 <table>
   <tr>
     <td align="center">
-      <strong>Muhammad Archie</strong><br/>
+      <strong>Muhamad Sidik</strong><br/>
       <em>Lead Developer & Designer</em>
     </td>
   </tr>
