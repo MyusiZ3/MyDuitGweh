@@ -7,8 +7,12 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'firebase_options.dart';
+import 'services/security_service.dart';
+import 'services/security_listener_service.dart';
+import 'package:my_duit_gweh/services/notification_service.dart';
 import 'utils/app_theme.dart';
 import 'utils/tone_dictionary.dart';
+import 'utils/navigator_key.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/main_nav.dart';
@@ -16,7 +20,6 @@ import 'screens/maintenance_gate_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'services/auth_service.dart';
 import 'services/update_service.dart';
-import 'services/security_service.dart';
 import 'screens/security_gate_screen.dart';
 import 'services/notif_sync_service.dart';
 import 'services/notif_listener_bridge.dart';
@@ -46,6 +49,8 @@ void main() async {
 
   // Init Workmanager untuk background sync notifikasi
   await NotifSyncService.init();
+  // Init local notifications
+  await NotificationService().init();
   // Restore listener state jika sebelumnya aktif
   await NotifListenerBridge.initOnAppStart();
 
@@ -62,6 +67,7 @@ class MyDuitGwehApp extends StatelessWidget {
       valueListenable: ToneManager.notifier,
       builder: (context, activeTone, child) {
         return MaterialApp(
+          navigatorKey: navigatorKey,
           title: 'My Duit Gweh',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
@@ -277,23 +283,23 @@ class _MaintenanceGateWrapperState extends State<MaintenanceGateWrapper> {
         final maintenanceMsg = data['maintenanceMessage'] ??
             'Aplikasi sedang dalam pemeliharaan rutin.';
             
-        if (!isMaintenance) {
-          // Check for updates if not in maintenance using real-time sync
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            UpdateService.syncUpdateDialog(context, data);
-          });
-          return const MainNav();
-        }
-
-        // Jika maintenance aktif, cek apakah user adalah admin/superadmin
+        // Selalu cek admin untuk menyalakan Security Listener di background
         return FutureBuilder<bool>(
           future: _adminFuture,
           builder: (context, adminSnapshot) {
-            if (adminSnapshot.connectionState == ConnectionState.waiting) {
-              return const SplashView();
+            final isAdmin = adminSnapshot.data ?? false;
+            debugPrint('--- AUTH GATE: User=${widget.user.email}, isAdmin=$isAdmin');
+            
+            if (isAdmin) {
+              SecurityListenerService().startListening(widget.user.uid);
             }
 
-            final isAdmin = adminSnapshot.data ?? false;
+            if (!isMaintenance) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                UpdateService.syncUpdateDialog(context, data);
+              });
+              return const MainNav();
+            }
 
             if (isAdmin) {
               return const MainNav();
