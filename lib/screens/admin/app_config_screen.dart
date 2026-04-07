@@ -401,7 +401,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                     ),
                     const SizedBox(width: 12),
                     const Expanded(
-                        child: Text('Guide Update (A-Z)',
+                        child: Text('Guide Update',
                             style: TextStyle(
                                 fontSize: 20, fontWeight: FontWeight.bold))),
                     IconButton(

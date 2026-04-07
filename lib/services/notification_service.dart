@@ -256,7 +256,7 @@ class NotificationService {
   Future<void> testNotification() async {
     await _notificationsPlugin.show(
       999,
-      'TEST: Pop-up Contsiol! (〜￣▽￣)〜',
+      'TEST: Pop-up Cortisol! (〜￣▽￣)〜',
       'Jika muncul ini sebagai pop-up di atas layar, artinya konfigurasi sudah benar!',
       const NotificationDetails(
         android: AndroidNotificationDetails(

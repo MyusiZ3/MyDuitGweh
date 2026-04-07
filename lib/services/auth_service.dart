@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'security_service.dart';
+
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -112,8 +114,19 @@ class AuthService {
       }
       return userCredential;
     } catch (e) {
+      // Log failure to security monitor
+      SecurityService().logEvent(
+        type: 'AUTH_FAILURE',
+        severity: 'medium',
+        message: 'Gagal masuk: $email',
+        metadata: {
+          'email': email,
+          'error': e.toString(),
+        },
+      );
       throw _getAuthErrorMessage(e);
     }
+
   }
 
   // PASSWORD RESET

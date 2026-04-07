@@ -356,7 +356,11 @@ class _HomeScreenState extends State<HomeScreen> {
     final prefs = await SharedPreferences.getInstance();
     final isLocked = prefs.getBool('use_biometrics') ?? false;
     if (isLocked) {
-      await _securityService.authenticate();
+      // Tunggu frame selesai sebelum panggil dialog kustom
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        await _securityService.authenticate(context);
+      });
     }
   }
 
@@ -1300,7 +1304,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               await _securityService.isBiometricAvailable();
                           if (!canAuth) return;
                           final authSuccess =
-                              await _securityService.authenticate();
+                              await _securityService.authenticate(context);
                           if (authSuccess) {
                             await _securityService.setBiometricEnabled(newVal);
                             setModalState(() => _isBiometricEnabled = newVal);
@@ -1314,7 +1318,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 await _securityService.isBiometricAvailable();
                             if (!canAuth) return;
                             final authSuccess =
-                                await _securityService.authenticate();
+                                await _securityService.authenticate(context);
                             if (authSuccess) {
                               await _securityService.setBiometricEnabled(val);
                               setModalState(() => _isBiometricEnabled = val);
