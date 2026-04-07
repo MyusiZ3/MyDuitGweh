@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
 import '../utils/app_theme.dart';
 import '../utils/tone_dictionary.dart';
+import '../utils/navigator_key.dart';
 
 class UIHelper {
   static void showSuccessSnackBar(BuildContext context, String message) {
@@ -17,6 +18,15 @@ class UIHelper {
   static void showInfoSnackBar(BuildContext context, String message) {
     _showTopToast(
         context, message, Colors.blueGrey, Icons.info_outline_rounded);
+  }
+
+  static void showGlobalInfoToast(String message, {Color color = Colors.blueGrey, IconData icon = Icons.security_rounded}) {
+    final context = navigatorKey.currentContext;
+    if (context != null) {
+      _showTopToast(context, message, color, icon);
+    } else {
+      debugPrint('--- UIHelper: GLOBAL TOAST FAILED - Context is NULL. Message: $message');
+    }
   }
 
   static void _showTopToast(
