@@ -458,7 +458,7 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'Sistem sedang merapikan data nota kamu secara otomatis ⚡',
+                  'Sistem sedang merapikan data nota kamu secara otomatis',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 13,

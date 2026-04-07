@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/firestore_service.dart';
+import '../services/connectivity_service.dart';
 import '../models/wallet_model.dart';
 import '../models/transaction_model.dart';
 import '../utils/app_theme.dart';
@@ -93,6 +95,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     setState(() => _isLoading = true);
 
     try {
+      final isOnline = await ConnectivityService.isOnline();
       final transaction = TransactionModel(
         id: '',
         walletId: _selectedWalletId!,
@@ -106,7 +109,23 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         date: DateTime.now(),
       );
 
-      await _firestoreService.addTransaction(transaction);
+      if (!isOnline) {
+        // Mode Offline: Langsung simpan ke cache dan tutup
+        _firestoreService.addTransaction(
+            transaction); // Jangan di-await agar tidak nge-hang jika stream error
+        if (mounted) {
+          Navigator.pop(context);
+          UIHelper.showInfoSnackBar(context, 'Transaksi disimpan offline');
+        }
+        return;
+      }
+
+      // Mode Online: Tunggu konfirmasi (timeout if necessary)
+      await _firestoreService.addTransaction(transaction).timeout(
+            const Duration(seconds: 10),
+            onTimeout: () =>
+                throw TimeoutException('Gagal menghubungi server.'),
+          );
 
       if (mounted) {
         Navigator.pop(context);
@@ -115,7 +134,16 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       }
     } catch (e) {
       if (mounted) {
-        UIHelper.showErrorSnackBar(context, 'Gagal simpan: ${e.toString()} ❌');
+        final errorMsg = e is TimeoutException
+            ? 'Koneksi lambat, transaksi akan disinkronkan di latar belakang.'
+            : 'Gagal simpan: ${e.toString()} ❌';
+
+        if (e is TimeoutException) {
+          Navigator.pop(context);
+          UIHelper.showInfoSnackBar(context, errorMsg);
+        } else {
+          UIHelper.showErrorSnackBar(context, errorMsg);
+        }
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

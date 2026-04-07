@@ -10,6 +10,7 @@ import 'firebase_options.dart';
 import 'services/security_service.dart';
 import 'services/security_listener_service.dart';
 import 'package:my_duit_gweh/services/notification_service.dart';
+import 'services/connectivity_service.dart';
 import 'utils/app_theme.dart';
 import 'utils/tone_dictionary.dart';
 import 'utils/navigator_key.dart';
@@ -53,6 +54,9 @@ void main() async {
   await NotificationService().init();
   // Restore listener state jika sebelumnya aktif
   await NotifListenerBridge.initOnAppStart();
+
+  // Start checking internet connection
+  ConnectivityService().startMonitoring();
 
   runApp(const MyDuitGwehApp());
 }

@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 
 import '../services/firestore_service.dart';
 import '../services/auth_service.dart';
+import '../services/connectivity_service.dart';
 import '../services/security_service.dart';
 import '../services/notification_service.dart';
 import '../models/transaction_model.dart';
@@ -438,9 +439,16 @@ class _HomeScreenState extends State<HomeScreen> {
     // Karena menggunakan StreamBuilder, data otomatis terupdate.
     // Kita berikan delay kecil untuk estetika UX (memberi rasa 'loading').
     await Future.delayed(const Duration(milliseconds: 800));
+    
     if (mounted) {
+      final isOnline = await ConnectivityService.isOnline();
       await _loadSettings();
-      UIHelper.showSuccessSnackBar(context, 'Data berhasil diperbarui! ✨');
+      
+      if (isOnline) {
+        UIHelper.showSuccessSnackBar(context, 'Data berhasil diperbarui! ✨');
+      } else {
+        UIHelper.showInfoSnackBar(context, 'Data dimuat dari cache (Offline) ⚡');
+      }
     }
   }
 
