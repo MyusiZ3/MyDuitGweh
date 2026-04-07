@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'notification_service.dart';
 import 'package:flutter/material.dart';
 import '../utils/ui_helper.dart';
@@ -10,10 +11,22 @@ class SecurityListenerService {
   SecurityListenerService._internal();
 
   StreamSubscription? _subscription;
-  DateTime _lastNotifiedTime = DateTime.now().subtract(const Duration(minutes: 1));
+  DateTime _lastNotifiedTime = DateTime.now();
+  static const String _prefKey = 'last_security_notif_time';
 
-  void startListening(String adminUid) {
+  void startListening(String adminUid) async {
     if (_subscription != null) return;
+    
+    // Load last notification time from preferences
+    final prefs = await SharedPreferences.getInstance();
+    final lastTimeMillis = prefs.getInt(_prefKey);
+    if (lastTimeMillis != null) {
+      _lastNotifiedTime = DateTime.fromMillisecondsSinceEpoch(lastTimeMillis);
+    } else {
+      // First time? Set to now
+      _lastNotifiedTime = DateTime.now();
+      await prefs.setInt(_prefKey, _lastNotifiedTime.millisecondsSinceEpoch);
+    }
 
     debugPrint('--- SECURITY LISTENER: Started for Admin $adminUid ---');
 
@@ -49,6 +62,11 @@ class SecurityListenerService {
           if (isRecent && isSevere) {
             _lastNotifiedTime = timestamp.toDate();
             _triggerPopup(type, message, severity);
+            
+            // Persist the last notification time
+            SharedPreferences.getInstance().then((prefs) {
+              prefs.setInt(_prefKey, _lastNotifiedTime.millisecondsSinceEpoch);
+            });
           }
         }
       }
