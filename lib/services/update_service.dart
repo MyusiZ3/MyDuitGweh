@@ -115,11 +115,13 @@ class UpdateService {
           status = await Permission.requestInstallPackages.request();
         }
 
-        if (status.isPermanentlyDenied) {
+        if (!status.isGranted) {
           if (context.mounted) {
             UIHelper.showErrorSnackBar(context,
                 'Izin instalasi ditolak. Silakan aktifkan di Pengaturan.');
-            openAppSettings();
+            if (status.isPermanentlyDenied) {
+              openAppSettings();
+            }
           }
           return;
         }
@@ -158,8 +160,11 @@ class UpdateService {
 
       isDownloading.value = false;
 
-      // 2. Buka Installer secara langsung
-      final result = await OpenFile.open(savePath);
+      // 2. Buka Installer secara langsung dengan MIME type yang spesifik
+      final result = await OpenFile.open(
+        savePath,
+        type: 'application/vnd.android.package-archive',
+      );
 
       if (result.type != ResultType.done) {
         if (context.mounted) {

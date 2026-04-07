@@ -106,9 +106,13 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
           final oldKey = data['advisor_api_key'] ?? '';
           if (oldKey.toString().isNotEmpty) {
             if (oldKey.toString().startsWith('gsk_') &&
-                !_groqKeys.contains(oldKey)) _groqKeys.add(oldKey);
+                !_groqKeys.contains(oldKey)) {
+              _groqKeys.add(oldKey);
+            }
             if (oldKey.toString().startsWith('AIza') &&
-                !_geminiKeys.contains(oldKey)) _geminiKeys.add(oldKey);
+                !_geminiKeys.contains(oldKey)) {
+              _geminiKeys.add(oldKey);
+            }
           }
 
           _advisorMinTransController.text =
@@ -686,31 +690,6 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                     icon: Icons.new_releases_rounded,
                     color: Colors.black,
                   ),
-                  const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton.icon(
-                      onPressed: () {
-                        setState(() {
-                          _latestVersionController.text = '1.0.6+6';
-                        });
-                      },
-                      style: TextButton.styleFrom(
-                        backgroundColor: Colors.black.withOpacity(0.05),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                      ),
-                      icon: const Icon(Icons.auto_awesome_rounded,
-                          size: 14, color: Colors.black54),
-                      label: const Text('Set to 1.0.6+6',
-                          style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87)),
-                    ),
-                  ),
                   const SizedBox(height: 16),
                   _buildModernTextField(
                     controller: _downloadUrlController,
@@ -721,18 +700,19 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                   const SizedBox(height: 8),
                   Align(
                     alignment: Alignment.centerRight,
-                    child: Wrap(
-                      spacing: 8,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         TextButton.icon(
                           onPressed: () {
                             setState(() {
                               _downloadUrlController.text =
-                                  'https://github.com/muusiZ3/MyDuitGweh/releases/latest/download/app-release.apk';
+                                  'https://github.com/myusiZ3/MyDuitGweh/releases/latest/download/app-release.apk';
                             });
                           },
                           style: TextButton.styleFrom(
-                            backgroundColor: AppColors.primary.withOpacity(0.08),
+                            backgroundColor:
+                                AppColors.primary.withOpacity(0.08),
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 8),
                             shape: RoundedRectangleBorder(
@@ -740,17 +720,18 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                           ),
                           icon: const Icon(Icons.rocket_launch_rounded,
                               size: 14, color: AppColors.primary),
-                          label: const Text('Use GitHub Release (APK)',
+                          label: const Text('Use GitHub Release',
                               style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.primary)),
                         ),
+                        const SizedBox(width: 8),
                         TextButton.icon(
                           onPressed: () {
                             setState(() {
                               _downloadUrlController.text =
-                                  'https://myduitgweh.web.app/app.bin';
+                                  'https://myduitgweh.web.app/bin/app-release.apk';
                             });
                           },
                           style: TextButton.styleFrom(
@@ -762,7 +743,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                           ),
                           icon: const Icon(Icons.cloud_done_rounded,
                               size: 14, color: Colors.black54),
-                          label: const Text('Use Firebase Hosting',
+                          label: const Text('Use Firebase Bin',
                               style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
@@ -1606,9 +1587,14 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                                                       _groqKeys.add(k);
                                                     }
                                                   });
-                                                  await _firestore.collection('app_config').doc('global').update({
-                                                    'advisor_gemini_keys': _geminiKeys,
-                                                    'advisor_groq_keys': _groqKeys,
+                                                  await _firestore
+                                                      .collection('app_config')
+                                                      .doc('global')
+                                                      .update({
+                                                    'advisor_gemini_keys':
+                                                        _geminiKeys,
+                                                    'advisor_groq_keys':
+                                                        _groqKeys,
                                                   });
                                                   setModalState(() {
                                                     isVerifying = false;
@@ -1618,10 +1604,11 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                                                 } else {
                                                   setModalState(() =>
                                                       isVerifying = false);
-                                                  if (mounted)
+                                                  if (mounted) {
                                                     UIHelper.showErrorSnackBar(
                                                         context,
                                                         'Key tidak valid: ${res.message}');
+                                                  }
                                                 }
                                               }
                                             },
@@ -1676,27 +1663,30 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                         if (_geminiKeys.isEmpty)
                           const Text('Belum ada data.',
                               style: TextStyle(color: Colors.grey)),
-                        ..._geminiKeys.asMap().entries.map(
-                                    (entry) => _buildKeyItem(entry.value, 'gemini', entry.key, () async {
-                                          final confirm = await UIHelper.showConfirmDialog(
-                                              context: context,
-                                              title: 'Hapus API Key?',
-                                              message:
-                                                  'Kamu yakin ingin menghapus API key ini?');
-                                          if (confirm != true) return;
+                        ..._geminiKeys.asMap().entries.map((entry) =>
+                            _buildKeyItem(entry.value, 'gemini', entry.key,
+                                () async {
+                              final confirm = await UIHelper.showConfirmDialog(
+                                  context: context,
+                                  title: 'Hapus API Key?',
+                                  message:
+                                      'Kamu yakin ingin menghapus API key ini?');
+                              if (confirm != true) return;
 
-                                          final index = entry.key;
-                                          
-                                          setState(() => _geminiKeys.removeAt(index));
-                                          await _firestore.collection('app_config').doc('global').update({
-                                            'advisor_gemini_keys': _geminiKeys
-                                          });
-                                          
-                                          if (mounted) {
-                                            UIHelper.showSuccessSnackBar(context, 'API Key Gemini berhasil dihapus');
-                                          }
-                                          setModalState(() {});
-                                        })),
+                              final index = entry.key;
+
+                              setState(() => _geminiKeys.removeAt(index));
+                              await _firestore
+                                  .collection('app_config')
+                                  .doc('global')
+                                  .update({'advisor_gemini_keys': _geminiKeys});
+
+                              if (mounted) {
+                                UIHelper.showSuccessSnackBar(
+                                    context, 'API Key Gemini berhasil dihapus');
+                              }
+                              setModalState(() {});
+                            })),
                         const SizedBox(height: 24),
                         const Text('Groq API Keys',
                             style: TextStyle(
@@ -1705,26 +1695,29 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                         if (_groqKeys.isEmpty)
                           const Text('Belum ada data.',
                               style: TextStyle(color: Colors.grey)),
-                        ..._groqKeys.asMap().entries
-                                .map((entry) => _buildKeyItem(entry.value, 'groq', entry.key, () async {
-                                      final confirm = await UIHelper.showConfirmDialog(
-                                          context: context,
-                                          title: 'Hapus API Key?',
-                                          message:
-                                              'Kamu yakin ingin menghapus API key ini?');
-                                      if (confirm != true) return;
+                        ..._groqKeys.asMap().entries.map((entry) =>
+                            _buildKeyItem(entry.value, 'groq', entry.key,
+                                () async {
+                              final confirm = await UIHelper.showConfirmDialog(
+                                  context: context,
+                                  title: 'Hapus API Key?',
+                                  message:
+                                      'Kamu yakin ingin menghapus API key ini?');
+                              if (confirm != true) return;
 
-                                      final index = entry.key;
-                                      setState(() => _groqKeys.removeAt(index));
-                                      await _firestore.collection('app_config').doc('global').update({
-                                        'advisor_groq_keys': _groqKeys
-                                      });
-                                      
-                                      if (mounted) {
-                                        UIHelper.showSuccessSnackBar(context, 'API Key Groq berhasil dihapus');
-                                      }
-                                      setModalState(() {});
-                                    })),
+                              final index = entry.key;
+                              setState(() => _groqKeys.removeAt(index));
+                              await _firestore
+                                  .collection('app_config')
+                                  .doc('global')
+                                  .update({'advisor_groq_keys': _groqKeys});
+
+                              if (mounted) {
+                                UIHelper.showSuccessSnackBar(
+                                    context, 'API Key Groq berhasil dihapus');
+                              }
+                              setModalState(() {});
+                            })),
                         const SizedBox(height: 100),
                       ]))
                 ],
@@ -1734,14 +1727,18 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
         });
   }
 
-  Widget _buildKeyItem(String apiKey, String type, int index, VoidCallback onDelete) {
+  Widget _buildKeyItem(
+      String apiKey, String type, int index, VoidCallback onDelete) {
     String testResult = 'Tap TEST to verify';
     String status = 'unknown'; // 'unknown', 'checking', 'ok', 'error'
 
     final isGroq = type == 'groq';
-    final keyColor = isGroq ? const Color(0xFFF55036) : const Color.fromRGBO(0, 122, 255, 1);
+    final keyColor =
+        isGroq ? const Color(0xFFF55036) : const Color.fromRGBO(0, 122, 255, 1);
     final keyIcon = isGroq ? Icons.bolt_rounded : Icons.vpn_key_rounded;
-    final obscuredKey = apiKey.length > 12 ? "${apiKey.substring(0, 6)}...${apiKey.substring(apiKey.length - 4)}" : apiKey;
+    final obscuredKey = apiKey.length > 12
+        ? "${apiKey.substring(0, 6)}...${apiKey.substring(apiKey.length - 4)}"
+        : apiKey;
 
     return StatefulBuilder(builder: (context, setItemState) {
       return Container(
@@ -1784,7 +1781,8 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                 style: TextStyle(fontSize: 11, color: Colors.grey[500]),
               ),
               trailing: IconButton(
-                icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 22),
+                icon: const Icon(Icons.delete_outline_rounded,
+                    color: Colors.redAccent, size: 22),
                 onPressed: onDelete,
               ),
             ),
@@ -1806,7 +1804,9 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                           decoration: BoxDecoration(
                             color: status == 'ok'
                                 ? Colors.green
-                                : (status == 'error' ? Colors.red : Colors.grey[400]),
+                                : (status == 'error'
+                                    ? Colors.red
+                                    : Colors.grey[400]),
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -1820,7 +1820,9 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                               letterSpacing: -0.2,
                               color: status == 'ok'
                                   ? Colors.green[800]
-                                  : (status == 'unknown' ? AppColors.textHint : Colors.red[800]),
+                                  : (status == 'unknown'
+                                      ? AppColors.textHint
+                                      : Colors.red[800]),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -1862,11 +1864,19 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                         foregroundColor: AppColors.primary,
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(horizontal: 20),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16)),
                       ),
                       child: status == 'checking'
-                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                          : const Text('TEST', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, letterSpacing: -0.5)),
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Text('TEST',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 13,
+                                  letterSpacing: -0.5)),
                     ),
                   ),
                 ],
