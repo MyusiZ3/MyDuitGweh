@@ -8,7 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-import '../utils/ui_helper.dart';
+
 
 class SecurityService {
   final LocalAuthentication _auth = LocalAuthentication();
@@ -105,10 +105,7 @@ class SecurityService {
     try {
       if (!await isBiometricAvailable()) return true;
 
-      // STEP 1: Tampilkan backdrop kustom (Center Aligned)
-      UIHelper.showAuthDialog(context, 'Scan sidik jari atau wajah untuk membuka MyDuitGweh');
-
-      // STEP 2: Langsung panggil native auth setelah backdrop muncul
+      // Langsung panggil native auth
       final bool result = await _auth.authenticate(
         localizedReason: 'Otentikasi Keamanan MyDuitGweh',
         authMessages: const [
@@ -127,12 +124,8 @@ class SecurityService {
         ),
       );
 
-      // STEP 3: Tutup backdrop setelah selesai
-      if (context.mounted) Navigator.pop(context);
-
       return result;
     } catch (e) {
-      if (context.mounted) Navigator.pop(context);
       return false;
     }
   }

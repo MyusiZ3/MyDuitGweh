@@ -478,65 +478,6 @@ class UIHelper {
     // ... existing code ...
   }
 
-  static void showAuthDialog(BuildContext context, String message) {
-    showGeneralDialog(
-      context: context,
-      barrierDismissible: false,
-      barrierLabel: '',
-      barrierColor: Colors.black.withOpacity(0.8),
-      transitionDuration: const Duration(milliseconds: 200),
-      pageBuilder: (context, anim1, anim2) => Center(
-        child: Material(
-          color: Colors.transparent,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-               Container(
-                 padding: const EdgeInsets.all(24),
-                 decoration: BoxDecoration(
-                   color: AppColors.primary.withOpacity(0.1),
-                   shape: BoxShape.circle,
-                   border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 2),
-                 ),
-                 child: const Icon(Icons.fingerprint_rounded, color: AppColors.primary, size: 64),
-               ),
-               const SizedBox(height: 32),
-               Padding(
-                 padding: const EdgeInsets.symmetric(horizontal: 48),
-                 child: Text(
-                   message,
-                   textAlign: TextAlign.center,
-                   style: const TextStyle(
-                     color: Colors.white,
-                     fontSize: 20,
-                     fontWeight: FontWeight.w900,
-                     letterSpacing: -0.5,
-                   ),
-                 ),
-               ),
-               const SizedBox(height: 8),
-               const Text(
-                 'Sentuh sensor untuk melanjutkan',
-                 style: TextStyle(
-                   color: Colors.white54,
-                   fontSize: 13,
-                   fontWeight: FontWeight.w500,
-                 ),
-               ),
-            ],
-          ),
-        ),
-      ),
-      transitionBuilder: (context, anim1, anim2, child) => FadeTransition(
-        opacity: anim1,
-        child: ScaleTransition(
-          scale: Tween<double>(begin: 1.1, end: 1.0).animate(
-              CurvedAnimation(parent: anim1, curve: Curves.easeOutBack)),
-          child: child,
-        ),
-      ),
-    );
-  }
 
   static Future<void> showAiMaintenanceDialog(BuildContext context) {
     return showPremiumDialog(
