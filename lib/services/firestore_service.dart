@@ -172,7 +172,7 @@ class FirestoreService {
     required String description,
   }) async {
     final walletId = await getOrCreateFinancialWallet(uid);
-    
+
     // Get current user name for createdByName if possible
     final userSnap = await _firestore.collection('users').doc(uid).get();
     final userName = userSnap.data()?['displayName'] ?? 'Auto-Sync';
@@ -327,7 +327,10 @@ class FirestoreService {
   }
 
   Future<void> updateUserProfile(String uid, Map<String, dynamic> data) async {
-    await _firestore.collection('users').doc(uid).set(data, SetOptions(merge: true));
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .set(data, SetOptions(merge: true));
   }
 
   Future<void> leaveWallet(String walletId, String uid) async {
@@ -527,8 +530,7 @@ class FirestoreService {
         .limit(2000)
         .get();
     return snap.docs
-        .map((doc) =>
-            TransactionModel.fromJson(doc.data(), docId: doc.id))
+        .map((doc) => TransactionModel.fromJson(doc.data(), docId: doc.id))
         .toList();
   }
 
@@ -567,10 +569,12 @@ class FirestoreService {
       'updatedAt': FieldValue.serverTimestamp(),
     };
 
-    if (startTime != null)
+    if (startTime != null) {
       data['maintenanceStartTime'] = Timestamp.fromDate(startTime);
-    if (endTime != null)
+    }
+    if (endTime != null) {
       data['maintenanceEndTime'] = Timestamp.fromDate(endTime);
+    }
 
     await _firestore
         .collection('app_config')
@@ -664,7 +668,7 @@ class FirestoreService {
   /// Submit user feedback
   Future<void> submitFeedback(FeedbackModel feedback) async {
     await _firestore.collection('user_feedbacks').add(feedback.toJson());
-    
+
     // Mark user as having completed the survey
     await _firestore.collection('users').doc(feedback.userId).update({
       'surveyDone': true,
@@ -691,9 +695,10 @@ class FirestoreService {
 
   /// Update survey configuration with Audit Logging
   Future<void> updateSurveyConfig(SurveyConfigModel config) async {
-    final oldDoc = await _firestore.collection('app_config').doc('survey').get();
+    final oldDoc =
+        await _firestore.collection('app_config').doc('survey').get();
     final oldData = oldDoc.data() ?? {};
-    
+
     await _firestore
         .collection('app_config')
         .doc('survey')
@@ -702,7 +707,8 @@ class FirestoreService {
     // Audit Log Construction
     String logMessage = "Admin mengubah kofigurasi survei: ";
     if (oldData['isAvailable'] != config.isAvailable) {
-      logMessage += "Status jadi ${config.isAvailable ? 'AKTIF' : 'NONAKTIF'}. ";
+      logMessage +=
+          "Status jadi ${config.isAvailable ? 'AKTIF' : 'NONAKTIF'}. ";
     }
     if (oldData['minTransactions'] != config.minTransactions) {
       logMessage += "Min Transaksi jadi ${config.minTransactions}. ";

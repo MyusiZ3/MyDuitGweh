@@ -19,7 +19,7 @@ class _ExperienceSurveySheetState extends State<ExperienceSurveySheet> {
   final TextEditingController _commentController = TextEditingController();
 
   double _rating = 0;
-  List<String> _selectedCategories = [];
+  final List<String> _selectedCategories = [];
   bool _isSubmitting = false;
 
   final List<String> _categories = [
@@ -51,7 +51,7 @@ class _ExperienceSurveySheetState extends State<ExperienceSurveySheet> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       final packageInfo = await PackageInfo.fromPlatform();
-      
+
       final feedback = FeedbackModel(
         userId: user?.uid ?? 'anonymous',
         rating: _rating,

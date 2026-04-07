@@ -1501,8 +1501,8 @@ class WalletScreenState extends State<WalletScreen> {
                       if (mounted) {
                         Navigator.pop(context); // Pop dialog
                         Navigator.pop(context); // Pop details sheet
-                        UIHelper.showInfoSnackBar(context,
-                            'Nama dompet akan berubah setelah online ⚡');
+                        UIHelper.showInfoSnackBar(
+                            context, 'Nama dompet akan berubah setelah online');
                       }
                       return;
                     }

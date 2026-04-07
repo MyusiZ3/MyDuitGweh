@@ -156,7 +156,7 @@ class _HomeScreenState extends State<HomeScreen> {
               body: b['message'] ?? 'Ada info penting nih!',
               scheduledTime: time,
             );
-          } catch(e) {
+          } catch (e) {
             print('Error scheduling locally: $e');
           }
         }
@@ -439,15 +439,15 @@ class _HomeScreenState extends State<HomeScreen> {
     // Karena menggunakan StreamBuilder, data otomatis terupdate.
     // Kita berikan delay kecil untuk estetika UX (memberi rasa 'loading').
     await Future.delayed(const Duration(milliseconds: 800));
-    
+
     if (mounted) {
       final isOnline = await ConnectivityService.isOnline();
       await _loadSettings();
-      
+
       if (isOnline) {
         UIHelper.showSuccessSnackBar(context, 'Data berhasil diperbarui! ✨');
       } else {
-        UIHelper.showInfoSnackBar(context, 'Data dimuat dari cache (Offline) ⚡');
+        UIHelper.showInfoSnackBar(context, 'Data dimuat dari cache (Offline)');
       }
     }
   }

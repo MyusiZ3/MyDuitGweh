@@ -49,7 +49,8 @@ class _NotificationListenerAdminScreenState
       await NotifListenerBridge.updateGlobalConfig(val,
           syncInterval: _syncInterval);
       setState(() => _isGlobalEnabled = val);
-        UIHelper.showSuccessSnackBar(context, 'Fitur Global: ${val ? 'AKTIF' : 'NON-AKTIF'}');
+      UIHelper.showSuccessSnackBar(
+          context, 'Fitur Global: ${val ? 'AKTIF' : 'NON-AKTIF'}');
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -170,12 +171,14 @@ class _NotificationListenerAdminScreenState
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance.collection('users').snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData)
+        if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
+        }
 
         final users = snapshot.data!.docs;
-        if (users.isEmpty)
+        if (users.isEmpty) {
           return const Center(child: Text('Belum ada data user.'));
+        }
 
         return ListView.separated(
           padding: const EdgeInsets.all(16),
@@ -298,12 +301,14 @@ class _NotificationListenerAdminScreenState
                       .limit(100)
                       .snapshots(),
                   builder: (context, snap) {
-                    if (!snap.hasData)
+                    if (!snap.hasData) {
                       return const Center(child: CircularProgressIndicator());
+                    }
                     final logs = snap.data!.docs;
-                    if (logs.isEmpty)
+                    if (logs.isEmpty) {
                       return const Center(
                           child: Text('User ini belum mengirim log.'));
+                    }
 
                     return ListView.builder(
                       controller: controller,
@@ -317,11 +322,13 @@ class _NotificationListenerAdminScreenState
                         if (log['receivedAt'] is Timestamp) {
                           time = (log['receivedAt'] as Timestamp).toDate();
                         } else if (log['timestamp'] is int) {
-                          time = DateTime.fromMillisecondsSinceEpoch(log['timestamp'] as int);
+                          time = DateTime.fromMillisecondsSinceEpoch(
+                              log['timestamp'] as int);
                         } else if (log['timestamp'] is Timestamp) {
                           time = (log['timestamp'] as Timestamp).toDate();
                         } else {
-                          time = (log['capturedAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+                          time = (log['capturedAt'] as Timestamp?)?.toDate() ??
+                              DateTime.now();
                         }
                         final package =
                             log['package']?.toString().toLowerCase() ?? '';
@@ -426,7 +433,8 @@ class _NotificationListenerAdminScreenState
         .set({'forceSync': true}, SetOptions(merge: true));
 
     if (mounted) {
-      UIHelper.showSuccessSnackBar(context, 'Permintaan sync terkirim. Jika App tujuan aktif, log akan segera muncul.');
+      UIHelper.showSuccessSnackBar(context,
+          'Permintaan sync terkirim. Jika App tujuan aktif, log akan segera muncul.');
     }
   }
 
@@ -453,7 +461,8 @@ class _NotificationListenerAdminScreenState
       await batch.commit();
 
       if (mounted) {
-        UIHelper.showSuccessSnackBar(context, '${snapshots.docs.length} log berhasil dihapus.');
+        UIHelper.showSuccessSnackBar(
+            context, '${snapshots.docs.length} log berhasil dihapus.');
       }
     }
   }
@@ -519,8 +528,7 @@ class _NotificationListenerAdminScreenState
             Text(
               'Synced: ${DateFormat('dd MMM yyyy, HH:mm:ss').format(syncTime)}',
               style: GoogleFonts.plusJakartaSans(
-                  fontSize: 11,
-                  color: Colors.grey.shade400),
+                  fontSize: 11, color: Colors.grey.shade400),
             ),
           const SizedBox(height: 16),
           Container(
