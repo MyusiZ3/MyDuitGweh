@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 
 import '../services/firestore_service.dart';
 import '../services/auth_service.dart';
+import '../services/connectivity_service.dart';
 import '../services/security_service.dart';
 import '../services/notification_service.dart';
 import '../models/transaction_model.dart';
@@ -155,7 +156,7 @@ class _HomeScreenState extends State<HomeScreen> {
               body: b['message'] ?? 'Ada info penting nih!',
               scheduledTime: time,
             );
-          } catch(e) {
+          } catch (e) {
             print('Error scheduling locally: $e');
           }
         }
@@ -356,7 +357,11 @@ class _HomeScreenState extends State<HomeScreen> {
     final prefs = await SharedPreferences.getInstance();
     final isLocked = prefs.getBool('use_biometrics') ?? false;
     if (isLocked) {
-      await _securityService.authenticate();
+      // Tunggu frame selesai sebelum panggil dialog kustom
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        await _securityService.authenticate(context);
+      });
     }
   }
 
@@ -434,9 +439,16 @@ class _HomeScreenState extends State<HomeScreen> {
     // Karena menggunakan StreamBuilder, data otomatis terupdate.
     // Kita berikan delay kecil untuk estetika UX (memberi rasa 'loading').
     await Future.delayed(const Duration(milliseconds: 800));
+
     if (mounted) {
+      final isOnline = await ConnectivityService.isOnline();
       await _loadSettings();
-      UIHelper.showSuccessSnackBar(context, 'Data berhasil diperbarui! ✨');
+
+      if (isOnline) {
+        UIHelper.showSuccessSnackBar(context, 'Data berhasil diperbarui! ✨');
+      } else {
+        UIHelper.showInfoSnackBar(context, 'Data dimuat dari cache (Offline)');
+      }
     }
   }
 
@@ -1300,7 +1312,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               await _securityService.isBiometricAvailable();
                           if (!canAuth) return;
                           final authSuccess =
-                              await _securityService.authenticate();
+                              await _securityService.authenticate(context);
                           if (authSuccess) {
                             await _securityService.setBiometricEnabled(newVal);
                             setModalState(() => _isBiometricEnabled = newVal);
@@ -1314,7 +1326,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 await _securityService.isBiometricAvailable();
                             if (!canAuth) return;
                             final authSuccess =
-                                await _securityService.authenticate();
+                                await _securityService.authenticate(context);
                             if (authSuccess) {
                               await _securityService.setBiometricEnabled(val);
                               setModalState(() => _isBiometricEnabled = val);

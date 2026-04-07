@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
 import '../utils/app_theme.dart';
 import '../utils/tone_dictionary.dart';
+import '../utils/navigator_key.dart';
 
 class UIHelper {
+  static OverlayEntry? _connectivityOverlayEntry;
+
   static void showSuccessSnackBar(BuildContext context, String message) {
     _showTopToast(
         context, message, AppColors.income, Icons.check_circle_rounded);
@@ -17,6 +20,15 @@ class UIHelper {
   static void showInfoSnackBar(BuildContext context, String message) {
     _showTopToast(
         context, message, Colors.blueGrey, Icons.info_outline_rounded);
+  }
+
+  static void showGlobalInfoToast(String message, {Color color = Colors.blueGrey, IconData icon = Icons.security_rounded}) {
+    final context = navigatorKey.currentContext;
+    if (context != null) {
+      _showTopToast(context, message, color, icon);
+    } else {
+      debugPrint('--- UIHelper: GLOBAL TOAST FAILED - Context is NULL. Message: $message');
+    }
   }
 
   static void _showTopToast(
@@ -99,6 +111,111 @@ class UIHelper {
         overlayEntry.remove();
       }
     });
+  }
+
+  static void showNoInternetOverlay() {
+    final context = navigatorKey.currentContext;
+    if (context == null || _connectivityOverlayEntry != null) return;
+
+    final overlay = Overlay.of(context);
+    _connectivityOverlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        bottom: MediaQuery.of(context).padding.bottom + 16,
+        left: 20,
+        right: 20,
+        child: Material(
+          color: Colors.transparent,
+          child: TweenAnimationBuilder<double>(
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeOutBack,
+            tween: Tween(begin: 0.0, end: 1.0),
+            builder: (context, value, child) {
+              return Transform.translate(
+                offset: Offset(0, 100 * (1 - value)),
+                child: Opacity(
+                  opacity: value.clamp(0.0, 1.0),
+                  child: child,
+                ),
+              );
+            },
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: BackdropFilter(
+                filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.85),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: const BoxDecoration(
+                          color: Colors.white24,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.wifi_off_rounded, color: Colors.white, size: 20),
+                      ),
+                      const SizedBox(width: 16),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Offline Mode',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                            Text(
+                              'Koneksi terputus. Data akan disimpan secara lokal.',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(_connectivityOverlayEntry!);
+  }
+
+  static void hideNoInternetOverlay() {
+    if (_connectivityOverlayEntry != null) {
+      _connectivityOverlayEntry?.remove();
+      _connectivityOverlayEntry = null;
+      
+      // Show success toast when back online
+      final context = navigatorKey.currentContext;
+      if (context != null) {
+        showSuccessSnackBar(context, 'Koneksi kembali terhubung!');
+      }
+    }
   }
 
   static Future<bool?> showConfirmDialog({
@@ -358,60 +475,9 @@ class UIHelper {
   }
 
   static void showLoadingDialog(BuildContext context, {String? message}) {
-    showGeneralDialog(
-      context: context,
-      barrierDismissible: false,
-      barrierLabel: '',
-      barrierColor: Colors.black.withOpacity(0.5),
-      transitionDuration: const Duration(milliseconds: 200),
-      pageBuilder: (context, anim1, anim2) => Center(
-        child: Material(
-          color: Colors.transparent,
-          child: Container(
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(32),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: CircularProgressIndicator(
-                    color: AppColors.primary,
-                    strokeWidth: 4,
-                  ),
-                ),
-                if (message != null) ...[
-                  const SizedBox(height: 24),
-                  Text(
-                    message,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.black,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-      ),
-      transitionBuilder: (context, anim1, anim2, child) => FadeTransition(
-        opacity: anim1,
-        child: ScaleTransition(
-          scale: Tween<double>(begin: 0.8, end: 1.0).animate(
-              CurvedAnimation(parent: anim1, curve: Curves.easeOutBack)),
-          child: child,
-        ),
-      ),
-    );
+    // ... existing code ...
   }
+
 
   static Future<void> showAiMaintenanceDialog(BuildContext context) {
     return showPremiumDialog(

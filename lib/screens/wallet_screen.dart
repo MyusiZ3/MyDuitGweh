@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/firestore_service.dart';
+import '../services/connectivity_service.dart';
 import '../models/wallet_model.dart';
 import '../models/transaction_model.dart';
 import '../widgets/shimmer_loading.dart';
@@ -617,6 +619,7 @@ class WalletScreenState extends State<WalletScreen> {
                   child: ElevatedButton(
                     onPressed: () async {
                       if (nameController.text.isNotEmpty) {
+                        final isOnline = await ConnectivityService.isOnline();
                         final newWallet = WalletModel(
                           id: '', // Will be set by service
                           walletName: nameController.text,
@@ -634,11 +637,39 @@ class WalletScreenState extends State<WalletScreen> {
                           debtType: selectedType == 'debt' ? debtType : null,
                         );
 
-                        await _firestoreService.createWallet(newWallet);
-                        if (!context.mounted) return;
-                        Navigator.pop(context);
-                        UIHelper.showSuccessSnackBar(context,
-                            'Dompet "${nameController.text}" berhasil dibuat! 🎉');
+                        if (!isOnline) {
+                          _firestoreService.createWallet(newWallet);
+                          if (mounted) {
+                            Navigator.pop(context);
+                            UIHelper.showInfoSnackBar(
+                                context, 'Dompet dibuat offline');
+                          }
+                          return;
+                        }
+
+                        try {
+                          await _firestoreService
+                              .createWallet(newWallet)
+                              .timeout(
+                                const Duration(seconds: 10),
+                                onTimeout: () =>
+                                    throw TimeoutException('Timeout'),
+                              );
+                          if (!context.mounted) return;
+                          Navigator.pop(context);
+                          UIHelper.showSuccessSnackBar(context,
+                              'Dompet "${nameController.text}" berhasil dibuat! 🎉');
+                        } catch (e) {
+                          if (mounted) {
+                            if (e is TimeoutException) {
+                              Navigator.pop(context);
+                              UIHelper.showInfoSnackBar(context,
+                                  'Koneksi lambat, dompet akan muncul saat tersambung.');
+                            } else {
+                              UIHelper.showErrorSnackBar(context, 'Gagal: $e');
+                            }
+                          }
+                        }
                       }
                     },
                     style: ElevatedButton.styleFrom(
@@ -928,11 +959,42 @@ class WalletScreenState extends State<WalletScreen> {
                             message: ToneManager.t('dialog_del_wallet_msg'),
                           );
                           if (confirm == true) {
-                            await _firestoreService.deleteWallet(wallet.id);
-                            if (!context.mounted) return;
-                            Navigator.pop(context); // Close sheet
-                            UIHelper.showSuccessSnackBar(
-                                context, 'Dompet berhasil dihapus');
+                            final isOnline =
+                                await ConnectivityService.isOnline();
+                            if (!isOnline) {
+                              _firestoreService.deleteWallet(wallet.id);
+                              if (mounted) {
+                                Navigator.pop(context); // Close sheet
+                                UIHelper.showInfoSnackBar(context,
+                                    'Dompet akan dihapus setelah online');
+                              }
+                              return;
+                            }
+
+                            try {
+                              await _firestoreService
+                                  .deleteWallet(wallet.id)
+                                  .timeout(
+                                    const Duration(seconds: 10),
+                                    onTimeout: () =>
+                                        throw TimeoutException('Timeout'),
+                                  );
+                              if (!context.mounted) return;
+                              Navigator.pop(context); // Close sheet
+                              UIHelper.showSuccessSnackBar(
+                                  context, 'Dompet berhasil dihapus');
+                            } catch (e) {
+                              if (mounted) {
+                                if (e is TimeoutException) {
+                                  Navigator.pop(context);
+                                  UIHelper.showInfoSnackBar(context,
+                                      'Proses hapus tertunda koneksi.');
+                                } else {
+                                  UIHelper.showErrorSnackBar(
+                                      context, 'Gagal: $e');
+                                }
+                              }
+                            }
                           }
                         } else if (value == 'leave') {
                           final confirm = await UIHelper.showConfirmDialog(
@@ -1432,14 +1494,43 @@ class WalletScreenState extends State<WalletScreen> {
                 onPressed: () async {
                   if (nameController.text.isNotEmpty &&
                       nameController.text != wallet.walletName) {
-                    await _firestoreService.renameWallet(
-                        wallet.id, nameController.text);
-                    if (!context.mounted) return;
-                    Navigator.pop(context); // Pop dialog
-                    Navigator.pop(
-                        context); // Pop details sheet to refresh/close
-                    UIHelper.showSuccessSnackBar(context,
-                        'Nama dompet berhasil diubah ke "${nameController.text}"! 📝');
+                    final isOnline = await ConnectivityService.isOnline();
+                    if (!isOnline) {
+                      _firestoreService.renameWallet(
+                          wallet.id, nameController.text);
+                      if (mounted) {
+                        Navigator.pop(context); // Pop dialog
+                        Navigator.pop(context); // Pop details sheet
+                        UIHelper.showInfoSnackBar(
+                            context, 'Nama dompet akan berubah setelah online');
+                      }
+                      return;
+                    }
+
+                    try {
+                      await _firestoreService
+                          .renameWallet(wallet.id, nameController.text)
+                          .timeout(
+                            const Duration(seconds: 10),
+                            onTimeout: () => throw TimeoutException('Timeout'),
+                          );
+                      if (!context.mounted) return;
+                      Navigator.pop(context); // Pop dialog
+                      Navigator.pop(context); // Pop details sheet
+                      UIHelper.showSuccessSnackBar(context,
+                          'Nama dompet berhasil diubah ke "${nameController.text}"! 📝');
+                    } catch (e) {
+                      if (mounted) {
+                        if (e is TimeoutException) {
+                          Navigator.pop(context);
+                          Navigator.pop(context);
+                          UIHelper.showInfoSnackBar(
+                              context, 'Perubahan nama tertunda koneksi.');
+                        } else {
+                          UIHelper.showErrorSnackBar(context, 'Gagal: $e');
+                        }
+                      }
+                    }
                   } else {
                     Navigator.pop(context);
                   }

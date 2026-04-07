@@ -5,6 +5,8 @@ import 'user_management_screen.dart';
 import 'global_insights_screen.dart';
 import 'broadcast_center_screen.dart';
 import 'app_config_screen.dart';
+import 'security_monitor_screen.dart';
+import '../../services/security_service.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -100,77 +102,80 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   const SizedBox(height: 32),
 
                   // GRID MENU
-                  GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 20,
-                    crossAxisSpacing: 20,
-                    childAspectRatio: 0.9,
-                    children: [
-                      _buildMenuCard(
-                        context,
-                        title: 'User Control',
-                        subtitle: _isSuper
-                            ? 'Kelola peran & status akun.'
-                            : 'Lihat daftar pengguna.',
-                        icon: Icons.manage_accounts_rounded,
-                        color: Colors.indigoAccent,
-                        onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const UserManagementScreen())),
-                      ),
-                      _buildMenuCard(
-                        context,
-                        title: 'Live Insights',
-                        subtitle: 'Analisis kesehatan ekonomi app.',
-                        icon: Icons.query_stats_rounded,
-                        color: Colors.deepOrangeAccent,
-                        onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => GlobalInsightsScreen(isSuperAdmin: _isSuper))),
-                      ),
-                      _buildMenuCard(
-                        context,
-                        title: 'Broadcast',
-                        subtitle: 'Kirim pengumuman massal.',
-                        icon: Icons.campaign_rounded,
-                        color: Colors.tealAccent[700]!,
-                        onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const BroadcastCenterScreen())),
-                      ),
-                      _buildMenuCard(
-                        context,
-                        title: 'App Config',
-                        subtitle: _isSuper
-                            ? 'Ganti maintenance & versi app.'
-                            : 'Lihat konfigurasi app.',
-                        icon: Icons.dns_rounded,
-                        color: Colors.purpleAccent,
-                        onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const AppConfigScreen())),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  const Text('System Health',
-                      style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.5)),
-                  const SizedBox(height: 16),
-                  _buildStatusTile('Database Engine', 'Operational',
-                      Icons.storage_rounded, Colors.green),
-                  _buildStatusTile('Notification Node', 'Active',
-                      Icons.notifications_active_rounded, Colors.green),
-                  _buildStatusTile('Auth Service', 'Healthy',
-                      Icons.security_rounded, Colors.green),
+                    GridView.count(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 20,
+                      crossAxisSpacing: 20,
+                      childAspectRatio: 0.9,
+                      children: [
+                        _buildMenuCard(
+                          context,
+                          title: 'User Control',
+                          subtitle: _isSuper
+                              ? 'Kelola peran & status akun.'
+                              : 'Lihat daftar pengguna.',
+                          icon: Icons.manage_accounts_rounded,
+                          color: Colors.indigoAccent,
+                          onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const UserManagementScreen())),
+                        ),
+                        _buildMenuCard(
+                          context,
+                          title: 'Live Insights',
+                          subtitle: 'Analisis kesehatan ekonomi app.',
+                          icon: Icons.query_stats_rounded,
+                          color: Colors.deepOrangeAccent,
+                          onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => GlobalInsightsScreen(isSuperAdmin: _isSuper))),
+                        ),
+                        _buildMenuCard(
+                          context,
+                          title: 'Broadcast',
+                          subtitle: 'Kirim pengumuman massal.',
+                          icon: Icons.campaign_rounded,
+                          color: Colors.tealAccent[700]!,
+                          onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const BroadcastCenterScreen())),
+                        ),
+                        _buildMenuCard(
+                          context,
+                          title: 'App Config',
+                          subtitle: _isSuper
+                              ? 'Ganti maintenance & versi app.'
+                              : 'Lihat konfigurasi app.',
+                          icon: Icons.dns_rounded,
+                          color: Colors.purpleAccent,
+                          onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const AppConfigScreen())),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+                    _buildSecurityHubBanner(context),
+                    const SizedBox(height: 32),
+                    const Text('System Health',
+                        style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.5)),
+                    const SizedBox(height: 16),
+                    _buildStatusTile('Database Engine', 'Operational',
+                        Icons.storage_rounded, Colors.green),
+                    _buildStatusTile('Notification Node', 'Active',
+                        Icons.notifications_active_rounded, Colors.green),
+                    _buildStatusTile('Auth Service', 'Healthy',
+                        Icons.security_rounded, Colors.green),
+
                 ],
               ),
             ),
@@ -184,7 +189,88 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
+  Widget _buildSecurityHubBanner(BuildContext context) {
+    return StreamBuilder<int>(
+      stream: SecurityService().getUnreadCountStream(),
+      builder: (context, snapshot) {
+        final count = snapshot.data ?? 0;
+        final bool hasAlert = count > 0;
+
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SecurityMonitorScreen()),
+            ),
+            borderRadius: BorderRadius.circular(28),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(28),
+                gradient: LinearGradient(
+                  colors: hasAlert
+                      ? [Colors.red[900]!, Colors.red[700]!]
+                      : [const Color(0xFF1E1E2E), const Color(0xFF2D2D44)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: (hasAlert ? Colors.red : Colors.black).withOpacity(0.2),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  _PulseIcon(isActive: hasAlert),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'SECURITY HUB',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 2,
+                            fontSize: 11,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          hasAlert
+                              ? '$count Ancaman Terdeteksi'
+                              : 'Sistem Terpantau Aman',
+                          style: TextStyle(
+                            color: hasAlert ? Colors.white : Colors.white70,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    color: hasAlert ? Colors.white : Colors.white24,
+                    size: 16,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildAppBar(BuildContext context) {
+
     return SliverAppBar(
       expandedHeight: 180,
       pinned: true,
@@ -328,6 +414,68 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _PulseIcon extends StatefulWidget {
+  final bool isActive;
+  const _PulseIcon({required this.isActive});
+
+  @override
+  State<_PulseIcon> createState() => _PulseIconState();
+}
+
+class _PulseIconState extends State<_PulseIcon> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            return Container(
+              width: 48 * _controller.value,
+              height: 48 * _controller.value,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: (widget.isActive ? Colors.red : Colors.cyanAccent)
+                    .withOpacity(1 - _controller.value),
+              ),
+            );
+          },
+        ),
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: widget.isActive ? Colors.white : Colors.white10,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            widget.isActive ? Icons.gpp_maybe_rounded : Icons.security_rounded,
+            color: widget.isActive ? Colors.red[900] : Colors.cyanAccent,
+            size: 24,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -168,8 +168,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               'Berhasil!', '$name sekarang memiliki akses $roleLabel.');
         }
       } catch (e) {
-        if (mounted)
+        if (mounted) {
           UIHelper.showErrorSnackBar(context, 'Gagal ubah akses: $e');
+        }
       }
     }
   }
@@ -431,12 +432,14 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           'action': 'DELETE_USER',
           'targetUid': uid,
         });
-        if (mounted)
+        if (mounted) {
           _showSuccessSheet(
               'User Dihapus', 'Data user telah dibersihkan dari sistem.');
+        }
       } catch (e) {
-        if (mounted)
+        if (mounted) {
           UIHelper.showErrorSnackBar(context, 'Gagal menghapus user: $e');
+        }
       }
     }
   }
@@ -538,8 +541,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 child: StreamBuilder<QuerySnapshot>(
                   stream: _firestore.collection('users').snapshots(),
                   builder: (context, snapshot) {
-                    if (!snapshot.hasData)
+                    if (!snapshot.hasData) {
                       return const Center(child: CircularProgressIndicator());
+                    }
 
                     final allUsers = snapshot.data!.docs.where((doc) {
                       final data = doc.data() as Map<String, dynamic>;

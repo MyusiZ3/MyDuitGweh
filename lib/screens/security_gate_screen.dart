@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:lottie/lottie.dart';
 
 class SecurityGateScreen extends StatelessWidget {
   const SecurityGateScreen({super.key});

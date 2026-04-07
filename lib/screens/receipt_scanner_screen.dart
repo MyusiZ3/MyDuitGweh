@@ -89,7 +89,7 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
       } catch (e) {
         debugPrint('Focus Mode Error: $e');
       }
-      
+
       if (mounted) setState(() => _isInitializing = false);
     } catch (e) {
       debugPrint('Camera Error: $e');
@@ -117,8 +117,9 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     final CameraController? cameraController = _controller;
-    if (cameraController == null || !cameraController.value.isInitialized)
+    if (cameraController == null || !cameraController.value.isInitialized) {
       return;
+    }
 
     if (state == AppLifecycleState.inactive) {
       cameraController.dispose();
@@ -133,7 +134,8 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
     if (mounted) {
       setState(() {
         _hasApiKey = key != null && key.isNotEmpty;
-        final savedState = prefs.getBool('receipt_scanner_use_ai_mode') ?? false;
+        final savedState =
+            prefs.getBool('receipt_scanner_use_ai_mode') ?? false;
         _useAiAnalysis = _hasApiKey && savedState;
       });
     }
@@ -143,15 +145,18 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
     if (_controller == null ||
         !_controller!.value.isInitialized ||
         _controller!.value.isTakingPicture ||
-        _isProcessing) return;
+        _isProcessing) {
+      return;
+    }
 
     try {
       setState(() => _isProcessing = true);
       HapticFeedback.mediumImpact();
 
       final image = await _controller!.takePicture();
-      if (mounted)
+      if (mounted) {
         Navigator.pop(context, {'image': image, 'useAi': _useAiAnalysis});
+      }
     } catch (e) {
       if (mounted) {
         setState(() => _isProcessing = false);
@@ -210,7 +215,8 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
           // 1. Camera Preview
           GestureDetector(
             onTapDown: (TapDownDetails details) async {
-              if (_controller == null || !_controller!.value.isInitialized) return;
+              if (_controller == null || !_controller!.value.isInitialized)
+                return;
               final screenSize = MediaQuery.of(context).size;
               // Map tap coordinates to 0..1 range
               final x = details.localPosition.dx / screenSize.width;
@@ -259,8 +265,8 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
     }
 
     final size = MediaQuery.of(context).size;
-    
-    return Container(
+
+    return SizedBox(
       width: size.width,
       height: size.height,
       child: ClipRect(
@@ -592,52 +598,70 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
                     onChanged: (val) async {
                       if (val) {
                         if (!_hasApiKey) {
-                          UIHelper.showInfoDialog(context, 'API Key Belum Diatur', 'Waduh, fitur AI Mode membutuhkan API Key. Silakan atur terlebih dahulu melalui fitur Chat AI.');
+                          UIHelper.showInfoDialog(
+                              context,
+                              'API Key Belum Diatur',
+                              'Waduh, fitur AI Mode membutuhkan API Key. Silakan atur terlebih dahulu melalui fitur Chat AI.');
                           return;
                         }
-                        
+
                         final bool? confirm = await showDialog<bool>(
-                          context: context,
-                          builder: (ctx) => AlertDialog(
-                            backgroundColor: Colors.grey[900],
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            title: const Text('Gunakan AI Mode?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                            content: const Text(
-                              'Analisis struk ini akan menggunakan API Key pribadi Anda yang telah disetel.\n\nProses ini dapat memotong limit kuota API pihak ketiga Anda. Lanjutkan?', 
-                              style: TextStyle(color: Colors.white70)
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(ctx, false),
-                                child: Text('Batal', style: TextStyle(color: Colors.grey[400])),
-                              ),
-                              ElevatedButton(
-                                onPressed: () => Navigator.pop(ctx, true),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                ),
-                                child: const Text('Lanjutkan', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                              )
-                            ]
-                          )
-                        );
-                        
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                                    backgroundColor: Colors.grey[900],
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(16)),
+                                    title: const Text('Gunakan AI Mode?',
+                                        style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold)),
+                                    content: const Text(
+                                        'Analisis struk ini akan menggunakan API Key pribadi Anda yang telah disetel.\n\nProses ini dapat memotong limit kuota API pihak ketiga Anda. Lanjutkan?',
+                                        style:
+                                            TextStyle(color: Colors.white70)),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(ctx, false),
+                                        child: Text('Batal',
+                                            style: TextStyle(
+                                                color: Colors.grey[400])),
+                                      ),
+                                      ElevatedButton(
+                                        onPressed: () =>
+                                            Navigator.pop(ctx, true),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: AppColors.primary,
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8)),
+                                        ),
+                                        child: const Text('Lanjutkan',
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold)),
+                                      )
+                                    ]));
+
                         if (confirm == true && mounted) {
                           setState(() => _useAiAnalysis = true);
                           final prefs = await SharedPreferences.getInstance();
-                          await prefs.setBool('receipt_scanner_use_ai_mode', true);
+                          await prefs.setBool(
+                              'receipt_scanner_use_ai_mode', true);
                         } else if (mounted) {
                           setState(() => _useAiAnalysis = false);
                           final prefs = await SharedPreferences.getInstance();
-                          await prefs.setBool('receipt_scanner_use_ai_mode', false);
+                          await prefs.setBool(
+                              'receipt_scanner_use_ai_mode', false);
                         }
                       } else {
                         setState(() {
                           _useAiAnalysis = false;
                         });
                         final prefs = await SharedPreferences.getInstance();
-                        await prefs.setBool('receipt_scanner_use_ai_mode', false);
+                        await prefs.setBool(
+                            'receipt_scanner_use_ai_mode', false);
                       }
                     },
                     activeColor: AppColors.primary,

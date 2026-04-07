@@ -15,7 +15,8 @@ import 'package:flutter/services.dart';
 import '../../services/ai_service.dart';
 import '../../utils/ui_helper.dart';
 import 'notification_listener_admin_screen.dart';
-import '../../services/notification_service.dart';
+import 'security_monitor_screen.dart';
+import '../../services/security_service.dart';
 
 class AdminToolsScreen extends StatefulWidget {
   const AdminToolsScreen({super.key});
@@ -127,6 +128,8 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildStatsHeader(),
+                    const SizedBox(height: 32),
+                    _buildSecurityHubBanner(context),
                     const SizedBox(height: 32),
                     _buildSectionHeader('System Hub', Icons.grid_view_rounded),
                     const SizedBox(height: 16),
@@ -287,14 +290,17 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                                     icon: Icons.notification_important_rounded,
                                     color: const Color(0xFFF43F5E),
                                     onTap: () async {
-                                      await NotificationService().testNotification();
+                                      // SIMULASI SERANGAN / EVENT SECURITY
+                                      await SecurityService().logEvent(
+                                        type: 'SIMULATED_ALERT',
+                                        severity: 'high',
+                                        message: 'Ini adalah uji coba notifikasi keamanan real-time untuk Admin.',
+                                      );
+                                      
                                       if (mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(
-                                            content: Text('Test notification sent! Check your status bar & pop-up.'),
-                                            backgroundColor: Colors.green,
-                                          ),
-                                        );
+                                        UIHelper.showSuccessSnackBar(
+                                            context,
+                                            'Security simulation triggered! Processing log...');
                                       }
                                     },
                                     isRestricted: !_isSuperAdmin,
@@ -552,6 +558,82 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildSecurityHubBanner(BuildContext context) {
+    return StreamBuilder<int>(
+      stream: SecurityService().getUnreadCountStream(),
+      builder: (context, snapshot) {
+        final count = snapshot.data ?? 0;
+        final bool hasAlert = count > 0;
+
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SecurityMonitorScreen()),
+            ),
+            borderRadius: BorderRadius.circular(28),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(28),
+                gradient: LinearGradient(
+                  colors: hasAlert
+                      ? [Colors.red[900]!, Colors.red[700]!]
+                      : [const Color(0xFF1E1E2E), const Color(0xFF2D2D44)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: (hasAlert ? Colors.red : Colors.black).withOpacity(0.2),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  _PulseIcon(isActive: hasAlert),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'SECURITY HUB',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 2,
+                            fontSize: 11,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          hasAlert
+                              ? '$count Ancaman Terdeteksi'
+                              : 'Sistem Terpantau Aman',
+                          style: TextStyle(
+                            color: hasAlert ? Colors.white : Colors.white70,
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right_rounded, color: Colors.white54),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -2051,6 +2133,92 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
             ),
           );
         });
+      },
+    );
+  }
+}
+
+class _PulseIcon extends StatefulWidget {
+  final bool isActive;
+  const _PulseIcon({required this.isActive});
+
+  @override
+  State<_PulseIcon> createState() => _PulseIconState();
+}
+
+class _PulseIconState extends State<_PulseIcon>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: widget.isActive
+                ? Colors.red.withOpacity(0.1)
+                : Colors.cyan.withOpacity(0.1),
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Outer pulse
+              Container(
+                width: 48 * _controller.value,
+                height: 48 * _controller.value,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: widget.isActive
+                      ? Colors.red.withOpacity(0.2 * (1 - _controller.value))
+                      : Colors.cyan.withOpacity(0.2 * (1 - _controller.value)),
+                ),
+              ),
+              // Inner static icon
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: widget.isActive ? Colors.red : Colors.cyan,
+                  boxShadow: [
+                    BoxShadow(
+                      color: (widget.isActive ? Colors.red : Colors.cyan)
+                          .withOpacity(0.5),
+                      blurRadius: 10,
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  widget.isActive
+                      ? Icons.gpp_maybe_rounded
+                      : Icons.gpp_good_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
+            ],
+          ),
+        );
       },
     );
   }

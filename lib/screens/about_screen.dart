@@ -127,19 +127,27 @@ class AboutScreen extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 12),
                                   InkWell(
-                                    onTap: () => UpdateService.checkUpdateManual(context),
+                                    onTap: () =>
+                                        UpdateService.checkUpdateManual(
+                                            context),
                                     borderRadius: BorderRadius.circular(12),
                                     child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 12, vertical: 8),
                                       decoration: BoxDecoration(
-                                        color: AppColors.primary.withOpacity(0.1),
+                                        color:
+                                            AppColors.primary.withOpacity(0.1),
                                         borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                                        border: Border.all(
+                                            color: AppColors.primary
+                                                .withOpacity(0.2)),
                                       ),
                                       child: const Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Icon(CupertinoIcons.refresh, size: 14, color: AppColors.primary),
+                                          Icon(CupertinoIcons.refresh,
+                                              size: 14,
+                                              color: AppColors.primary),
                                           SizedBox(width: 6),
                                           Text(
                                             'Check',
@@ -174,9 +182,9 @@ class AboutScreen extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Icon(CupertinoIcons.sparkles,
-                          color: Colors.amber, size: 20),
-                      SizedBox(width: 8),
+                      // Icon(CupertinoIcons.sparkles,
+                      //     color: Colors.amber, size: 20),
+                      // SizedBox(width: 8),
                       Text(
                         'Misi Kami',
                         style: TextStyle(
@@ -261,7 +269,7 @@ class AboutScreen extends StatelessWidget {
                           FittedBox(
                             fit: BoxFit.scaleDown,
                             child: Text(
-                              'Flutter, Firebase, & \nDoa Hamba \nyg Tersakiti',
+                              'Flutter, Firebase, & \nوَكَفٰى بِاللّٰهِ شَهِيْدًا',
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700,
@@ -283,7 +291,8 @@ class AboutScreen extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: const [
-                    Icon(Icons.copyright_rounded, size: 14, color: AppColors.textHint),
+                    Icon(Icons.copyright_rounded,
+                        size: 14, color: AppColors.textHint),
                     SizedBox(width: 4),
                     Text(
                       '2026 MyDuitGweh | Arch',

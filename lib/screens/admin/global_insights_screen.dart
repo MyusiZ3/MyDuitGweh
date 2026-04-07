@@ -39,6 +39,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
   List<TransactionModel> _transactions = [];
   bool _isLoadingTx = true;
   String? _txError;
+  Duration? _lastLoadDuration;
 
   // Growth Chart
   List<Map<String, dynamic>> _userGrowthData = [];
@@ -97,6 +98,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
   }
 
   Future<void> _loadTransactions() async {
+    final stopwatch = Stopwatch()..start();
     // Only show shimmer on first load
     if (_transactions.isEmpty) {
       if (_txSetState != null) {
@@ -123,26 +125,31 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
             _transactions = txns;
             _isLoadingTx = false;
             _txError = null;
+            _lastLoadDuration = stopwatch.elapsed;
           });
         } else {
           setState(() {
             _transactions = txns;
             _isLoadingTx = false;
             _txError = null;
+            _lastLoadDuration = stopwatch.elapsed;
           });
         }
       }
     } catch (e) {
+      stopwatch.stop();
       if (mounted) {
         if (_txSetState != null) {
           _txSetState!(() {
             _txError = e.toString();
             _isLoadingTx = false;
+            _lastLoadDuration = stopwatch.elapsed;
           });
         } else {
           setState(() {
             _txError = e.toString();
             _isLoadingTx = false;
+            _lastLoadDuration = stopwatch.elapsed;
           });
         }
       }
@@ -245,12 +252,25 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                   StreamBuilder<QuerySnapshot>(
                     stream: _usersStream,
                     builder: (context, userSnap) {
-                      final userCount =
-                          userSnap.hasData ? userSnap.data!.docs.length : 0;
-                      // Calculate mock growth based on count
-                      final growth = userCount == 0
-                          ? 0.0
-                          : (userCount / (userCount * 0.9) - 1) * 100;
+                      final now = DateTime.now();
+                      final sevenDaysAgo = now.subtract(const Duration(days: 7));
+                      final allUsers = userSnap.data?.docs ?? [];
+                      final userCount = allUsers.length;
+
+                      // Calculate real growth (new users in last 7 days vs previous total)
+                      int newUsersCount = 0;
+                      for (var doc in allUsers) {
+                        final data = doc.data() as Map<String, dynamic>;
+                        final createdAt = (data['createdAt'] as Timestamp?)?.toDate();
+                        if (createdAt != null && createdAt.isAfter(sevenDaysAgo)) {
+                          newUsersCount++;
+                        }
+                      }
+
+                      final existingUsers = userCount - newUsersCount;
+                      final growth = existingUsers == 0
+                          ? (newUsersCount > 0 ? 100.0 : 0.0)
+                          : (newUsersCount / existingUsers) * 100;
 
                       return Row(
                         children: [
@@ -372,12 +392,62 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                           fontSize: 18,
                           letterSpacing: -0.5)),
                   const SizedBox(height: 16),
-                  _buildIndicatorTile('Cash Circulation', 'Highly Active',
-                      Icons.bolt_rounded, Colors.amber),
-                  _buildIndicatorTile('System Integrity', 'Secure & Syncing',
-                      Icons.verified_user_rounded, Colors.green),
-                  _buildIndicatorTile('API Latency', '8ms (Excellent)',
-                      Icons.speed_rounded, Colors.purple),
+                  Builder(builder: (context) {
+                    // Logic for Dynamic Economy Index
+                    final now = DateTime.now();
+                    final last24h = now.subtract(const Duration(hours: 24));
+                    final vol24h = _transactions
+                        .where((tx) => tx.date.isAfter(last24h))
+                        .fold(0.0, (sum, tx) => sum + tx.amount);
+
+                    String circulationStatus = 'Quiet';
+                    Color circulationColor = Colors.grey;
+                    if (vol24h > 10000000) {
+                      // Above 10M
+                      circulationStatus = 'Hyper Active';
+                      circulationColor = Colors.orange;
+                    } else if (vol24h > 1000000) {
+                      // Above 1M
+                      circulationStatus = 'Active Flow';
+                      circulationColor = Colors.amber;
+                    }
+
+                    final latency = _lastLoadDuration?.inMilliseconds ?? 0;
+                    String latencyStatus =
+                        latency == 0 ? 'Excellent' : '${latency}ms';
+                    Color latencyColor = Colors.green;
+                    if (latency > 500) {
+                      latencyStatus += ' (Slow)';
+                      latencyColor = Colors.redAccent;
+                    } else if (latency > 200) {
+                      latencyStatus += ' (Good)';
+                      latencyColor = Colors.blue;
+                    } else {
+                      latencyStatus += ' (Fast)';
+                      latencyColor = Colors.purple;
+                    }
+
+                    return Column(
+                      children: [
+                        _buildIndicatorTile(
+                            'Cash Circulation',
+                            vol24h == 0
+                                ? 'No recent activity'
+                                : '$circulationStatus (${CurrencyFormatter.formatCurrency(vol24h)})',
+                            Icons.bolt_rounded,
+                            circulationColor),
+                        _buildIndicatorTile(
+                            'System Integrity',
+                            _txError != null
+                                ? 'Issues detected'
+                                : 'Syncing & Encrypted (SSL)',
+                            Icons.verified_user_rounded,
+                            _txError != null ? Colors.red : Colors.green),
+                        _buildIndicatorTile('Query Latency', latencyStatus,
+                            Icons.speed_rounded, latencyColor),
+                      ],
+                    );
+                  }),
                   const SizedBox(height: 40),
                 ],
               ),
@@ -1992,6 +2062,33 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                 const SizedBox(height: 12),
                 _buildStatusRow(
                     'Min. Umur Akun', '${config.minAccountAgeDays} Hari'),
+                const Divider(height: 32),
+                StreamBuilder<QuerySnapshot>(
+                  stream: _usersStream,
+                  builder: (context, userSnapshot) {
+                    if (!userSnapshot.hasData) {
+                      return const Center(
+                          child: LinearProgressIndicator(minHeight: 2));
+                    }
+                    final users = userSnapshot.data!.docs;
+                    final totalUsers = users.length;
+                    final doneCount = users
+                        .where((doc) =>
+                            (doc.data() as Map<String, dynamic>)['surveyDone'] ==
+                            true)
+                        .length;
+                    final pendingCount = totalUsers - doneCount;
+
+                    return Column(
+                      children: [
+                        _buildStatusRow('Sudah Isi Survey', '$doneCount Orang'),
+                        const SizedBox(height: 12),
+                        _buildStatusRow(
+                            'Belum Isi Survey', '$pendingCount Orang'),
+                      ],
+                    );
+                  },
+                ),
                 const SizedBox(height: 20),
               ],
               SizedBox(

@@ -71,6 +71,11 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
       'label': 'Groq -',
       'icon': Icons.bolt_rounded
     },
+    {
+      'id': 'SECURITY_ALERT',
+      'label': 'Alert',
+      'icon': Icons.security_rounded
+    },
   ];
 
   @override
@@ -267,16 +272,17 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
   }
 
   Widget _buildLogsList() {
-    Query query =
-        _firestore.collection('app_config').doc('global').collection('history');
+    final isSecurity = _selectedCategory == 'SECURITY_ALERT';
+    
+    Query query = isSecurity 
+      ? _firestore.collection('security_logs')
+      : _firestore.collection('app_config').doc('global').collection('history');
 
-    // PERINGATAN: Filter kategori membutuhkan Index di Firestore.
-    // Jika belum ada index, Firestore akan melempar error di console dengan link untuk membuat index otomatis.
-    if (_selectedCategory != 'ALL') {
+    if (!isSecurity && _selectedCategory != 'ALL') {
       query = query.where('action', isEqualTo: _selectedCategory);
     }
 
-    query = query.orderBy('updatedAt', descending: true);
+    query = query.orderBy(isSecurity ? 'timestamp' : 'updatedAt', descending: true);
 
     return StreamBuilder<QuerySnapshot>(
       stream: query.snapshots(),
@@ -424,16 +430,22 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
 
   Widget _buildLogCard(QueryDocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    final action = data['action'] ?? data['type'] ?? 'ACTIVITY';
-    final time = (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now();
-    final admin = data['updatedBy'] ?? 'System';
+    final isSecurity = data.containsKey('severity');
+    final action = isSecurity ? 'SECURITY_ALERT' : (data['action'] ?? data['type'] ?? 'ACTIVITY');
+    final time = (isSecurity ? (data['timestamp'] as Timestamp?) : (data['updatedAt'] as Timestamp?))?.toDate() ?? DateTime.now();
+    final admin = isSecurity ? (data['userId'] ?? 'System') : (data['updatedBy'] ?? 'System');
 
     IconData icon = Icons.info_outline_rounded;
     Color color = Colors.grey;
-    String title = 'Admin Action';
-    String subtitle = 'Pembaruan sistem terdeteksi.';
+    String title = isSecurity ? 'Security Alert' : 'Admin Action';
+    String subtitle = isSecurity ? (data['message'] ?? '') : 'Pembaruan sistem terdeteksi.';
 
-    if (action == 'BROADCAST') {
+    if (isSecurity) {
+      final severity = data['severity'] ?? 'low';
+      icon = severity == 'critical' ? Icons.security_rounded : Icons.warning_amber_rounded;
+      color = (severity == 'critical' || severity == 'high') ? Colors.red : Colors.orange;
+      title = '[${data['type'] ?? 'ALERT'}]';
+    } else if (action == 'BROADCAST') {
       icon = Icons.campaign_rounded;
       color = AppColors.primary;
       title = data['title'] ?? 'Global Broadcast';

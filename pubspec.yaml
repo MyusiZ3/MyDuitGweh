@@ -2,7 +2,7 @@ name: my_duit_gweh
 description: "My Duit Gweh - Smart Financial Manager"
 publish_to: "none"
 
-version: 1.0.7+7
+version: 1.0.8+8
 
 environment:
   sdk: ^3.6.0
