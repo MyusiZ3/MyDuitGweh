@@ -952,9 +952,10 @@ INSTRUKSI:
 
       return finalResponse?.text ?? 'Maaf, jawaban kosong.';
     } catch (e) {
-      if (e.toString().contains('QUOTA_EXCEEDED')) throw e;
-      if (e.toString().contains('Invalid API key'))
+      if (e.toString().contains('QUOTA_EXCEEDED')) rethrow;
+      if (e.toString().contains('Invalid API key')) {
         return 'API Key tidak valid.';
+      }
       return 'Terjadi kesalahan: $e';
     }
   }
@@ -983,12 +984,8 @@ INSTRUKSI:
 
     String walletsStr = "";
     if (wallets != null && wallets.isNotEmpty) {
-      walletsStr = "\nSTATUS DOMPET SAAT INI:\n" +
-          wallets
-              .map((w) =>
-                  "- ${w.walletName} (${w.type == 'colab' ? 'Tabungan Bersama' : w.type == 'debt' ? 'Hutang/Piutang' : 'Pribadi'}): Rp ${w.balance.toStringAsFixed(0)}")
-              .join("\n") +
-          "\n";
+      walletsStr =
+          "\nSTATUS DOMPET SAAT INI:\n${wallets.map((w) => "- ${w.walletName} (${w.type == 'colab' ? 'Tabungan Bersama' : w.type == 'debt' ? 'Hutang/Piutang' : 'Pribadi'}): Rp ${w.balance.toStringAsFixed(0)}").join("\n")}\n";
     }
 
     return '''
@@ -1017,8 +1014,9 @@ ${transactions.take(20).map((t) => "[${DateFormat('dd/MM').format(t.date)}] ${t.
     try {
       final config = await getGlobalConfig();
       final bool isEnabled = config['is_advisor_enabled'] ?? true;
-      if (!isEnabled)
+      if (!isEnabled) {
         return 'Fitur Analisis AI sedang dinonaktifkan oleh Admin.';
+      }
 
       final String provider = config['advisor_provider'] ?? 'gemini';
       final List<String> geminiKeys =
@@ -1265,27 +1263,77 @@ INSTRUKSI ANALISIS:
       final summary = AIService()._generateDataSummary(transactions, dateRange);
 
       final systemPrompt = '''
-Kamu adalah "Eagle Eye Insight", analis makroekonomi khusus untuk performa agregat pengguna aplikasi keuangan.
-Tugasmu adalah menyajikan laporan tren keuangan seluruh pengguna dalam bentuk Markdown yang lengkap.
+Kamu adalah "Archen Eye Insight", analis makroekonomi khusus untuk performa agregat pengguna aplikasi keuangan.
 
+Tugasmu adalah menyajikan laporan tren keuangan seluruh pengguna dalam bentuk Markdown profesional berbasis DATA AGREGAT.
+
+====================
 DATA PLATFORM (AGGREGATED):
 - Total Akun Pengguna Data Ini: $userCount
 - Total Wallet Aktif: $walletCount
 - Total Uang Beredar (Liquidity): Rp ${totalLiquidity.toStringAsFixed(0)}
 
 $summary
+====================
 
-INSTRUKSI FORMAT OUTPUT:
-1. Buat laporan profesional layaknya diberikan kepada jajaran Direksi (SuperAdmin).
-2. Sorot tiga hal utama: **Status Cash Flow Ekosistem**, **Kategori Paling Menyedot Dana**, dan **Insight Unik**.
-3. Gunakan formatting Markdown penuh: heading (##), teks tebal, daftar (bullets), serta emoji relevan.
-4. JANGAN SEBUT "Sample 20 item" atau rahasia struktural data. Berpura-puralah kau menganalisis jutaan titik data.
-5. PENTING: Laporan HARUS LENGKAP, maksimal 400 kata. SELALU akhiri dengan bagian "## 📌 Kesimpulan" berisi 2-3 kalimat penutup.
-6. JANGAN PERNAH memotong laporan di tengah kalimat. Pastikan setiap bagian memiliki penutup yang jelas.
+ATURAN ANALISIS (WAJIB DIPATUHI):
+1. HANYA gunakan perspektif MAKRO (agregat).
+2. DILARANG KERAS menyebut:
+   - Transaksi individu dalam bentuk apapun
+   - Contoh pembelian (eksplisit maupun implisit)
+   - Narasi perilaku user spesifik
+3. Insight HARUS:
+   - Berbasis data yang tersedia di atas (JANGAN mengarang pola yang tidak didukung data)
+   - Berupa tren, distribusi, anomali, atau hubungan antar metrik
+4. Gunakan bahasa makro seperti:
+   - "Terjadi peningkatan..."
+   - "Distribusi menunjukkan..."
+   - "Secara agregat..."
+5. Anggap data ini merepresentasikan jutaan pengguna.
+6. Jika data terbatas, lakukan inferensi MAKRO yang logis tanpa turun ke level individu.
+
+====================
+
+FORMAT OUTPUT (WAJIB):
+## Status Cash Flow Ekosistem
+(Analisis kondisi umum arus uang berbasis data)
+
+## Kategori Paling Menyedot Dana
+(Analisis kategori dominan + penjelasan berbasis pola agregat)
+
+## Insight Strategis
+- Insight 1 (berbasis data & tren)
+- Insight 2
+- Insight 3
+
+## Kesimpulan
+(2-3 kalimat ringkas, high-level, executive tone)
+
+====================
+
+KETENTUAN TAMBAHAN:
+- Gunakan Markdown (heading, bold, bullet, emoji seperlunya)
+- Maksimal 400 kata
+- JANGAN keluar dari struktur di atas
+- JANGAN menambahkan section lain
+- JANGAN berhenti di tengah kalimat
+
+SELF-CHECK (WAJIB SEBELUM OUTPUT):
+- Jika terdapat contoh transaksi, hapus dan perbaiki
+- Jika insight tidak berbasis data, perbaiki
+- Pastikan semua insight bersifat makro
+
+Output yang mengandung detail transaksi individu dianggap gagal total.
 ''';
 
-      final userQuery =
-          'Analisis data global pengguna ini dan sebutkan 3 insight kunci. Pastikan laporan LENGKAP hingga bagian Kesimpulan.';
+      final userQuery = '''
+Analisis data global pengguna ini dan hasilkan laporan lengkap sesuai format.
+
+Pastikan:
+- Tidak ada narasi transaksi individu
+- Semua insight berbasis data yang tersedia
+- Output final sudah lolos SELF-CHECK
+''';
 
       Future<String?> tryGroqList() async {
         final List<String> fallbackModels = [
@@ -1472,8 +1520,9 @@ INSTRUKSI KHUSUS:
   // ══════════════════════════════════════════════════
 
   Future<String> analyzeFeedbackSentiment(List<FeedbackModel> feedbacks) async {
-    if (feedbacks.isEmpty)
+    if (feedbacks.isEmpty) {
       return "Belum ada feedback yang masuk untuk dianalisis.";
+    }
 
     final config = await getAIConfig();
     final groqKeys = List<String>.from(config['groq_keys'] ?? []);

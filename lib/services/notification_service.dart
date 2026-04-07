@@ -76,7 +76,8 @@ class NotificationService {
   }
 
   /// Jadwalkan notifikasi harian pada jam & menit tertentu
-  Future<void> scheduleDailyReminder({int hour = 20, int minute = 0, bool showConfirmation = false}) async {
+  Future<void> scheduleDailyReminder(
+      {int hour = 20, int minute = 0, bool showConfirmation = false}) async {
     try {
       // Batalkan semua notifikasi lama dulu
       await _notificationsPlugin.cancelAll();
@@ -129,16 +130,16 @@ class NotificationService {
           'Kamu akan diingetin tiap hari jam $jamStr. (〜￣▽￣)〜',
           const NotificationDetails(
             android: AndroidNotificationDetails(
-            'daily_jurnal_paling_penting_v3', // Final consistent ID for fresh channel
-            'Daily Reminder',
-            channelDescription: 'Reminds you to record transactions',
-            importance: Importance.max,
-            priority: Priority.max, // Changed to max for better popup chance
-            icon: 'notif_icon',
-            color: const Color(0xFF007AFF),
-            playSound: true,
-            enableVibration: true,
-          ),
+              'daily_jurnal_paling_penting_v3', // Final consistent ID for fresh channel
+              'Daily Reminder',
+              channelDescription: 'Reminds you to record transactions',
+              importance: Importance.max,
+              priority: Priority.max, // Changed to max for better popup chance
+              icon: 'notif_icon',
+              color: Color(0xFF007AFF),
+              playSound: true,
+              enableVibration: true,
+            ),
           ),
         );
       }
@@ -213,8 +214,9 @@ class NotificationService {
     required DateTime scheduledTime,
   }) async {
     try {
-      final tz.TZDateTime tzScheduledTime = tz.TZDateTime.from(scheduledTime, tz.local);
-      
+      final tz.TZDateTime tzScheduledTime =
+          tz.TZDateTime.from(scheduledTime, tz.local);
+
       // Jika waktu sudah terlewat, lewati
       if (tzScheduledTime.isBefore(tz.TZDateTime.now(tz.local))) return;
 
@@ -254,7 +256,7 @@ class NotificationService {
   Future<void> testNotification() async {
     await _notificationsPlugin.show(
       999,
-      'TEST: Pop-up Çalışıyor! 🚀',
+      'TEST: Pop-up Contsiol! (〜￣▽￣)〜',
       'Jika muncul ini sebagai pop-up di atas layar, artinya konfigurasi sudah benar!',
       const NotificationDetails(
         android: AndroidNotificationDetails(
@@ -266,8 +268,8 @@ class NotificationService {
           ticker: 'Test running...',
           playSound: true,
           icon: 'notif_icon',
-          color: const Color(0xFF007AFF),
-          fullScreenIntent: false, 
+          color: Color(0xFF007AFF),
+          fullScreenIntent: false,
         ),
       ),
     );
