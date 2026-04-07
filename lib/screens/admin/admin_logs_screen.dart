@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../utils/app_theme.dart';
 import 'dart:ui';
 import '../../utils/ui_helper.dart';
+import '../../services/auth_service.dart';
 
 class AdminLogsScreen extends StatefulWidget {
   const AdminLogsScreen({super.key});
@@ -14,8 +15,25 @@ class AdminLogsScreen extends StatefulWidget {
 
 class _AdminLogsScreenState extends State<AdminLogsScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final AuthService _authService = AuthService();
   String _searchQuery = "";
   String _selectedCategory = "ALL";
+  bool _isSuperAdmin = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkRole();
+  }
+
+  Future<void> _checkRole() async {
+    final isAdmin = await _authService.isSuperAdmin();
+    if (mounted) {
+      setState(() {
+        _isSuperAdmin = isAdmin;
+      });
+    }
+  }
 
   final List<Map<String, dynamic>> _categories = [
     {'id': 'ALL', 'label': 'Semua', 'icon': Icons.grid_view_rounded},
@@ -117,6 +135,15 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
         icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
         onPressed: () => Navigator.pop(context),
       ),
+      actions: [
+        if (_isSuperAdmin)
+          IconButton(
+            icon: const Icon(Icons.delete_sweep_rounded, color: Colors.redAccent),
+            tooltip: 'Bersihkan Semua Log',
+            onPressed: () => _showClearLogsConfirmation(),
+          ),
+        const SizedBox(width: 8),
+      ],
       centerTitle: true,
       flexibleSpace: FlexibleSpaceBar(
         centerTitle: true,
@@ -775,6 +802,90 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
         ],
       ),
     );
+  }
+
+  void _showClearLogsConfirmation() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text('Hapus Semua Log?',
+            style: TextStyle(fontWeight: FontWeight.w900)),
+        content: const Text(
+          'Tindakan ini akan menghapus seluruh riwayat sistem dan log keamanan secara permanen. Apakah Anda yakin?',
+          style: TextStyle(fontSize: 14, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('BATAL',
+                style: TextStyle(
+                    color: Colors.grey[600], fontWeight: FontWeight.bold)),
+          ),
+          Container(
+            margin: const EdgeInsets.only(left: 8),
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _clearAllLogs();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                elevation: 0,
+              ),
+              child: const Text('HAPUS SEMUA',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _clearAllLogs() async {
+    // Fail-safe security check
+    if (!_isSuperAdmin) {
+      UIHelper.showErrorSnackBar(context, 'Akses ditolak: Hanya SuperAdmin yang dapat melakukan tindakan ini.');
+      return;
+    }
+
+    UIHelper.showLoadingDialog(context, message: 'Membersihkan log...');
+
+    try {
+      // 1. Clear history collection
+      final historySnap = await _firestore
+          .collection('app_config')
+          .doc('global')
+          .collection('history')
+          .get();
+
+      final batch = _firestore.batch();
+      for (var doc in historySnap.docs) {
+        batch.delete(doc.reference);
+      }
+
+      // 2. Clear security_logs
+      final securitySnap = await _firestore.collection('security_logs').get();
+      for (var doc in securitySnap.docs) {
+        batch.delete(doc.reference);
+      }
+
+      // Execute batch
+      await batch.commit();
+
+      if (mounted) {
+        Navigator.pop(context); // Close loading
+        UIHelper.showSuccessSnackBar(context, 'Semua log berhasil dibersihkan.');
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Close loading
+        UIHelper.showErrorSnackBar(context, 'Gagal membersihkan log: $e');
+      }
+    }
   }
 
   Widget _buildActionButton({

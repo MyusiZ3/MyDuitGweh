@@ -37,6 +37,7 @@
     />
     <script>
       tailwind.config = {
+        darkMode: 'class',
         theme: {
           extend: {
             fontFamily: {
@@ -45,6 +46,9 @@
             colors: {
               "primary-bg": "#f8f9fa",
               "border-subtle": "#e2e2e7",
+              "dark-bg": "#09090b",
+              "dark-card": "#09090b",
+              "dark-border": "#1a1a1a",
             },
             borderRadius: {
               "3xl": "24px",
@@ -56,88 +60,87 @@
     <style type="text/tailwindcss">
       @layer components {
         .bento-card {
-          @apply bg-white p-8 rounded-3xl border border-border-subtle flex flex-col justify-between transition-all duration-300 relative overflow-hidden;
+          @apply bg-white p-8 rounded-3xl border border-border-subtle flex flex-col justify-between transition-all duration-300 relative overflow-hidden dark:bg-zinc-900/40 dark:border-white/5 dark:backdrop-blur-xl;
         }
         .bento-card:hover {
-          @apply -translate-y-1 shadow-2xl shadow-black/5;
+          @apply -translate-y-1 shadow-2xl shadow-black/5 dark:shadow-white/5;
         }
         .icon-circle {
-          @apply w-11 h-11 rounded-xl bg-zinc-100 text-black flex items-center justify-center mb-5 border border-zinc-200;
+          @apply w-11 h-11 rounded-xl bg-zinc-100 text-black flex items-center justify-center mb-5 border border-zinc-200 dark:bg-zinc-800 dark:text-white dark:border-white/10;
         }
         .floating-pill {
-          @apply absolute bg-white text-black px-4 py-2 rounded-full text-xs font-bold shadow-lg flex items-center gap-1.5 z-10 transition-all;
+          @apply absolute bg-white text-black px-4 py-2 rounded-full text-xs font-bold shadow-lg flex items-center gap-1.5 z-10 transition-all dark:bg-zinc-800 dark:text-white;
         }
+      }
+
+      /* Transitions for smooth theme switching */
+      * {
+        transition: background-color 0.4s ease, border-color 0.4s ease, color 0.4s ease;
       }
 
       /* Keep custom animations for ultra-smooth feel */
       @keyframes float-main {
-        0%,
-        100% {
-          transform: translateY(0);
-        }
-        50% {
-          transform: translateY(-12px);
-        }
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-12px); }
       }
       @keyframes float-top {
-        0%,
-        100% {
-          transform: translate(0, 0);
-        }
-        50% {
-          transform: translate(8px, -15px);
-        }
+        0%, 100% { transform: translate(0, 0); }
+        50% { transform: translate(8px, -15px); }
       }
       @keyframes float-bottom {
-        0%,
-        100% {
-          transform: translate(0, 0);
-        }
-        50% {
-          transform: translate(-5px, 20px);
-        }
+        0%, 100% { transform: translate(0, 0); }
+        50% { transform: translate(-5px, 20px); }
       }
       @keyframes float-side {
-        0%,
-        100% {
-          transform: translateX(0);
-        }
-        50% {
-          transform: translateX(10px);
+        0%, 100% { transform: translateX(0); }
+        50% { transform: translateX(10px); }
+      }
+
+      .animate-float-main { animation: float-main 6s ease-in-out infinite; }
+      .animate-float-top { animation: float-top 7s ease-in-out infinite; }
+      .animate-float-bottom { animation: float-bottom 5s ease-in-out infinite; }
+      .animate-float-side { animation: float-side 8s linear infinite; }
+    </style>
+    <script>
+      // Theme Logic
+      function toggleTheme() {
+        if (document.documentElement.classList.contains('dark')) {
+          document.documentElement.classList.remove('dark');
+          localStorage.theme = 'light';
+        } else {
+          document.documentElement.classList.add('dark');
+          localStorage.theme = 'dark';
         }
       }
 
-      .animate-float-main {
-        animation: float-main 6s ease-in-out infinite;
+      function initTheme() {
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
       }
-      .animate-float-top {
-        animation: float-top 7s ease-in-out infinite;
-      }
-      .animate-float-bottom {
-        animation: float-bottom 5s ease-in-out infinite;
-      }
-      .animate-float-side {
-        animation: float-side 8s linear infinite;
-      }
-    </style>
+
+      initTheme();
+    </script>
   </head>
-  <body class="bg-primary-bg text-black px-6 flex flex-col items-center">
+  <body class="bg-primary-bg dark:bg-dark-bg text-black dark:text-zinc-100 px-6 flex flex-col items-center">
     <!-- Navbar -->
     <nav
-      class="fixed top-5 w-[calc(100%-48px)] max-w-[1000px] h-14 bg-white/85 backdrop-blur-xl border border-border-subtle rounded-full flex justify-between items-center px-4 z-[1000] shadow-sm"
+      class="fixed top-5 w-[calc(100%-48px)] max-w-[1000px] h-14 bg-white/85 dark:bg-black/50 backdrop-blur-xl border border-border-subtle dark:border-white/10 rounded-full flex justify-between items-center px-4 z-[1000] shadow-sm"
     >
       <a href="#" class="flex items-center gap-2.5 no-underline px-3">
         <div
-          class="w-8 h-8 bg-black rounded-lg flex items-center justify-center"
+          class="w-8 h-8 bg-black dark:bg-white rounded-lg flex items-center justify-center transition-colors"
         >
           <svg
             viewBox="0 0 24 24"
             fill="none"
             stroke="white"
+            class="w-4 h-4 dark:stroke-black"
             stroke-width="2.5"
             stroke-linecap="round"
             stroke-linejoin="round"
-            class="w-4 h-4"
           >
             <path
               d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4"
@@ -145,15 +148,29 @@
             <path d="M21 10h-4a2 2 0 0 0 0 4h4" />
           </svg>
         </div>
-        <span class="font-extrabold text-sm tracking-tight text-black"
+        <span class="font-extrabold text-sm tracking-tight text-black dark:text-white"
           >My Duit Gweh</span
         >
       </a>
-      <div class="flex items-center pr-2">
-        <div
-          class="bg-black text-white px-3.5 py-1.5 rounded-full text-[10px] font-bold"
+      <div class="flex items-center gap-3">
+        <!-- Theme Toggle -->
+        <button 
+          onclick="toggleTheme()"
+          class="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:bg-zinc-100 dark:hover:bg-zinc-800 group relative"
+          title="Toggle Theme"
         >
-          Build v1.0.8
+          <svg class="hidden dark:block w-5 h-5 text-zinc-400 group-hover:text-yellow-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4-9H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 12.728l-.707-.707M6.343 17.657l-.707-.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <svg class="block dark:hidden w-5 h-5 text-zinc-500 group-hover:text-indigo-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+
+        <div
+          class="bg-black dark:bg-white text-white dark:text-black px-3.5 py-1.5 rounded-full text-[10px] font-bold"
+        >
+          Build v1.0.9
         </div>
       </div>
     </nav>
@@ -165,7 +182,7 @@
       >
         <!-- Hero Card (Large) -->
         <div
-          class="lg:col-span-3 lg:row-span-2 bento-card bg-black text-white border-none flex flex-row items-center justify-between p-10"
+          class="lg:col-span-3 lg:row-span-2 bento-card bg-black dark:bg-zinc-950 text-white border-none flex flex-row items-center justify-between p-10"
         >
           <div class="max-w-[400px]">
             <span
@@ -183,11 +200,11 @@
               every day.
             </p>
             <a
-              href="https://github.com/MyusiZ3/MyDuitGweh/releases/download/v1.0.8/app-release.apk"
+              href="https://github.com/MyusiZ3/MyDuitGweh/releases/download/v1.0.9/app-release.apk"
               target="_blank"
               class="bg-white text-black px-7 py-3.5 rounded-xl no-underline font-bold inline-flex items-center gap-2.5 mt-6 transition-transform hover:scale-105 active:scale-95"
             >
-              <span>Get APP v1.0.8</span>
+              <span>Get APP v1.0.9</span>
               <svg
                 width="18"
                 height="18"
@@ -219,8 +236,8 @@
               <div class="h-1 w-1/3 bg-white/10 rounded-full my-2"></div>
             </div>
 
-            <!-- Floating Components -->
-            <div class="floating-pill top-[15%] right-[10px] animate-float-top">
+            <!-- Floating Components (Corrected Colors) -->
+            <div class="floating-pill top-[15%] right-[10px] animate-float-top bg-blue-500/10 text-blue-400 border border-blue-500/20">
               <svg
                 width="10"
                 height="14"
@@ -234,7 +251,7 @@
               <span>Insight +15%</span>
             </div>
             <div
-              class="floating-pill bottom-[20%] -right-5 bg-black text-white border border-white/20 animate-float-bottom"
+              class="floating-pill bottom-[20%] -right-5 bg-black text-white border border-white/20 animate-float-bottom dark:bg-white dark:text-black dark:border-black/10"
             >
               <svg
                 width="14"
@@ -249,19 +266,19 @@
               <span>Secured</span>
             </div>
             <div
-              class="floating-pill top-[65%] -left-5 bg-emerald-500/20 text-emerald-500 backdrop-blur-md animate-float-side"
+              class="floating-pill top-[65%] -left-5 bg-zinc-400/10 text-zinc-400 backdrop-blur-md animate-float-side border border-zinc-400/20"
             >
               <span class="text-lg">✨</span>
-              <span>AI Active</span>
+              <span>AI Engine</span>
             </div>
           </div>
         </div>
 
         <!-- Install QR Card (Tall) -->
         <div
-          class="lg:col-span-1 lg:row-span-2 bento-card bg-black text-white border-none text-center flex flex-col items-center"
+          class="lg:col-span-1 lg:row-span-2 bento-card bg-black dark:bg-zinc-950 text-white border-none text-center flex flex-col items-center"
         >
-          <div class="w-full">
+          <div class="w-full text-center">
             <span
               class="text-[10px] font-extrabold uppercase tracking-widest text-white/40"
               >Quick Install</span
@@ -272,13 +289,13 @@
             class="bg-white p-2.5 rounded-2xl inline-block my-5 shadow-inner"
           >
             <img
-              src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=https://github.com/MyusiZ3/MyDuitGweh/releases/download/v1.0.8/app-release.apk"
+              src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=https://github.com/MyusiZ3/MyDuitGweh/releases/download/v1.0.9/app-release.apk"
               alt="QR"
               class="w-[120px] h-[120px]"
             />
           </div>
           <p class="text-[10px] opacity-40 font-bold uppercase tracking-wider">
-            v1.0.8 Beta Test
+            v1.0.9 Beta Test
           </p>
         </div>
 
@@ -300,10 +317,11 @@
                 />
               </svg>
             </div>
-            <h3 class="text-xl font-extrabold text-black">Archen AI</h3>
-            <p class="text-sm text-zinc-500 leading-relaxed font-medium mt-1">
-              Hyper-focused analytical intelligence designed to optimize your
-              spending pattern instantly.
+            <h3 class="text-xl font-extrabold text-black dark:text-white">Archen AI</h3>
+            <p class="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed font-medium mt-1">
+              Archen AI uses hyper-focused analytical intelligence to optimize
+              your spending patterns with instant categorization and predictive
+              budget recommendations.
             </p>
           </div>
         </div>
@@ -324,9 +342,9 @@
                 <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
               </svg>
             </div>
-            <h3 class="text-xl font-extrabold text-black">Health</h3>
-            <p class="text-sm text-zinc-500 leading-relaxed font-medium mt-1">
-              Financial AI Diagnosis & System Monitoring
+            <h3 class="text-xl font-extrabold text-black dark:text-white">Health</h3>
+            <p class="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed font-medium mt-1">
+              AI-driven diagnostics monitor account health and identify leaks in your balance.
             </p>
           </div>
         </div>
@@ -348,9 +366,9 @@
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
             </div>
-            <h3 class="text-xl font-extrabold text-black">Protection</h3>
-            <p class="text-sm text-zinc-500 leading-relaxed font-medium mt-1">
-              Biometric Shield & Real-time Audit Logs
+            <h3 class="text-xl font-extrabold text-black dark:text-white">Protection</h3>
+            <p class="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed font-medium mt-1">
+              Premium biometric shield and real-time audit logs for encrypted financial data.
             </p>
           </div>
         </div>
@@ -374,10 +392,9 @@
                 <circle cx="12" cy="13" r="4" />
               </svg>
             </div>
-            <h3 class="text-xl font-extrabold text-black">Smart OCR Scan</h3>
-            <p class="text-sm text-zinc-500 leading-relaxed font-medium mt-1">
-              Capture receipts and categorize instantly. Powered by a hybrid
-              engine of local ML and AI Optimization for absolute precision.
+            <h3 class="text-xl font-extrabold text-black dark:text-white">Smart OCR Scan</h3>
+            <p class="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed font-medium mt-1">
+              Extract receipt data instantly using hybrid local ML and AI models with absolute accuracy and speed.
             </p>
           </div>
         </div>
@@ -398,8 +415,8 @@
                 <path d="M12 20V10M18 20V4M6 20v-4" />
               </svg>
             </div>
-            <h3 class="text-xl font-extrabold text-black">Wealth Trajectory</h3>
-            <p class="text-sm text-zinc-500 leading-relaxed font-medium mt-1">
+            <h3 class="text-xl font-extrabold text-black dark:text-white">Wealth Trajectory</h3>
+            <p class="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed font-medium mt-1">
               Visualize your assets and project your financial independence with
               Pro-grade metrics.
             </p>
@@ -408,20 +425,20 @@
       </div>
 
       <!-- Footer -->
-      <footer class="mt-20 w-full pt-16 pb-12 border-t border-border-subtle">
+      <footer class="mt-20 w-full pt-16 pb-12 border-t border-border-subtle dark:border-white/5">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
           <!-- Column 1: Brand -->
           <div class="flex flex-col gap-4">
             <div class="flex items-center gap-2">
               <div
-                class="w-6 h-6 bg-black rounded flex items-center justify-center"
+                class="w-6 h-6 bg-black dark:bg-white rounded flex items-center justify-center transition-colors"
               >
                 <svg
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="white"
                   stroke-width="2.5"
-                  class="w-3 h-3"
+                  class="w-3 h-3 dark:stroke-black"
                 >
                   <path
                     d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4"
@@ -429,10 +446,10 @@
                   <path d="M21 10h-4a2 2 0 0 0 0 4h4" />
                 </svg>
               </div>
-              <span class="font-bold text-sm text-black">MyDuitGweh</span>
+              <span class="font-bold text-sm text-black dark:text-white">MyDuitGweh</span>
             </div>
             <p
-              class="text-xs text-zinc-500 font-medium leading-relaxed max-w-[200px]"
+              class="text-xs text-zinc-500 dark:text-zinc-400 font-medium leading-relaxed max-w-[200px]"
             >
               Designed to bring clarity to your finances, helping you track,
               understand, and grow your money with confidence.
@@ -442,7 +459,7 @@
           <!-- Column 2: Developer & Socials -->
           <div class="flex flex-col gap-4">
             <h4
-              class="text-[10px] font-extrabold uppercase tracking-widest text-zinc-400"
+              class="text-[10px] font-extrabold uppercase tracking-widest text-zinc-400 dark:text-zinc-500"
             >
               Core Developer
             </h4>
@@ -450,7 +467,7 @@
               <a
                 href="https://github.com/MyusiZ3"
                 target="_blank"
-                class="text-zinc-400 hover:text-black transition-colors"
+                class="text-zinc-400 hover:text-black dark:hover:text-white transition-colors"
               >
                 <svg
                   width="20"
@@ -470,7 +487,7 @@
               <a
                 href="https://www.instagram.com/imyusi_/"
                 target="_blank"
-                class="text-zinc-400 hover:text-black transition-colors"
+                class="text-zinc-400 hover:text-black dark:hover:text-white transition-colors"
               >
                 <svg
                   width="20"
@@ -492,7 +509,7 @@
               <a
                 href="https://www.linkedin.com/in/muhamad-sidik-a6757b25b/"
                 target="_blank"
-                class="text-zinc-400 hover:text-black transition-colors"
+                class="text-zinc-400 hover:text-black dark:hover:text-white transition-colors"
               >
                 <svg
                   width="20"
@@ -517,14 +534,14 @@
           <!-- Column 3: Contact -->
           <div class="flex flex-col gap-4">
             <h4
-              class="text-[10px] font-extrabold uppercase tracking-widest text-zinc-400"
+              class="text-[10px] font-extrabold uppercase tracking-widest text-zinc-400 dark:text-zinc-500"
             >
               Connect & Support
             </h4>
             <a
               href="mailto:support.myduitgweh@gmail.com"
               target="_blank"
-              class="text-xs font-bold text-black border-b border-black w-fit hover:opacity-60 transition-opacity"
+              class="text-xs font-bold text-black dark:text-white border-b border-black dark:border-white w-fit hover:opacity-60 transition-opacity"
             >
               support.myduitgweh@gmail.com
             </a>
@@ -532,20 +549,24 @@
         </div>
 
         <div
-          class="flex justify-between items-center pt-8 border-t border-zinc-100"
+          class="flex justify-between items-center pt-8 border-t border-zinc-100 dark:border-white/5"
         >
           <p
-            class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest"
+            class="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 uppercase tracking-widest"
           >
             &copy; 2026 MyDuitGweh | Arch.
           </p>
           <p
-            class="text-[10px] font-bold text-zinc-300 uppercase tracking-widest"
+            class="text-[10px] font-bold text-zinc-300 dark:text-zinc-800 uppercase tracking-widest"
           >
             Proudly Crafted in Indonesia
           </p>
         </div>
       </footer>
+    </div>
+  </body>
+</html>
+r>
     </div>
   </body>
 </html>
