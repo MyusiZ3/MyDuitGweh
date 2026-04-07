@@ -15,7 +15,6 @@ import 'package:flutter/services.dart';
 import '../../services/ai_service.dart';
 import '../../utils/ui_helper.dart';
 import 'notification_listener_admin_screen.dart';
-import '../../services/notification_service.dart';
 import 'security_monitor_screen.dart';
 import '../../services/security_service.dart';
 
@@ -291,14 +290,17 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                                     icon: Icons.notification_important_rounded,
                                     color: const Color(0xFFF43F5E),
                                     onTap: () async {
-                                      await NotificationService().testNotification();
+                                      // SIMULASI SERANGAN / EVENT SECURITY
+                                      await SecurityService().logEvent(
+                                        type: 'SIMULATED_ALERT',
+                                        severity: 'high',
+                                        message: 'Ini adalah uji coba notifikasi keamanan real-time untuk Admin.',
+                                      );
+                                      
                                       if (mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(
-                                            content: Text('Test notification sent! Check your status bar & pop-up.'),
-                                            backgroundColor: Colors.green,
-                                          ),
-                                        );
+                                        UIHelper.showSuccessSnackBar(
+                                            context,
+                                            'Security simulation triggered! Processing log...');
                                       }
                                     },
                                     isRestricted: !_isSuperAdmin,
