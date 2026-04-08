@@ -473,11 +473,14 @@ class _ReportScreenState extends State<ReportScreen> {
                         ),
                         const SizedBox(height: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
                             color: AppColors.primary.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 0.8),
+                            border: Border.all(
+                                color: AppColors.primary.withOpacity(0.2),
+                                width: 0.8),
                           ),
                           child: Text(
                             'EXPERIMENTAL',
@@ -545,7 +548,8 @@ class _ReportScreenState extends State<ReportScreen> {
                       onPressed: () async {
                         await NotifListenerBridge.openSettings();
                         // Re-check after returning from settings
-                        Future.delayed(const Duration(seconds: 2), _checkNotifStatus);
+                        Future.delayed(
+                            const Duration(seconds: 2), _checkNotifStatus);
                       },
                       icon: const Icon(Icons.settings_suggest_rounded,
                           color: Colors.white, size: 20),
@@ -2564,7 +2568,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
           double score = 100;
           String status = "Sangat Sehat";
           String initialAnalysis =
-              "**Archen(´･ω･`):** Menghitung kesehatan keuanganmu...";
+              "**Archen(´･ω･`):**  Menghitung kesehatan keuanganmu...";
 
           if (income > 0) {
             double savingsRate = (income - expense) / income;
@@ -2636,14 +2640,17 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                       builder: (context, prefsSnapshot) {
                         String lastUpdateStr = '--:--';
                         if (prefsSnapshot.hasData) {
-                          final storedTime = prefsSnapshot.data!.getString('advisor_last_update');
+                          final storedTime = prefsSnapshot.data!
+                              .getString('advisor_last_update');
                           if (storedTime != null) {
-                            lastUpdateStr = DateFormat('HH:mm').format(DateTime.parse(storedTime));
+                            lastUpdateStr = DateFormat('HH:mm')
+                                .format(DateTime.parse(storedTime));
                           }
                         }
                         return Text(
                           'Update: $lastUpdateStr',
-                          style: const TextStyle(color: Colors.white70, fontSize: 10),
+                          style: const TextStyle(
+                              color: Colors.white70, fontSize: 10),
                         );
                       },
                     ),
@@ -2701,7 +2708,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                   builder: (context, analysisSnapshot) {
                     String displayStr = (analysisSnapshot.data != null &&
                             analysisSnapshot.data != initialAnalysis)
-                        ? "**Archen(´･ω･`):** ${analysisSnapshot.data}"
+                        ? "**Archen(´･ω･`):**  ${analysisSnapshot.data}"
                         : initialAnalysis;
                     String? drainingWarning;
                     if (displayStr.contains('(Archen Lagi draining')) {
@@ -2723,13 +2730,13 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                               color: Colors.white,
                               fontSize: 12,
                               height: 1.4,
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w400,
                             ),
                             strong: const TextStyle(
                               color: Colors.white,
                               fontSize: 12,
                               height: 1.4,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w900,
                             ),
                             listBullet: const TextStyle(
                               color: Colors.white,
@@ -2742,7 +2749,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                               fontFamily: 'monospace',
                             ),
                             codeblockDecoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
+                              color: Colors.white.withOpacity(0),
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
@@ -3147,12 +3154,12 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
             const SizedBox(height: 8),
             if (isAI)
               MarkdownBody(
-                data: "**Archen(´･ω･`):** $text",
+                data: "**Archen(´･ω･`):**  $text",
                 styleSheet: MarkdownStyleSheet(
                   p: const TextStyle(
                       fontSize: 14, height: 1.5, color: Colors.black87),
                   strong: const TextStyle(
-                      fontWeight: FontWeight.bold, color: AppColors.primary),
+                      fontWeight: FontWeight.w900, color: AppColors.primary),
                   listBullet:
                       const TextStyle(fontSize: 14, color: AppColors.primary),
                   code: TextStyle(
