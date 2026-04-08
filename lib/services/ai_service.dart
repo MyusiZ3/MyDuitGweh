@@ -788,6 +788,8 @@ INSTRUKSI:
 4. Gunakan Markdown untuk format jawaban (bullet point, bold).
 5. Jangan berikan nasihat investasi berisiko tinggi.
 6. JIKA PENGGUNA HANYA MENYAPA (Halo, Hai, Pagi, Malam, dll) atau memberikan input singkat yang tidak memerlukan analisis mendalam, JANGAN memberondong dengan ringkasan data atau saran panjang. Balaslah sesingkat dan seramah mungkin sesuai kepribadianmu.
+7. JANGAN sertakan nama AI atau prefix apapun (seperti "**Archen...**") di awal jawabanmu. Langsung berikan isi jawaban.
+8. WAJIB gunakan pemisah ribuan titik (.) untuk setiap nominal angka (contoh: 50.000, 1.250.000). Pastikan angka tidak menyatu tanpa pemisah agar mudah dibaca.
 ''';
 
     try {
@@ -978,28 +980,31 @@ INSTRUKSI:
       }
     }
 
+    String _format(double amount) =>
+        NumberFormat('#,###', 'id_ID').format(amount);
+ 
     String breakdownStr = categoryBreakdown.entries
-        .map((e) => "- ${e.key}: Rp ${e.value.toStringAsFixed(0)}")
+        .map((e) => "- ${e.key}: Rp ${_format(e.value)}")
         .join("\n");
-
+ 
     String walletsStr = "";
     if (wallets != null && wallets.isNotEmpty) {
       walletsStr =
-          "\nSTATUS DOMPET SAAT INI:\n${wallets.map((w) => "- ${w.walletName} (${w.type == 'colab' ? 'Tabungan Bersama' : w.type == 'debt' ? 'Hutang/Piutang' : 'Pribadi'}): Rp ${w.balance.toStringAsFixed(0)}").join("\n")}\n";
+          "\nSTATUS DOMPET SAAT INI:\n${wallets.map((w) => "- ${w.walletName} (${w.type == 'colab' ? 'Tabungan Bersama' : w.type == 'debt' ? 'Hutang/Piutang' : 'Pribadi'}): Rp ${_format(w.balance)}").join("\n")}\n";
     }
-
+ 
     return '''
-RINGKASAN DATA KEUANGAN (${DateFormat('dd/MM').format(range.start)} - ${DateFormat('dd/MM').format(range.end)}):
-- Total Pemasukan: Rp ${totalIncome.toStringAsFixed(0)}
-- Total Pengeluaran: Rp ${totalExpense.toStringAsFixed(0)}
-- Saldo Bersih: Rp ${(totalIncome - totalExpense).toStringAsFixed(0)}
-$walletsStr
-RINCIAN PENGELUARAN PER KATEGORI:
-$breakdownStr
-
-DAFTAR TRANSAKSI TERAKHIR (Sample 20 item):
-${transactions.take(20).map((t) => "[${DateFormat('dd/MM').format(t.date)}] ${t.type == 'income' ? '+' : '-'} Rp ${t.amount.toStringAsFixed(0)} (${t.category}: ${t.note})").join("\n")}
-''';
+ RINGKASAN DATA KEUANGAN (${DateFormat('dd/MM').format(range.start)} - ${DateFormat('dd/MM').format(range.end)}):
+ - Total Pemasukan: Rp ${_format(totalIncome)}
+ - Total Pengeluaran: Rp ${_format(totalExpense)}
+ - Saldo Bersih: Rp ${_format(totalIncome - totalExpense)}
+ $walletsStr
+ RINCIAN PENGELUARAN PER KATEGORI:
+ $breakdownStr
+ 
+ DAFTAR TRANSAKSI TERAKHIR (Sample 20 item):
+ ${transactions.take(20).map((t) => "[${DateFormat('dd/MM').format(t.date)}] ${t.type == 'income' ? '+' : '-'} Rp ${_format(t.amount)} (${t.category}: ${t.note})").join("\n")}
+ ''';
   }
 
   // === SPECIALIZED FINANCIAL ADVISOR (ANALYTIC) ===
@@ -1161,16 +1166,14 @@ ATURAN ANALISIS (WAJIB):
    - "batasi transaksi harian"
 4. Hindari mengulang angka dari data kecuali sangat penting.
 5. Gunakan bahasa yang memotivasi, tegas, dan peduli.
+6. WAJIB gunakan pemisah ribuan titik (.) untuk setiap nominal angka (contoh: 50.000, 1.250.000).
 
 ====================
 
-FORMAT OUTPUT (WAJIB):
-- WAJIB dimulai EXACTLY dengan:
-**Archen(´･ω･`):**
-Gunakan format Markdown untuk bold.
-
-- Tidak boleh ada teks apapun sebelum itu
-- Tidak boleh menambahkan prefix/suffix lain
+INSTRUKSI FORMAT:
+- Mulailah jawabanmu LANGSUNG dengan teks analisis.
+- JANGAN sertakan nama AI atau prefix apapun (seperti "**Archen...**").
+- Gunakan bahasa Indonesia.
 
 ====================
 
@@ -1331,7 +1334,7 @@ Tugasmu adalah menyajikan laporan tren keuangan seluruh pengguna dalam bentuk Ma
 DATA PLATFORM (AGGREGATED):
 - Total Akun Pengguna Data Ini: $userCount
 - Total Wallet Aktif: $walletCount
-- Total Uang Beredar (Liquidity): Rp ${totalLiquidity.toStringAsFixed(0)}
+- Total Uang Beredar (Liquidity): Rp ${NumberFormat('#,###', 'id_ID').format(totalLiquidity)}
 
 $summary
 ====================
@@ -1351,6 +1354,7 @@ ATURAN ANALISIS (WAJIB DIPATUHI):
    - "Secara agregat..."
 5. Anggap data ini merepresentasikan jutaan pengguna.
 6. Jika data terbatas, lakukan inferensi MAKRO yang logis tanpa turun ke level individu.
+7. WAJIB gunakan pemisah ribuan titik (.) untuk setiap nominal angka yang disebutkan (contoh: 1.000.000, 250.000.000).
 
 ====================
 

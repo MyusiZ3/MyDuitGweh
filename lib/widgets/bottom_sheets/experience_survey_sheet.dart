@@ -68,9 +68,9 @@ class _ExperienceSurveySheetState extends State<ExperienceSurveySheet> {
       await _firestoreService.submitFeedback(feedback);
 
       if (!mounted) return;
-      Navigator.pop(context);
       UIHelper.showSuccessSnackBar(context,
           'Terima kasih atas feedback-nya! Archen sangat menghargainya. ✨');
+      Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
       UIHelper.showErrorSnackBar(context, 'Waduh, gagal kirim feedback: $e');

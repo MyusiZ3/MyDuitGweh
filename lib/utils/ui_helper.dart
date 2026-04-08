@@ -421,57 +421,59 @@ class UIHelper {
       BuildContext context, String title, String message) {
     return showPremiumDialog(
         context: context,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(Icons.receipt_long_rounded,
-                  color: AppColors.primary, size: 32),
-            ),
-            const SizedBox(height: 24),
-            Text(title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -1)),
-            const SizedBox(height: 12),
-            Text(message,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    color: Colors.grey[600], fontSize: 14, height: 1.5)),
-            const SizedBox(height: 32),
-            InkWell(
-              onTap: () => Navigator.pop(context),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Builder(builder: (dialogContext) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.black,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 15,
-                        offset: const Offset(0, 5)),
-                  ],
+                  color: AppColors.primary.withOpacity(0.1),
+                  shape: BoxShape.circle,
                 ),
-                child: const Center(
-                  child: Text('Oke, Mengerti',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 14)),
+                child: Icon(Icons.receipt_long_rounded,
+                    color: AppColors.primary, size: 32),
+              ),
+              const SizedBox(height: 24),
+              Text(title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -1)),
+              const SizedBox(height: 12),
+              Text(message,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      color: Colors.grey[600], fontSize: 14, height: 1.5)),
+              const SizedBox(height: 32),
+              InkWell(
+                onTap: () => Navigator.pop(dialogContext),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5)),
+                    ],
+                  ),
+                  child: const Center(
+                    child: Text('Oke, Mengerti',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 14)),
+                  ),
                 ),
               ),
-            ),
-          ],
-        ));
+            ],
+          );
+        }));
   }
 
   static void showLoadingDialog(BuildContext context, {String? message}) {
@@ -482,67 +484,69 @@ class UIHelper {
   static Future<void> showAiMaintenanceDialog(BuildContext context) {
     return showPremiumDialog(
         context: context,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                Container(
-                  width: 80,
-                  height: 80,
+        child: Builder(builder: (dialogContext) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: AppColors.expense.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const Icon(Icons.engineering_rounded,
+                      color: AppColors.expense, size: 40),
+                ],
+              ),
+              const SizedBox(height: 24),
+              const Text('AI Advisor Beristirahat',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -1)),
+              const SizedBox(height: 12),
+              Text(
+                  'Layanan AI Advisor sedang dinonaktifkan sementara oleh admin untuk pemeliharaan rutin. Silakan coba beberapa saat lagi ya!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      color: Colors.grey[700],
+                      fontSize: 14,
+                      height: 1.6,
+                      fontWeight: FontWeight.w500)),
+              const SizedBox(height: 32),
+              InkWell(
+                onTap: () => Navigator.pop(dialogContext),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   decoration: BoxDecoration(
-                    color: AppColors.expense.withOpacity(0.1),
-                    shape: BoxShape.circle,
+                    color: AppColors.expense,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                          color: AppColors.expense.withOpacity(0.3),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5)),
+                    ],
+                  ),
+                  child: const Center(
+                    child: Text('Siap, Tunggu Kabar!',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 14)),
                   ),
                 ),
-                const Icon(Icons.engineering_rounded,
-                    color: AppColors.expense, size: 40),
-              ],
-            ),
-            const SizedBox(height: 24),
-            const Text('AI Advisor Beristirahat',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -1)),
-            const SizedBox(height: 12),
-            Text(
-                'Layanan AI Advisor sedang dinonaktifkan sementara oleh admin untuk pemeliharaan rutin. Silakan coba beberapa saat lagi ya!',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    color: Colors.grey[700],
-                    fontSize: 14,
-                    height: 1.6,
-                    fontWeight: FontWeight.w500)),
-            const SizedBox(height: 32),
-            InkWell(
-              onTap: () => Navigator.pop(context),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                decoration: BoxDecoration(
-                  color: AppColors.expense,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                        color: AppColors.expense.withOpacity(0.3),
-                        blurRadius: 15,
-                        offset: const Offset(0, 5)),
-                  ],
-                ),
-                child: const Center(
-                  child: Text('Siap, Tunggu Kabar!',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 14)),
-                ),
               ),
-            ),
-          ],
-        ));
+            ],
+          );
+        }));
   }
 
   static void showToneSelector(BuildContext context) {

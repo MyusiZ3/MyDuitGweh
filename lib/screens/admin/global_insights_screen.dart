@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
+import 'survey_data_screen.dart';
 import '../../utils/currency_formatter.dart';
 import '../../models/transaction_model.dart';
 import '../../services/firestore_service.dart';
@@ -47,8 +48,6 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
 
   // Survey & AI Feedback
   final AIService _aiService = AIService();
-  bool _isAnalyzingFeedback = false;
-  Map<String, dynamic>? _aiSentimentResult;
   StateSetter? _txSetState;
 
   // Streams
@@ -364,7 +363,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                     const SizedBox(height: 16),
                     _buildSurveyControlPanel(),
                     const SizedBox(height: 16),
-                    _buildAiFeedbackInsights(),
+                    const _AiSentimentAnalysisCard(),
                     const SizedBox(height: 32),
                   ] else ...[
                     _buildLockedSection(
@@ -2063,6 +2062,11 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                 _buildStatusRow(
                     'Min. Umur Akun', '${config.minAccountAgeDays} Hari'),
                 const Divider(height: 32),
+                const Text(
+                  'Stats Partisipasi',
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
+                ),
+                const SizedBox(height: 12),
                 StreamBuilder<QuerySnapshot>(
                   stream: _usersStream,
                   builder: (context, userSnapshot) {
@@ -2081,39 +2085,67 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
 
                     return Column(
                       children: [
-                        _buildStatusRow('Sudah Isi Survey', '$doneCount Orang'),
+                        _buildStatusRow('Sudah Isi Survey',
+                            '${CurrencyFormatter.formatNumber(doneCount)} Orang'),
                         const SizedBox(height: 12),
-                        _buildStatusRow(
-                            'Belum Isi Survey', '$pendingCount Orang'),
+                        _buildStatusRow('Belum Isi Survey',
+                            '${CurrencyFormatter.formatNumber(pendingCount)} Orang'),
                       ],
                     );
                   },
                 ),
                 const SizedBox(height: 20),
-              ],
-              SizedBox(
-                width: double.infinity,
-                child: TextButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const AppConfigScreen()),
-                    );
-                  },
-                  icon: const Icon(Icons.settings_suggest_rounded, size: 18),
-                  label: const Text('UBAH KONFIGURASI DI APP SETTINGS',
-                      style:
-                          TextStyle(fontWeight: FontWeight.w900, fontSize: 11)),
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.indigo,
-                    backgroundColor: Colors.indigo.withOpacity(0.05),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                SizedBox(
+                  width: double.infinity,
+                  child: Column(
+                    children: [
+                      TextButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const SurveyDataScreen()),
+                          );
+                        },
+                        icon: const Icon(Icons.analytics_rounded, size: 18),
+                        label: const Text('LIHAT DATA & ISI SURVEI USER',
+                            style: TextStyle(
+                                fontWeight: FontWeight.w900, fontSize: 11)),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.teal,
+                          backgroundColor: Colors.teal.withOpacity(0.05),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          minimumSize: const Size(double.infinity, 48),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const AppConfigScreen()),
+                          );
+                        },
+                        icon: const Icon(Icons.settings_suggest_rounded, size: 18),
+                        label: const Text('UBAH KONFIGURASI DI APP SETTINGS',
+                            style: TextStyle(
+                                fontWeight: FontWeight.w900, fontSize: 11)),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.indigo,
+                          backgroundColor: Colors.indigo.withOpacity(0.05),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          minimumSize: const Size(double.infinity, 48),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
+              ],
             ],
           ),
         );
@@ -2137,7 +2169,23 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
     );
   }
 
-  Widget _buildAiFeedbackInsights() {
+}
+
+class _AiSentimentAnalysisCard extends StatefulWidget {
+  const _AiSentimentAnalysisCard();
+
+  @override
+  State<_AiSentimentAnalysisCard> createState() => _AiSentimentAnalysisCardState();
+}
+
+class _AiSentimentAnalysisCardState extends State<_AiSentimentAnalysisCard> {
+  final AIService _aiService = AIService();
+  final FirestoreService _firestoreService = FirestoreService();
+  bool _isAnalyzingFeedback = false;
+  Map<String, dynamic>? _aiSentimentResult;
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -2226,7 +2274,9 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
   Widget _buildAiResultContent() {
     final sentiment = _aiSentimentResult!['sentiment_score'] ?? 'N/A';
     final summary = _aiSentimentResult!['summary'] ?? '';
-    final requests = _aiSentimentResult!['top_feature_requests'] as List? ?? [];
+    final requests = (_aiSentimentResult!['top_feature_requests'] as List? ?? [])
+        .where((r) => r.toString().trim().isNotEmpty)
+        .toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2241,9 +2291,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
               children: [
                 _buildSentimentBadge(sentiment),
                 Text(
-                    'BERDASARKAN ' +
-                        _aiSentimentResult!['sample_size'].toString() +
-                        ' FEEDBACK',
+                    'BERDASARKAN ${CurrencyFormatter.formatNumber(_aiSentimentResult!['sample_size'] ?? 0)} FEEDBACK',
                     style: const TextStyle(
                         color: Colors.white38,
                         fontSize: 9,
@@ -2326,7 +2374,6 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
   Future<void> _runAiFeedbackAnalysis() async {
     setState(() => _isAnalyzingFeedback = true);
     try {
-      // Mengubah Stream.first karena getRecentFeedbacks mengembalikan Stream
       final feedbacks =
           await _firestoreService.getRecentFeedbacks(limit: 50).first;
 
@@ -2336,11 +2383,9 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
 
       final result = await _aiService.analyzeFeedbackSentiment(feedbacks);
 
-      // Robust JSON parsing with sanitization
       String cleanResult =
           result.replaceAll('```json', '').replaceAll('```', '').trim();
 
-      // Extract only the JSON object between first { and last }
       final startIdx = cleanResult.indexOf('{');
       final endIdx = cleanResult.lastIndexOf('}');
 
@@ -2349,19 +2394,14 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
       }
 
       cleanResult = cleanResult.substring(startIdx, endIdx + 1);
-
-      // Sanitize common AI JSON issues
-      // Remove trailing commas before ] or }
       cleanResult = cleanResult.replaceAll(RegExp(r',\s*]'), ']');
       cleanResult = cleanResult.replaceAll(RegExp(r',\s*}'), '}');
 
-      // Try parsing, if it fails try once more with the AI
       Map<String, dynamic>? parsedResult;
       try {
         parsedResult = jsonDecode(cleanResult) as Map<String, dynamic>;
       } catch (parseErr) {
         debugPrint('JSON parse failed: $parseErr, raw: $cleanResult');
-        // Provide a fallback structure from the raw text
         parsedResult = {
           'sentiment_score': 'Netral',
           'summary': result.length > 200 ? result.substring(0, 200) : result,
@@ -2369,14 +2409,18 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
         };
       }
 
-      setState(() {
-        _aiSentimentResult = parsedResult;
-        _aiSentimentResult?['sample_size'] = feedbacks.length;
-        _isAnalyzingFeedback = false;
-      });
+      if (mounted) {
+        setState(() {
+          _aiSentimentResult = parsedResult;
+          _aiSentimentResult?['sample_size'] = feedbacks.length;
+          _isAnalyzingFeedback = false;
+        });
+      }
     } catch (e) {
-      setState(() => _isAnalyzingFeedback = false);
-      if (mounted) UIHelper.showErrorSnackBar(context, e.toString());
+      if (mounted) {
+        setState(() => _isAnalyzingFeedback = false);
+        UIHelper.showErrorSnackBar(context, e.toString());
+      }
     }
   }
 }

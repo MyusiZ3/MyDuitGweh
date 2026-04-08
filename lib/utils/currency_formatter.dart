@@ -17,6 +17,11 @@ class CurrencyFormatter {
   static final DateFormat _dateTimeFormat =
       DateFormat('dd MMM yyyy, HH:mm', 'id_ID');
   static final DateFormat _timeFormat = DateFormat('HH:mm', 'id_ID');
+  static final NumberFormat _numberFormat = NumberFormat.decimalPattern('id_ID');
+
+  static String formatNumber(dynamic value) {
+    return _numberFormat.format(value);
+  }
 
   static String formatCurrency(double amount) {
     return _currencyFormat.format(amount);

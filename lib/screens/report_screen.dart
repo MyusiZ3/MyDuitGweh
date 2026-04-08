@@ -2568,7 +2568,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
           double score = 100;
           String status = "Sangat Sehat";
           String initialAnalysis =
-              "**Archen(´･ω･`):**  Menghitung kesehatan keuanganmu...";
+              "**Archen** ( ˘︹˘ ):  Menghitung kesehatan keuanganmu...";
 
           if (income > 0) {
             double savingsRate = (income - expense) / income;
@@ -2706,9 +2706,13 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                         )
                       : Future.value(initialAnalysis),
                   builder: (context, analysisSnapshot) {
+                    String cleanedData = (analysisSnapshot.data ?? '').trim();
+                    final prefixPattern = RegExp(r'^\**Archen.*?:?\**\s*', caseSensitive: false);
+                    cleanedData = cleanedData.replaceFirst(prefixPattern, '');
+
                     String displayStr = (analysisSnapshot.data != null &&
                             analysisSnapshot.data != initialAnalysis)
-                        ? "**Archen(´･ω･`):**  ${analysisSnapshot.data}"
+                        ? "**Archen** (´･ω･`):  $cleanedData"
                         : initialAnalysis;
                     String? drainingWarning;
                     if (displayStr.contains('(Archen Lagi draining')) {
@@ -2743,14 +2747,26 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                               fontSize: 12,
                             ),
                             code: TextStyle(
-                              backgroundColor: Colors.white.withOpacity(0.1),
+                              backgroundColor: Colors.transparent,
                               color: Colors.white,
                               fontSize: 11,
                               fontFamily: 'monospace',
                             ),
                             codeblockDecoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0),
+                              color: Colors.transparent,
                               borderRadius: BorderRadius.circular(8),
+                            ),
+                            blockquoteDecoration: BoxDecoration(
+                              color: Colors.transparent,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            horizontalRuleDecoration: BoxDecoration(
+                              border: Border(
+                                top: BorderSide(
+                                  width: 0.5,
+                                  color: Colors.white.withOpacity(0.2),
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -3154,7 +3170,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
             const SizedBox(height: 8),
             if (isAI)
               MarkdownBody(
-                data: "**Archen(´･ω･`):**  $text",
+                data: "**Archen** (´･ω･`):  $text",
                 styleSheet: MarkdownStyleSheet(
                   p: const TextStyle(
                       fontSize: 14, height: 1.5, color: Colors.black87),
@@ -3163,14 +3179,18 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                   listBullet:
                       const TextStyle(fontSize: 14, color: AppColors.primary),
                   code: TextStyle(
-                    backgroundColor: Colors.black.withOpacity(0.05),
+                    backgroundColor: Colors.transparent,
                     color: AppColors.primary,
                     fontSize: 13,
                     fontFamily: 'monospace',
                   ),
                   codeblockDecoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.transparent,
                     borderRadius: BorderRadius.circular(8),
+                  ),
+                  blockquoteDecoration: BoxDecoration(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(4),
                   ),
                 ),
               )
@@ -3331,7 +3351,12 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
 
       if (mounted) {
         setState(() {
-          _messages.add({'text': response, 'isAI': true});
+          // Clean the response from any prefixes the AI might have added
+          String cleanedResponse = response.trim();
+          final prefixPattern = RegExp(r'^\**Archen.*?:?\**\s*', caseSensitive: false);
+          cleanedResponse = cleanedResponse.replaceFirst(prefixPattern, '');
+
+          _messages.add({'text': cleanedResponse, 'isAI': true});
           _isLoading = false;
         });
         _saveCurrentSession();

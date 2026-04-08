@@ -279,14 +279,18 @@ class _AiTrendAnalysisScreenState extends State<AiTrendAnalysisScreen> {
                     letterSpacing: 0.2),
                 listBullet: TextStyle(color: Colors.blueAccent[700]),
                 strong: const TextStyle(fontWeight: FontWeight.w900),
-                blockquote: TextStyle(
-                  color: Colors.grey[600],
-                  fontStyle: FontStyle.italic,
-                  backgroundColor: Colors.grey[100],
-                  decorationColor: Colors.blueAccent,
+                code: TextStyle(
+                  backgroundColor: Colors.transparent,
+                  color: Colors.blueAccent[700],
+                  fontSize: 13,
+                  fontFamily: 'monospace',
+                ),
+                codeblockDecoration: BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 blockquoteDecoration: BoxDecoration(
-                  color: Colors.blue[50],
+                  color: Colors.blue[50]?.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(8),
                   border: const Border(
                       left: BorderSide(color: Colors.blueAccent, width: 4)),
