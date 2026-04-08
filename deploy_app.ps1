@@ -6,8 +6,8 @@ Write-Host "--- Memulai proses Auto-Deploy ---" -ForegroundColor Cyan
 
 # 1. Ambil Versi dari pubspec.yaml
 $pubspec = Get-Content "pubspec.yaml" -Raw
-if ($pubspec -match "version:\s*([0-9.]+)") {
-    $versionName = $Matches[1]
+if ($pubspec -match "version:\s*([^\s#]+)") {
+    $versionName = $Matches[1].Trim()
     Write-Host "[OK] Versi terdeteksi: $versionName" -ForegroundColor Green
 } else {
     Write-Host "[ERROR] Gagal membaca versi dari pubspec.yaml" -ForegroundColor Red
@@ -67,7 +67,24 @@ $apkSource = "build\app\outputs\flutter-apk\app-release.apk"
 Write-Host "--- Sinkronisasi Versi di Landing Page ---" -ForegroundColor Yellow
 $indexPath = "public\index.html"
 if (Test-Path $indexPath) {
-    (Get-Content $indexPath) -replace "{{VERSION}}", "$versionName" | Set-Content $indexPath
+    $content = Get-Content $indexPath -Raw
+    $newContent = $content
+    
+    # Coba ganti placeholder {{VERSION}} jika ada (pertama kali)
+    if ($newContent -match "\{\{VERSION\}\}") {
+        $newContent = $newContent -replace "\{\{VERSION\}\}", $versionName
+        Write-Host "[INFO] Placeholder {{VERSION}} ditemukan dan diperbarui." -ForegroundColor Cyan
+    } 
+    # Jika tidak ada placeholder, cari versi lama (dari last_version.txt) dan timpa
+    elseif ($lastVersion -and ($newContent -match [regex]::Escape($lastVersion))) {
+        $newContent = $newContent -replace [regex]::Escape($lastVersion), $versionName
+        Write-Host "[INFO] Versi lama $lastVersion ditemukan dan diperbarui ke $versionName." -ForegroundColor Cyan
+    }
+    else {
+        Write-Host "[WARN] Tidak ditemukan placeholder {{VERSION}} atau versi lama di index.html. Sinkronisasi dilewati." -ForegroundColor Yellow
+    }
+
+    $newContent | Set-Content $indexPath -NoNewline
 }
 
 Write-Host "--- Deploy ke Firebase Hosting (Web Only) ---" -ForegroundColor Yellow

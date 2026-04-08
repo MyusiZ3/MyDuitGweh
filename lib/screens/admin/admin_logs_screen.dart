@@ -804,45 +804,19 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
     );
   }
 
-  void _showClearLogsConfirmation() {
-    showDialog(
+  void _showClearLogsConfirmation() async {
+    final bool? confirm = await UIHelper.showConfirmDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text('Hapus Semua Log?',
-            style: TextStyle(fontWeight: FontWeight.w900)),
-        content: const Text(
-          'Tindakan ini akan menghapus seluruh riwayat sistem dan log keamanan secara permanen. Apakah Anda yakin?',
-          style: TextStyle(fontSize: 14, height: 1.5),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('BATAL',
-                style: TextStyle(
-                    color: Colors.grey[600], fontWeight: FontWeight.bold)),
-          ),
-          Container(
-            margin: const EdgeInsets.only(left: 8),
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _clearAllLogs();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                elevation: 0,
-              ),
-              child: const Text('HAPUS SEMUA',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-          ),
-        ],
-      ),
+      title: 'Hapus Semua Log?',
+      message: 'Tindakan ini akan menghapus seluruh riwayat sistem dan log keamanan secara permanen dari database. Apakah Anda yakin?',
+      confirmText: 'HAPUS SEMUA',
+      cancelText: 'BATAL',
+      isDangerous: true,
     );
+
+    if (confirm == true) {
+      _clearAllLogs();
+    }
   }
 
   Future<void> _clearAllLogs() async {

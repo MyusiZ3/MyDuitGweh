@@ -566,6 +566,24 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
               const Spacer(),
               Text(DateFormat('dd MMM, HH:mm').format(time),
                   style: const TextStyle(fontSize: 10, color: Colors.grey)),
+              if (status == 'ongoing')
+                IconButton(
+                  icon: const Icon(Icons.stop_circle_outlined,
+                      size: 16, color: Colors.orange),
+                  tooltip: 'Akhiri Broadcast',
+                  onPressed: () async {
+                    final confirm = await UIHelper.showConfirmDialog(
+                      context: context,
+                      title: 'Akhiri Broadcast?',
+                      message: 'Status broadcast akan diubah menjadi END dan tidak akan muncul lagi di beranda user.',
+                      confirmText: 'Akhiri',
+                    );
+                    if (confirm == true) {
+                      await _firestoreService.endBroadcast(b['id']);
+                      if (mounted) UIHelper.showSuccessSnackBar(context, 'Broadcast berhasil diakhiri.');
+                    }
+                  },
+                ),
               IconButton(
                 icon: const Icon(Icons.delete_outline_rounded,
                     size: 16, color: Colors.grey),
@@ -574,12 +592,13 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
                     context: context,
                     title: 'Hapus Broadcast?',
                     message:
-                        'Ini akan menghapus broadcast dari riwayat pengguna.',
+                        'Ini akan menghapus broadcast dari riwayat sistem secara permanen.',
                     confirmText: 'Hapus',
                     isDangerous: true,
                   );
                   if (confirm == true) {
                     await _firestoreService.deleteBroadcast(b['id']);
+                    if (mounted) UIHelper.showSuccessSnackBar(context, 'Broadcast dihapus.');
                   }
                 },
               ),
