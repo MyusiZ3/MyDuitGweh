@@ -2735,6 +2735,16 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                               color: Colors.white,
                               fontSize: 12,
                             ),
+                            code: TextStyle(
+                              backgroundColor: Colors.white.withOpacity(0.1),
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontFamily: 'monospace',
+                            ),
+                            codeblockDecoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
                         ),
                         if (drainingWarning != null)
@@ -3145,6 +3155,16 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                       fontWeight: FontWeight.bold, color: AppColors.primary),
                   listBullet:
                       const TextStyle(fontSize: 14, color: AppColors.primary),
+                  code: TextStyle(
+                    backgroundColor: Colors.black.withOpacity(0.05),
+                    color: AppColors.primary,
+                    fontSize: 13,
+                    fontFamily: 'monospace',
+                  ),
+                  codeblockDecoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
               )
             else
