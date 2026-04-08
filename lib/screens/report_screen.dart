@@ -2564,7 +2564,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
           double score = 100;
           String status = "Sangat Sehat";
           String initialAnalysis =
-              "Archen Analytic: Menghitung kesehatan keuanganmu...";
+              "**Archen(´･ω･`):** Menghitung kesehatan keuanganmu...";
 
           if (income > 0) {
             double savingsRate = (income - expense) / income;
@@ -2699,8 +2699,10 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                         )
                       : Future.value(initialAnalysis),
                   builder: (context, analysisSnapshot) {
-                    String displayStr =
-                        analysisSnapshot.data ?? initialAnalysis;
+                    String displayStr = (analysisSnapshot.data != null &&
+                            analysisSnapshot.data != initialAnalysis)
+                        ? "**Archen(´･ω･`):** ${analysisSnapshot.data}"
+                        : initialAnalysis;
                     String? drainingWarning;
                     if (displayStr.contains('(Archen Lagi draining')) {
                       final parts = displayStr.split('(Archen Lagi draining');
@@ -3061,7 +3063,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                   _buildSuggestions()
                 else ...[
                   ..._messages.map((m) => _buildMessageBubble(
-                        m['isAI'] ? 'Asisten MyDuitGweh' : 'Anda',
+                        m['isAI'] ? 'Archen(´･ω･`)' : 'Anda',
                         m['text'],
                         isAI: m['isAI'],
                       )),
@@ -3135,7 +3137,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
             const SizedBox(height: 8),
             if (isAI)
               MarkdownBody(
-                data: text,
+                data: "**Archen(´･ω･`):** $text",
                 styleSheet: MarkdownStyleSheet(
                   p: const TextStyle(
                       fontSize: 14, height: 1.5, color: Colors.black87),
