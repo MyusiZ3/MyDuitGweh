@@ -7,3 +7,20 @@
 -dontwarn com.google.mlkit.vision.text.devanagari.**
 -dontwarn com.google.mlkit.vision.text.japanese.**
 -dontwarn com.google.mlkit.vision.text.korean.**
+
+# Flutter Local Notifications rules
+-keep class com.dexterous.flutterlocalnotifications.** { *; }
+-dontwarn com.dexterous.flutterlocalnotifications.**
+
+# MyDuitGweh Custom Services (Notification Listener)
+-keep class com.arch.myduitgweh.NotifListenerService { *; }
+-keep class com.arch.myduitgweh.MainActivity { *; }
+
+# Firebase & Google Services
+-keep class com.google.firebase.** { *; }
+-dontwarn com.google.firebase.**
+-keep class com.google.android.gms.** { *; }
+-dontwarn com.google.android.gms.**
+
+# Keep timezone data if applicable
+-keep class com.samuelgdj.flutter_timezone.** { *; }
