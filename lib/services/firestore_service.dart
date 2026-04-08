@@ -645,15 +645,39 @@ class FirestoreService {
         final data = doc.data() as Map<String, dynamic>;
         data['id'] = doc.id;
 
-        // Status logic
-        final scheduled = (data['scheduledTime'] as Timestamp?)?.toDate();
-        if (scheduled != null && scheduled.isAfter(now)) {
-          data['status'] = 'pending';
+        // Status logic: Manual status takes priority, otherwise compute from schedule
+        final manualStatus = data['status'];
+        if (manualStatus != null) {
+          data['status'] = manualStatus;
         } else {
-          data['status'] = 'ongoing';
+          final scheduled = (data['scheduledTime'] as Timestamp?)?.toDate();
+          if (scheduled != null && scheduled.isAfter(now)) {
+            data['status'] = 'pending';
+          } else {
+            data['status'] = 'ongoing';
+          }
         }
         return data;
       }).toList();
+    });
+  }
+
+  Future<void> endBroadcast(String id) async {
+    await _firestore.collection('broadcasts').doc(id).update({
+      'status': 'END',
+      'endedAt': FieldValue.serverTimestamp(),
+    });
+
+    // Log to Global Activity History
+    await _firestore
+        .collection('app_config')
+        .doc('global')
+        .collection('history')
+        .add({
+      'action': 'BROADCAST_ENDED',
+      'broadcastId': id,
+      'updatedBy': FirebaseAuth.instance.currentUser?.uid ?? 'system',
+      'updatedAt': FieldValue.serverTimestamp(),
     });
   }
 
