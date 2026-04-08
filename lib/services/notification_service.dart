@@ -9,6 +9,10 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
+  static final NotificationService _instance = NotificationService._internal();
+  factory NotificationService() => _instance;
+  NotificationService._internal();
+
   Future<void> init() async {
     tz.initializeTimeZones();
     try {
@@ -16,6 +20,13 @@ class NotificationService {
       tz.setLocalLocation(tz.getLocation(timeZoneName));
     } catch (e) {
       print('Timezone init error: $e');
+      // Fallback ke Asia/Jakarta jika gagal deteksi otomatis
+      try {
+        tz.setLocalLocation(tz.getLocation('Asia/Jakarta'));
+      } catch (_) {
+        // Fallback terakhir ke UTC jika semua gagal
+        tz.setLocalLocation(tz.getLocation('UTC'));
+      }
     }
 
     if (Platform.isAndroid) {
@@ -26,12 +37,9 @@ class NotificationService {
       // Minta izin notifikasi (Android 13+)
       await androidPlugin?.requestNotificationsPermission();
 
-      // Minta izin exact alarm (Android 12+)
-      await androidPlugin?.requestExactAlarmsPermission();
-
-      // Bikin channel dengan importance MAX agar muncul heads-up / pop-up
+      // Channel untuk Daily Reminder
       const AndroidNotificationChannel channel = AndroidNotificationChannel(
-        'daily_jurnal_paling_penting_v3', // Match with the ID used in show/schedule
+        'daily_jurnal_paling_penting_v3',
         'Pengingat Jurnal',
         description: 'Notifikasi pengingat harian tercinta',
         importance: Importance.max,
@@ -42,6 +50,7 @@ class NotificationService {
 
       await androidPlugin?.createNotificationChannel(channel);
 
+      // Channel untuk Broadcast
       const AndroidNotificationChannel broadcastChannel =
           AndroidNotificationChannel(
         'broadcast_channel_v2',
@@ -72,21 +81,36 @@ class NotificationService {
       iOS: initializationSettingsIOS,
     );
 
-    await _notificationsPlugin.initialize(initializationSettings);
+    await _notificationsPlugin.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: (NotificationResponse details) {
+         // Placeholder for notification interaction
+         print('Notification tapped: ${details.payload}');
+      },
+    );
   }
 
   /// Jadwalkan notifikasi harian pada jam & menit tertentu
   Future<void> scheduleDailyReminder(
       {int hour = 20, int minute = 0, bool showConfirmation = false}) async {
     try {
-      // Batalkan semua notifikasi lama dulu
-      await _notificationsPlugin.cancelAll();
+      // Batalkan hanya ID 101 (Daily Reminder), jangan cancelAll agar broadcast tidak hilang
+      await _notificationsPlugin.cancel(101);
 
       // Hitung waktu terjadwal berikutnya
       final tz.TZDateTime scheduledDate = _nextInstanceOfTime(hour, minute);
 
-      // Gunakan zonedSchedule dengan matchDateTimeComponents.time
-      // agar notifikasi BERULANG SETIAP HARI pada jam yang sama
+      // Cek izin exact alarm di Android untuk menghindari crash
+      AndroidScheduleMode scheduleMode = AndroidScheduleMode.exactAllowWhileIdle;
+      if (Platform.isAndroid) {
+        final androidPlugin = _notificationsPlugin.resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+        final bool? canScheduleExact = await androidPlugin?.canScheduleExactNotifications();
+        if (canScheduleExact == false) {
+          scheduleMode = AndroidScheduleMode.inexactAllowWhileIdle;
+        }
+      }
+
       await _notificationsPlugin.zonedSchedule(
         101,
         'Its Timee! o((>ω< ))o ',
@@ -94,16 +118,15 @@ class NotificationService {
         scheduledDate,
         const NotificationDetails(
           android: AndroidNotificationDetails(
-            'daily_jurnal_paling_penting_v3', // Match with the confirmation ID
+            'daily_jurnal_paling_penting_v3',
             'Pengingat Jurnal',
             channelDescription: 'Notifikasi pengingat jurnal harian keuangan',
             importance: Importance.max,
             priority: Priority.max,
-            ticker: 'Waktunya mencatat!', // Tambahkan ticker
+            ticker: 'Waktunya mencatat!',
             playSound: true,
             enableVibration: true,
             showWhen: true,
-            // HAPUS fullScreenIntent agar muncul sebagai pop-up biasa di atas layar
             category: AndroidNotificationCategory.reminder,
             visibility: NotificationVisibility.public,
             icon: 'notif_icon',
@@ -114,13 +137,13 @@ class NotificationService {
             presentSound: true,
           ),
         ),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidScheduleMode: scheduleMode,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
         matchDateTimeComponents: DateTimeComponents.time,
       );
 
-      // Tampilkan notifikasi konfirmasi langsung (opsional)
+      // Tampilkan notifikasi konfirmasi langsung
       final String jamStr =
           '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
       if (showConfirmation) {
@@ -130,11 +153,11 @@ class NotificationService {
           'Kamu akan diingetin tiap hari jam $jamStr. (〜￣▽￣)〜',
           const NotificationDetails(
             android: AndroidNotificationDetails(
-              'daily_jurnal_paling_penting_v3', // Final consistent ID for fresh channel
+              'daily_jurnal_paling_penting_v3',
               'Daily Reminder',
               channelDescription: 'Reminds you to record transactions',
               importance: Importance.max,
-              priority: Priority.max, // Changed to max for better popup chance
+              priority: Priority.max,
               icon: 'notif_icon',
               color: Color(0xFF007AFF),
               playSound: true,
@@ -143,14 +166,11 @@ class NotificationService {
           ),
         );
       }
-
-      print('Notification Scheduled Successfully for $jamStr');
     } catch (e) {
       print('Critical Notification Error: $e');
     }
   }
 
-  /// Hitung kapan waktu terjadwal berikutnya
   tz.TZDateTime _nextInstanceOfTime(int hour, int minute) {
     final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
     tz.TZDateTime scheduledDate = tz.TZDateTime(
@@ -162,7 +182,6 @@ class NotificationService {
       minute,
     );
 
-    // Kalau jamnya sudah lewat hari ini, jadwalkan untuk besok
     if (scheduledDate.isBefore(now)) {
       scheduledDate = scheduledDate.add(const Duration(days: 1));
     }
@@ -174,7 +193,6 @@ class NotificationService {
     await _notificationsPlugin.cancelAll();
   }
 
-  /// Tampilkan notifikasi instan (untuk Broadcast)
   Future<void> showInstant(
       {int id = 0, required String title, required String body}) async {
     try {
@@ -206,7 +224,6 @@ class NotificationService {
     }
   }
 
-  /// Jadwalkan notifikasi broadcast sekali pada waktu spesifik (Pending Broadcasts)
   Future<void> scheduleBroadcast({
     required int id,
     required String title,
@@ -214,21 +231,52 @@ class NotificationService {
     required DateTime scheduledTime,
   }) async {
     try {
+      // Pastikan ID positif
+      final int safeId = id.abs();
+      
+      // Inisialisasi timezone jika dipanggil mendadak
+      if (tz.local.name == 'UTC' && Platform.isAndroid) {
+        // Double check init jika local belum terdeteksi sempurna
+        try {
+          final String? timeZoneName = await FlutterTimezone.getLocalTimezone();
+          if (timeZoneName != null) {
+            tz.setLocalLocation(tz.getLocation(timeZoneName));
+          }
+        } catch (_) {}
+      }
+
       final tz.TZDateTime tzScheduledTime =
           tz.TZDateTime.from(scheduledTime, tz.local);
 
-      // Jika waktu sudah terlewat, lewati
-      if (tzScheduledTime.isBefore(tz.TZDateTime.now(tz.local))) return;
+      // Jangan jadwalkan jika waktu sudah lewat
+      if (tzScheduledTime.isBefore(tz.TZDateTime.now(tz.local))) {
+        print('Broadcast skipped: scheduled time is in the past');
+        return;
+      }
+
+      // Cek izin exact alarm di Android
+      AndroidScheduleMode scheduleMode = AndroidScheduleMode.exactAllowWhileIdle;
+      if (Platform.isAndroid) {
+        final androidPlugin = _notificationsPlugin.resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+        final bool? canScheduleExact = await androidPlugin?.canScheduleExactNotifications();
+        if (canScheduleExact == false) {
+          scheduleMode = AndroidScheduleMode.inexactAllowWhileIdle;
+        }
+      }
 
       const androidDetails = AndroidNotificationDetails(
         'broadcast_channel_v2',
         'Pesan Broadcast',
         channelDescription: 'Notifikasi pesan penting dari admin',
         importance: Importance.max,
-        priority: Priority.max,
+        priority: Priority.high, // Consistent with pop-up behavior
         showWhen: true,
         playSound: true,
         icon: 'notif_icon',
+        color: Color(0xFF007AFF),
+        category: AndroidNotificationCategory.status, // More appropriate for broadcasts
+        fullScreenIntent: false, // Prevent activity start issues
       );
 
       const iosDetails = DarwinNotificationDetails(
@@ -238,21 +286,22 @@ class NotificationService {
       );
 
       await _notificationsPlugin.zonedSchedule(
-        id,
+        safeId,
         title,
         body,
         tzScheduledTime,
         const NotificationDetails(android: androidDetails, iOS: iosDetails),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidScheduleMode: scheduleMode,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
       );
+      
+      print('Broadcast scheduled successfully with ID: $safeId at $tzScheduledTime');
     } catch (e) {
       print('Error scheduling broadcast: $e');
     }
   }
 
-  /// Uji coba notifikasi heads-up langsung
   Future<void> testNotification() async {
     await _notificationsPlugin.show(
       999,
@@ -275,3 +324,4 @@ class NotificationService {
     );
   }
 }
+

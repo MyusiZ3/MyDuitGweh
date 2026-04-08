@@ -147,13 +147,16 @@ class _HomeScreenState extends State<HomeScreen> {
       final pendingBroadcasts =
           broadcasts.where((b) => b['status'] == 'pending').toList();
       for (var b in pendingBroadcasts) {
-        if (b['scheduledTime'] != null) {
+        final rawId = b['id']?.toString();
+        final rawTime = b['scheduledTime'];
+        
+        if (rawId != null && rawTime != null && rawTime is Timestamp) {
           try {
-            final time = (b['scheduledTime'] as Timestamp).toDate();
+            final time = rawTime.toDate();
             _notificationService.scheduleBroadcast(
-              id: b['id'].hashCode,
-              title: b['title'] ?? 'Pengumuman',
-              body: b['message'] ?? 'Ada info penting nih!',
+              id: rawId.hashCode,
+              title: b['title']?.toString() ?? 'Pengumuman',
+              body: b['message']?.toString() ?? 'Ada info penting nih!',
               scheduledTime: time,
             );
           } catch (e) {
@@ -164,7 +167,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
       // Unread = active + not yet SEEN by user (not dismissed)
       final unseenCount = activeBroadcasts
-          .where((b) => !_seenBroadcasts.contains(b['id']))
+          .where((b) => b['id'] != null && !_seenBroadcasts.contains(b['id']))
           .length;
 
       setState(() => _unreadBroadcasts = unseenCount);
