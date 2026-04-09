@@ -13,7 +13,7 @@ class AboutScreen extends StatelessWidget {
       backgroundColor: const Color(0xFFF2F2F7), // iOS native grouped background
       appBar: AppBar(
         title: const Text(
-          'About App',
+          'Tentang Aplikasi',
           style: TextStyle(
             fontWeight: FontWeight.w700,
             letterSpacing: -0.5,
@@ -197,13 +197,63 @@ class AboutScreen extends StatelessWidget {
                   ),
                   SizedBox(height: 12),
                   Text(
-                    'Jujur gatau orang gua cuma gabut doang :3',
+                    'Helping you keep track of your money, stay in control, and make better decisions—simple as that.',
                     style: TextStyle(
                       fontSize: 15,
                       height: 1.5,
                       fontWeight: FontWeight.w400,
                       color: Color(0xFF3A3A3C),
                     ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // NEW SECTION: WHAT'S NEW
+            _buildBentoCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(CupertinoIcons.sparkles,
+                            color: Colors.amber, size: 16),
+                      ),
+                      const SizedBox(width: 10),
+                      const Text(
+                        'Apa yang Baru?',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1C1C1E),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _buildChangelogItem(
+                    title: 'Archen AI: Personality Update',
+                    desc:
+                        'Gaya bahasa Archen AI lebih asik, rame, dan relatable!',
+                  ),
+                  const SizedBox(height: 12),
+                  _buildChangelogItem(
+                    title: 'BUG FIXES',
+                    desc:
+                        'Perbaikan beebrapa BUG dan error yang ada di aplikasi.',
+                  ),
+                  const SizedBox(height: 12),
+                  _buildChangelogItem(
+                    title: 'UI/UX Improvements',
+                    desc:
+                        'Perbaikan sistem pengaturan UI dan UX agar lebih nyaman digunakan.',
                   ),
                 ],
               ),
@@ -342,6 +392,48 @@ class AboutScreen extends StatelessWidget {
         ],
       ),
       child: child,
+    );
+  }
+
+  Widget _buildChangelogItem({required String title, required String desc}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          margin: const EdgeInsets.only(top: 6),
+          width: 6,
+          height: 6,
+          decoration: const BoxDecoration(
+            color: Colors.amber,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1C1C1E),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                desc,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textSecondary,
+                  height: 1.3,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

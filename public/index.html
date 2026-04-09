@@ -37,7 +37,7 @@
     />
     <script>
       tailwind.config = {
-        darkMode: 'class',
+        darkMode: "class",
         theme: {
           extend: {
             fontFamily: {
@@ -75,56 +75,93 @@
 
       /* Transitions for smooth theme switching */
       * {
-        transition: background-color 0.4s ease, border-color 0.4s ease, color 0.4s ease;
+        transition:
+          background-color 0.4s ease,
+          border-color 0.4s ease,
+          color 0.4s ease;
       }
 
       /* Keep custom animations for ultra-smooth feel */
       @keyframes float-main {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-12px); }
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-12px);
+        }
       }
       @keyframes float-top {
-        0%, 100% { transform: translate(0, 0); }
-        50% { transform: translate(8px, -15px); }
+        0%,
+        100% {
+          transform: translate(0, 0);
+        }
+        50% {
+          transform: translate(8px, -15px);
+        }
       }
       @keyframes float-bottom {
-        0%, 100% { transform: translate(0, 0); }
-        50% { transform: translate(-5px, 20px); }
+        0%,
+        100% {
+          transform: translate(0, 0);
+        }
+        50% {
+          transform: translate(-5px, 20px);
+        }
       }
       @keyframes float-side {
-        0%, 100% { transform: translateX(0); }
-        50% { transform: translateX(10px); }
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        50% {
+          transform: translateX(10px);
+        }
       }
 
-      .animate-float-main { animation: float-main 6s ease-in-out infinite; }
-      .animate-float-top { animation: float-top 7s ease-in-out infinite; }
-      .animate-float-bottom { animation: float-bottom 5s ease-in-out infinite; }
-      .animate-float-side { animation: float-side 8s linear infinite; }
+      .animate-float-main {
+        animation: float-main 6s ease-in-out infinite;
+      }
+      .animate-float-top {
+        animation: float-top 7s ease-in-out infinite;
+      }
+      .animate-float-bottom {
+        animation: float-bottom 5s ease-in-out infinite;
+      }
+      .animate-float-side {
+        animation: float-side 8s linear infinite;
+      }
     </style>
     <script>
       // Theme Logic
       function toggleTheme() {
-        if (document.documentElement.classList.contains('dark')) {
-          document.documentElement.classList.remove('dark');
-          localStorage.theme = 'light';
+        if (document.documentElement.classList.contains("dark")) {
+          document.documentElement.classList.remove("dark");
+          localStorage.theme = "light";
         } else {
-          document.documentElement.classList.add('dark');
-          localStorage.theme = 'dark';
+          document.documentElement.classList.add("dark");
+          localStorage.theme = "dark";
         }
       }
 
       function initTheme() {
-        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-          document.documentElement.classList.add('dark');
+        if (
+          localStorage.theme === "dark" ||
+          (!("theme" in localStorage) &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches)
+        ) {
+          document.documentElement.classList.add("dark");
         } else {
-          document.documentElement.classList.remove('dark');
+          document.documentElement.classList.remove("dark");
         }
       }
 
       initTheme();
     </script>
   </head>
-  <body class="bg-primary-bg dark:bg-dark-bg text-black dark:text-zinc-100 px-6 flex flex-col items-center">
+  <body
+    class="bg-primary-bg dark:bg-dark-bg text-black dark:text-zinc-100 px-6 flex flex-col items-center"
+  >
     <!-- Navbar -->
     <nav
       class="fixed top-5 w-[calc(100%-48px)] max-w-[1000px] h-14 bg-white/85 dark:bg-black/50 backdrop-blur-xl border border-border-subtle dark:border-white/10 rounded-full flex justify-between items-center px-4 z-[1000] shadow-sm"
@@ -148,22 +185,43 @@
             <path d="M21 10h-4a2 2 0 0 0 0 4h4" />
           </svg>
         </div>
-        <span class="font-extrabold text-sm tracking-tight text-black dark:text-white"
+        <span
+          class="font-extrabold text-sm tracking-tight text-black dark:text-white"
           >My Duit Gweh</span
         >
       </a>
       <div class="flex items-center gap-3">
         <!-- Theme Toggle -->
-        <button 
+        <button
           onclick="toggleTheme()"
           class="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:bg-zinc-100 dark:hover:bg-zinc-800 group relative"
           title="Toggle Theme"
         >
-          <svg class="hidden dark:block w-5 h-5 text-zinc-400 group-hover:text-yellow-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4-9H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 12.728l-.707-.707M6.343 17.657l-.707-.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          <svg
+            class="hidden dark:block w-5 h-5 text-zinc-400 group-hover:text-yellow-400 transition-colors"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 3v1m0 16v1m9-9h-1M4-9H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 12.728l-.707-.707M6.343 17.657l-.707-.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+            />
           </svg>
-          <svg class="block dark:hidden w-5 h-5 text-zinc-500 group-hover:text-indigo-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          <svg
+            class="block dark:hidden w-5 h-5 text-zinc-500 group-hover:text-indigo-600 transition-colors"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+            />
           </svg>
         </button>
 
@@ -237,7 +295,9 @@
             </div>
 
             <!-- Floating Components (Corrected Colors) -->
-            <div class="floating-pill top-[15%] right-[10px] animate-float-top bg-blue-500/10 text-blue-400 border border-blue-500/20">
+            <div
+              class="floating-pill top-[15%] right-[10px] animate-float-top bg-blue-500/10 text-blue-400 border border-blue-500/20"
+            >
               <svg
                 width="10"
                 height="14"
@@ -317,8 +377,12 @@
                 />
               </svg>
             </div>
-            <h3 class="text-xl font-extrabold text-black dark:text-white">Archen AI</h3>
-            <p class="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed font-medium mt-1">
+            <h3 class="text-xl font-extrabold text-black dark:text-white">
+              Archen AI
+            </h3>
+            <p
+              class="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed font-medium mt-1"
+            >
               Archen AI uses hyper-focused analytical intelligence to optimize
               your spending patterns with instant categorization and predictive
               budget recommendations.
@@ -342,9 +406,14 @@
                 <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
               </svg>
             </div>
-            <h3 class="text-xl font-extrabold text-black dark:text-white">Health</h3>
-            <p class="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed font-medium mt-1">
-              AI-driven diagnostics monitor account health and identify leaks in your balance.
+            <h3 class="text-xl font-extrabold text-black dark:text-white">
+              Health
+            </h3>
+            <p
+              class="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed font-medium mt-1"
+            >
+              AI-driven diagnostics monitor account health and identify leaks in
+              your balance.
             </p>
           </div>
         </div>
@@ -366,9 +435,14 @@
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
             </div>
-            <h3 class="text-xl font-extrabold text-black dark:text-white">Protection</h3>
-            <p class="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed font-medium mt-1">
-              Premium biometric shield and real-time audit logs for encrypted financial data.
+            <h3 class="text-xl font-extrabold text-black dark:text-white">
+              Protection
+            </h3>
+            <p
+              class="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed font-medium mt-1"
+            >
+              Premium biometric shield and real-time audit logs for encrypted
+              financial data.
             </p>
           </div>
         </div>
@@ -392,9 +466,14 @@
                 <circle cx="12" cy="13" r="4" />
               </svg>
             </div>
-            <h3 class="text-xl font-extrabold text-black dark:text-white">Smart OCR Scan</h3>
-            <p class="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed font-medium mt-1">
-              Extract receipt data instantly using hybrid local ML and AI models with absolute accuracy and speed.
+            <h3 class="text-xl font-extrabold text-black dark:text-white">
+              Smart OCR Scan
+            </h3>
+            <p
+              class="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed font-medium mt-1"
+            >
+              Extract receipt data instantly using hybrid local ML and AI models
+              with absolute accuracy and speed.
             </p>
           </div>
         </div>
@@ -415,8 +494,12 @@
                 <path d="M12 20V10M18 20V4M6 20v-4" />
               </svg>
             </div>
-            <h3 class="text-xl font-extrabold text-black dark:text-white">Wealth Trajectory</h3>
-            <p class="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed font-medium mt-1">
+            <h3 class="text-xl font-extrabold text-black dark:text-white">
+              Wealth Trajectory
+            </h3>
+            <p
+              class="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed font-medium mt-1"
+            >
               Visualize your assets and project your financial independence with
               Pro-grade metrics.
             </p>
@@ -425,7 +508,9 @@
       </div>
 
       <!-- Footer -->
-      <footer class="mt-20 w-full pt-16 pb-12 border-t border-border-subtle dark:border-white/5">
+      <footer
+        class="mt-20 w-full pt-16 pb-12 border-t border-border-subtle dark:border-white/5"
+      >
         <div class="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
           <!-- Column 1: Brand -->
           <div class="flex flex-col gap-4">
@@ -446,7 +531,9 @@
                   <path d="M21 10h-4a2 2 0 0 0 0 4h4" />
                 </svg>
               </div>
-              <span class="font-bold text-sm text-black dark:text-white">MyDuitGweh</span>
+              <span class="font-bold text-sm text-black dark:text-white"
+                >MyDuitGweh</span
+              >
             </div>
             <p
               class="text-xs text-zinc-500 dark:text-zinc-400 font-medium leading-relaxed max-w-[200px]"
@@ -563,10 +650,6 @@
           </p>
         </div>
       </footer>
-    </div>
-  </body>
-</html>
-r>
     </div>
   </body>
 </html>

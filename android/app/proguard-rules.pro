@@ -8,6 +8,14 @@
 -dontwarn com.google.mlkit.vision.text.japanese.**
 -dontwarn com.google.mlkit.vision.text.korean.**
 
+# ProGuard rules to preserve generic signatures (CRITICAL for GSON/TypeToken)
+-keepattributes Signature, EnclosingMethod, InnerClasses
+
+# GSON rules
+-keep class com.google.gson.** { *; }
+-keep class sun.misc.Unsafe { *; }
+-keep class com.google.gson.stream.** { *; }
+
 # Flutter Local Notifications rules
 -keep class com.dexterous.flutterlocalnotifications.** { *; }
 -dontwarn com.dexterous.flutterlocalnotifications.**

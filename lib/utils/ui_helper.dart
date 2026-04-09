@@ -33,68 +33,75 @@ class UIHelper {
 
   static void _showTopToast(
       BuildContext context, String message, Color color, IconData icon) {
-    final overlay = Overlay.of(context);
-    final overlayEntry = OverlayEntry(
-      builder: (context) => Positioned(
-        top: MediaQuery.of(context).padding.top + 16,
-        left: 20,
-        right: 20,
-        child: Material(
-          color: Colors.transparent,
-          child: TweenAnimationBuilder<double>(
-            duration: const Duration(milliseconds: 400),
-            curve: Curves.easeOutBack,
-            tween: Tween(begin: 0.0, end: 1.0),
-            builder: (context, value, child) {
-              return Transform.translate(
-                offset: Offset(0, -50 * (1 - value)),
-                child: Opacity(
-                  opacity: value.clamp(0.0, 1.0),
-                  child: child,
-                ),
-              );
-            },
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(100),
-                child: BackdropFilter(
-                  filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1C1C1E).withOpacity(0.85),
-                      borderRadius: BorderRadius.circular(100),
-                      border: Border.all(
-                          color: Colors.white.withOpacity(0.15), width: 0.5),
-                      boxShadow: [
-                        BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10)),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                              color: color.withOpacity(0.15),
-                              shape: BoxShape.circle),
-                          child: Icon(icon, color: color, size: 18),
-                        ),
-                        const SizedBox(width: 12),
-                        Flexible(
-                          child: Text(message,
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: -0.2)),
-                        ),
-                      ],
+    try {
+      final overlay = Overlay.maybeOf(context);
+      if (overlay == null) {
+        debugPrint('--- UIHelper: Overlay.of(context) is NULL. Cannot show toast: $message');
+        return;
+      }
+      
+      final overlayEntry = OverlayEntry(
+        builder: (context) => Positioned(
+          top: MediaQuery.of(context).padding.top + 16,
+          left: 20,
+          right: 20,
+          child: Material(
+            color: Colors.transparent,
+            child: TweenAnimationBuilder<double>(
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeOutBack,
+              tween: Tween(begin: 0.0, end: 1.0),
+              builder: (context, value, child) {
+                return Transform.translate(
+                  offset: Offset(0, -50 * (1 - value)),
+                  child: Opacity(
+                    opacity: value.clamp(0.0, 1.0),
+                    child: child,
+                  ),
+                );
+              },
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(100),
+                  child: BackdropFilter(
+                    filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1C1C1E).withOpacity(0.85),
+                        borderRadius: BorderRadius.circular(100),
+                        border: Border.all(
+                            color: Colors.white.withOpacity(0.15), width: 0.5),
+                        boxShadow: [
+                          BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10)),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                                color: color.withOpacity(0.15),
+                                shape: BoxShape.circle),
+                            child: Icon(icon, color: color, size: 18),
+                          ),
+                          const SizedBox(width: 12),
+                          Flexible(
+                            child: Text(message,
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: -0.2)),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -102,15 +109,17 @@ class UIHelper {
             ),
           ),
         ),
-      ),
-    );
+      );
 
-    overlay.insert(overlayEntry);
-    Future.delayed(const Duration(seconds: 3), () {
-      if (overlayEntry.mounted) {
-        overlayEntry.remove();
-      }
-    });
+      overlay.insert(overlayEntry);
+      Future.delayed(const Duration(seconds: 3), () {
+        if (overlayEntry.mounted) {
+          overlayEntry.remove();
+        }
+      });
+    } catch (e) {
+      debugPrint('--- UIHelper: Error showing toast: $e');
+    }
   }
 
   static void showNoInternetOverlay() {
@@ -448,7 +457,7 @@ class UIHelper {
                       color: Colors.grey[600], fontSize: 14, height: 1.5)),
               const SizedBox(height: 32),
               InkWell(
-                onTap: () => Navigator.pop(dialogContext),
+                onTap: () => Navigator.of(dialogContext, rootNavigator: true).pop(),
                 child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 16),
@@ -476,8 +485,47 @@ class UIHelper {
         }));
   }
 
-  static void showLoadingDialog(BuildContext context, {String? message}) {
-    // ... existing code ...
+  static void showLoadingDialog(BuildContext context, {String message = 'Mohon tunggu...'}) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.9),
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                strokeWidth: 3,
+              ),
+              const SizedBox(height: 20),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.black87,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  decoration: TextDecoration.none,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
 
@@ -521,7 +569,7 @@ class UIHelper {
                       fontWeight: FontWeight.w500)),
               const SizedBox(height: 32),
               InkWell(
-                onTap: () => Navigator.pop(dialogContext),
+                onTap: () => Navigator.of(dialogContext, rootNavigator: true).pop(),
                 child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 16),

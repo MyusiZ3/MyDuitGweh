@@ -221,38 +221,50 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
       return;
     }
 
+    if (!mounted) return;
+
     final bool? confirm = await UIHelper.showConfirmDialog(
       context: context,
       title: 'Luncurkan Pesan?',
       message: 'Pesan akan dikirim ke SELURUH user MyDuitGweh. Lanjut?',
-      confirmText: 'Luncukan!',
+      confirmText: 'Luncurkan!',
       cancelText: 'Batal',
     );
 
     if (confirm != true) return;
 
     setState(() => _isSending = true);
+    print('--- BroadcastCenter: Starting send process...');
 
     try {
       await _firestoreService.sendGlobalBroadcast(
-        title: _titleController.text,
-        message: _msgController.text,
+        title: _titleController.text.trim(),
+        message: _msgController.text.trim(),
         type: _selectedType,
         scheduledTime: _scheduledTime,
       );
+
+      print('--- BroadcastCenter: Firestore document created.');
 
       if (mounted) {
         _titleController.clear();
         _msgController.clear();
         setState(() {
           _scheduledTime = null;
+          _isSending = false; // Reset early before success sheet
         });
-        _showBroadcastSuccess();
+        
+        // Final check before showing success
+        if (context.mounted) {
+          _showBroadcastSuccess();
+        }
       }
     } catch (e) {
-      if (mounted) UIHelper.showErrorSnackBar(context, 'Gagal: $e');
-    } finally {
-      setState(() => _isSending = false);
+      print('--- BroadcastCenter: Error in _sendBroadcast: $e');
+      if (mounted) {
+        UIHelper.showErrorSnackBar(context, 'Gagal: $e');
+        setState(() => _isSending = false);
+      }
     }
   }
 
