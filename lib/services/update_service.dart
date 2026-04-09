@@ -15,6 +15,8 @@ class UpdateService {
   static final ValueNotifier<bool> isDownloading = ValueNotifier(false);
   static bool _isUpdateDialogOpen = false;
   static BuildContext? _currentDialogContext;
+  static bool _sessionUpdateSkipped = false;
+  static String? _skippedVersion;
 
   /// Cek update secara manual dari UI (misal: About Screen)
   static Future<void> checkUpdateManual(BuildContext context) async {
@@ -68,10 +70,18 @@ class UpdateService {
       final downloadUrl = config['downloadUrl'] ?? '';
       final isForceUpdate = config['isForceUpdate'] ?? false;
 
-      final bool isUpdateNeeded = _isVersionLower(currentVersion, latestVersion) && downloadUrl.isNotEmpty;
       final bool isForce = isForceUpdate || _isVersionLower(currentVersion, minVersion);
 
-      if (isUpdateNeeded) {
+      final isUpdateNeeded = _isVersionLower(currentVersion, latestVersion);
+
+      if (isUpdateNeeded && downloadUrl.isNotEmpty) {
+        // Jangan tampilkan jika sudah di-skip di sesi ini untuk versi yang sama
+        // kecuali jika itu FORCE update
+        if (_sessionUpdateSkipped && _skippedVersion == latestVersion && !isForce) {
+          debugPrint('--- UpdateService: Update skipped for this session.');
+          return;
+        }
+
         if (!_isUpdateDialogOpen) {
           if (context.mounted) {
             _showUpdateDialog(context, latestVersion, downloadUrl, isForce: isForce);
@@ -93,14 +103,33 @@ class UpdateService {
   /// Menghitung apakah versi saat ini sudah yang terbaru (Legacy Check)
   static bool _isVersionLower(String current, String latest) {
     if (current == latest) return false;
-    List<int> c = current.split('.').map((e) => int.tryParse(e) ?? 0).toList();
-    List<int> l = latest.split('.').map((e) => int.tryParse(e) ?? 0).toList();
 
-    for (int i = 0; i < c.length && i < l.length; i++) {
-      if (l[i] > c[i]) return true;
-      if (l[i] < c[i]) return false;
+    // Bersihkan versi dari build number (+...) untuk perbandingan dasar
+    String cClean = current.split('+')[0];
+    String lClean = latest.split('+')[0];
+
+    List<String> cParts = cClean.split('.');
+    List<String> lParts = lClean.split('.');
+
+    for (int i = 0; i < 3; i++) {
+      int cVal = i < cParts.length ? (int.tryParse(cParts[i]) ?? 0) : 0;
+      int lVal = i < lParts.length ? (int.tryParse(lParts[i]) ?? 0) : 0;
+
+      if (lVal > cVal) return true;
+      if (lVal < cVal) return false;
     }
-    return l.length > c.length;
+
+    // Jika versi dasar sama, cek build number jika ada
+    if (current.contains('+') && latest.contains('+')) {
+      int cBuild = int.tryParse(current.split('+')[1]) ?? 0;
+      int lBuild = int.tryParse(latest.split('+')[1]) ?? 0;
+      return lBuild > cBuild;
+    } else if (latest.contains('+')) {
+      // Latest punya build number, current tidak
+      return true;
+    }
+
+    return false;
   }
 
   /// Memulai proses download & install APK
@@ -108,23 +137,25 @@ class UpdateService {
     if (isDownloading.value) return;
 
     try {
-      // 1. Request izin install dari sumber tak dikenal (Khusus Android)
-      if (Platform.isAndroid) {
-        var status = await Permission.requestInstallPackages.status;
-        if (status.isDenied) {
-          status = await Permission.requestInstallPackages.request();
-        }
+      if (!Platform.isAndroid) {
+        UIHelper.showInfoSnackBar(context, 'Fitur install otomatis hanya tersedia di Android. Silakan unduh manual.');
+        return;
+      }
 
-        if (!status.isGranted) {
-          if (context.mounted) {
-            UIHelper.showErrorSnackBar(context,
-                'Izin instalasi ditolak. Silakan aktifkan di Pengaturan.');
-            if (status.isPermanentlyDenied) {
-              openAppSettings();
-            }
+      var status = await Permission.requestInstallPackages.status;
+      if (status.isDenied) {
+        status = await Permission.requestInstallPackages.request();
+      }
+
+      if (!status.isGranted) {
+        if (context.mounted) {
+          UIHelper.showErrorSnackBar(context,
+              'Izin diperlukan untuk menginstall aplikasi baru. Silakan berikan izin di pengaturan.');
+          if (status.isPermanentlyDenied) {
+            openAppSettings();
           }
-          return;
         }
+        return;
       }
 
       isDownloading.value = true;
