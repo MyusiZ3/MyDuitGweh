@@ -136,7 +136,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       if (mounted) {
         final errorMsg = e is TimeoutException
             ? 'Koneksi lambat, transaksi akan disinkronkan di latar belakang.'
-            : 'Gagal simpan: ${e.toString()} ❌';
+            : 'Gagal simpan: ${e.toString()}';
 
         if (e is TimeoutException) {
           Navigator.pop(context);

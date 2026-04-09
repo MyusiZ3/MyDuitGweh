@@ -48,7 +48,7 @@ class UpdateService {
           
           _showUpdateDialog(context, latestVersion, downloadUrl, isForce: isForce);
         } else {
-          UIHelper.showSuccessSnackBar(context, 'Aplikasi sudah versi terbaru! ✨');
+          UIHelper.showSuccessSnackBar(context, 'Aplikasi sudah versi terbaru!');
         }
       }
     } catch (e) {

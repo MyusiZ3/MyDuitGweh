@@ -855,10 +855,10 @@ class WalletScreenState extends State<WalletScreen> {
                             Navigator.pop(context);
                             if (success) {
                               UIHelper.showSuccessSnackBar(context,
-                                  'Berhasil bergabung! Selamat berkolaborasi 🎉');
+                                  'Berhasil bergabung! Selamat berkolaborasi');
                             } else {
                               UIHelper.showErrorSnackBar(context,
-                                  'Kode tidak valid atau kamu sudah bergabung ❌');
+                                  'Kode tidak valid atau kamu sudah bergabung');
                             }
                           },
                     style: ElevatedButton.styleFrom(
@@ -1009,7 +1009,7 @@ class WalletScreenState extends State<WalletScreen> {
                             if (!context.mounted) return;
                             Navigator.pop(context); // Close sheet
                             UIHelper.showSuccessSnackBar(
-                                context, 'Berhasil keluar dari dompet. 👋');
+                                context, 'Berhasil keluar dari dompet.');
                           }
                         }
                       },
@@ -1092,7 +1092,7 @@ class WalletScreenState extends State<WalletScreen> {
                           Clipboard.setData(
                               ClipboardData(text: wallet.inviteCode ?? ''));
                           UIHelper.showSuccessSnackBar(
-                              context, 'Kode disalin ke clipboard! 📋');
+                              context, 'Kode disalin ke clipboard!');
                         },
                         borderRadius: BorderRadius.circular(12),
                         child: Container(

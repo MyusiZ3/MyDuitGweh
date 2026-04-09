@@ -92,7 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
           config.isAvailable &&
           !_isAdmin) {
         UIHelper.showSuccessSnackBar(
-            context, '📣 Survei Kepuasan Baru tersedia! Cek di profil ya.');
+            context, 'Survei Kepuasan Baru tersedia! Cek di profil ya.');
       }
 
       setState(() => _currentSurveyConfig = config);
@@ -452,7 +452,7 @@ class _HomeScreenState extends State<HomeScreen> {
       await _loadSettings();
 
       if (isOnline) {
-        UIHelper.showSuccessSnackBar(context, 'Data berhasil diperbarui! ✨');
+        UIHelper.showSuccessSnackBar(context, 'Data berhasil diperbarui!');
       } else {
         UIHelper.showInfoSnackBar(context, 'Data dimuat dari cache (Offline)');
       }
@@ -1494,7 +1494,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (config == null || !config.isAvailable) {
         if (mounted) {
           UIHelper.showInfoDialog(context, 'Survei Ditutup',
-              'Maaf banget, survei saat ini sedang ditutup oleh Archen. Ditunggu jadwal berikutnya ya! 🙏');
+              'Maaf, survei saat ini sedang ditutup. Ditunggu jadwal berikutnya ya!');
         }
         return;
       }
@@ -1506,7 +1506,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (alreadyDone) {
         if (mounted) {
           UIHelper.showInfoDialog(context, 'Sudah Berpartisipasi',
-              'Kamu sudah mengisi survei ini sebelumnya. Terima kasih banyak atas masukannya! ❤️');
+              'Anda sudah mengisi survei ini sebelumnya. Terima kasih banyak atas masukannya!');
         }
         return;
       }

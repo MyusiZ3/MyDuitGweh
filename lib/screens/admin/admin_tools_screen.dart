@@ -1982,7 +1982,7 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                                                 if (context.mounted) {
                                                   UIHelper.showErrorSnackBar(
                                                       context,
-                                                      '❌ ${statusResult['message']}');
+                                                      '${statusResult['message']}');
                                                 }
                                                 setDialogState(() =>
                                                     isCheckingKey = false);

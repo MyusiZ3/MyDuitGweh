@@ -70,7 +70,7 @@ class _NotificationPermissionSliverState extends State<NotificationPermissionSli
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Auto-Record Transaksi! ✨',
+                        'Pencatatan Transaksi Otomatis',
                         style: GoogleFonts.plusJakartaSans(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,

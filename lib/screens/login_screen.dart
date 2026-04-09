@@ -80,7 +80,7 @@ class _LoginScreenState extends State<LoginScreen>
     }
 
     if (!_isLogin && password != confirmPassword) {
-      UIHelper.showErrorSnackBar(context, 'Password gak cocok bro! 🧐');
+      UIHelper.showErrorSnackBar(context, 'Konfirmasi password tidak sesuai.');
       return;
     }
 
@@ -116,7 +116,7 @@ class _LoginScreenState extends State<LoginScreen>
       }
     } catch (e) {
       if (mounted) {
-        UIHelper.showErrorSnackBar(context, 'Gagal terhubung ke Google ⚠️');
+        UIHelper.showErrorSnackBar(context, 'Gagal terhubung ke Google');
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -537,7 +537,7 @@ class _LoginScreenState extends State<LoginScreen>
   void _showForgotPass() async {
     final email = _emailController.text.trim();
     if (email.isEmpty) {
-      UIHelper.showErrorSnackBar(context, 'Tulis email dulu ya!');
+      UIHelper.showErrorSnackBar(context, 'Masukkan alamat email Anda.');
       return;
     }
     try {

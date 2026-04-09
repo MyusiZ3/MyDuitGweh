@@ -42,7 +42,7 @@ class _ExperienceSurveySheetState extends State<ExperienceSurveySheet> {
 
   Future<void> _submitFeedback() async {
     if (_rating == 0) {
-      UIHelper.showErrorSnackBar(context, 'Kasih rating bintang dulu yuk! ⭐');
+      UIHelper.showErrorSnackBar(context, 'Kasih rating bintang dulu yuk!');
       return;
     }
 
@@ -69,7 +69,7 @@ class _ExperienceSurveySheetState extends State<ExperienceSurveySheet> {
 
       if (!mounted) return;
       UIHelper.showSuccessSnackBar(context,
-          'Terima kasih atas feedback-nya! Archen sangat menghargainya. ✨');
+          'Terima kasih atas feedback-nya! Archen sangat menghargainya.');
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
@@ -308,15 +308,15 @@ class _ExperienceSurveySheetState extends State<ExperienceSurveySheet> {
   String _getRatingText() {
     switch (_rating.toInt()) {
       case 1:
-        return 'Waduh, sedih banget Archen... 😢';
+        return 'Kurang memuaskan';
       case 2:
-        return 'Masih kurang oke ya? Kasih tau Archen! 😕';
+        return 'Butuh perbaikan';
       case 3:
-        return 'Lumayanlah, tapi ada yang bisa lebih baik! 🙂';
+        return 'Cukup baik';
       case 4:
-        return 'Mantap! MyDuitGweh sudah membantu! ✨';
+        return 'Memuaskan';
       case 5:
-        return 'LUAR BIASA! User paling keren sedunia! 🔥';
+        return 'Luar biasa';
       default:
         return 'Pilih Bintang-mu!';
     }

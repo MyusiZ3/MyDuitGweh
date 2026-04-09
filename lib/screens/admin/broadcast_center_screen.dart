@@ -217,7 +217,8 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
 
   Future<void> _sendBroadcast() async {
     if (_titleController.text.isEmpty || _msgController.text.isEmpty) {
-      UIHelper.showErrorSnackBar(context, 'Isi dulu judul dan pesannya Bang!');
+      UIHelper.showErrorSnackBar(
+          context, 'Judul dan pesan tidak boleh kosong.');
       return;
     }
 
@@ -253,7 +254,7 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
           _scheduledTime = null;
           _isSending = false; // Reset early before success sheet
         });
-        
+
         // Final check before showing success
         if (context.mounted) {
           _showBroadcastSuccess();
@@ -295,7 +296,7 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Kirim Pengumuman 📢',
+                  const Text('Kirim Pengumuman',
                       style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.w900,
@@ -587,12 +588,15 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
                     final confirm = await UIHelper.showConfirmDialog(
                       context: context,
                       title: 'Akhiri Broadcast?',
-                      message: 'Status broadcast akan diubah menjadi END dan tidak akan muncul lagi di beranda user.',
+                      message:
+                          'Status broadcast akan diubah menjadi END dan tidak akan muncul lagi di beranda user.',
                       confirmText: 'Akhiri',
                     );
                     if (confirm == true) {
                       await _firestoreService.endBroadcast(b['id']);
-                      if (mounted) UIHelper.showSuccessSnackBar(context, 'Broadcast berhasil diakhiri.');
+                      if (mounted)
+                        UIHelper.showSuccessSnackBar(
+                            context, 'Broadcast berhasil diakhiri.');
                     }
                   },
                 ),
@@ -610,7 +614,9 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
                   );
                   if (confirm == true) {
                     await _firestoreService.deleteBroadcast(b['id']);
-                    if (mounted) UIHelper.showSuccessSnackBar(context, 'Broadcast dihapus.');
+                    if (mounted)
+                      UIHelper.showSuccessSnackBar(
+                          context, 'Broadcast dihapus.');
                   }
                 },
               ),
