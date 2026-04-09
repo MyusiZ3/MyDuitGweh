@@ -2707,7 +2707,8 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                       : Future.value(initialAnalysis),
                   builder: (context, analysisSnapshot) {
                     String cleanedData = (analysisSnapshot.data ?? '').trim();
-                    final prefixPattern = RegExp(r'^\**Archen.*?:?\**\s*', caseSensitive: false);
+                    final prefixPattern =
+                        RegExp(r'^\**Archen.*?:?\**\s*', caseSensitive: false);
                     cleanedData = cleanedData.replaceFirst(prefixPattern, '');
 
                     String displayStr = (analysisSnapshot.data != null &&
@@ -3096,7 +3097,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                   _buildSuggestions()
                 else ...[
                   ..._messages.map((m) => _buildMessageBubble(
-                        m['isAI'] ? 'Archen(´･ω･`)' : 'Anda',
+                        m['isAI'] ? '✧Archen AI' : 'Anda',
                         m['text'],
                         isAI: m['isAI'],
                       )),
@@ -3170,7 +3171,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
             const SizedBox(height: 8),
             if (isAI)
               MarkdownBody(
-                data: "**Archen** (´･ω･`):  $text",
+                data: text,
                 styleSheet: MarkdownStyleSheet(
                   p: const TextStyle(
                       fontSize: 14, height: 1.5, color: Colors.black87),
@@ -3353,7 +3354,8 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
         setState(() {
           // Clean the response from any prefixes the AI might have added
           String cleanedResponse = response.trim();
-          final prefixPattern = RegExp(r'^\**Archen.*?:?\**\s*', caseSensitive: false);
+          final prefixPattern =
+              RegExp(r'^\**Archen.*?:?\**\s*', caseSensitive: false);
           cleanedResponse = cleanedResponse.replaceFirst(prefixPattern, '');
 
           _messages.add({'text': cleanedResponse, 'isAI': true});
