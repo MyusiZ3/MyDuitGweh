@@ -279,7 +279,7 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                                     isRestricted: !_isSuperAdmin,
                                   ),
                                 ),
-                                  const SizedBox(height: 12),
+                                const SizedBox(height: 12),
                                 // ─── Test Notification Card ─────────
                                 SizedBox(
                                   height: 140,
@@ -294,12 +294,12 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                                       await SecurityService().logEvent(
                                         type: 'SIMULATED_ALERT',
                                         severity: 'high',
-                                        message: 'Ini adalah uji coba notifikasi keamanan real-time untuk Admin.',
+                                        message:
+                                            'Ini adalah uji coba notifikasi keamanan real-time untuk Admin.',
                                       );
-                                      
+
                                       if (mounted) {
-                                        UIHelper.showSuccessSnackBar(
-                                            context,
+                                        UIHelper.showSuccessSnackBar(context,
                                             'Security simulation triggered! Processing log...');
                                       }
                                     },
@@ -590,7 +590,8 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: (hasAlert ? Colors.red : Colors.black).withOpacity(0.2),
+                    color:
+                        (hasAlert ? Colors.red : Colors.black).withOpacity(0.2),
                     blurRadius: 15,
                     offset: const Offset(0, 8),
                   ),
@@ -627,7 +628,8 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                       ],
                     ),
                   ),
-                  const Icon(Icons.chevron_right_rounded, color: Colors.white54),
+                  const Icon(Icons.chevron_right_rounded,
+                      color: Colors.white54),
                 ],
               ),
             ),
@@ -1495,13 +1497,11 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                                               .doc('global')
                                               .collection('history')
                                               .add({
-                                            'updatedBy': FirebaseAuth
-                                                    .instance
-                                                    .currentUser
-                                                    ?.uid ??
+                                            'updatedBy': FirebaseAuth.instance
+                                                    .currentUser?.uid ??
                                                 'system',
-                                            'updatedAt': FieldValue
-                                                .serverTimestamp(),
+                                            'updatedAt':
+                                                FieldValue.serverTimestamp(),
                                             'action': isGroq
                                                 ? 'GROQ_KEY_REMOVED'
                                                 : 'AI_KEY_REMOVED',
@@ -2058,7 +2058,7 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                                               if (context.mounted) {
                                                 UIHelper.showSuccessSnackBar(
                                                     context,
-                                                    '✅ $providerLabel Key valid dan berhasil ditambahkan!');
+                                                    '$providerLabel Key valid dan berhasil ditambahkan!');
                                               }
                                             } catch (e) {
                                               if (context.mounted) {

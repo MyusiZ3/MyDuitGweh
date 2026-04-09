@@ -658,7 +658,7 @@ class WalletScreenState extends State<WalletScreen> {
                           if (!context.mounted) return;
                           Navigator.pop(context);
                           UIHelper.showSuccessSnackBar(context,
-                              'Dompet "${nameController.text}" berhasil dibuat! 🎉');
+                              'Dompet "${nameController.text}" berhasil dibuat!');
                         } catch (e) {
                           if (mounted) {
                             if (e is TimeoutException) {
@@ -1518,7 +1518,7 @@ class WalletScreenState extends State<WalletScreen> {
                       Navigator.pop(context); // Pop dialog
                       Navigator.pop(context); // Pop details sheet
                       UIHelper.showSuccessSnackBar(context,
-                          'Nama dompet berhasil diubah ke "${nameController.text}"! 📝');
+                          'Nama dompet berhasil diubah ke "${nameController.text}"!');
                     } catch (e) {
                       if (mounted) {
                         if (e is TimeoutException) {

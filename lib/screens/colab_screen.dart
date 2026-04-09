@@ -65,12 +65,14 @@ class ColabScreenState extends State<ColabScreen> {
               ),
               child: TextField(
                 controller: _searchController,
-                onChanged: (val) => setState(() => _searchQuery = val.toLowerCase()),
+                onChanged: (val) =>
+                    setState(() => _searchQuery = val.toLowerCase()),
                 style: const TextStyle(fontSize: 16),
                 decoration: InputDecoration(
                   hintText: 'Cari dompet...',
                   hintStyle: const TextStyle(color: Color(0xFF8E8E93)),
-                  prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF8E8E93), size: 20),
+                  prefixIcon: const Icon(Icons.search_rounded,
+                      color: Color(0xFF8E8E93), size: 20),
                   suffixIcon: _searchQuery.isEmpty
                       ? null
                       : GestureDetector(
@@ -78,10 +80,12 @@ class ColabScreenState extends State<ColabScreen> {
                             _searchController.clear();
                             setState(() => _searchQuery = "");
                           },
-                          child: const Icon(Icons.cancel_rounded, color: Color(0xFF8E8E93), size: 18),
+                          child: const Icon(Icons.cancel_rounded,
+                              color: Color(0xFF8E8E93), size: 18),
                         ),
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
               ),
             ),
@@ -326,7 +330,8 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          CurrencyFormatter.formatCurrency(widget.wallet.balance),
+                          CurrencyFormatter.formatCurrency(
+                              widget.wallet.balance),
                           style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
@@ -432,12 +437,14 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                     decoration: BoxDecoration(
                       color: AppColors.primary.withOpacity(0.05),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.primary.withOpacity(0.15)),
+                      border: Border.all(
+                          color: AppColors.primary.withOpacity(0.15)),
                     ),
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.chat_rounded, size: 18, color: AppColors.primary),
+                        Icon(Icons.chat_rounded,
+                            size: 18, color: AppColors.primary),
                         SizedBox(width: 8),
                         Text(
                           'Buka Chat',
@@ -462,20 +469,25 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                       message: ToneManager.t('dialog_leave_wallet_msg'),
                     );
                     if (confirm == true) {
-                      await widget.firestoreService.leaveWallet(widget.wallet.id, widget.currentUid);
+                      await widget.firestoreService
+                          .leaveWallet(widget.wallet.id, widget.currentUid);
                       if (context.mounted) {
-                        UIHelper.showSuccessSnackBar(context, 'Berhasil keluar dompet 👋');
+                        UIHelper.showSuccessSnackBar(
+                            context, 'Berhasil keluar dompet 👋');
                       }
                     }
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
                       color: AppColors.expense.withOpacity(0.05),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.expense.withOpacity(0.15)),
+                      border: Border.all(
+                          color: AppColors.expense.withOpacity(0.15)),
                     ),
-                    child: const Icon(Icons.logout_rounded, size: 18, color: AppColors.expense),
+                    child: const Icon(Icons.logout_rounded,
+                        size: 18, color: AppColors.expense),
                   ),
                 ),
               ],
@@ -510,7 +522,8 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
         final canKick = widget.wallet.owner == widget.currentUid && !isOwner;
 
         return Container(
-          padding: EdgeInsets.only(left: 12, right: canKick ? 6 : 12, top: 6, bottom: 6),
+          padding: EdgeInsets.only(
+              left: 12, right: canKick ? 6 : 12, top: 6, bottom: 6),
           decoration: BoxDecoration(
             color: isOwner
                 ? AppColors.primary.withOpacity(0.1)
@@ -536,7 +549,8 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: isOwner ? AppColors.primary : AppColors.textSecondary,
+                    color:
+                        isOwner ? AppColors.primary : AppColors.textSecondary,
                   ),
                 ),
               ),
@@ -550,13 +564,16 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                       message: ToneManager.t('dialog_kick_member_msg'),
                     );
                     if (confirm == true) {
-                      await widget.firestoreService.kickMember(widget.wallet.id, uid);
+                      await widget.firestoreService
+                          .kickMember(widget.wallet.id, uid);
                       if (context.mounted) {
-                        UIHelper.showSuccessSnackBar(context, 'Anggota dikeluarkan 👋');
+                        UIHelper.showSuccessSnackBar(
+                            context, 'Anggota dikeluarkan 👋');
                       }
                     }
                   },
-                  child: Icon(Icons.close_rounded, size: 16, color: AppColors.expense.withOpacity(0.7)),
+                  child: Icon(Icons.close_rounded,
+                      size: 16, color: AppColors.expense.withOpacity(0.7)),
                 ),
               ],
             ],
@@ -595,7 +612,8 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
               confirmDismiss: (direction) async {
                 // Restriction: only the creator can delete their transaction
                 if (txn.createdBy != widget.currentUid) {
-                  UIHelper.showErrorSnackBar(context, ToneManager.t('error_not_creator_delete'));
+                  UIHelper.showErrorSnackBar(
+                      context, ToneManager.t('error_not_creator_delete'));
                   return false;
                 }
                 return await UIHelper.showConfirmDialog(
@@ -607,7 +625,8 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
               onDismissed: (direction) async {
                 await widget.firestoreService.deleteTransaction(txn);
                 if (context.mounted) {
-                  UIHelper.showSuccessSnackBar(context, 'Transaksi berhasil dihapus');
+                  UIHelper.showSuccessSnackBar(
+                      context, 'Transaksi berhasil dihapus');
                 }
               },
               background: Container(
@@ -617,7 +636,8 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                   color: AppColors.expense.withOpacity(0.8),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Icon(Icons.delete_outline_rounded, color: Colors.white),
+                child: const Icon(Icons.delete_outline_rounded,
+                    color: Colors.white),
               ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6),
@@ -737,9 +757,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                   'Masukkan email akun teman yang sudah\nterdaftar di MyDuitGweh.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                      color: AppColors.textHint,
-                      fontSize: 13,
-                      height: 1.5),
+                      color: AppColors.textHint, fontSize: 13, height: 1.5),
                 ),
                 const SizedBox(height: 24),
                 TextField(
@@ -747,8 +765,8 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
                     hintText: 'contoh@email.com',
-                    prefixIcon:
-                        const Icon(Icons.email_outlined, color: AppColors.primary),
+                    prefixIcon: const Icon(Icons.email_outlined,
+                        color: AppColors.primary),
                     filled: true,
                     fillColor: AppColors.surfaceVariant,
                     border: OutlineInputBorder(
@@ -780,8 +798,8 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                               return;
                             }
                             setModalState(() => isSending = true);
-                            final success = await widget.firestoreService
-                                .addMemberByEmail(
+                            final success =
+                                await widget.firestoreService.addMemberByEmail(
                               widget.wallet.id,
                               email,
                             );
@@ -789,13 +807,13 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                             Navigator.pop(ctx);
                             if (success) {
                               if (context.mounted) {
-                                UIHelper.showSuccessSnackBar(context,
-                                    'Undangan berhasil dikirim! 📩');
+                                UIHelper.showSuccessSnackBar(
+                                    context, 'Undangan berhasil dikirim!');
                               }
                             } else {
                               if (context.mounted) {
                                 UIHelper.showErrorSnackBar(context,
-                                    'Email tidak ditemukan atau sudah bergabung 😕');
+                                    'Email tidak ditemukan atau sudah bergabung');
                               }
                             }
                           },

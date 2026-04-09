@@ -17,7 +17,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _firestoreService = FirestoreService();
   final _nameController = TextEditingController();
   final _occupationController = TextEditingController();
-  
+
   bool _isLoading = false;
   bool _isEditing = false;
   String _gender = 'Prefer not to say'; // Default value
@@ -36,7 +36,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       setState(() {
         _nameController.text = user.displayName ?? '';
       });
-      
+
       // Ambil sisa data (gender, pekerjaan, tgl lahir) dari Firestore di latar
       try {
         final userInfo = await _firestoreService.getUserInfo(user.uid);
@@ -54,7 +54,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 if (dobData is String) {
                   _dateOfBirth = DateTime.tryParse(dobData);
                 } else {
-                  _dateOfBirth = dobData.toDate(); 
+                  _dateOfBirth = dobData.toDate();
                 }
               }
             }
@@ -68,12 +68,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   Future<void> _pickDateOfBirth() async {
     if (!_isEditing) return;
-    
-    // Gunakan cupertino date picker style widget kalau mau full iOS feel, 
+
+    // Gunakan cupertino date picker style widget kalau mau full iOS feel,
     // tapi Material showDatePicker yg dimodifikasi warnanya juga cukup iOS-ish untuk fungsi.
     final picked = await showDatePicker(
       context: context,
-      initialDate: _dateOfBirth ?? DateTime.now().subtract(const Duration(days: 365 * 20)),
+      initialDate: _dateOfBirth ??
+          DateTime.now().subtract(const Duration(days: 365 * 20)),
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
       builder: (context, child) {
@@ -89,7 +90,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         );
       },
     );
-    
+
     if (picked != null) {
       setState(() {
         _dateOfBirth = picked;
@@ -110,24 +111,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
         await user.updateDisplayName(newName);
-        
+
         final data = {
           'displayName': newName,
           'gender': _gender,
           'occupation': newOccupation,
         };
-        
+
         if (_dateOfBirth != null) {
-          data['dateOfBirth'] = _dateOfBirth!.toIso8601String(); 
+          data['dateOfBirth'] = _dateOfBirth!.toIso8601String();
         }
-        
+
         await _firestoreService.updateUserProfile(user.uid, data);
 
         if (mounted) {
           setState(() {
             _isEditing = false;
           });
-          UIHelper.showSuccessSnackBar(context, 'Profil berhasil diperbarui! ✨');
+          UIHelper.showSuccessSnackBar(context, 'Profil berhasil diperbarui!');
         }
       }
     } catch (e) {
@@ -236,7 +237,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             CupertinoButton(
               padding: const EdgeInsets.only(right: 16),
               onPressed: () => setState(() => _isEditing = true),
-              child: const Text('Edit', style: TextStyle(fontWeight: FontWeight.w600)),
+              child: const Text('Edit',
+                  style: TextStyle(fontWeight: FontWeight.w600)),
             ),
           if (_isEditing)
             CupertinoButton(
@@ -245,16 +247,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 setState(() => _isEditing = false);
                 _loadUserProfile(); // Revert
               },
-              child: const Text('Batal', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w500)),
+              child: const Text('Batal',
+                  style: TextStyle(
+                      color: Colors.red, fontWeight: FontWeight.w500)),
             ),
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.primary))
           : SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 child: Column(
                   children: [
                     // Profile Header section
@@ -267,23 +273,35 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             decoration: BoxDecoration(
                               color: AppColors.primary.withOpacity(0.1),
                               shape: BoxShape.circle,
-                              border: Border.all(color: AppColors.primary.withOpacity(0.3), width: 2),
+                              border: Border.all(
+                                  color: AppColors.primary.withOpacity(0.3),
+                                  width: 2),
                               // Use Google photoURL if signed in via Google, otherwise null
-                              image: FirebaseAuth.instance.currentUser?.photoURL != null
-                                  ? DecorationImage(
-                                      image: NetworkImage(FirebaseAuth.instance.currentUser!.photoURL!),
-                                      fit: BoxFit.cover,
-                                    )
-                                  : null,
+                              image:
+                                  FirebaseAuth.instance.currentUser?.photoURL !=
+                                          null
+                                      ? DecorationImage(
+                                          image: NetworkImage(FirebaseAuth
+                                              .instance.currentUser!.photoURL!),
+                                          fit: BoxFit.cover,
+                                        )
+                                      : null,
                             ),
                             // Show icon only if there is no profile photo
-                            child: FirebaseAuth.instance.currentUser?.photoURL == null
-                                ? const Icon(CupertinoIcons.person_solid, size: 45, color: AppColors.primary)
-                                : null,
+                            child:
+                                FirebaseAuth.instance.currentUser?.photoURL ==
+                                        null
+                                    ? const Icon(CupertinoIcons.person_solid,
+                                        size: 45, color: AppColors.primary)
+                                    : null,
                           ),
-                          const SizedBox(height: 24), // Spacing diperbesar agar teks tidak terlalu mepet dengan border biru
+                          const SizedBox(
+                              height:
+                                  24), // Spacing diperbesar agar teks tidak terlalu mepet dengan border biru
                           Text(
-                            _nameController.text.isNotEmpty ? _nameController.text : 'Pengguna',
+                            _nameController.text.isNotEmpty
+                                ? _nameController.text
+                                : 'Pengguna',
                             style: const TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.w700,
@@ -323,7 +341,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           _buildCupertinoTile(
                             icon: CupertinoIcons.person_fill,
                             title: 'Nama Lengkap',
-                            child: _buildFormField(_nameController, 'Masukkan Nama'),
+                            child: _buildFormField(
+                                _nameController, 'Masukkan Nama'),
                           ),
                           _buildCupertinoTile(
                             icon: CupertinoIcons.person_3_fill,
@@ -335,24 +354,37 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                       value: _gender,
                                       isExpanded: true,
                                       alignment: Alignment.centerRight,
-                                      icon: const Icon(CupertinoIcons.chevron_down, size: 16),
-                                      style: const TextStyle(fontSize: 15, color: Colors.black),
+                                      icon: const Icon(
+                                          CupertinoIcons.chevron_down,
+                                          size: 16),
+                                      style: const TextStyle(
+                                          fontSize: 15, color: Colors.black),
                                       items: const [
-                                        DropdownMenuItem(value: 'Prefer not to say', child: Text('Prefer not to say')),
-                                        DropdownMenuItem(value: 'Laki-laki', child: Text('Laki-laki')),
-                                        DropdownMenuItem(value: 'Perempuan', child: Text('Perempuan')),
+                                        DropdownMenuItem(
+                                            value: 'Prefer not to say',
+                                            child: Text('Prefer not to say')),
+                                        DropdownMenuItem(
+                                            value: 'Laki-laki',
+                                            child: Text('Laki-laki')),
+                                        DropdownMenuItem(
+                                            value: 'Perempuan',
+                                            child: Text('Perempuan')),
                                       ],
                                       onChanged: (val) {
-                                        if (val != null) setState(() => _gender = val);
+                                        if (val != null)
+                                          setState(() => _gender = val);
                                       },
                                     ),
                                   )
                                 : Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12),
                                     child: Text(
                                       _gender,
                                       textAlign: TextAlign.right,
-                                      style: TextStyle(fontSize: 15, color: Colors.grey.shade600),
+                                      style: TextStyle(
+                                          fontSize: 15,
+                                          color: Colors.grey.shade600),
                                     ),
                                   ),
                           ),
@@ -363,15 +395,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             child: InkWell(
                               onTap: _pickDateOfBirth,
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
                                 child: Text(
                                   _dateOfBirth != null
-                                      ? DateFormat('dd MMM yyyy').format(_dateOfBirth!)
+                                      ? DateFormat('dd MMM yyyy')
+                                          .format(_dateOfBirth!)
                                       : 'Pilih Tanggal',
                                   textAlign: TextAlign.right,
                                   style: TextStyle(
                                     fontSize: 15,
-                                    color: _dateOfBirth == null ? AppColors.textHint : (_isEditing ? AppColors.primary : Colors.grey.shade600),
+                                    color: _dateOfBirth == null
+                                        ? AppColors.textHint
+                                        : (_isEditing
+                                            ? AppColors.primary
+                                            : Colors.grey.shade600),
                                   ),
                                 ),
                               ),
@@ -382,7 +420,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             title: 'Pekerjaan',
                             iconColor: Colors.teal,
                             showBorder: false,
-                            child: _buildFormField(_occupationController, 'Mis: Mahasiswa'),
+                            child: _buildFormField(
+                                _occupationController, 'Mis: Mahasiswa'),
                           ),
                         ],
                       ),
@@ -404,10 +443,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           ),
                           onPressed: _isLoading ? null : _saveProfile,
                           child: _isLoading
-                              ? const CircularProgressIndicator(color: Colors.white)
+                              ? const CircularProgressIndicator(
+                                  color: Colors.white)
                               : const Text(
                                   'Simpan Perubahan',
-                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: -0.3),
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: -0.3),
                                 ),
                         ),
                       ),
@@ -418,4 +461,3 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 }
-
