@@ -65,7 +65,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _notificationService.init(); // Inisiasi & Minta Izin Notifikasi awal
+    _handleInit();
+  }
+
+  Future<void> _handleInit() async {
+    await _notificationService.init(); // Inisiasi & Minta Izin Notifikasi awal
     _loadSettings();
     _checkAppLock();
     _initNotificationListener();
@@ -149,7 +153,7 @@ class _HomeScreenState extends State<HomeScreen> {
       for (var b in pendingBroadcasts) {
         final rawId = b['id']?.toString();
         final rawTime = b['scheduledTime'];
-        
+
         if (rawId != null && rawTime != null && rawTime is Timestamp) {
           try {
             final time = rawTime.toDate();
@@ -1358,88 +1362,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       _buildProfileMenuItem(
                         icon: Icons.notifications_none_rounded,
-                        label: 'Pengingat Jurnal Harian',
+                        label: 'Pengingat Harian',
                         subtitle: _isNotificationEnabled
                             ? 'Ingatkan setiap pukul ${_reminderTime.format(context)}'
                             : 'Ketuk untuk aktifkan',
-                        onTap: () async {
-                          final prefs = await SharedPreferences.getInstance();
-                          if (!_isNotificationEnabled) {
-                            final pickedTime = await showTimePicker(
-                                context: context, initialTime: _reminderTime);
-                            if (pickedTime != null) {
-                              await prefs.setBool('use_notifications', true);
-                              await prefs.setInt(
-                                  'reminder_hour', pickedTime.hour);
-                              await prefs.setInt(
-                                  'reminder_minute', pickedTime.minute);
-
-                              try {
-                                await _notificationService.init();
-                                await _notificationService
-                                    .scheduleDailyReminder(
-                                        hour: pickedTime.hour,
-                                        minute: pickedTime.minute,
-                                        showConfirmation: true);
-                                setModalState(() {
-                                  _isNotificationEnabled = true;
-                                  _reminderTime = pickedTime;
-                                });
-                                setState(() {
-                                  _isNotificationEnabled = true;
-                                  _reminderTime = pickedTime;
-                                });
-                              } catch (e) {
-                                debugPrint('Notification fail: $e');
-                              }
-                            }
-                          } else {
-                            await prefs.setBool('use_notifications', false);
-                            await _notificationService.cancelAll();
-                            setModalState(() => _isNotificationEnabled = false);
-                            setState(() => _isNotificationEnabled = false);
-                          }
-                        },
+                        onTap: () => _handleDailyReminderToggle(setModalState),
                         trailing: Switch(
                           value: _isNotificationEnabled,
-                          onChanged: (val) async {
-                            // This will trigger the same logic as onTap
-                            if (val && !_isNotificationEnabled) {
-                              final pickedTime = await showTimePicker(
-                                  context: context, initialTime: _reminderTime);
-                              if (pickedTime != null) {
-                                final prefs =
-                                    await SharedPreferences.getInstance();
-                                await prefs.setBool('use_notifications', true);
-                                await prefs.setInt(
-                                    'reminder_hour', pickedTime.hour);
-                                await prefs.setInt(
-                                    'reminder_minute', pickedTime.minute);
-                                await _notificationService.init();
-                                await _notificationService
-                                    .scheduleDailyReminder(
-                                        hour: pickedTime.hour,
-                                        minute: pickedTime.minute,
-                                        showConfirmation: true);
-                                setModalState(() {
-                                  _isNotificationEnabled = true;
-                                  _reminderTime = pickedTime;
-                                });
-                                setState(() {
-                                  _isNotificationEnabled = true;
-                                  _reminderTime = pickedTime;
-                                });
-                              }
-                            } else if (!val && _isNotificationEnabled) {
-                              final prefs =
-                                  await SharedPreferences.getInstance();
-                              await prefs.setBool('use_notifications', false);
-                              await _notificationService.cancelAll();
-                              setModalState(
-                                  () => _isNotificationEnabled = false);
-                              setState(() => _isNotificationEnabled = false);
-                            }
-                          },
+                          onChanged: (_) =>
+                              _handleDailyReminderToggle(setModalState),
                           activeColor: AppColors.primary,
                           activeTrackColor: AppColors.primary.withOpacity(0.3),
                         ),
@@ -1558,7 +1489,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final userDoc = results[1] as DocumentSnapshot;
       final txCountResult = results[2] as AggregateQuerySnapshot;
 
-      if (mounted) Navigator.pop(context);
+      if (mounted) Navigator.of(context, rootNavigator: true).pop();
 
       if (config == null || !config.isAvailable) {
         if (mounted) {
@@ -1615,6 +1546,84 @@ class _HomeScreenState extends State<HomeScreen> {
       debugPrint('SURVEY ERROR: $e');
     } finally {
       _isCheckingSurvey = false;
+    }
+  }
+
+  Future<void> _handleDailyReminderToggle(StateSetter setModalState) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    if (!_isNotificationEnabled) {
+      // Step 1: Open time picker
+      final TimeOfDay? pickedTime = await showTimePicker(
+        context: context,
+        initialTime: _reminderTime,
+        helpText: 'Pilih Waktu Pengingat',
+        builder: (context, child) {
+          return Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: ColorScheme.light(
+                primary: AppColors.primary,
+                onPrimary: Colors.white,
+                onSurface: Colors.black,
+              ),
+            ),
+            child: child!,
+          );
+        },
+      );
+
+      if (pickedTime != null) {
+        // Step 2: Optimistic UI Update
+        final oldState = _isNotificationEnabled;
+        final oldTime = _reminderTime;
+
+        setModalState(() {
+          _isNotificationEnabled = true;
+          _reminderTime = pickedTime;
+        });
+        setState(() {
+          _isNotificationEnabled = true;
+          _reminderTime = pickedTime;
+        });
+
+        try {
+          // Step 3: Persistence & Service Init
+          await prefs.setBool('use_notifications', true);
+          await prefs.setInt('reminder_hour', pickedTime.hour);
+          await prefs.setInt('reminder_minute', pickedTime.minute);
+
+          await _notificationService.init();
+          await _notificationService.scheduleDailyReminder(
+            hour: pickedTime.hour,
+            minute: pickedTime.minute,
+            showConfirmation: true,
+          );
+        } catch (e) {
+          debugPrint('--- Daily Reminder Fail: $e');
+          // Rollback if failure
+          setModalState(() {
+            _isNotificationEnabled = oldState;
+            _reminderTime = oldTime;
+          });
+          setState(() {
+            _isNotificationEnabled = oldState;
+            _reminderTime = oldTime;
+          });
+          if (mounted) UIHelper.showErrorSnackBar(context, 'Gagal menjadwalkan: $e');
+        }
+      }
+    } else {
+      // Step 2: Optimistic UI Update (Turning OFF)
+      setModalState(() => _isNotificationEnabled = false);
+      setState(() => _isNotificationEnabled = false);
+
+      try {
+        await prefs.setBool('use_notifications', false);
+        await _notificationService.cancelAll();
+        if (mounted) UIHelper.showInfoSnackBar(context, 'Pengingat harian dinonaktifkan.');
+      } catch (e) {
+        debugPrint('--- Daily Reminder Cancel Fail: $e');
+      }
     }
   }
 

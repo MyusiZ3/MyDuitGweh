@@ -18,14 +18,17 @@ class NotificationService {
     try {
       final String timeZoneName = await FlutterTimezone.getLocalTimezone();
       tz.setLocalLocation(tz.getLocation(timeZoneName));
+      print('--- NotificationService: Timezone initialized to $timeZoneName');
     } catch (e) {
-      print('Timezone init error: $e');
+      print('--- NotificationService: Timezone init error: $e');
       // Fallback ke Asia/Jakarta jika gagal deteksi otomatis
       try {
         tz.setLocalLocation(tz.getLocation('Asia/Jakarta'));
+        print('--- NotificationService: Fallback to Asia/Jakarta');
       } catch (_) {
         // Fallback terakhir ke UTC jika semua gagal
         tz.setLocalLocation(tz.getLocation('UTC'));
+        print('--- NotificationService: Final fallback to UTC');
       }
     }
 
@@ -40,7 +43,7 @@ class NotificationService {
       // Channel untuk Daily Reminder
       const AndroidNotificationChannel channel = AndroidNotificationChannel(
         'daily_jurnal_paling_penting_v3',
-        'Pengingat Jurnal',
+        'Pengingat',
         description: 'Notifikasi pengingat harian tercinta',
         importance: Importance.max,
         playSound: true,
@@ -84,8 +87,8 @@ class NotificationService {
     await _notificationsPlugin.initialize(
       initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse details) {
-         // Placeholder for notification interaction
-         print('Notification tapped: ${details.payload}');
+        // Placeholder for notification interaction
+        print('Notification tapped: ${details.payload}');
       },
     );
   }
@@ -101,11 +104,14 @@ class NotificationService {
       final tz.TZDateTime scheduledDate = _nextInstanceOfTime(hour, minute);
 
       // Cek izin exact alarm di Android untuk menghindari crash
-      AndroidScheduleMode scheduleMode = AndroidScheduleMode.exactAllowWhileIdle;
+      AndroidScheduleMode scheduleMode =
+          AndroidScheduleMode.exactAllowWhileIdle;
       if (Platform.isAndroid) {
-        final androidPlugin = _notificationsPlugin.resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
-        final bool? canScheduleExact = await androidPlugin?.canScheduleExactNotifications();
+        final androidPlugin =
+            _notificationsPlugin.resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>();
+        final bool? canScheduleExact =
+            await androidPlugin?.canScheduleExactNotifications();
         if (canScheduleExact == false) {
           scheduleMode = AndroidScheduleMode.inexactAllowWhileIdle;
         }
@@ -119,8 +125,8 @@ class NotificationService {
         const NotificationDetails(
           android: AndroidNotificationDetails(
             'daily_jurnal_paling_penting_v3',
-            'Pengingat Jurnal',
-            channelDescription: 'Notifikasi pengingat jurnal harian keuangan',
+            'Pengingat',
+            channelDescription: 'Notifikasi pengingat harian keuangan',
             importance: Importance.max,
             priority: Priority.max,
             ticker: 'Waktunya mencatat!',
@@ -233,7 +239,7 @@ class NotificationService {
     try {
       // Pastikan ID positif
       final int safeId = id.abs();
-      
+
       // Inisialisasi timezone jika dipanggil mendadak
       if (tz.local.name == 'UTC' && Platform.isAndroid) {
         // Double check init jika local belum terdeteksi sempurna
@@ -255,11 +261,14 @@ class NotificationService {
       }
 
       // Cek izin exact alarm di Android
-      AndroidScheduleMode scheduleMode = AndroidScheduleMode.exactAllowWhileIdle;
+      AndroidScheduleMode scheduleMode =
+          AndroidScheduleMode.exactAllowWhileIdle;
       if (Platform.isAndroid) {
-        final androidPlugin = _notificationsPlugin.resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
-        final bool? canScheduleExact = await androidPlugin?.canScheduleExactNotifications();
+        final androidPlugin =
+            _notificationsPlugin.resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>();
+        final bool? canScheduleExact =
+            await androidPlugin?.canScheduleExactNotifications();
         if (canScheduleExact == false) {
           scheduleMode = AndroidScheduleMode.inexactAllowWhileIdle;
         }
@@ -275,7 +284,8 @@ class NotificationService {
         playSound: true,
         icon: 'notif_icon',
         color: Color(0xFF007AFF),
-        category: AndroidNotificationCategory.status, // More appropriate for broadcasts
+        category: AndroidNotificationCategory
+            .status, // More appropriate for broadcasts
         fullScreenIntent: false, // Prevent activity start issues
       );
 
@@ -295,8 +305,9 @@ class NotificationService {
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
       );
-      
-      print('Broadcast scheduled successfully with ID: $safeId at $tzScheduledTime');
+
+      print(
+          'Broadcast scheduled successfully with ID: $safeId at $tzScheduledTime');
     } catch (e) {
       print('Error scheduling broadcast: $e');
     }
@@ -310,7 +321,7 @@ class NotificationService {
       const NotificationDetails(
         android: AndroidNotificationDetails(
           'daily_jurnal_paling_penting_v3',
-          'Pengingat Jurnal',
+          'Pengingat',
           channelDescription: 'Notifikasi pengingat harian tercinta',
           importance: Importance.max,
           priority: Priority.max,
@@ -324,4 +335,3 @@ class NotificationService {
     );
   }
 }
-
