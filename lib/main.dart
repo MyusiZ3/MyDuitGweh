@@ -12,6 +12,7 @@ import 'services/security_listener_service.dart';
 import 'package:my_duit_gweh/services/notification_service.dart';
 import 'services/connectivity_service.dart';
 import 'utils/app_theme.dart';
+import 'utils/theme_manager.dart';
 import 'utils/tone_dictionary.dart';
 import 'utils/navigator_key.dart';
 import 'screens/onboarding_screen.dart';
@@ -58,6 +59,9 @@ void main() async {
   // Start checking internet connection
   ConnectivityService().startMonitoring();
 
+  // Initialize Theme Manager
+  await ThemeManager.init();
+
   runApp(const MyDuitGwehApp());
 }
 
@@ -70,12 +74,19 @@ class MyDuitGwehApp extends StatelessWidget {
     return ValueListenableBuilder<AppTone>(
       valueListenable: ToneManager.notifier,
       builder: (context, activeTone, child) {
-        return MaterialApp(
-          navigatorKey: navigatorKey,
-          title: 'My Duit Gweh',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.lightTheme,
-          home: const AuthGate(),
+        return ValueListenableBuilder<ThemeMode>(
+          valueListenable: ThemeManager.notifier,
+          builder: (context, mode, child) {
+            return MaterialApp(
+              navigatorKey: navigatorKey,
+              title: 'My Duit Gweh',
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              themeMode: mode,
+              home: const AuthGate(),
+            );
+          },
         );
       },
     );
@@ -323,7 +334,7 @@ class SplashView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,

@@ -70,7 +70,9 @@ class UIHelper {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1C1C1E).withOpacity(0.85),
+                        color: Theme.of(context).brightness == Brightness.dark 
+                          ? const Color(0xFF2C2C2E).withOpacity(0.9) 
+                          : const Color(0xFF1C1C1E).withOpacity(0.85),
                         borderRadius: BorderRadius.circular(100),
                         border: Border.all(
                             color: Colors.white.withOpacity(0.15), width: 0.5),
@@ -260,10 +262,10 @@ class UIHelper {
               child: Container(
                 padding: const EdgeInsets.all(32),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
+                  color: Theme.of(context).cardColor.withOpacity(0.9),
                   borderRadius: BorderRadius.circular(32),
                   border: Border.all(
-                      color: Colors.white.withOpacity(0.5), width: 1),
+                      color: Theme.of(context).dividerColor.withOpacity(0.1), width: 1),
                 ),
                 child: Material(
                   color: Colors.transparent,
@@ -300,7 +302,7 @@ class UIHelper {
                       Text(message,
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                              color: Colors.grey[600],
+                              color: Theme.of(context).hintColor,
                               fontSize: 14,
                               height: 1.5)),
                       const SizedBox(height: 32),
@@ -319,8 +321,9 @@ class UIHelper {
                                 ),
                                 child: Center(
                                   child: Text(cancelText ?? 'Batal',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           fontWeight: FontWeight.bold,
+                                          color: Theme.of(context).textTheme.bodyMedium?.color,
                                           fontSize: 13)),
                                 ),
                               ),
@@ -335,7 +338,7 @@ class UIHelper {
                                     const EdgeInsets.symmetric(vertical: 16),
                                 decoration: BoxDecoration(
                                   color: isDangerous
-                                      ? Colors.black
+                                      ? (Theme.of(context).brightness == Brightness.dark ? Colors.redAccent : Colors.black)
                                       : AppColors.primary,
                                   borderRadius: BorderRadius.circular(16),
                                   boxShadow: [
@@ -405,10 +408,10 @@ class UIHelper {
               child: Container(
                 padding: const EdgeInsets.all(28),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.92),
+                  color: Theme.of(context).cardColor.withOpacity(0.92),
                   borderRadius: BorderRadius.circular(32),
                   border: Border.all(
-                      color: Colors.white.withOpacity(0.5), width: 1),
+                      color: Theme.of(context).dividerColor.withOpacity(0.1), width: 1),
                 ),
                 child: Material(
                   color: Colors.transparent,
@@ -454,7 +457,7 @@ class UIHelper {
               Text(message,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                      color: Colors.grey[600], fontSize: 14, height: 1.5)),
+                      color: Theme.of(context).hintColor, fontSize: 14, height: 1.5)),
               const SizedBox(height: 32),
               InkWell(
                 onTap: () => Navigator.of(dialogContext, rootNavigator: true).pop(),
@@ -462,7 +465,7 @@ class UIHelper {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   decoration: BoxDecoration(
-                    color: Colors.black,
+                    color: Theme.of(context).brightness == Brightness.dark ? AppColors.surfaceVariantDark : Colors.black,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
@@ -493,7 +496,7 @@ class UIHelper {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.9),
+            color: Theme.of(context).cardColor.withOpacity(0.9),
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
@@ -514,8 +517,8 @@ class UIHelper {
               Text(
                 message,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.black87,
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   decoration: TextDecoration.none,
@@ -563,7 +566,7 @@ class UIHelper {
                   'Layanan AI Advisor sedang dinonaktifkan sementara oleh admin untuk pemeliharaan rutin. Silakan coba beberapa saat lagi ya!',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                      color: Colors.grey[700],
+                      color: Theme.of(context).hintColor,
                       fontSize: 14,
                       height: 1.6,
                       fontWeight: FontWeight.w500)),
@@ -611,10 +614,10 @@ class UIHelper {
             margin: EdgeInsets.fromLTRB(
                 16, 0, 16, MediaQuery.of(ctx).padding.bottom + 16),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.8),
+              color: Theme.of(context).cardColor.withOpacity(0.8),
               borderRadius: BorderRadius.circular(32),
               border:
-                  Border.all(color: Colors.white.withOpacity(0.5), width: 1.5),
+                  Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1), width: 1.5),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.12),
@@ -633,7 +636,7 @@ class UIHelper {
                     width: 36,
                     height: 5,
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Theme.of(context).dividerColor.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(2.5),
                     ),
                   ),
@@ -643,7 +646,7 @@ class UIHelper {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Column(
+                        Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
@@ -652,21 +655,21 @@ class UIHelper {
                                 fontSize: 20,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: -0.8,
-                                color: Colors.black,
+                                color: Theme.of(context).textTheme.titleLarge?.color,
                               ),
                             ),
                             Text(
                               'Pilih kepribadian asistenmu',
                               style: TextStyle(
                                 fontSize: 13,
-                                color: Colors.black54,
+                                color: Theme.of(context).hintColor,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                           ],
                         ),
                         Material(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Theme.of(context).brightness == Brightness.dark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
                           shape: const CircleBorder(),
                           child: InkWell(
                             onTap: () => Navigator.pop(ctx),
@@ -693,7 +696,10 @@ class UIHelper {
                               final isMyBini = t == AppTone.pasangan;
                               final activeColor = isMyBini
                                   ? const Color(0xFFFF2D55)
-                                  : AppColors.primary;
+                                  : (Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? Colors.indigoAccent
+                                          : AppColors.primary);
 
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 10),
@@ -713,7 +719,7 @@ class UIHelper {
                                     decoration: BoxDecoration(
                                       color: isSelected
                                           ? activeColor.withOpacity(0.12)
-                                          : Colors.white.withOpacity(0.4),
+                                          : Theme.of(context).brightness == Brightness.dark ? AppColors.surfaceVariantDark : Colors.white.withOpacity(0.4),
                                       borderRadius: BorderRadius.circular(22),
                                       border: Border.all(
                                         color: isSelected
@@ -765,7 +771,13 @@ class UIHelper {
                                                   letterSpacing: -0.2,
                                                   color: isSelected
                                                       ? activeColor
-                                                      : Colors.black,
+                                                      : (Theme.of(context).brightness ==
+                                                              Brightness.dark
+                                                          ? Colors.white
+                                                          : Theme.of(context)
+                                                              .textTheme
+                                                              .bodyLarge
+                                                              ?.color),
                                                 ),
                                               ),
                                               Text(
@@ -775,7 +787,7 @@ class UIHelper {
                                                   color: isSelected
                                                       ? activeColor
                                                           .withOpacity(0.7)
-                                                      : Colors.black45,
+                                                      : Theme.of(context).hintColor,
                                                   fontWeight: FontWeight.w500,
                                                 ),
                                               ),
@@ -787,7 +799,7 @@ class UIHelper {
                                               color: activeColor, size: 28)
                                         else
                                           Icon(Icons.arrow_forward_ios_rounded,
-                                              color: Colors.black12, size: 16),
+                                              color: Theme.of(context).hintColor.withOpacity(0.3), size: 16),
                                       ],
                                     ),
                                   ),

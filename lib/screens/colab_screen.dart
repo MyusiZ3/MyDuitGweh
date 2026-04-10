@@ -39,14 +39,14 @@ class ColabScreenState extends State<ColabScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Kolaborasi',
             style: TextStyle(
                 fontWeight: FontWeight.w800,
                 fontSize: 22,
                 letterSpacing: -0.5)),
-        backgroundColor: AppColors.background,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         titleSpacing: 24,
         toolbarHeight: 70,
@@ -60,7 +60,7 @@ class ColabScreenState extends State<ColabScreen> {
             child: Container(
               height: 48,
               decoration: BoxDecoration(
-                color: const Color(0xFF767680).withOpacity(0.12),
+                color: Theme.of(context).brightness == Brightness.dark ? Colors.white.withOpacity(0.12) : const Color(0xFF767680).withOpacity(0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: TextField(
@@ -70,9 +70,9 @@ class ColabScreenState extends State<ColabScreen> {
                 style: const TextStyle(fontSize: 16),
                 decoration: InputDecoration(
                   hintText: 'Cari dompet...',
-                  hintStyle: const TextStyle(color: Color(0xFF8E8E93)),
-                  prefixIcon: const Icon(Icons.search_rounded,
-                      color: Color(0xFF8E8E93), size: 20),
+                  hintStyle: TextStyle(color: Theme.of(context).hintColor),
+                  prefixIcon: Icon(Icons.search_rounded,
+                      color: Theme.of(context).hintColor, size: 20),
                   suffixIcon: _searchQuery.isEmpty
                       ? null
                       : GestureDetector(
@@ -80,8 +80,8 @@ class ColabScreenState extends State<ColabScreen> {
                             _searchController.clear();
                             setState(() => _searchQuery = "");
                           },
-                          child: const Icon(Icons.cancel_rounded,
-                              color: Color(0xFF8E8E93), size: 18),
+                          child: Icon(Icons.cancel_rounded,
+                              color: Theme.of(context).hintColor, size: 18),
                         ),
                   border: InputBorder.none,
                   contentPadding:
@@ -156,7 +156,7 @@ class ColabScreenState extends State<ColabScreen> {
                 ToneManager.t('colab_empty_title'),
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).textTheme.titleMedium?.color,
                       fontWeight: FontWeight.bold,
                     ),
               ),
@@ -164,7 +164,7 @@ class ColabScreenState extends State<ColabScreen> {
               Text(
                 ToneManager.t('colab_empty_msg'),
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textHint),
+                style: TextStyle(color: Theme.of(context).hintColor),
               ),
             ],
           ),
@@ -228,7 +228,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -259,12 +259,12 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: AppColors.deepBlue.withOpacity(0.1),
+                              color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A84FF) : AppColors.deepBlue).withOpacity(0.2),
                               borderRadius: BorderRadius.circular(16),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.group_rounded,
-                              color: AppColors.deepBlue,
+                              color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A84FF) : AppColors.deepBlue,
                             ),
                           ),
                           if (unreadCount > 0)
@@ -278,7 +278,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                                   color: AppColors.expense,
                                   borderRadius: BorderRadius.circular(10),
                                   border:
-                                      Border.all(color: Colors.white, width: 2),
+                                      Border.all(color: Theme.of(context).cardColor, width: 2),
                                 ),
                                 constraints: const BoxConstraints(
                                     minWidth: 20, minHeight: 20),
@@ -315,9 +315,9 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                         const SizedBox(height: 2),
                         Text(
                           '${widget.wallet.members.length} anggota',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
-                            color: AppColors.textHint,
+                            color: Theme.of(context).textTheme.bodySmall?.color,
                           ),
                         ),
                       ],
@@ -344,7 +344,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                           _expanded
                               ? Icons.keyboard_arrow_up_rounded
                               : Icons.keyboard_arrow_down_rounded,
-                          color: AppColors.textHint,
+                          color: Theme.of(context).hintColor,
                           size: 20,
                         ),
                       ],
@@ -393,17 +393,17 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
               if (widget.wallet.owner == widget.currentUid)
                 GestureDetector(
                   onTap: () => _showAddMemberDialog(),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.person_add_outlined,
+                      const Icon(Icons.person_add_outlined,
                           size: 16, color: AppColors.primary),
-                      SizedBox(width: 4),
+                      const SizedBox(width: 4),
                       Text(
                         'Undang',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.primary,
+                          color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A84FF) : AppColors.primary,
                         ),
                       ),
                     ],
@@ -435,23 +435,23 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.05),
+                      color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A84FF) : AppColors.primary).withOpacity(0.15),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                          color: AppColors.primary.withOpacity(0.15)),
+                          color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A84FF) : AppColors.primary).withOpacity(0.25)),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.chat_rounded,
-                            size: 18, color: AppColors.primary),
-                        SizedBox(width: 8),
+                            size: 18, color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A84FF) : AppColors.primary),
+                        const SizedBox(width: 8),
                         Text(
                           'Buka Chat',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.primary,
+                            color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A84FF) : AppColors.primary,
                           ),
                         ),
                       ],
@@ -471,7 +471,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                     if (confirm == true) {
                       await widget.firestoreService
                           .leaveWallet(widget.wallet.id, widget.currentUid);
-                      if (context.mounted) {
+                      if (mounted) {
                         UIHelper.showSuccessSnackBar(
                             context, 'Berhasil keluar dompet 👋');
                       }
@@ -526,19 +526,19 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
               left: 12, right: canKick ? 6 : 12, top: 6, bottom: 6),
           decoration: BoxDecoration(
             color: isOwner
-                ? AppColors.primary.withOpacity(0.1)
-                : AppColors.surfaceVariant,
+                ? (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A84FF) : AppColors.primary).withOpacity(0.2)
+                : Theme.of(context).canvasColor,
             borderRadius: BorderRadius.circular(20),
             border: isOwner
-                ? Border.all(color: AppColors.primary.withOpacity(0.3))
+                ? Border.all(color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A84FF) : AppColors.primary).withOpacity(0.35))
                 : null,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               if (isOwner) ...[
-                const Icon(Icons.star_rounded,
-                    size: 14, color: AppColors.primary),
+                Icon(Icons.star_rounded,
+                    size: 14, color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A84FF) : AppColors.primary),
                 const SizedBox(width: 4),
               ],
               Flexible(
@@ -550,7 +550,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                     color:
-                        isOwner ? AppColors.primary : AppColors.textSecondary,
+                        isOwner ? (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A84FF) : AppColors.primary) : AppColors.textSecondary,
                   ),
                 ),
               ),
@@ -566,7 +566,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                     if (confirm == true) {
                       await widget.firestoreService
                           .kickMember(widget.wallet.id, uid);
-                      if (context.mounted) {
+                      if (mounted) {
                         UIHelper.showSuccessSnackBar(
                             context, 'Anggota dikeluarkan 👋');
                       }
@@ -670,9 +670,9 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                           ),
                           Text(
                             CurrencyFormatter.formatRelativeDate(txn.date),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
-                              color: AppColors.textHint,
+                              color: Theme.of(context).textTheme.bodySmall?.color,
                             ),
                           ),
                         ],
@@ -718,9 +718,9 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                 MediaQuery.of(ctx).padding.bottom +
                 24,
           ),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: SingleChildScrollView(
             child: Column(
@@ -731,7 +731,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: AppColors.textHint.withOpacity(0.3),
+                      color: Theme.of(context).brightness == Brightness.dark ? Colors.white24 : Colors.grey[300],
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -747,17 +747,17 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                       color: AppColors.primary, size: 36),
                 ),
                 const SizedBox(height: 20),
-                const Text('Undang Anggota',
+                Text('Undang Anggota',
                     style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.3)),
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: Theme.of(context).textTheme.titleLarge?.color)),
                 const SizedBox(height: 8),
                 Text(
                   'Masukkan email akun teman yang sudah\nterdaftar di MyDuitGweh.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                      color: AppColors.textHint, fontSize: 13, height: 1.5),
+                      color: Theme.of(context).hintColor, fontSize: 13, height: 1.5),
                 ),
                 const SizedBox(height: 24),
                 TextField(
@@ -768,7 +768,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                     prefixIcon: const Icon(Icons.email_outlined,
                         color: AppColors.primary),
                     filled: true,
-                    fillColor: AppColors.surfaceVariant,
+                    fillColor: Theme.of(context).canvasColor,
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide.none),
@@ -806,12 +806,12 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                             if (!ctx.mounted) return;
                             Navigator.pop(ctx);
                             if (success) {
-                              if (context.mounted) {
+                              if (mounted) {
                                 UIHelper.showSuccessSnackBar(
                                     context, 'Undangan berhasil dikirim!');
                               }
                             } else {
-                              if (context.mounted) {
+                              if (mounted) {
                                 UIHelper.showErrorSnackBar(context,
                                     'Email tidak ditemukan atau sudah bergabung');
                               }

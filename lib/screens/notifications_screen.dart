@@ -49,16 +49,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text('Notifikasi',
+        title: Text('Notifikasi',
             style: TextStyle(
-                fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                fontWeight: FontWeight.w800, color: Theme.of(context).textTheme.titleLarge?.color)),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: AppColors.textPrimary, size: 20),
+          icon: Icon(Icons.arrow_back_ios_new_rounded,
+              color: Theme.of(context).iconTheme.color, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -260,12 +260,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   Text(
                     data['message'] ?? '',
                     style: TextStyle(
-                        color: AppColors.textHint, fontSize: 13, height: 1.4),
+                        color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 13, height: 1.4),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     DateFormat('dd MMM, HH:mm').format(timestamp),
-                    style: const TextStyle(color: Colors.black26, fontSize: 11),
+                    style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.5), fontSize: 11),
                   ),
                 ],
               ),
@@ -286,7 +286,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: isRead ? Colors.white.withOpacity(0.6) : Colors.white,
+        color: isRead ? Theme.of(context).cardColor.withOpacity(0.6) : Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -324,15 +324,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       Text(
                         data['message'] ?? '',
                         style: TextStyle(
-                            color: AppColors.textHint,
+                            color: Theme.of(context).textTheme.bodyMedium?.color,
                             fontSize: 13,
                             height: 1.4),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         DateFormat('dd MMM, HH:mm').format(timestamp),
-                        style: const TextStyle(
-                            color: Colors.black26, fontSize: 11),
+                        style: TextStyle(
+                            color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.5), fontSize: 11),
                       ),
                       if (type == 'invite' && data['status'] == 'pending') ...[
                         const SizedBox(height: 16),

@@ -115,7 +115,7 @@ class _ConnectionBadgeState extends State<ConnectionBadge> {
             decoration: BoxDecoration(
               color: _getBadgeColor(),
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 2),
+              border: Border.all(color: Theme.of(context).cardColor, width: 2),
               boxShadow: [
                 BoxShadow(
                   color: _getBadgeColor().withOpacity(0.4),

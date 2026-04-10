@@ -184,15 +184,18 @@ class _ReportScreenState extends State<ReportScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Laporan Keuangan'),
-        backgroundColor: AppColors.background,
+        title: Text('Laporan Keuangan'),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         actions: [
           IconButton(
             onPressed: _showExportDialog,
-            icon: const Icon(Icons.download_rounded, color: AppColors.primary),
+            icon: Icon(Icons.download_rounded,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.indigoAccent
+                    : Theme.of(context).primaryColor),
             tooltip: 'Export PDF',
           ),
         ],
@@ -208,27 +211,29 @@ class _ReportScreenState extends State<ReportScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                        color: Colors.black.withOpacity(0.02),
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.black.withOpacity(0.3)
+                            : Colors.black.withOpacity(0.02),
                         blurRadius: 10,
                         offset: const Offset(0, 4))
                   ],
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.calendar_today_rounded,
-                        color: AppColors.primary, size: 20),
+                    Icon(Icons.calendar_today_rounded,
+                        color: Theme.of(context).primaryColor, size: 20),
                     const SizedBox(width: 12),
                     Text(
                       '${DateFormat('dd MMM').format(selectedDateRange.start)} - ${DateFormat('dd MMM yyyy').format(selectedDateRange.end)}',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     const Spacer(),
-                    const Icon(Icons.keyboard_arrow_down_rounded,
-                        color: AppColors.textHint),
+                    Icon(Icons.keyboard_arrow_down_rounded,
+                        color: Theme.of(context).hintColor),
                   ],
                 ),
               ),
@@ -378,13 +383,13 @@ class _ReportScreenState extends State<ReportScreen> {
                   strokeWidth: 2,
                 ),
               )
-            : const Text('Arch AI',
+            : Text('Arch AI',
                 style: TextStyle(
                     fontWeight: FontWeight.bold, color: Colors.white)),
         icon: _isCheckingAi
             ? const SizedBox.shrink()
-            : const Icon(Icons.auto_awesome_rounded, color: Colors.white),
-        backgroundColor: AppColors.primary,
+            : Icon(Icons.auto_awesome_rounded, color: Colors.white),
+        backgroundColor: Theme.of(context).primaryColor,
         elevation: 4,
       ),
     );
@@ -400,16 +405,17 @@ class _ReportScreenState extends State<ReportScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.light(
-              primary: AppColors.primary,
+              primary: Theme.of(context).primaryColor,
               onPrimary: Colors.white,
-              onSurface: AppColors.textPrimary,
+              onSurface: Theme.of(context).textTheme.bodyLarge?.color ??
+                  Colors.black87,
               secondaryContainer: const Color.fromARGB(255, 144, 142, 180)
                   .withOpacity(
                       0.12), // Warna blok rentang (sekarang dipaksa biru muda)
             ),
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
-                foregroundColor: AppColors.primary,
+                foregroundColor: Theme.of(context).primaryColor,
               ),
             ),
           ),
@@ -431,7 +437,7 @@ class _ReportScreenState extends State<ReportScreen> {
         return Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(28),
             boxShadow: [
               BoxShadow(
@@ -449,12 +455,12 @@ class _ReportScreenState extends State<ReportScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
+                      color: Theme.of(context).primaryColor.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.auto_awesome_rounded,
-                      color: AppColors.primary,
+                      color: Theme.of(context).primaryColor,
                       size: 24,
                     ),
                   ),
@@ -463,7 +469,7 @@ class _ReportScreenState extends State<ReportScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Auto-Magic Sync',
                           style: TextStyle(
                             fontWeight: FontWeight.w900,
@@ -476,10 +482,13 @@ class _ReportScreenState extends State<ReportScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.1),
+                            color:
+                                Theme.of(context).primaryColor.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(4),
                             border: Border.all(
-                                color: AppColors.primary.withOpacity(0.2),
+                                color: Theme.of(context)
+                                    .primaryColor
+                                    .withOpacity(0.2),
                                 width: 0.8),
                           ),
                           child: Text(
@@ -487,17 +496,17 @@ class _ReportScreenState extends State<ReportScreen> {
                             style: TextStyle(
                               fontWeight: FontWeight.w900,
                               fontSize: 7,
-                              color: AppColors.primary,
+                              color: Theme.of(context).primaryColor,
                               letterSpacing: 0.5,
                             ),
                           ),
                         ),
                         const SizedBox(height: 4),
-                        const Text(
+                        Text(
                           'Pencatatan otomatis dari notifikasi keuangan',
                           style: TextStyle(
                             fontSize: 12,
-                            color: AppColors.textHint,
+                            color: Theme.of(context).hintColor,
                           ),
                         ),
                       ],
@@ -551,11 +560,11 @@ class _ReportScreenState extends State<ReportScreen> {
                         Future.delayed(
                             const Duration(seconds: 2), _checkNotifStatus);
                       },
-                      icon: const Icon(Icons.settings_suggest_rounded,
+                      icon: Icon(Icons.settings_suggest_rounded,
                           color: Colors.white, size: 20),
-                      label: const Text('Buka Pengaturan Perizinan'),
+                      label: Text('Buka Pengaturan Perizinan'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
+                        backgroundColor: Theme.of(context).primaryColor,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -579,13 +588,13 @@ class _ReportScreenState extends State<ReportScreen> {
                           'Banner perizinan di-reset! Silakan kembali ke Home.');
                     }
                   },
-                  child: const Center(
+                  child: Center(
                     child: Text(
                       'Tampilkan kembali banner di Home',
                       style: TextStyle(
                         fontSize: 12,
                         decoration: TextDecoration.underline,
-                        color: AppColors.textHint,
+                        color: Theme.of(context).hintColor,
                       ),
                     ),
                   ),
@@ -604,13 +613,16 @@ class _ReportScreenState extends State<ReportScreen> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(32),
         gradient: LinearGradient(
-          colors: [AppColors.primary, AppColors.primary.withOpacity(0.85)],
+          colors: [
+            Theme.of(context).primaryColor,
+            Theme.of(context).primaryColor.withOpacity(0.85)
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.3),
+            color: Theme.of(context).primaryColor.withOpacity(0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -618,7 +630,7 @@ class _ReportScreenState extends State<ReportScreen> {
       ),
       child: Column(
         children: [
-          const Text('TOTAL SALDO BERSIH',
+          Text('TOTAL SALDO BERSIH',
               style: TextStyle(
                   color: Colors.white70,
                   fontSize: 11,
@@ -629,7 +641,7 @@ class _ReportScreenState extends State<ReportScreen> {
             fit: BoxFit.scaleDown,
             child: Text(
               CurrencyFormatter.formatCurrency(balance),
-              style: const TextStyle(
+              style: TextStyle(
                   color: Colors.white,
                   fontSize: 32,
                   fontWeight: FontWeight.w900,
@@ -671,16 +683,15 @@ class _ReportScreenState extends State<ReportScreen> {
           children: [
             Icon(icon, size: 14, color: Colors.white70),
             const SizedBox(width: 4),
-            Text(label,
-                style: const TextStyle(color: Colors.white70, fontSize: 12)),
+            Text(label, style: TextStyle(color: Colors.white70, fontSize: 12)),
           ],
         ),
         const SizedBox(height: 4),
         FittedBox(
           fit: BoxFit.scaleDown,
           child: Text(CurrencyFormatter.formatCurrency(amount),
-              style: const TextStyle(
-                  color: Colors.white, fontWeight: FontWeight.bold)),
+              style:
+                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         ),
       ],
     );
@@ -690,7 +701,9 @@ class _ReportScreenState extends State<ReportScreen> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: AppColors.surfaceVariant.withOpacity(0.5),
+        color: Theme.of(context).brightness == Brightness.dark
+            ? Colors.white.withOpacity(0.05)
+            : AppColors.surfaceVariant.withOpacity(0.5),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -698,26 +711,31 @@ class _ReportScreenState extends State<ReportScreen> {
           Expanded(
             child: _toggleItem('Kategori', _isCategoryMode, () {
               setState(() => _isCategoryMode = true);
-            }),
+            }, context),
           ),
           Expanded(
             child: _toggleItem('Tren Mingguan', !_isCategoryMode, () {
               setState(() => _isCategoryMode = false);
-            }),
+            }, context),
           ),
         ],
       ),
     );
   }
 
-  Widget _toggleItem(String label, bool isActive, VoidCallback onTap) {
+  Widget _toggleItem(
+      String label, bool isActive, VoidCallback onTap, BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: isActive ? Colors.white : Colors.transparent,
+          color: isActive
+              ? (Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF0A84FF)
+                  : Theme.of(context).primaryColor)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           boxShadow: isActive
               ? [
@@ -734,7 +752,11 @@ class _ReportScreenState extends State<ReportScreen> {
             style: TextStyle(
               fontSize: 13,
               fontWeight: isActive ? FontWeight.w800 : FontWeight.w500,
-              color: isActive ? AppColors.primary : AppColors.textHint,
+              color: isActive
+                  ? Colors.white
+                  : (Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white.withOpacity(0.5)
+                      : Theme.of(context).hintColor),
             ),
           ),
         ),
@@ -749,7 +771,7 @@ class _ReportScreenState extends State<ReportScreen> {
         List<PieChartSectionData> sections = [];
         int i = 0;
         final colors = [
-          AppColors.primary,
+          Theme.of(context).primaryColor,
           const Color(0xFF5856D6), // iOS Purple
           AppColors.income,
           const Color(0xFFFF9500), // iOS Orange
@@ -812,15 +834,17 @@ class _ReportScreenState extends State<ReportScreen> {
                     style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textHint),
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF8E8E93)
+                            : Theme.of(context).hintColor),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     CurrencyFormatter.formatCurrency(total),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w900,
-                      color: AppColors.textPrimary,
+                      color: Theme.of(context).textTheme.titleLarge?.color,
                     ),
                   ),
                 ],
@@ -906,10 +930,14 @@ class _ReportScreenState extends State<ReportScreen> {
                 return Padding(
                   padding: const EdgeInsets.only(top: 8.0),
                   child: Text(day,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textHint)),
+                          color: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.color
+                              ?.withOpacity(0.7))),
                 );
               },
             ),
@@ -921,7 +949,7 @@ class _ReportScreenState extends State<ReportScreen> {
               final type = rodIndex == 0 ? 'Pemasukan' : 'Pengeluaran';
               return BarTooltipItem(
                 '$type\n${CurrencyFormatter.formatCurrency(rod.toY)}',
-                const TextStyle(
+                TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: 12),
@@ -941,30 +969,46 @@ class _ReportScreenState extends State<ReportScreen> {
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-              color: Colors.white, borderRadius: BorderRadius.circular(16)),
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(16)),
           child: Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                    color: AppColors.background,
-                    borderRadius: BorderRadius.circular(10)),
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white.withOpacity(0.08)
+                        : Theme.of(context)
+                            .scaffoldBackgroundColor
+                            .withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(20)),
                 child: Icon(TransactionCategory.getIconForCategory(e.key),
-                    color: AppColors.primary, size: 20),
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF0A84FF)
+                        : Theme.of(context).primaryColor,
+                    size: 20),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(e.key,
-                        style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text(e.key, style: TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 4),
                     LinearProgressIndicator(
-                        value: percentage,
-                        backgroundColor: AppColors.background,
-                        color: AppColors.primary,
-                        minHeight: 4),
+                      value: percentage,
+                      backgroundColor:
+                          Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white.withOpacity(0.12)
+                              : Theme.of(context).scaffoldBackgroundColor,
+                      valueColor: AlwaysStoppedAnimation<Color>(percentage > 0.5
+                          ? AppColors.expense
+                          : (Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFF0A84FF)
+                              : Theme.of(context).primaryColor)),
+                      minHeight: 8,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                   ],
                 ),
               ),
@@ -972,7 +1016,7 @@ class _ReportScreenState extends State<ReportScreen> {
               FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(CurrencyFormatter.formatCurrency(e.value),
-                    style: const TextStyle(fontWeight: FontWeight.w900)),
+                    style: TextStyle(fontWeight: FontWeight.w900)),
               ),
             ],
           ),
@@ -987,12 +1031,11 @@ class _ReportScreenState extends State<ReportScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.analytics_outlined,
-              size: 80, color: AppColors.textHint.withOpacity(0.2)),
+              size: 80, color: Theme.of(context).hintColor.withOpacity(0.2)),
           const SizedBox(height: 16),
           Text(title,
-              style:
-                  const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          Text(subtitle, style: const TextStyle(color: AppColors.textHint)),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(subtitle, style: TextStyle(color: Theme.of(context).hintColor)),
         ],
       ),
     );
@@ -1035,8 +1078,8 @@ class _ReportScreenState extends State<ReportScreen> {
         backgroundColor: Colors.transparent,
         builder: (ctx) => StatefulBuilder(builder: (context, setSheetState) {
           return Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
             ),
             padding: EdgeInsets.only(
@@ -1054,11 +1097,11 @@ class _ReportScreenState extends State<ReportScreen> {
                     height: 4,
                     margin: const EdgeInsets.only(bottom: 24),
                     decoration: BoxDecoration(
-                        color: AppColors.textHint.withOpacity(0.3),
+                        color: Theme.of(context).hintColor.withOpacity(0.3),
                         borderRadius: BorderRadius.circular(2)),
                   ),
                 ),
-                const Text('Pilih Kategori',
+                Text('Pilih Kategori',
                     style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w900,
@@ -1066,7 +1109,8 @@ class _ReportScreenState extends State<ReportScreen> {
                 const SizedBox(height: 8),
                 Text(
                     'Tentukan kategori yang ingin kamu masukkan ke dalam laporan.',
-                    style: TextStyle(color: AppColors.textHint, fontSize: 13)),
+                    style: TextStyle(
+                        color: Theme.of(context).hintColor, fontSize: 13)),
                 const SizedBox(height: 24),
 
                 // Selection Actions
@@ -1114,12 +1158,17 @@ class _ReportScreenState extends State<ReportScreen> {
                                 horizontal: 14, vertical: 10),
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? AppColors.primary.withOpacity(0.1)
-                                  : AppColors.background,
+                                  ? (Theme.of(context).brightness == Brightness.dark 
+                                      ? Colors.indigoAccent 
+                                      : Theme.of(context).primaryColor)
+                                      .withOpacity(0.1)
+                                  : Theme.of(context).scaffoldBackgroundColor,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: isSelected
-                                    ? AppColors.primary
+                                    ? (Theme.of(context).brightness == Brightness.dark 
+                                        ? Colors.indigoAccent 
+                                        : Theme.of(context).primaryColor)
                                     : Colors.transparent,
                                 width: 1.5,
                               ),
@@ -1131,8 +1180,10 @@ class _ReportScreenState extends State<ReportScreen> {
                                   TransactionCategory.getIconForCategory(cat),
                                   size: 16,
                                   color: isSelected
-                                      ? AppColors.primary
-                                      : AppColors.textHint,
+                                      ? (Theme.of(context).brightness == Brightness.dark 
+                                          ? Colors.indigoAccent 
+                                          : Theme.of(context).primaryColor)
+                                      : Theme.of(context).hintColor,
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
@@ -1143,8 +1194,14 @@ class _ReportScreenState extends State<ReportScreen> {
                                         ? FontWeight.bold
                                         : FontWeight.normal,
                                     color: isSelected
-                                        ? AppColors.primary
-                                        : AppColors.textPrimary,
+                                        ? (Theme.of(context).brightness == Brightness.dark 
+                                            ? Colors.indigoAccent 
+                                            : Theme.of(context).primaryColor)
+                                        : Theme.of(context)
+                                                .textTheme
+                                                .bodyLarge
+                                                ?.color ??
+                                            Colors.black87,
                                   ),
                                 ),
                               ],
@@ -1205,19 +1262,25 @@ class _ReportScreenState extends State<ReportScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isActive ? AppColors.primary : Colors.transparent,
+          color: isActive 
+              ? (Theme.of(context).brightness == Brightness.dark 
+                  ? Colors.indigoAccent 
+                  : Theme.of(context).primaryColor) 
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
               color: isActive
-                  ? AppColors.primary
-                  : AppColors.textHint.withOpacity(0.3)),
+                  ? (Theme.of(context).brightness == Brightness.dark 
+                      ? Colors.indigoAccent 
+                      : Theme.of(context).primaryColor)
+                  : Theme.of(context).hintColor.withOpacity(0.3)),
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.bold,
-            color: isActive ? Colors.white : AppColors.textHint,
+            color: isActive ? Colors.white : Theme.of(context).hintColor,
           ),
         ),
       ),
@@ -1242,7 +1305,7 @@ class _ReportScreenState extends State<ReportScreen> {
       child: Center(
         child: Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
               fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: 1.2),
         ),
       ),
@@ -1363,16 +1426,24 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.white,
+          color: isSelected
+              ? (Theme.of(context).brightness == Brightness.dark
+                  ? Colors.indigoAccent
+                  : Theme.of(context).primaryColor)
+              : Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.surfaceVariant,
+            color: isSelected
+                ? (Theme.of(context).brightness == Brightness.dark
+                    ? Colors.indigoAccent
+                    : Theme.of(context).primaryColor)
+                : Theme.of(context).dividerColor.withOpacity(0.1),
             width: 1.5,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.3),
+                    color: Theme.of(context).primaryColor.withOpacity(0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   )
@@ -1385,7 +1456,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
             Icon(
               icon,
               size: 20,
-              color: isSelected ? Colors.white : AppColors.textHint,
+              color: isSelected ? Colors.white : Theme.of(context).hintColor,
             ),
             const SizedBox(width: 8),
             Text(
@@ -1393,7 +1464,10 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
-                color: isSelected ? Colors.white : AppColors.textPrimary,
+                color: isSelected
+                    ? Colors.white
+                    : Theme.of(context).textTheme.bodyLarge?.color ??
+                        Colors.black87,
               ),
             ),
           ],
@@ -1516,9 +1590,10 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
           return Container(
             height: MediaQuery.of(context).size.height * 0.8,
             padding: EdgeInsets.only(bottom: bottomInset),
-            decoration: const BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(32)),
             ),
             child: SafeArea(
               top: false,
@@ -1530,7 +1605,9 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                     height: 4,
                     margin: const EdgeInsets.symmetric(vertical: 16),
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.grey.shade700
+                          : Colors.grey.shade300,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -1544,19 +1621,26 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.key_rounded,
-                                  color: AppColors.primary),
+                              Icon(Icons.key_rounded,
+                                  color: Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.indigoAccent
+                                      : Theme.of(context).primaryColor),
                               const SizedBox(width: 12),
                               Text(ToneManager.t('dialog_api_title'),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontWeight: FontWeight.w900,
                                       fontSize: 18,
                                       letterSpacing: -0.5)),
                               const Spacer(),
                               IconButton(
                                   onPressed: () => Navigator.pop(context),
-                                  icon: const Icon(Icons.close_rounded,
-                                      size: 20)),
+                                  icon: Icon(Icons.close_rounded,
+                                      size: 20,
+                                      color: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.color)),
                             ],
                           ),
                           const SizedBox(height: 24),
@@ -1585,29 +1669,34 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                           ),
                           const SizedBox(height: 24),
                           Text(ToneManager.t('dialog_api_add'),
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.textHint)),
+                                  color: Theme.of(context).hintColor)),
                           const SizedBox(height: 12),
                           TextField(
                             controller: controller,
-                            style: const TextStyle(fontSize: 14),
+                            style: TextStyle(fontSize: 14),
                             decoration: InputDecoration(
                               hintText: 'Masukkan API Key...',
                               hintStyle: TextStyle(
-                                  color: AppColors.textHint.withOpacity(0.5)),
+                                  color: Theme.of(context)
+                                      .hintColor
+                                      .withOpacity(0.5)),
                               filled: true,
-                              fillColor:
-                                  AppColors.surfaceVariant.withOpacity(0.3),
+                              fillColor: (Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? AppColors.surfaceVariantDark
+                                      : AppColors.surfaceVariant)
+                                  .withOpacity(0.3),
                               contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 20, vertical: 16),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
                                 borderSide: BorderSide.none,
                               ),
-                              prefixIcon: const Icon(Icons.vpn_key_outlined,
-                                  size: 20, color: AppColors.textHint),
+                              prefixIcon: Icon(Icons.vpn_key_outlined,
+                                  size: 20, color: Theme.of(context).hintColor),
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -1624,22 +1713,33 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                       controller.text = clipboardData.text!;
                                     }
                                   },
-                                  icon: const Icon(Icons.paste_rounded,
-                                      size: 16, color: AppColors.primary),
-                                  label: const Text('Paste',
+                                  icon: Icon(Icons.paste_rounded,
+                                      size: 16,
+                                      color: Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? Colors.indigoAccent
+                                          : Theme.of(context).primaryColor),
+                                  label: Text('Paste',
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold,
-                                          color: AppColors.primary)),
+                                          color: Theme.of(context).brightness ==
+                                                  Brightness.dark
+                                              ? Colors.indigoAccent
+                                              : Theme.of(context).primaryColor)),
                                   style: ElevatedButton.styleFrom(
                                     elevation: 0,
-                                    backgroundColor:
-                                        AppColors.primary.withOpacity(0.1),
+                                    backgroundColor: (Theme.of(context).brightness == Brightness.dark
+                                            ? Colors.indigoAccent
+                                            : Theme.of(context).primaryColor)
+                                        .withOpacity(0.12),
                                     padding: const EdgeInsets.symmetric(
                                         vertical: 14),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(16),
                                       side: BorderSide(
-                                          color: AppColors.primary
+                                          color: (Theme.of(context).brightness == Brightness.dark
+                                                  ? Colors.indigoAccent
+                                                  : Theme.of(context).primaryColor)
                                               .withOpacity(0.3),
                                           width: 1.5),
                                     ),
@@ -1651,19 +1751,19 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                 flex: 2,
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [
-                                        AppColors.primary,
-                                        Color(0xFF8B5CF6)
-                                      ],
+                                    gradient: LinearGradient(
+                                      colors: Theme.of(context).brightness == Brightness.dark
+                                          ? [Colors.indigoAccent, Color(0xFF9333EA)]
+                                          : [Theme.of(context).primaryColor, Color(0xFF8B5CF6)],
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                     ),
                                     borderRadius: BorderRadius.circular(16),
                                     boxShadow: [
                                       BoxShadow(
-                                        color:
-                                            AppColors.primary.withOpacity(0.3),
+                                        color: Theme.of(context)
+                                            .primaryColor
+                                            .withOpacity(0.3),
                                         blurRadius: 12,
                                         offset: const Offset(0, 4),
                                       ),
@@ -1730,15 +1830,13 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                             child: CircularProgressIndicator(
                                                 color: Colors.white,
                                                 strokeWidth: 2))
-                                        : const Icon(
-                                            Icons.add_circle_outline_rounded,
-                                            size: 18,
-                                            color: Colors.white),
+                                        : Icon(Icons.add_circle_outline_rounded,
+                                            size: 18, color: Colors.white),
                                     label: Text(
                                         isCheckingKey
                                             ? 'Mengecek...'
                                             : 'Add API',
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                             fontWeight: FontWeight.w900,
                                             color: Colors.white,
                                             fontSize: 14)),
@@ -1758,14 +1856,14 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                             ],
                           ),
                           const SizedBox(height: 24),
-                          const Row(
+                          Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text('KUNCI BAWAAN (Shared)',
                                   style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.bold,
-                                      color: AppColors.textHint,
+                                      color: Theme.of(context).hintColor,
                                       letterSpacing: 1.5)),
                             ],
                           ),
@@ -1781,14 +1879,26 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 16, vertical: 10),
                               decoration: BoxDecoration(
-                                color:
-                                    AppColors.surfaceVariant.withOpacity(0.2),
+                                color: isActive
+                                    ? (Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? Colors.indigoAccent
+                                            : Theme.of(context).primaryColor)
+                                        .withOpacity(0.12)
+                                    : (Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? AppColors.surfaceVariantDark
+                                            : AppColors.surfaceVariant)
+                                        .withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
                                     color: isActive
-                                        ? AppColors.primary.withOpacity(0.3)
+                                        ? (Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? Colors.indigoAccent
+                                            : Theme.of(context).primaryColor)
                                         : Colors.transparent,
-                                    width: 1),
+                                    width: 1.5),
                               ),
                               child: InkWell(
                                 onTap: () {
@@ -1810,16 +1920,26 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                             : Icons.radio_button_off,
                                         size: 16,
                                         color: isActive
-                                            ? AppColors.primary
-                                            : Colors.grey),
+                                            ? (Theme.of(context).brightness ==
+                                                    Brightness.dark
+                                                ? Colors.indigoAccent
+                                                : Theme.of(context).primaryColor)
+                                            : (Theme.of(context).brightness ==
+                                                    Brightness.dark
+                                                ? Colors.white30
+                                                : Colors.grey)),
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: Text(
                                           'Integrated Keys ($keysCount keys)',
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                               fontSize: 12,
                                               fontWeight: FontWeight.w600,
-                                              color: AppColors.textPrimary)),
+                                              color: Theme.of(context)
+                                                      .textTheme
+                                                      .bodyLarge
+                                                      ?.color ??
+                                                  Colors.black87)),
                                     ),
                                   ],
                                 ),
@@ -1828,11 +1948,11 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                           }),
                           if (_localAllApiKeys.isNotEmpty) ...[
                             const SizedBox(height: 24),
-                            const Text('SAVED KEYS',
+                            Text('SAVED KEYS',
                                 style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
-                                    color: AppColors.textHint,
+                                    color: Theme.of(context).hintColor,
                                     letterSpacing: 1.5)),
                             const SizedBox(height: 12),
                             ConstrainedBox(
@@ -1853,20 +1973,28 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                           horizontal: 16, vertical: 12),
                                       decoration: BoxDecoration(
                                         color: isActive
-                                            ? AppColors.primary
+                                            ? Theme.of(context)
+                                                .primaryColor
                                                 .withOpacity(0.08)
-                                            : Colors.white,
+                                            : Theme.of(context).cardColor,
                                         borderRadius: BorderRadius.circular(20),
                                         border: Border.all(
                                             color: isActive
-                                                ? AppColors.primary
+                                                ? Theme.of(context)
+                                                    .primaryColor
                                                     .withOpacity(0.2)
-                                                : AppColors.surfaceVariant,
+                                                : (Theme.of(context)
+                                                                .brightness ==
+                                                            Brightness.dark
+                                                        ? Colors.white10
+                                                        : AppColors
+                                                            .surfaceVariant),
                                             width: 1.5),
                                         boxShadow: isActive
                                             ? [
                                                 BoxShadow(
-                                                    color: AppColors.primary
+                                                    color: Theme.of(context)
+                                                        .primaryColor
                                                         .withOpacity(0.1),
                                                     blurRadius: 8,
                                                     offset: const Offset(0, 4))
@@ -1892,8 +2020,15 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                               padding: const EdgeInsets.all(8),
                                               decoration: BoxDecoration(
                                                 color: isActive
-                                                    ? AppColors.primary
-                                                    : AppColors.surfaceVariant
+                                                    ? Theme.of(context)
+                                                        .primaryColor
+                                                    : (Theme.of(context)
+                                                                    .brightness ==
+                                                                Brightness.dark
+                                                            ? AppColors
+                                                                .surfaceVariantDark
+                                                            : AppColors
+                                                                .surfaceVariant)
                                                         .withOpacity(0.5),
                                                 shape: BoxShape.circle,
                                               ),
@@ -1907,7 +2042,8 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                                 size: 14,
                                                 color: isActive
                                                     ? Colors.white
-                                                    : AppColors.textHint,
+                                                    : Theme.of(context)
+                                                        .hintColor,
                                               ),
                                             ),
                                             const SizedBox(width: 12),
@@ -1924,16 +2060,22 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                                             : FontWeight.w600,
                                                         fontSize: 13,
                                                         color: isActive
-                                                            ? AppColors.primary
-                                                            : AppColors
-                                                                .textPrimary),
+                                                            ? Theme.of(context)
+                                                                .primaryColor
+                                                            : (Theme.of(context)
+                                                                        .brightness ==
+                                                                    Brightness
+                                                                        .dark
+                                                                ? Colors.white70
+                                                                : AppColors
+                                                                    .textPrimary)),
                                                   ),
                                                   if (isActive)
                                                     Text(
                                                         ToneManager.t(
                                                             'dialog_api_active'),
                                                         style:
-                                                            const TextStyle(
+                                                            TextStyle(
                                                                 fontSize: 9,
                                                                 fontWeight:
                                                                     FontWeight
@@ -1947,10 +2089,14 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                             ),
                                             const SizedBox(width: 8),
                                             IconButton(
-                                              icon: const Icon(
+                                              icon: Icon(
                                                   Icons.delete_sweep_rounded,
                                                   size: 20,
-                                                  color: Colors.grey),
+                                                  color: Theme.of(context)
+                                                                  .brightness ==
+                                                              Brightness.dark
+                                                          ? Colors.white38
+                                                          : Colors.grey),
                                               padding: EdgeInsets.zero,
                                               constraints:
                                                   const BoxConstraints(),
@@ -2007,13 +2153,12 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                 Navigator.pop(context); // Close dialog first
                                 _showAPITutorial();
                               },
-                              icon: const Icon(Icons.help_outline_rounded,
-                                  size: 14, color: AppColors.textHint),
-                              label: const Text(
-                                  'Bingung cara dapetin API Key-nya?',
+                              icon: Icon(Icons.help_outline_rounded,
+                                  size: 14, color: Theme.of(context).hintColor),
+                              label: Text('Bingung cara dapetin API Key-nya?',
                                   style: TextStyle(
                                       fontSize: 11,
-                                      color: AppColors.textHint,
+                                      color: Theme.of(context).hintColor,
                                       decoration: TextDecoration.underline)),
                             ),
                           ),
@@ -2036,8 +2181,8 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.8,
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
       ),
       child: SafeArea(
@@ -2052,7 +2197,9 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                 height: 4,
                 margin: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white12
+                        : Colors.grey[300],
                     borderRadius: BorderRadius.circular(2)),
               ),
               Padding(
@@ -2063,18 +2210,21 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                       IconButton(
                         onPressed: () =>
                             setState(() => _currentSessionId = null),
-                        icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                            size: 20),
+                        icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20),
                         tooltip: 'Pilih Chat',
                       ),
-                    const Icon(Icons.auto_awesome_rounded,
-                        color: AppColors.primary),
+                    Icon(Icons.auto_awesome_rounded,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.indigoAccent
+                            : Theme.of(context).primaryColor),
                     const SizedBox(width: 12),
                     Text(_currentSessionId == null ? 'AI Dashboard' : 'Chat',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w900,
-                            letterSpacing: -0.5)),
+                            letterSpacing: -0.5,
+                            color:
+                                Theme.of(context).textTheme.titleLarge?.color)),
                     const Spacer(),
                     const SizedBox(width: 8),
                     if (_localApiKey != null) ...[
@@ -2086,8 +2236,8 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                             _currentSessionId = null;
                           });
                         },
-                        icon: const Icon(Icons.settings_suggest_rounded,
-                            color: AppColors.textHint),
+                        icon: Icon(Icons.settings_suggest_rounded,
+                            color: Theme.of(context).hintColor),
                         tooltip: 'Ganti Mode AI',
                       ),
                       ValueListenableBuilder<String>(
@@ -2158,7 +2308,10 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                     child: Container(
                                       padding: const EdgeInsets.all(32),
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.9),
+                                        color: Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? Colors.grey[900]?.withOpacity(0.9)
+                                            : Colors.white.withOpacity(0.9),
                                         borderRadius: BorderRadius.circular(32),
                                         border: Border.all(
                                             color:
@@ -2177,28 +2330,34 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                                     .withOpacity(0.1),
                                                 shape: BoxShape.circle,
                                               ),
-                                              child: const Icon(
+                                              child: Icon(
                                                 Icons.warning_amber_rounded,
                                                 color: AppColors.expense,
                                                 size: 32,
                                               ),
                                             ),
                                             const SizedBox(height: 24),
-                                            const Text('Baca Yaaa!',
+                                            Text('Baca Yaaa!',
                                                 textAlign: TextAlign.center,
                                                 style: TextStyle(
                                                     fontSize: 20,
                                                     fontWeight: FontWeight.w900,
                                                     letterSpacing: -0.5,
-                                                    color:
-                                                        AppColors.textPrimary)),
+                                                    color: Theme.of(context)
+                                                            .textTheme
+                                                            .bodyLarge
+                                                            ?.color ??
+                                                        Colors.black87)),
                                             const SizedBox(height: 12),
-                                            const Text(
+                                            Text(
                                                 'Ni AI gweh buat untuk manage uang di APP ini, bukan malah buat curhat anjerr, limit coo... *Archen',
                                                 textAlign: TextAlign.center,
                                                 style: TextStyle(
-                                                    color:
-                                                        AppColors.textSecondary,
+                                                    color: Theme.of(context)
+                                                            .textTheme
+                                                            .bodyMedium
+                                                            ?.color ??
+                                                        Colors.grey,
                                                     fontSize: 14,
                                                     fontWeight: FontWeight.w600,
                                                     height: 1.5)),
@@ -2212,25 +2371,35 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                                     const EdgeInsets.symmetric(
                                                         vertical: 16),
                                                 decoration: BoxDecoration(
-                                                  color: Colors.black,
+                                                  color: Theme.of(context)
+                                                              .brightness ==
+                                                          Brightness.dark
+                                                      ? Colors.indigoAccent
+                                                      : Theme.of(context)
+                                                          .primaryColor,
                                                   borderRadius:
                                                       BorderRadius.circular(16),
                                                   boxShadow: [
                                                     BoxShadow(
                                                         color: Colors.black
-                                                            .withOpacity(0.25),
-                                                        blurRadius: 15,
+                                                            .withOpacity(0.1),
+                                                        blurRadius: 10,
                                                         offset:
-                                                            const Offset(0, 5)),
+                                                            const Offset(0, 4)),
                                                   ],
                                                 ),
-                                                child: const Center(
+                                                child: Center(
                                                   child: Text('Siap Kak!',
                                                       style: TextStyle(
-                                                          color: Colors.white,
+                                                          color: Theme.of(context)
+                                                                      .brightness ==
+                                                                  Brightness
+                                                                      .dark
+                                                              ? Colors.white
+                                                              : Colors.white,
                                                           fontWeight:
                                                               FontWeight.w900,
-                                                          fontSize: 13)),
+                                                          fontSize: 14)),
                                                 ),
                                               ),
                                             ),
@@ -2251,8 +2420,8 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                             ),
                           );
                         },
-                        icon: const Icon(Icons.help_outline_rounded,
-                            color: AppColors.textHint)),
+                        icon: Icon(Icons.help_outline_rounded,
+                            color: Theme.of(context).hintColor)),
                   ],
                 ),
               ),
@@ -2277,8 +2446,8 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         height: MediaQuery.of(context).size.height * 0.7,
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(32),
             topRight: Radius.circular(32),
@@ -2292,7 +2461,9 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                 height: 4,
                 margin: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white12
+                        : Colors.grey[300],
                     borderRadius: BorderRadius.circular(2)),
               ),
               Padding(
@@ -2300,19 +2471,27 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                     const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                 child: Row(
                   children: [
-                    const Icon(Icons.lightbulb_rounded, color: Colors.amber),
+                    Icon(Icons.lightbulb_rounded, color: Colors.amber),
                     const SizedBox(width: 12),
-                    const Text('Tutorial Dapatkan API Key',
+                    Text('Tutorial Dapatkan API Key',
                         style: TextStyle(
                             fontSize: 18, fontWeight: FontWeight.bold)),
                     const Spacer(),
                     IconButton(
                         onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.close_rounded)),
+                        icon: Icon(Icons.close_rounded,
+                            color: Theme.of(context)
+                                .textTheme
+                                .bodyLarge
+                                ?.color)),
                   ],
                 ),
               ),
-              const Divider(),
+               Divider(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white10
+                    : null,
+              ),
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.all(24),
@@ -2349,20 +2528,34 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.05),
+                        color: (Theme.of(context).brightness == Brightness.dark
+                                ? Colors.indigoAccent
+                                : Colors.blue)
+                            .withOpacity(0.08),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.blue.withOpacity(0.1)),
+                        border: Border.all(
+                            color: (Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.indigoAccent
+                                    : Colors.blue)
+                                .withOpacity(0.2)),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
                           Icon(Icons.info_outline_rounded,
-                              color: Colors.blue, size: 20),
-                          SizedBox(width: 12),
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.indigoAccent
+                                  : Colors.blue,
+                              size: 20),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               'API Key Gemini (Free Tier) gratis untuk penggunaan personal.',
-                              style:
-                                  TextStyle(fontSize: 12, color: Colors.blue),
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color: Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.indigoAccent
+                                      : Colors.blue),
                             ),
                           ),
                         ],
@@ -2393,18 +2586,19 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
               Container(
                 width: 32,
                 height: 32,
-                decoration: const BoxDecoration(
-                    color: AppColors.primary, shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor,
+                    shape: BoxShape.circle),
                 alignment: Alignment.center,
                 child: Text(step,
-                    style: const TextStyle(
+                    style: TextStyle(
                         color: Colors.white, fontWeight: FontWeight.bold)),
               ),
               if (!isLast)
                 Expanded(
                   child: Container(
                     width: 2,
-                    color: AppColors.primary.withOpacity(0.2),
+                    color: Theme.of(context).primaryColor.withOpacity(0.2),
                   ),
                 ),
             ],
@@ -2417,12 +2611,15 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 16)),
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 4),
                   Text(desc,
-                      style: const TextStyle(
-                          color: AppColors.textSecondary, fontSize: 13)),
+                      style: TextStyle(
+                          color:
+                              Theme.of(context).textTheme.bodyMedium?.color ??
+                                  Colors.grey,
+                          fontSize: 13)),
                 ],
               ),
             ),
@@ -2438,37 +2635,46 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.auto_awesome_rounded,
-              size: 48, color: AppColors.primary),
+          Icon(Icons.auto_awesome_rounded,
+              size: 48,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.indigoAccent
+                  : Theme.of(context).primaryColor),
           const SizedBox(height: 12),
-          const Text('Pilih Mode AI Advisor',
+          Text('Pilih Mode AI Advisor',
               style: TextStyle(
                   fontWeight: FontWeight.w900,
                   fontSize: 20,
                   letterSpacing: -0.5)),
           const SizedBox(height: 8),
-          const Text(
+          Text(
               'Gunakan asisten keuangan pintar untuk menganalisis data Anda secara instan.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+              style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyMedium?.color ??
+                      Colors.grey,
+                  fontSize: 13)),
           const SizedBox(height: 32),
 
           // Opsi Integrated
           _buildOptionCard(
             title: 'AI Bawaan (Terintegrasi)',
-            subtitle: 'Gunakan saldo API aplikasi. Gratis & Langsung.',
+            subtitle: 'Gunakan API Key aplikasi Langsung.',
             icon: Icons.flash_on_rounded,
-            color: AppColors.primary,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.indigoAccent
+                : Theme.of(context).primaryColor,
+            isDark: Theme.of(context).brightness == Brightness.dark,
             onTap: () {
               setState(() => _localApiKey = "");
               widget.onSaveKey("", "gemini"); // Save to prefs
             },
           ),
           const SizedBox(height: 12),
-          const Text('ATAU',
+          Text('ATAU',
               style: TextStyle(
                   fontSize: 10,
-                  color: AppColors.textHint,
+                  color: Theme.of(context).hintColor,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 2)),
           const SizedBox(height: 12),
@@ -2478,18 +2684,21 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
             title: 'API Key Sendiri',
             subtitle: 'Atur & pilih dari daftar API Key Kamu.',
             icon: Icons.key_rounded,
-            color: Colors.blueGrey,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.grey
+                : Colors.blueGrey,
+            isDark: Theme.of(context).brightness == Brightness.dark,
             onTap: _showManageAPIDialog,
           ),
           const SizedBox(height: 16),
           TextButton.icon(
             onPressed: _showAPITutorial,
-            icon: const Icon(Icons.help_outline_rounded, size: 14),
-            label: const Text('Cara dapetin API Key gratis?',
+            icon: Icon(Icons.help_outline_rounded, size: 14),
+            label: Text('Cara dapetin API Key gratis?',
                 style: TextStyle(
                     fontSize: 12,
                     decoration: TextDecoration.underline,
-                    color: AppColors.textHint)),
+                    color: Theme.of(context).hintColor)),
           ),
         ],
       ),
@@ -2520,12 +2729,12 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                     fontSize: 11,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 1.2,
-                    color: AppColors.textHint.withOpacity(0.8))),
+                    color: Theme.of(context).hintColor.withOpacity(0.8))),
             const Spacer(),
             if (_allSessions.isNotEmpty)
               TextButton(
                   onPressed: _showClearAllConfirm,
-                  child: const Text('Hapus Semua',
+                  child: Text('Hapus Semua',
                       style: TextStyle(
                           fontSize: 11,
                           color: Colors.redAccent,
@@ -2649,8 +2858,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                         }
                         return Text(
                           'Update: $lastUpdateStr',
-                          style: const TextStyle(
-                              color: Colors.white70, fontSize: 10),
+                          style: TextStyle(color: Colors.white70, fontSize: 10),
                         );
                       },
                     ),
@@ -2663,13 +2871,13 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(score.toStringAsFixed(0),
-                            style: const TextStyle(
+                            style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 48,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: -2)),
                         Text(status,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold)),
@@ -2731,19 +2939,19 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                         MarkdownBody(
                           data: displayStr,
                           styleSheet: MarkdownStyleSheet(
-                            p: const TextStyle(
+                            p: TextStyle(
                               color: Colors.white,
                               fontSize: 12,
                               height: 1.4,
                               fontWeight: FontWeight.w400,
                             ),
-                            strong: const TextStyle(
+                            strong: TextStyle(
                               color: Colors.white,
                               fontSize: 12,
                               height: 1.4,
                               fontWeight: FontWeight.w900,
                             ),
-                            listBullet: const TextStyle(
+                            listBullet: TextStyle(
                               color: Colors.white,
                               fontSize: 12,
                             ),
@@ -2827,9 +3035,10 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.grey.shade100),
+        border:
+            Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.03),
@@ -2844,21 +3053,29 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(6),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: (isHigh ? Colors.red : AppColors.primary)
-                      .withOpacity(0.1),
+                  color: (isHigh ? Colors.red : Theme.of(context).primaryColor)
+                      .withOpacity(
+                          Theme.of(context).brightness == Brightness.dark
+                              ? 0.2
+                              : 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(Icons.bolt_rounded,
-                    size: 14, color: isHigh ? Colors.red : AppColors.primary),
+                    size: 16,
+                    color: isHigh
+                        ? Colors.red
+                        : (Theme.of(context).brightness == Brightness.dark
+                            ? Colors.amber
+                            : Theme.of(context).primaryColor)),
               ),
               const SizedBox(width: 8),
-              const Text('AI Quota',
+              Text('AI Quota',
                   style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textHint)),
+                      color: Theme.of(context).hintColor)),
             ],
           ),
           const SizedBox(height: 12),
@@ -2869,12 +3086,15 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                   style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w900,
-                      color: isHigh ? Colors.red : AppColors.textPrimary)),
+                      color: isHigh
+                          ? Colors.red
+                          : Theme.of(context).textTheme.bodyLarge?.color ??
+                              Colors.black87)),
               Text('/$_aiLimit',
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textHint)),
+                      color: Theme.of(context).hintColor)),
             ],
           ),
           const SizedBox(height: 8),
@@ -2882,9 +3102,14 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: progress,
-              backgroundColor: Colors.grey.shade100,
-              valueColor: AlwaysStoppedAnimation<Color>(
-                  isHigh ? Colors.red : AppColors.primary),
+              backgroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white10
+                  : Colors.grey.shade100,
+              valueColor: AlwaysStoppedAnimation<Color>(isHigh
+                  ? Colors.red
+                  : (Theme.of(context).brightness == Brightness.dark
+                      ? Colors.amber
+                      : Theme.of(context).primaryColor)),
               minHeight: 4,
             ),
           ),
@@ -2894,7 +3119,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
               'Reset dlm $_nextReset',
               style: TextStyle(
                   fontSize: 9,
-                  color: AppColors.textHint.withOpacity(0.6),
+                  color: Theme.of(context).hintColor.withOpacity(0.6),
                   fontWeight: FontWeight.bold),
             ),
           ],
@@ -2910,13 +3135,18 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.primary,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.indigo[900]?.withOpacity(0.8)
+              : Theme.of(context).primaryColor,
           borderRadius: BorderRadius.circular(24),
+          border: Theme.of(context).brightness == Brightness.dark
+              ? Border.all(color: Colors.white.withOpacity(0.2), width: 1.5)
+              : null,
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withOpacity(0.2),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              color: Theme.of(context).primaryColor.withOpacity(0.25),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
             ),
           ],
         ),
@@ -2925,13 +3155,13 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
           children: [
             Icon(Icons.add_comment_rounded, color: Colors.white, size: 20),
             const SizedBox(height: 12),
-            const Text('Tanya Archen',
+            Text('Tanya Archen',
                 style: TextStyle(
                     fontWeight: FontWeight.w900,
                     fontSize: 12,
                     color: Colors.white)),
             const SizedBox(height: 4),
-            const Text('Mulai chat baru',
+            Text('Mulai chat baru',
                 style: TextStyle(color: Colors.white70, fontSize: 10)),
             const Spacer(),
             Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 14),
@@ -2956,10 +3186,14 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
       child: Column(
         children: [
           Icon(Icons.chat_bubble_outline_rounded,
-              size: 48, color: Colors.grey.shade200),
+              size: 48,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white.withOpacity(0.15)
+                  : Colors.grey.shade200),
           const SizedBox(height: 16),
           Text('Belum ada riwayat percakapan',
-              style: TextStyle(color: AppColors.textHint, fontSize: 12)),
+              style:
+                  TextStyle(color: Theme.of(context).hintColor, fontSize: 12)),
         ],
       ),
     );
@@ -2969,9 +3203,10 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade50),
+        border:
+            Border.all(color: Theme.of(context).dividerColor.withOpacity(0.05)),
       ),
       child: ListTile(
         onTap: () => _loadSession(session['id']),
@@ -2979,23 +3214,35 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
         leading: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
+            color: Theme.of(context).primaryColor.withOpacity(
+                Theme.of(context).brightness == Brightness.dark ? 0.2 : 0.1),
             shape: BoxShape.circle,
+            border: Theme.of(context).brightness == Brightness.dark
+                ? Border.all(
+                    color: Theme.of(context).primaryColor.withOpacity(0.3),
+                    width: 1)
+                : null,
           ),
-          child: const Icon(Icons.chat_rounded,
-              size: 18, color: AppColors.primary),
+          child: Icon(Icons.chat_rounded,
+              size: 18,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white
+                  : Theme.of(context).primaryColor),
         ),
         title: Text(session['title'],
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
         subtitle: Text(
             DateFormat('dd MMM, HH:mm')
                 .format(DateTime.parse(session['lastUpdate'])),
-            style: const TextStyle(fontSize: 10, color: AppColors.textHint)),
+            style: TextStyle(fontSize: 10, color: Theme.of(context).hintColor)),
         trailing: IconButton(
-          icon: const Icon(Icons.delete_outline_rounded,
-              size: 20, color: Colors.grey),
+          icon: Icon(Icons.delete_outline_rounded,
+              size: 20,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white54
+                  : Colors.grey),
           onPressed: () => _showDeleteConfirm(session['id']),
         ),
       ),
@@ -3041,6 +3288,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
     required IconData icon,
     required Color color,
     required VoidCallback onTap,
+    bool isDark = false,
   }) {
     return InkWell(
       onTap: onTap,
@@ -3048,9 +3296,9 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
+          color: color.withOpacity(isDark ? 0.15 : 0.08),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: color.withOpacity(0.1)),
+          border: Border.all(color: color.withOpacity(isDark ? 0.3 : 0.1)),
         ),
         child: Row(
           children: [
@@ -3066,13 +3314,16 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 16,
                           letterSpacing: -0.5)),
                   Text(subtitle,
                       style: TextStyle(
-                          fontSize: 11, color: AppColors.textSecondary)),
+                          fontSize: 11,
+                          color:
+                              Theme.of(context).textTheme.bodyMedium?.color ??
+                                  Colors.grey)),
                 ],
               ),
             ),
@@ -3122,18 +3373,28 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Coba tanya ini:',
+        Text('Coba tanya ini:',
             style: TextStyle(
-                fontWeight: FontWeight.bold, color: AppColors.textHint)),
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).hintColor)),
         const SizedBox(height: 12),
         Wrap(
           spacing: 8,
           runSpacing: 8,
           children: suggestions
               .map((s) => ActionChip(
-                    label: Text(s, style: const TextStyle(fontSize: 12)),
+                    label: Text(s,
+                        style: TextStyle(
+                            fontSize: 12,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.white
+                                    : Colors.black)),
                     onPressed: () => _handleQuery(s),
-                    backgroundColor: AppColors.surfaceVariant,
+                    backgroundColor:
+                        Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.surfaceVariantDark
+                            : AppColors.surfaceVariant,
                     side: BorderSide.none,
                   ))
               .toList(),
@@ -3152,13 +3413,22 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
           maxWidth: MediaQuery.of(context).size.width * 0.75,
         ),
         decoration: BoxDecoration(
-          color: isAI ? AppColors.surfaceVariant : AppColors.primary,
+          color: isAI
+              ? (Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.surfaceVariantDark
+                  : AppColors.surfaceVariant)
+              : (Theme.of(context).brightness == Brightness.dark
+                  ? const ui.Color.fromARGB(255, 61, 61, 61)
+                  : Theme.of(context).primaryColor),
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(20),
             topRight: const Radius.circular(20),
             bottomLeft: Radius.circular(isAI ? 0 : 20),
             bottomRight: Radius.circular(isAI ? 20 : 0),
           ),
+          border: (!isAI && Theme.of(context).brightness == Brightness.dark)
+              ? Border.all(color: Colors.white.withOpacity(0.2), width: 1.5)
+              : null,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -3167,21 +3437,29 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                 style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: isAI ? AppColors.textHint : Colors.white70)),
+                    color:
+                        isAI ? Theme.of(context).hintColor : Colors.white70)),
             const SizedBox(height: 8),
             if (isAI)
               MarkdownBody(
                 data: text,
                 styleSheet: MarkdownStyleSheet(
-                  p: const TextStyle(
-                      fontSize: 14, height: 1.5, color: Colors.black87),
-                  strong: const TextStyle(
-                      fontWeight: FontWeight.w900, color: AppColors.primary),
-                  listBullet:
-                      const TextStyle(fontSize: 14, color: AppColors.primary),
+                  p: TextStyle(
+                      fontSize: 14,
+                      height: 1.5,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white.withOpacity(0.9)
+                          : AppColors.textPrimary),
+                  strong: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF5AC8FA)
+                          : Theme.of(context).primaryColor),
+                  listBullet: TextStyle(
+                      fontSize: 14, color: Theme.of(context).primaryColor),
                   code: TextStyle(
                     backgroundColor: Colors.transparent,
-                    color: AppColors.primary,
+                    color: Theme.of(context).primaryColor,
                     fontSize: 13,
                     fontFamily: 'monospace',
                   ),
@@ -3196,8 +3474,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                 ),
               )
             else
-              Text(text,
-                  style: const TextStyle(height: 1.4, color: Colors.white)),
+              Text(text, style: TextStyle(height: 1.4, color: Colors.white)),
           ],
         ),
       ),
@@ -3211,7 +3488,9 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
         padding: const EdgeInsets.all(16),
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
-          color: AppColors.surfaceVariant,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.surfaceVariantDark
+              : AppColors.surfaceVariant,
           borderRadius: BorderRadius.circular(16),
         ),
         child: const SizedBox(
@@ -3224,13 +3503,14 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
   }
 
   Widget _buildInputArea() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? AppColors.surfaceDark : Colors.white,
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
               blurRadius: 10,
               offset: const Offset(0, -2))
         ],
@@ -3251,7 +3531,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                     decoration: BoxDecoration(
                       color: tone == AppTone.pasangan
                           ? const Color(0xFFFF2D55).withOpacity(0.15)
-                          : AppColors.primary.withOpacity(0.1),
+                          : Theme.of(context).primaryColor.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Text(
@@ -3264,7 +3544,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                   : tone == AppTone.pasangan
                                       ? '❤️'
                                       : '🤵',
-                      style: const TextStyle(fontSize: 18),
+                      style: TextStyle(fontSize: 18),
                     ),
                   ),
                 ),
@@ -3274,31 +3554,33 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                color: AppColors.background,
+                color: isDark ? const Color(0xFF2C2C2C) : AppColors.background,
                 borderRadius: BorderRadius.circular(28),
               ),
               child: TextField(
                 controller: _queryController,
-                decoration: const InputDecoration(
+                style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                decoration: InputDecoration(
                     hintText: 'Tanyakan sesuatu...',
+                    hintStyle:
+                        TextStyle(color: isDark ? Colors.white54 : Colors.grey),
                     border: InputBorder.none,
                     filled: false,
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 20, vertical: 16)),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 16)),
                 onSubmitted: _handleQuery,
               ),
             ),
           ),
           const SizedBox(width: 8),
           Container(
-            decoration: const BoxDecoration(
-              color: AppColors.primary,
+            decoration: BoxDecoration(
+              color: Theme.of(context).primaryColor,
               shape: BoxShape.circle,
             ),
             child: IconButton(
               onPressed: () => _handleQuery(_queryController.text),
-              icon:
-                  const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+              icon: Icon(Icons.send_rounded, color: Colors.white, size: 20),
             ),
           ),
         ],
@@ -3446,12 +3728,13 @@ class _AnimatedHeartbeatState extends State<AnimatedHeartbeat>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return ScaleTransition(
       scale: _animation,
       child: Center(
         child: Icon(
           widget.icon,
-          color: Colors.white,
+          color: isDark ? Colors.white : Colors.white,
           size: 28,
           shadows: [
             Shadow(

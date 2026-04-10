@@ -161,9 +161,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
             MediaQuery.of(context).padding.bottom +
             24,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -176,7 +176,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.textHint.withOpacity(0.3),
+                  color: Theme.of(context).dividerColor,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -197,13 +197,13 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: '0',
                 prefixText: 'Rp ',
                 prefixStyle: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary),
+                    color: Theme.of(context).textTheme.bodyLarge?.color),
               ),
             ),
             const SizedBox(height: 16),
@@ -216,7 +216,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceVariant,
+                  color: Theme.of(context).brightness == Brightness.dark 
+                      ? const Color(0xFF1C1C1E) 
+                      : AppColors.surfaceVariant,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(
@@ -228,7 +230,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                               _selectedCategory!),
                       color: _selectedCategory == null
                           ? AppColors.textHint
-                          : AppColors.primary,
+                          : (Theme.of(context).brightness == Brightness.dark 
+                              ? const Color(0xFF0A84FF) 
+                              : AppColors.primary),
                       size: 20,
                     ),
                     const SizedBox(width: 12),
@@ -237,8 +241,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                         _selectedCategory ?? 'Pilih Kategori',
                         style: TextStyle(
                           color: _selectedCategory == null
-                              ? AppColors.textHint
-                              : AppColors.textPrimary,
+                              ? Theme.of(context).hintColor
+                              : Theme.of(context).textTheme.bodyLarge?.color,
                         ),
                       ),
                     ),
@@ -327,7 +331,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color: isSelected ? color.withOpacity(0.1) : AppColors.surfaceVariant,
+          color: isSelected 
+              ? color.withOpacity(0.1) 
+              : (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1C1C1E) : AppColors.surfaceVariant),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
               color: isSelected ? color : Colors.transparent, width: 1.5),
@@ -361,9 +367,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) => Container(
           height: MediaQuery.of(context).size.height * 0.7,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
             children: [
@@ -372,7 +378,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                      color: Colors.grey[300],
+                      color: Theme.of(context).dividerColor,
                       borderRadius: BorderRadius.circular(2))),
               const SizedBox(height: 20),
               Padding(
@@ -394,7 +400,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                           )
                         : null,
                     filled: true,
-                    fillColor: AppColors.surfaceVariant,
+                    fillColor: Theme.of(context).brightness == Brightness.dark 
+                        ? const Color(0xFF1C1C1E) 
+                        : AppColors.surfaceVariant,
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide.none),
@@ -422,14 +430,18 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? AppColors.primary.withOpacity(0.1)
-                              : Colors.grey[100],
+                              ? (Theme.of(context).brightness == Brightness.dark 
+                                  ? const Color(0xFF0A84FF).withOpacity(0.15) 
+                                  : AppColors.primary.withOpacity(0.1))
+                              : (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF2C2C2E) : Colors.grey[100]),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
                           TransactionCategory.getIconForCategory(category),
                           color: isSelected
-                              ? AppColors.primary
+                              ? (Theme.of(context).brightness == Brightness.dark 
+                                  ? const Color(0xFF0A84FF) 
+                                  : AppColors.primary)
                               : AppColors.textSecondary,
                           size: 20,
                         ),
@@ -440,8 +452,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                           fontWeight:
                               isSelected ? FontWeight.bold : FontWeight.normal,
                           color: isSelected
-                              ? AppColors.primary
-                              : AppColors.textPrimary,
+                              ? (Theme.of(context).brightness == Brightness.dark 
+                                  ? const Color(0xFF0A84FF) 
+                                  : AppColors.primary)
+                              : Theme.of(context).textTheme.bodyLarge?.color,
                         ),
                       ),
                       trailing: isSelected
@@ -472,7 +486,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-          color: AppColors.surfaceVariant,
+          color: Theme.of(context).brightness == Brightness.dark 
+              ? const Color(0xFF1C1C1E) 
+              : AppColors.surfaceVariant,
           borderRadius: BorderRadius.circular(16)),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<T>(
@@ -488,7 +504,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           items: items,
           onChanged: onChanged,
           borderRadius: BorderRadius.circular(16),
-          dropdownColor: Colors.white,
+          dropdownColor: Theme.of(context).cardColor,
         ),
       ),
     );

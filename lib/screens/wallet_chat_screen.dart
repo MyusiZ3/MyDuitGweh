@@ -108,9 +108,9 @@ class _WalletChatScreenState extends State<WalletChatScreen>
       context: context,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         padding: EdgeInsets.only(
           top: 8,
@@ -137,9 +137,9 @@ class _WalletChatScreenState extends State<WalletChatScreen>
               padding: const EdgeInsets.all(16),
               margin: const EdgeInsets.only(bottom: 20),
               decoration: BoxDecoration(
-                color: Colors.grey[100],
+                color: Theme.of(context).canvasColor,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.black.withOpacity(0.05)),
+                border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.05)),
               ),
               child: Text(
                 msg.message,
@@ -250,14 +250,14 @@ class _WalletChatScreenState extends State<WalletChatScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).cardColor,
         elevation: 0.5,
         centerTitle: false,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              size: 20, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back_ios_new_rounded,
+              size: 20, color: Theme.of(context).textTheme.titleLarge?.color),
           onPressed: () => Navigator.pop(context),
         ),
         title: Row(
@@ -279,10 +279,10 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                 children: [
                   Text(
                     widget.walletName,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary),
+                        color: Theme.of(context).textTheme.titleLarge?.color),
                     overflow: TextOverflow.ellipsis,
                   ),
                   const Text(
@@ -492,9 +492,9 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                     decoration: BoxDecoration(
                       color: msg.isDeleted
                           ? (isMe
-                              ? Colors.grey[300]
-                              : Colors.grey[100])
-                          : (isMe ? AppColors.primary : Colors.white),
+                              ? (Theme.of(context).brightness == Brightness.dark ? Colors.grey[800] : Colors.grey[300])
+                              : (Theme.of(context).brightness == Brightness.dark ? Colors.grey[900] : Colors.grey[100]))
+                          : (isMe ? AppColors.primary : Theme.of(context).cardColor),
                       borderRadius: BorderRadius.only(
                         topLeft: const Radius.circular(20),
                         topRight: const Radius.circular(20),
@@ -543,7 +543,7 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                           msg.message,
                           style: TextStyle(
                             fontSize: 14,
-                            color: isMe ? Colors.white : AppColors.textPrimary,
+                            color: isMe ? Colors.white : Theme.of(context).textTheme.bodyLarge?.color,
                             height: 1.4,
                           ),
                         ),
@@ -594,9 +594,9 @@ class _WalletChatScreenState extends State<WalletChatScreen>
         bottom: MediaQuery.of(context).padding.bottom + 14,
       ),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         border: Border(
-          top: BorderSide(color: Colors.grey.withOpacity(0.1), width: 0.5),
+          top: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1), width: 0.5),
         ),
       ),
       child: Row(
@@ -605,7 +605,7 @@ class _WalletChatScreenState extends State<WalletChatScreen>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFFF2F2F7),
+                color: Theme.of(context).canvasColor,
                 borderRadius: BorderRadius.circular(22),
               ),
               child: TextField(
@@ -617,7 +617,7 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                 decoration: InputDecoration(
                   hintText: _isEditing ? 'Ubah pesan...' : 'Masukkan pesan...',
                   hintStyle:
-                      const TextStyle(color: Color(0xFF8E8E93), fontSize: 15),
+                      TextStyle(color: Theme.of(context).hintColor, fontSize: 15),
                   border: InputBorder.none,
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 10),

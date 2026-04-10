@@ -9,10 +9,10 @@ class HelpScreen extends StatelessWidget {
     const Color primary = AppColors.primary;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Bantuan & Dukungan'),
-        backgroundColor: AppColors.background,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       ),
       body: ListView(
         padding: const EdgeInsets.all(24.0),
@@ -21,19 +21,22 @@ class HelpScreen extends StatelessWidget {
               style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w900,
-                  color: AppColors.textPrimary)),
+                  )),
           const SizedBox(height: 24),
           _buildHelpCard(
+            context,
             'Cara Menambahkan Transaksi',
             'Buka tab Home, klik tombol "+" di navigasi tengah, isi jumlah dan kategori, lalu simpan.',
             Icons.add_box_rounded,
           ),
           _buildHelpCard(
+            context,
             'Apa itu Dompet Kolaborasi?',
             'Dompet yang dapat diakses oleh banyak anggota dengan saldo bersama yang transparan.',
             Icons.groups_rounded,
           ),
           _buildHelpCard(
+            context,
             'Cara Menggunakan Kode Undangan',
             'Bagikan kode undangan 6 digit ke teman agar mereka dapat bergabung di dompet yang Anda miliki.',
             Icons.vpn_key_rounded,
@@ -45,11 +48,11 @@ class HelpScreen extends StatelessWidget {
               style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary)),
+                  )),
           const SizedBox(height: 12),
-          const Text(
+          Text(
               'Hubungi tim dukungan kami melalui email jika Anda mengalami kendala teknis.',
-              style: TextStyle(color: AppColors.textSecondary, height: 1.5)),
+              style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, height: 1.5)),
           const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
@@ -73,12 +76,12 @@ class HelpScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHelpCard(String title, String desc, IconData icon) {
+  Widget _buildHelpCard(BuildContext context, String title, String desc, IconData icon) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -86,6 +89,7 @@ class HelpScreen extends StatelessWidget {
               blurRadius: 10,
               offset: const Offset(0, 2))
         ],
+        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -99,12 +103,11 @@ class HelpScreen extends StatelessWidget {
                 Text(title,
                     style: const TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: AppColors.textPrimary)),
+                        fontSize: 16)),
                 const SizedBox(height: 8),
                 Text(desc,
-                    style: const TextStyle(
-                        color: AppColors.textSecondary,
+                    style: TextStyle(
+                        color: Theme.of(context).textTheme.bodySmall?.color,
                         fontSize: 14,
                         height: 1.5)),
               ],

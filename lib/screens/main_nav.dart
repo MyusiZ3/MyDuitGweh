@@ -136,10 +136,10 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
           ),
           bottomNavigationBar: Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).cardColor,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withOpacity(Theme.of(context).brightness == Brightness.dark ? 0.3 : 0.04),
                   blurRadius: 20,
                   offset: const Offset(0, -4),
                 ),
@@ -171,6 +171,9 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
 
   Widget _buildNavItem(IconData icon, String label, int index) {
     final isActive = _currentIndex == index;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final activeColor = isDark ? const Color(0xFF0A84FF) : AppColors.primary;
+    
     return GestureDetector(
       onTap: () => _onTabTapped(index),
       behavior: HitTestBehavior.opaque,
@@ -179,7 +182,7 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isActive
-              ? AppColors.primary.withOpacity(0.1)
+              ? activeColor.withOpacity(0.12)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
@@ -189,7 +192,7 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
             Icon(
               icon,
               size: 24,
-              color: isActive ? AppColors.primary : AppColors.textHint,
+              color: isActive ? activeColor : Theme.of(context).hintColor,
             ),
             const SizedBox(height: 4),
             Text(
@@ -197,7 +200,7 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                color: isActive ? AppColors.primary : AppColors.textHint,
+                color: isActive ? activeColor : Theme.of(context).hintColor,
               ),
             ),
           ],
@@ -214,7 +217,7 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
             child: Container(
-              color: Colors.black.withOpacity(0.4),
+              color: (Theme.of(context).brightness == Brightness.dark ? Colors.black : Colors.black).withOpacity(0.4),
             ),
           ),
         ),
@@ -291,13 +294,13 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.95),
+                color: Theme.of(context).cardColor.withOpacity(0.95),
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
-                    color: Colors.white.withOpacity(0.5), width: 1.5),
+                    color: Theme.of(context).dividerColor.withOpacity(0.5), width: 1.5),
                 boxShadow: [
                   BoxShadow(
-                    color: color.withOpacity(0.2),
+                    color: color.withOpacity(Theme.of(context).brightness == Brightness.dark ? 0.4 : 0.2),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -318,7 +321,7 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
                   Text(
                     label,
                     style: TextStyle(
-                      color: Colors.grey[800],
+                      color: Theme.of(context).textTheme.titleMedium?.color,
                       fontWeight: FontWeight.w900,
                       fontSize: 16,
                       letterSpacing: -0.3,
@@ -347,8 +350,8 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppColors.primary.withOpacity(0.85),
-                  AppColors.primary,
+                  (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A84FF) : AppColors.primary).withOpacity(0.85),
+                  (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A84FF) : AppColors.primary),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -356,7 +359,7 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
               borderRadius: BorderRadius.circular(20), // iOS squircle shape
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
+                  color: Colors.black.withOpacity(Theme.of(context).brightness == Brightness.dark ? 0.4 : 0.15),
                   blurRadius: 12,
                   spreadRadius: 0,
                   offset: const Offset(0, 4),
@@ -423,11 +426,11 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
             width: 280,
             padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(28),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.12),
+                  color: Colors.black.withOpacity(Theme.of(context).brightness == Brightness.dark ? 0.4 : 0.12),
                   blurRadius: 30,
                   offset: const Offset(0, 15),
                 ),
@@ -452,7 +455,7 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w900,
-                    color: Colors.grey[800],
+                    color: Theme.of(context).textTheme.titleLarge?.color,
                     letterSpacing: -0.5,
                   ),
                 ),
@@ -463,7 +466,7 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w400,
-                    color: Colors.grey[500],
+                    color: Theme.of(context).textTheme.bodySmall?.color,
                     height: 1.4,
                   ),
                 ),

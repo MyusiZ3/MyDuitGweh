@@ -28,6 +28,7 @@ import 'admin/admin_tools_screen.dart';
 import '../widgets/bottom_sheets/experience_survey_sheet.dart';
 import '../models/survey_config_model.dart';
 import '../utils/debouncer.dart';
+import '../utils/theme_manager.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -65,6 +66,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    // VITAL: Inisialisasi stream SECEPATNYA sebelum build pertama berjalan
+    _walletsStream = _firestoreService.getWalletsStream(_uid);
     _handleInit();
   }
 
@@ -74,7 +77,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _checkAppLock();
     _initNotificationListener();
     _checkAdminRole();
-    _walletsStream = _firestoreService.getWalletsStream(_uid);
     _initSurveyListener();
   }
 
@@ -240,10 +242,10 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Container(
                 padding: const EdgeInsets.all(28),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.85),
+                  color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1C1C1E).withOpacity(0.9) : Colors.white.withOpacity(0.85),
                   borderRadius: BorderRadius.circular(28),
                   border: Border.all(
-                      color: Colors.white.withOpacity(0.5), width: 1),
+                      color: Theme.of(context).dividerColor.withOpacity(0.1), width: 1),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -256,12 +258,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           borderRadius: BorderRadius.circular(2)),
                     ),
                     const SizedBox(height: 24),
-                    const Icon(Icons.auto_awesome_rounded,
+                    Icon(Icons.auto_awesome_rounded,
                         color: AppColors.primary, size: 32),
                     const SizedBox(height: 16),
                     Text(title.toUpperCase(),
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w900,
                             letterSpacing: 2,
@@ -274,17 +276,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 32),
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
-                      child: Container(
+                        child: Container(
                         width: double.infinity,
                         height: 54,
                         decoration: BoxDecoration(
-                          color: Colors.black,
+                          color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
                           borderRadius: BorderRadius.circular(18),
                         ),
-                        child: const Center(
+                        child: Center(
                           child: Text('OK, UNDERSTOOD',
                               style: TextStyle(
-                                  color: Colors.white,
+                                  color: Theme.of(context).brightness == Brightness.dark ? Colors.black : Colors.white,
                                   fontWeight: FontWeight.w800,
                                   letterSpacing: 0.5,
                                   fontSize: 13,
@@ -327,13 +329,13 @@ class _HomeScreenState extends State<HomeScreen> {
       if (found.startsWith('**')) {
         spans.add(TextSpan(
             text: found.substring(2, found.length - 2),
-            style: const TextStyle(
-                fontWeight: FontWeight.bold, color: AppColors.textPrimary)));
+            style: TextStyle(
+                fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.titleLarge?.color)));
       } else {
         spans.add(TextSpan(
             text: found.substring(1, found.length - 1),
-            style: const TextStyle(
-                fontStyle: FontStyle.italic, color: AppColors.textPrimary)));
+            style: TextStyle(
+                fontStyle: FontStyle.italic, color: Theme.of(context).textTheme.titleLarge?.color)));
       }
       lastMatchEnd = match.end;
     }
@@ -345,10 +347,146 @@ class _HomeScreenState extends State<HomeScreen> {
     return RichText(
       textAlign: TextAlign.center,
       text: TextSpan(
-        style: const TextStyle(
-            fontSize: 15, color: AppColors.textSecondary, height: 1.5),
+        style: TextStyle(
+            fontSize: 15, color: Theme.of(context).textTheme.bodyMedium?.color, height: 1.5),
         children: spans,
       ),
+    );
+  }
+
+  String _getThemeModeLabel(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.light: return 'Terang';
+      case ThemeMode.dark: return 'Gelap';
+      default: return 'Sistem';
+    }
+  }
+
+  void _showThemeSelector() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(0, -5),
+            )
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 24),
+              decoration: BoxDecoration(
+                color: Theme.of(context).dividerColor.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(Icons.palette_outlined,
+                        color: AppColors.primary, size: 24),
+                  ),
+                  const SizedBox(width: 16),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Pilih Tampilan',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          color: Theme.of(context).textTheme.titleLarge?.color,
+                        ),
+                      ),
+                      Text(
+                        'Sesuaikan app dengan seleramu',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).textTheme.bodySmall?.color,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            ValueListenableBuilder<ThemeMode>(
+              valueListenable: ThemeManager.notifier,
+              builder: (context, currentMode, _) {
+                return Column(
+                  children: [
+                    _buildThemeOption(
+                      title: 'Sesuai Sistem',
+                      icon: Icons.brightness_auto_rounded,
+                      mode: ThemeMode.system,
+                      isSelected: currentMode == ThemeMode.system,
+                    ),
+                    _buildThemeOption(
+                      title: 'Terang',
+                      icon: Icons.light_mode_rounded,
+                      mode: ThemeMode.light,
+                      isSelected: currentMode == ThemeMode.light,
+                    ),
+                    _buildThemeOption(
+                      title: 'Gelap',
+                      icon: Icons.dark_mode_rounded,
+                      mode: ThemeMode.dark,
+                      isSelected: currentMode == ThemeMode.dark,
+                    ),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThemeOption({
+    required String title,
+    required IconData icon,
+    required ThemeMode mode,
+    required bool isSelected,
+  }) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+      leading: Icon(icon, color: isSelected ? AppColors.primary : Theme.of(context).iconTheme.color),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          color: isSelected ? AppColors.primary : Theme.of(context).textTheme.bodyLarge?.color,
+        ),
+      ),
+      trailing: isSelected
+          ? Icon(Icons.check_circle_rounded, color: AppColors.primary)
+          : null,
+      onTap: () {
+        ThemeManager.setThemeMode(mode);
+        Navigator.pop(context);
+      },
     );
   }
 
@@ -489,7 +627,7 @@ class _HomeScreenState extends State<HomeScreen> {
       valueListenable: ToneManager.notifier,
       builder: (context, activeTone, child) {
         return Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: StreamBuilder<List<WalletModel>>(
             stream: _walletsStream,
             builder: (context, snapshot) {
@@ -517,7 +655,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       pinned: true,
                       floating: true,
                       elevation: 0,
-                      backgroundColor: AppColors.background,
+                      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                       expandedHeight: 90,
                       toolbarHeight: 80,
                       centerTitle: false,
@@ -530,17 +668,17 @@ class _HomeScreenState extends State<HomeScreen> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(_getGreeting(),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontSize: 12,
-                                      color: AppColors.textHint,
+                                      color: Theme.of(context).textTheme.bodySmall?.color,
                                       fontWeight: FontWeight.w500)),
                               Row(
                                 children: [
                                   Text(user?.displayName ?? 'Pengguna',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           fontSize: 20,
                                           fontWeight: FontWeight.w800,
-                                          color: AppColors.textPrimary,
+                                          color: Theme.of(context).textTheme.titleLarge?.color,
                                           letterSpacing: -0.5)),
                                   if (_isAdmin) ...[
                                     const SizedBox(width: 8),
@@ -583,7 +721,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                           const SizedBox(width: 4),
                                           Text(
                                               _isSuperAdmin ? 'OWNER' : 'ADMIN',
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                   color: Colors.white,
                                                   fontSize: 8,
                                                   fontWeight: FontWeight.w900,
@@ -634,9 +772,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                       // Reload dismissed list (user might have swiped some)
                                       _loadSettings();
                                     },
-                                    icon: const Icon(
+                                    icon: Icon(
                                         Icons.notifications_none_rounded,
-                                        color: AppColors.textPrimary,
+                                        color: Theme.of(context).textTheme.titleLarge?.color,
                                         size: 26),
                                   ),
                                   if (unreadCount > 0)
@@ -645,14 +783,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                       right: 12,
                                       child: Container(
                                         padding: const EdgeInsets.all(4),
-                                        decoration: const BoxDecoration(
+                                        decoration: BoxDecoration(
                                             color: AppColors.expense,
                                             shape: BoxShape.circle),
                                         child: Text(
                                           unreadCount > 9
                                               ? '9+'
                                               : '$unreadCount',
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                               color: Colors.white,
                                               fontSize: 8,
                                               fontWeight: FontWeight.bold),
@@ -686,7 +824,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                           ? NetworkImage(user!.photoURL!)
                                           : null,
                                       child: user?.photoURL == null
-                                          ? const Icon(Icons.person_rounded,
+                                          ? Icon(Icons.person_rounded,
                                               size: 22,
                                               color: AppColors.primary)
                                           : null,
@@ -698,11 +836,19 @@ class _HomeScreenState extends State<HomeScreen> {
                                         left: -3,
                                         child: Container(
                                           padding: const EdgeInsets.all(2),
-                                          decoration: const BoxDecoration(
-                                            color: Colors.white,
+                                          decoration: BoxDecoration(
+                                            color: Theme.of(context).brightness == Brightness.dark 
+                                                ? AppColors.surfaceDark 
+                                                : Colors.white,
                                             shape: BoxShape.circle,
+                                            border: Border.all(
+                                              color: Theme.of(context).brightness == Brightness.dark 
+                                                  ? Colors.white12 
+                                                  : Colors.transparent,
+                                              width: 0.5
+                                            )
                                           ),
-                                          child: const Icon(
+                                          child: Icon(
                                             Icons.verified_rounded,
                                             color: AppColors.primary,
                                             size: 14,
@@ -755,7 +901,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(ToneManager.t('home_balance'),
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           color: Colors.white70,
                                           fontSize: 13,
                                           fontWeight: FontWeight.w500)),
@@ -788,7 +934,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ? CurrencyFormatter.formatCurrency(
                                           totalBalance)
                                       : 'Rp ••••••••',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       color: Colors.white,
                                       fontSize: 34,
                                       fontWeight: FontWeight.w900,
@@ -859,28 +1005,27 @@ class _HomeScreenState extends State<HomeScreen> {
                                   const EdgeInsets.symmetric(horizontal: 24),
                               width: double.infinity,
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: Theme.of(context).cardColor,
                                 borderRadius: BorderRadius.circular(24),
                                 border: Border.all(
-                                    color:
-                                        AppColors.surfaceVariant.withAlpha(50)),
+                                    color: Theme.of(context).dividerColor.withOpacity(0.1)),
                               ),
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(Icons.account_balance_wallet_outlined,
                                       color:
-                                          AppColors.textHint.withOpacity(0.3),
+                                          Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.3),
                                       size: 32),
                                   const SizedBox(height: 8),
-                                  const Text('Belum ada dompet nih!',
+                                  Text('Belum ada dompet nih!',
                                       style: TextStyle(
-                                          color: AppColors.textPrimary,
+                                          color: Theme.of(context).textTheme.titleLarge?.color,
                                           fontSize: 13,
                                           fontWeight: FontWeight.w700)),
-                                  const Text('Buat dompet pertamamu yuk!',
+                                  Text('Buat dompet pertamamu yuk!',
                                       style: TextStyle(
-                                          color: AppColors.textHint,
+                                          color: Theme.of(context).textTheme.bodySmall?.color,
                                           fontSize: 11)),
                                 ],
                               ),
@@ -902,11 +1047,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                       margin: const EdgeInsets.only(right: 16),
                                       padding: const EdgeInsets.all(16),
                                       decoration: BoxDecoration(
-                                        color: Colors.white,
+                                        color: Theme.of(context).cardColor,
                                         borderRadius: BorderRadius.circular(24),
                                         border: Border.all(
-                                            color: AppColors.surfaceVariant
-                                                .withOpacity(0.4)),
+                                            color: Theme.of(context).dividerColor.withOpacity(0.1)),
                                       ),
                                       child: Column(
                                         crossAxisAlignment:
@@ -915,8 +1059,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                             MainAxisAlignment.center,
                                         children: [
                                           Text(w.walletName,
-                                              style: const TextStyle(
-                                                  color: AppColors.textHint,
+                                              style: TextStyle(
+                                                  color: Theme.of(context).textTheme.bodySmall?.color,
                                                   fontSize: 10,
                                                   fontWeight: FontWeight.bold,
                                                   letterSpacing: 0.5)),
@@ -925,9 +1069,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                             child: Text(
                                                 CurrencyFormatter
                                                     .formatCurrency(w.balance),
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                     color:
-                                                        AppColors.textPrimary,
+                                                        Theme.of(context).textTheme.titleLarge?.color,
                                                     fontSize: 15,
                                                     fontWeight:
                                                         FontWeight.w800)),
@@ -958,7 +1102,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         fontSize: 18)),
                             TextButton(
                               onPressed: () => MainNav.of(context)?.setTab(4),
-                              child: const Text('Semua',
+                              child: Text('Semua',
                                   style:
                                       TextStyle(fontWeight: FontWeight.w700)),
                             ),
@@ -993,7 +1137,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Flexible(
               child: Text(label,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 13)),
@@ -1011,9 +1155,9 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.surfaceVariant.withOpacity(0.5)),
+        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1021,7 +1165,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Target Budget Bulanan',
+              Text('Target Budget Bulanan',
                   style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
               Text('${(percent * 100).toStringAsFixed(0)}%',
                   style: TextStyle(
@@ -1050,9 +1194,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   alignment: Alignment.centerLeft,
                   child: Text(
                       'Sisa: ${CurrencyFormatter.formatCurrency(_monthlyBudget - expense)}',
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.textHint,
+                          color: Theme.of(context).textTheme.bodySmall?.color,
                           fontWeight: FontWeight.w600)),
                 ),
               ),
@@ -1063,8 +1207,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   alignment: Alignment.centerRight,
                   child: Text(
                       'Dari ${CurrencyFormatter.formatCurrency(_monthlyBudget)}',
-                      style: const TextStyle(
-                          fontSize: 11, color: AppColors.textHint)),
+                      style: TextStyle(
+                          fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color)),
                 ),
               ),
             ],
@@ -1091,26 +1235,26 @@ class _HomeScreenState extends State<HomeScreen> {
               margin: const EdgeInsets.symmetric(horizontal: 24),
               width: double.infinity,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(24),
                 border:
-                    Border.all(color: AppColors.surfaceVariant.withAlpha(50)),
+                    Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.history_toggle_off_rounded,
-                      color: AppColors.textHint, size: 40),
+                  Icon(Icons.history_toggle_off_rounded,
+                      color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.5), size: 40),
                   const SizedBox(height: 12),
                   Text(ToneManager.t('home_empty_title'),
-                      style: const TextStyle(
-                          color: AppColors.textPrimary,
+                      style: TextStyle(
+                          color: Theme.of(context).textTheme.titleLarge?.color,
                           fontSize: 14,
                           fontWeight: FontWeight.w800)),
                   const SizedBox(height: 4),
                   Text(ToneManager.t('home_empty_msg'),
-                      style: const TextStyle(
-                          color: AppColors.textHint, fontSize: 12)),
+                      style: TextStyle(
+                          color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 12)),
                 ],
               ),
             ),
@@ -1128,7 +1272,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
@@ -1158,14 +1302,14 @@ class _HomeScreenState extends State<HomeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(t.category,
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontWeight: FontWeight.bold, fontSize: 15)),
                             Text(
                                 t.note.isEmpty
                                     ? DateFormat('dd MMM yyyy').format(t.date)
                                     : t.note,
-                                style: const TextStyle(
-                                    fontSize: 12, color: AppColors.textHint)),
+                                style: TextStyle(
+                                    fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color)),
                           ],
                         ),
                       ),
@@ -1210,9 +1354,9 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           padding: EdgeInsets.only(
               bottom: MediaQuery.of(context).padding.bottom + 24),
-          decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+          decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(32))),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1221,7 +1365,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                      color: Colors.grey[300],
+                      color: Theme.of(context).brightness == Brightness.dark 
+                          ? Colors.white24 
+                          : Colors.grey[300],
                       borderRadius: BorderRadius.circular(2))),
               const SizedBox(height: 24),
               CircleAvatar(
@@ -1230,7 +1376,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ? NetworkImage(user!.photoURL!)
                     : null,
                 child: user?.photoURL == null
-                    ? const Icon(Icons.person, size: 40)
+                    ? Icon(Icons.person, size: 40)
                     : null,
               ),
               const SizedBox(height: 16),
@@ -1240,7 +1386,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Flexible(
                     child: Text(user?.displayName ?? 'User',
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 20, fontWeight: FontWeight.bold)),
                   ),
                   if (_isAdmin) ...[
@@ -1268,7 +1414,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 : Icons.verified_user_rounded,
                             size: 10,
                             color: _isSuperAdmin
-                                ? Colors.amber[900]
+                                ? (Theme.of(context).brightness == Brightness.dark ? Colors.amber[300] : Colors.amber[900])
                                 : AppColors.primary,
                           ),
                           const SizedBox(width: 4),
@@ -1278,7 +1424,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               fontSize: 9,
                               fontWeight: FontWeight.w900,
                               color: _isSuperAdmin
-                                  ? Colors.amber[900]
+                                  ? (Theme.of(context).brightness == Brightness.dark ? Colors.amber[300] : Colors.amber[900])
                                   : AppColors.primary,
                               letterSpacing: 0.5,
                             ),
@@ -1307,7 +1453,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 MaterialPageRoute(
                                     builder: (_) => const AdminToolsScreen()));
                           },
-                          trailing: const Icon(Icons.arrow_forward_ios_rounded,
+                          trailing: Icon(Icons.arrow_forward_ios_rounded,
                               size: 16, color: AppColors.primary),
                         ),
                       _buildProfileMenuItem(
@@ -1356,7 +1502,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ? CurrencyFormatter.formatCurrency(
                                     _monthlyBudget)
                                 : 'Atur',
-                            style: const TextStyle(
+                            style: TextStyle(
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.bold)),
                       ),
@@ -1375,6 +1521,17 @@ class _HomeScreenState extends State<HomeScreen> {
                           activeTrackColor: AppColors.primary.withOpacity(0.3),
                         ),
                       ),
+                      _buildProfileMenuItem(
+                        icon: Icons.palette_outlined,
+                        label: 'Tampilan',
+                        subtitle: _getThemeModeLabel(ThemeManager.notifier.value),
+                        onTap: () {
+                          Navigator.pop(context);
+                          _showThemeSelector();
+                        },
+                        trailing: Icon(Icons.arrow_forward_ios_rounded,
+                            size: 16, color: AppColors.primary),
+                      ),
                       const Divider(),
                       _buildProfileMenuItem(
                         icon: Icons.language_rounded,
@@ -1385,7 +1542,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         },
                         trailing: Text(
                             ToneManager.notifier.value.name.toUpperCase(),
-                            style: const TextStyle(
+                            style: TextStyle(
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.bold)),
                       ),
@@ -1453,6 +1610,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+
   void _showToneSelector() {
     UIHelper.showToneSelector(context);
   }
@@ -1516,7 +1674,7 @@ class _HomeScreenState extends State<HomeScreen> {
           DateTime.now();
       final accountAgeDays =
           (DateTime.now().difference(createdAt).inHours / 24).ceil();
-      final minAge = config.minAccountAgeDays ?? 0;
+      final minAge = config.minAccountAgeDays;
 
       if (accountAgeDays < minAge) {
         if (mounted) {
@@ -1527,7 +1685,7 @@ class _HomeScreenState extends State<HomeScreen> {
       }
 
       final txCount = txCountResult.count ?? 0;
-      final minTx = config.minTransactions ?? 0;
+      final minTx = config.minTransactions;
 
       if (txCount < minTx) {
         if (mounted) {
@@ -1672,8 +1830,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
-                      border: Border.all(color: Colors.white.withOpacity(0.5)),
+                      color: Theme.of(context).cardColor.withOpacity(0.9),
+                      border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -1684,11 +1842,11 @@ class _HomeScreenState extends State<HomeScreen> {
                             color: AppColors.primary.withOpacity(0.1),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.track_changes_rounded,
+                          child: Icon(Icons.track_changes_rounded,
                               color: AppColors.primary, size: 32),
                         ),
                         const SizedBox(height: 20),
-                        const Text('Target Budget',
+                        Text('Target Budget',
                             style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.w900,
@@ -1697,29 +1855,29 @@ class _HomeScreenState extends State<HomeScreen> {
                         Text('Atur batas pengeluaran bulananmu.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                                fontSize: 13, color: Colors.grey[600])),
+                                fontSize: 13, color: Theme.of(context).textTheme.bodySmall?.color)),
                         const SizedBox(height: 24),
                         Container(
                           decoration: BoxDecoration(
-                            color: Colors.grey[100],
+                            color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF2C2C2E) : Colors.grey[100],
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: TextField(
                             controller: controller,
                             keyboardType: TextInputType.number,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 20, fontWeight: FontWeight.w800),
                             decoration: InputDecoration(
                               prefixText: 'Rp ',
-                              prefixStyle: const TextStyle(
+                              prefixStyle: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w800,
-                                  color: Colors.black54),
+                                  color: Theme.of(context).textTheme.bodyMedium?.color),
                               border: InputBorder.none,
                               contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 20, vertical: 16),
                               hintText: '0',
-                              hintStyle: TextStyle(color: Colors.grey[400]),
+                              hintStyle: TextStyle(color: Theme.of(context).hintColor),
                             ),
                           ),
                         ),
@@ -1736,7 +1894,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(16),
                                     border:
-                                        Border.all(color: Colors.grey[300]!),
+                                        Border.all(color: Theme.of(context).dividerColor),
                                   ),
                                   child: const Center(
                                     child: Text('Batal',
@@ -1805,7 +1963,7 @@ class _HomeScreenState extends State<HomeScreen> {
     String? subtitle,
     required VoidCallback onTap,
     Color iconColor = AppColors.primary,
-    Color textColor = Colors.black87,
+    Color? textColor,
     Widget? trailing,
   }) {
     return ListTile(
@@ -1819,12 +1977,16 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       title: Text(label,
           style: TextStyle(
-              fontWeight: FontWeight.bold, fontSize: 14, color: textColor)),
+              fontWeight: FontWeight.bold, fontSize: 14, color: textColor ?? Theme.of(context).textTheme.bodyLarge?.color)),
       subtitle: subtitle != null
           ? Text(subtitle,
-              style: const TextStyle(fontSize: 11, color: AppColors.textHint))
+              style: TextStyle(
+                  fontSize: 11, 
+                  color: Theme.of(context).brightness == Brightness.dark 
+                      ? Colors.white.withOpacity(0.85) 
+                      : Colors.black.withOpacity(0.6)))
           : null,
-      trailing: trailing ?? const Icon(Icons.chevron_right, size: 16),
+      trailing: trailing ?? Icon(Icons.chevron_right, size: 16, color: Theme.of(context).iconTheme.color),
       onTap: onTap,
     );
   }
@@ -1854,12 +2016,14 @@ class _HomeScreenState extends State<HomeScreen> {
               margin: const EdgeInsets.fromLTRB(24, 16, 24, 0),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: isMaintenance ? Colors.red[50] : Colors.orange[50],
+                color: Theme.of(context).brightness == Brightness.dark 
+                    ? (isMaintenance ? Colors.red.withOpacity(0.1) : Colors.orange.withOpacity(0.1))
+                    : (isMaintenance ? Colors.red[50] : Colors.orange[50]),
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
                     color: (isMaintenance
-                        ? Colors.red[100]
-                        : Colors.orange[100])!),
+                        ? (Theme.of(context).brightness == Brightness.dark ? Colors.red.withOpacity(0.3) : Colors.red[100])
+                        : (Theme.of(context).brightness == Brightness.dark ? Colors.orange.withOpacity(0.3) : Colors.orange[100]))!),
               ),
               child: Row(
                 children: [
@@ -1891,15 +2055,15 @@ class _HomeScreenState extends State<HomeScreen> {
                               fontWeight: FontWeight.w900,
                               fontSize: 13,
                               color: isMaintenance
-                                  ? Colors.red[900]
-                                  : Colors.orange[900]),
+                                  ? (Theme.of(context).brightness == Brightness.dark ? Colors.red[300] : Colors.red[900])
+                                  : (Theme.of(context).brightness == Brightness.dark ? Colors.orange[300] : Colors.orange[900])),
                         ),
                         Text(msg,
                             style: TextStyle(
                                 fontSize: 10,
                                 color: isMaintenance
-                                    ? Colors.red[700]
-                                    : Colors.orange[700],
+                                    ? (Theme.of(context).brightness == Brightness.dark ? Colors.red[200] : Colors.red[700])
+                                    : (Theme.of(context).brightness == Brightness.dark ? Colors.orange[200] : Colors.orange[700]),
                                 height: 1.3)),
                         if (!isMaintenance && startTime != null)
                           Padding(
@@ -1909,7 +2073,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 style: TextStyle(
                                     fontSize: 9,
                                     fontWeight: FontWeight.w900,
-                                    color: Colors.orange[800])),
+                                    color: Theme.of(context).brightness == Brightness.dark ? Colors.orange[200] : Colors.orange[800])),
                           ),
                       ],
                     ),
@@ -1961,13 +2125,13 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.blue[50],
+                  color: Theme.of(context).brightness == Brightness.dark ? Colors.blue.withOpacity(0.1) : Colors.blue[50],
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: Colors.blue[100]!),
+                  border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.blue.withOpacity(0.3) : Colors.blue[100]!),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.info_rounded,
+                    Icon(Icons.info_rounded,
                         color: Colors.blue, size: 24),
                     const SizedBox(width: 16),
                     Expanded(
@@ -1975,18 +2139,21 @@ class _HomeScreenState extends State<HomeScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(title,
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontWeight: FontWeight.w900, fontSize: 14)),
                           const SizedBox(height: 2),
                           Text(message,
                               style: TextStyle(
-                                  color: Colors.grey[700], fontSize: 11)),
+                                  color: Theme.of(context).brightness == Brightness.dark 
+                                      ? Colors.white.withOpacity(0.8) 
+                                      : Colors.black.withOpacity(0.6), 
+                                  fontSize: 11)),
                         ],
                       ),
                     ),
                     IconButton(
                       onPressed: () => _saveDismissedBroadcast(id),
-                      icon: const Icon(Icons.close_rounded, size: 16),
+                      icon: Icon(Icons.close_rounded, size: 16, color: Theme.of(context).iconTheme.color),
                       visualDensity: VisualDensity.compact,
                     ),
                   ],
@@ -2047,10 +2214,10 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Container(
                 padding: const EdgeInsets.all(32),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
+                  color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1C1C1E).withOpacity(0.9) : Colors.white.withOpacity(0.9),
                   borderRadius: BorderRadius.circular(32),
                   border: Border.all(
-                      color: Colors.white.withOpacity(0.5), width: 1.5),
+                      color: Theme.of(context).dividerColor.withOpacity(0.1), width: 1.5),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -2078,10 +2245,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 12),
                     Text(title,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
-                            color: Colors.black,
+                            color: Theme.of(context).textTheme.titleLarge?.color,
                             decoration: TextDecoration.none,
                             letterSpacing: -0.5)),
                     const SizedBox(height: 16),
@@ -2089,7 +2256,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                             fontSize: 14,
-                            color: Colors.grey[800],
+                            color: Theme.of(context).textTheme.bodyMedium?.color,
                             height: 1.6,
                             fontWeight: FontWeight.normal,
                             decoration: TextDecoration.none)),
@@ -2106,7 +2273,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           width: double.infinity,
                           height: 56,
                           decoration: BoxDecoration(
-                            color: Colors.black,
+                            color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
                             borderRadius: BorderRadius.circular(18),
                             boxShadow: [
                               BoxShadow(
@@ -2115,10 +2282,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                   offset: const Offset(0, 4))
                             ],
                           ),
-                          child: const Center(
+                          child: Center(
                             child: Text('UNDERSTOOD',
                                 style: TextStyle(
-                                    color: Colors.white,
+                                    color: Theme.of(context).brightness == Brightness.dark ? Colors.black : Colors.white,
                                     fontWeight: FontWeight.w900,
                                     letterSpacing: 1,
                                     fontSize: 13)),

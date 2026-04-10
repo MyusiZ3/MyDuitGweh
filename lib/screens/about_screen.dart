@@ -10,14 +10,14 @@ class AboutScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F2F7), // iOS native grouped background
+      backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF000000) : const Color(0xFFF2F2F7),
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Tentang Aplikasi',
           style: TextStyle(
             fontWeight: FontWeight.w700,
             letterSpacing: -0.5,
-            color: Color(0xFF1C1C1E),
+            color: Theme.of(context).textTheme.titleLarge?.color,
           ),
         ),
         backgroundColor: Colors.transparent,
@@ -41,6 +41,7 @@ class AboutScreen extends StatelessWidget {
                   Expanded(
                     flex: 5,
                     child: _buildBentoCard(
+                      context,
                       color: AppColors.primary,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,6 +85,7 @@ class AboutScreen extends StatelessWidget {
                   Expanded(
                     flex: 4,
                     child: _buildBentoCard(
+                      context,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -117,10 +119,10 @@ class AboutScreen extends StatelessWidget {
                                     fit: BoxFit.scaleDown,
                                     child: Text(
                                       version,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 22,
                                         fontWeight: FontWeight.w800,
-                                        color: Color(0xFF1C1C1E),
+                                        color: Theme.of(context).textTheme.titleLarge?.color,
                                         letterSpacing: -0.5,
                                       ),
                                     ),
@@ -177,7 +179,8 @@ class AboutScreen extends StatelessWidget {
 
             // MIDDLE ROW: Description / Mission
             _buildBentoCard(
-              child: const Column(
+              context,
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
@@ -190,7 +193,7 @@ class AboutScreen extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF1C1C1E),
+                          color: Theme.of(context).textTheme.titleLarge?.color,
                         ),
                       ),
                     ],
@@ -202,7 +205,7 @@ class AboutScreen extends StatelessWidget {
                       fontSize: 15,
                       height: 1.5,
                       fontWeight: FontWeight.w400,
-                      color: Color(0xFF3A3A3C),
+                      color: Theme.of(context).textTheme.bodyMedium?.color,
                     ),
                   ),
                 ],
@@ -212,6 +215,7 @@ class AboutScreen extends StatelessWidget {
 
             // NEW SECTION: WHAT'S NEW
             _buildBentoCard(
+              context,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -227,34 +231,37 @@ class AboutScreen extends StatelessWidget {
                             color: Colors.amber, size: 16),
                       ),
                       const SizedBox(width: 10),
-                      const Text(
+                      Text(
                         'Apa yang Baru?',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF1C1C1E),
+                          color: Theme.of(context).textTheme.titleLarge?.color,
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
-                  _buildChangelogItem(
-                    title: 'Archen AI: Personality Update',
-                    desc:
-                        'Gaya bahasa Archen AI lebih asik, rame, dan relatable!',
-                  ),
-                  const SizedBox(height: 12),
-                  _buildChangelogItem(
-                    title: 'BUG FIXES',
-                    desc:
-                        'Perbaikan beebrapa BUG dan error yang ada di aplikasi.',
-                  ),
-                  const SizedBox(height: 12),
-                  _buildChangelogItem(
-                    title: 'UI/UX Improvements',
-                    desc:
-                        'Perbaikan sistem pengaturan UI dan UX agar lebih nyaman digunakan.',
-                  ),
+                    _buildChangelogItem(
+                      context,
+                      title: 'Archen AI: Personality Update',
+                      desc:
+                          'Gaya bahasa Archen AI lebih asik, rame, dan relatable!',
+                    ),
+                    const SizedBox(height: 12),
+                    _buildChangelogItem(
+                      context,
+                      title: 'BUG FIXES',
+                      desc:
+                          'Perbaikan beebrapa BUG dan error yang ada di aplikasi.',
+                    ),
+                    const SizedBox(height: 12),
+                    _buildChangelogItem(
+                      context,
+                      title: 'UI/UX Improvements',
+                      desc:
+                          'Perbaikan sistem pengaturan UI dan UX agar lebih nyaman digunakan.',
+                    ),
                 ],
               ),
             ),
@@ -267,13 +274,14 @@ class AboutScreen extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _buildBentoCard(
-                      child: const Column(
+                      context,
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(CupertinoIcons.person_2_fill,
+                          const Icon(CupertinoIcons.person_2_fill,
                               color: Color(0xFF007AFF), size: 28),
-                          SizedBox(height: 20),
-                          Text(
+                          const SizedBox(height: 20),
+                          const Text(
                             'Dev / Owner',
                             style: TextStyle(
                               fontSize: 12,
@@ -281,7 +289,7 @@ class AboutScreen extends StatelessWidget {
                               color: AppColors.textHint,
                             ),
                           ),
-                          SizedBox(height: 2),
+                          const SizedBox(height: 2),
                           FittedBox(
                             fit: BoxFit.scaleDown,
                             child: Text(
@@ -289,7 +297,7 @@ class AboutScreen extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF1C1C1E),
+                                color: Theme.of(context).textTheme.titleLarge?.color,
                                 letterSpacing: -0.3,
                               ),
                             ),
@@ -301,13 +309,14 @@ class AboutScreen extends StatelessWidget {
                   const SizedBox(width: 16),
                   Expanded(
                     child: _buildBentoCard(
-                      child: const Column(
+                      context,
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(CupertinoIcons.device_phone_portrait,
+                          const Icon(CupertinoIcons.device_phone_portrait,
                               color: Colors.teal, size: 28),
-                          SizedBox(height: 20),
-                          Text(
+                          const SizedBox(height: 20),
+                          const Text(
                             'Ditenagai oleh',
                             style: TextStyle(
                               fontSize: 12,
@@ -315,7 +324,7 @@ class AboutScreen extends StatelessWidget {
                               color: AppColors.textHint,
                             ),
                           ),
-                          SizedBox(height: 2),
+                          const SizedBox(height: 2),
                           FittedBox(
                             fit: BoxFit.scaleDown,
                             child: Text(
@@ -323,7 +332,7 @@ class AboutScreen extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF1C1C1E),
+                                color: Theme.of(context).textTheme.titleLarge?.color,
                                 letterSpacing: -0.3,
                               ),
                             ),
@@ -340,7 +349,7 @@ class AboutScreen extends StatelessWidget {
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
+                  children: [
                     Icon(Icons.copyright_rounded,
                         size: 14, color: AppColors.textHint),
                     SizedBox(width: 4),
@@ -372,17 +381,17 @@ class AboutScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildBentoCard({
+  Widget _buildBentoCard(BuildContext context, {
     required Widget child,
     Color? color,
   }) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: color ?? Colors.white,
+        color: color ?? Theme.of(context).cardColor,
         borderRadius:
             BorderRadius.circular(28), // iOS style large border radius
-        border: Border.all(color: Colors.black.withOpacity(0.02), width: 1.5),
+        border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.02), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
@@ -395,7 +404,7 @@ class AboutScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildChangelogItem({required String title, required String desc}) {
+  Widget _buildChangelogItem(BuildContext context, {required String title, required String desc}) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -415,18 +424,18 @@ class AboutScreen extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF1C1C1E),
+                  color: Theme.of(context).textTheme.titleLarge?.color,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 desc,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).textTheme.bodySmall?.color,
                   height: 1.3,
                 ),
               ),

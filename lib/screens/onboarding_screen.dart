@@ -15,39 +15,43 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  final List<OnboardingData> _pages = [
-    OnboardingData(
-      title: 'Solusi Cerdas\nAtur Keuangan',
-      subtitle:
-          'Semua transaksi harian tercatat otomatis dan rapi dalam satu genggaman.',
-      icon: CupertinoIcons.chart_pie_fill,
-      iconColor: AppColors.primary,
-      backgroundColor: const Color(0xFFD6E4FF), // Soft Blue
-    ),
-    OnboardingData(
-      title: 'Pantau Bersama\nDgn Sahabat',
-      subtitle:
-          'Bikin dompet bareng teman atau pasangan, biar makin transparan dan seru!',
-      icon: CupertinoIcons.person_3_fill,
-      iconColor: Colors.deepOrange,
-      backgroundColor: const Color(0xFFFFE0B2), // Soft Orange
-    ),
-    OnboardingData(
-      title: 'Laporan Praktis\nSecepat Kilat',
-      subtitle:
-          'Download laporan bulanan dalam format PDF yang rapi, siap untuk dicetak kapan saja.',
-      icon: CupertinoIcons.doc_chart_fill,
-      iconColor: Colors.pink,
-      backgroundColor: const Color(0xFFFFD1DC), // Soft Pink
-    ),
-  ];
+  List<OnboardingData> _getPages(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return [
+      OnboardingData(
+        title: 'Solusi Cerdas\nAtur Keuangan',
+        subtitle:
+            'Semua transaksi harian tercatat otomatis dan rapi dalam satu genggaman.',
+        icon: CupertinoIcons.chart_pie_fill,
+        iconColor: AppColors.primary,
+        backgroundColor: isDark ? const Color(0xFF1A1A2E) : const Color(0xFFD6E4FF),
+      ),
+      OnboardingData(
+        title: 'Pantau Bersama\nDgn Sahabat',
+        subtitle:
+            'Bikin dompet bareng teman atau pasangan, biar makin transparan dan seru!',
+        icon: CupertinoIcons.person_3_fill,
+        iconColor: Colors.deepOrange,
+        backgroundColor: isDark ? const Color(0xFF2E1A1A) : const Color(0xFFFFE0B2),
+      ),
+      OnboardingData(
+        title: 'Laporan Praktis\nSecepat Kilat',
+        subtitle:
+            'Download laporan bulanan dalam format PDF yang rapi, siap untuk dicetak kapan saja.',
+        icon: CupertinoIcons.doc_chart_fill,
+        iconColor: Colors.pink,
+        backgroundColor: isDark ? const Color(0xFF2E1A2E) : const Color(0xFFFFD1DC),
+      ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
+    final pages = _getPages(context);
     return Scaffold(
       body: AnimatedContainer(
         duration: const Duration(milliseconds: 500),
-        color: _pages[_currentPage].backgroundColor,
+        color: pages[_currentPage].backgroundColor,
         child: SafeArea(
           child: Column(
             children: [
@@ -59,9 +63,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   onPageChanged: (index) {
                     setState(() => _currentPage = index);
                   },
-                  itemCount: _pages.length,
+                  itemCount: pages.length,
                   itemBuilder: (context, index) {
-                    return _buildPage(_pages[index]);
+                    return _buildPage(pages[index]);
                   },
                 ),
               ),
@@ -94,19 +98,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: const BoxDecoration(
-                  color: AppColors.textPrimary,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).textTheme.titleLarge?.color,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(CupertinoIcons.creditcard_fill,
                     color: Colors.white, size: 16),
               ),
               const SizedBox(width: 10),
-              const Text(
+              Text(
                 'MyDuitGweh',
                 style: TextStyle(
                   fontWeight: FontWeight.w900,
-                  color: AppColors.textPrimary,
+                  color: Theme.of(context).textTheme.titleLarge?.color,
                   fontSize: 16,
                   letterSpacing: -0.5,
                 ),
@@ -116,7 +120,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           TextButton(
             onPressed: _navigateToLogin,
             style: TextButton.styleFrom(
-              foregroundColor: AppColors.textPrimary,
+              foregroundColor: Theme.of(context).textTheme.titleLarge?.color,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             ),
             child: const Text(
@@ -168,10 +172,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               children: [
                 Text(
                   data.title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 36,
                     fontWeight: FontWeight.w900,
-                    color: AppColors.textPrimary,
+                    color: Theme.of(context).textTheme.titleLarge?.color,
                     height: 1.1,
                     letterSpacing: -1.5,
                   ),
@@ -182,7 +186,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.textPrimary.withOpacity(0.7),
+                    color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.7),
                     height: 1.5,
                   ),
                 ),
@@ -204,7 +208,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           // Indicator
           Row(
             children: List.generate(
-              _pages.length,
+              _getPages(context).length,
               (index) => AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
                 margin: const EdgeInsets.only(right: 6),
@@ -212,8 +216,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 width: _currentPage == index ? 24 : 6,
                 decoration: BoxDecoration(
                   color: _currentPage == index
-                      ? AppColors.textPrimary
-                      : AppColors.textPrimary.withOpacity(0.2),
+                      ? Theme.of(context).textTheme.titleLarge?.color
+                      : Theme.of(context).textTheme.titleLarge?.color?.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(3),
                 ),
               ),
@@ -223,7 +227,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           // Next Button
           GestureDetector(
             onTap: () {
-              if (_currentPage < _pages.length - 1) {
+              if (_currentPage < _getPages(context).length - 1) {
                 _pageController.nextPage(
                   duration: const Duration(milliseconds: 600),
                   curve: Curves.fastOutSlowIn,
@@ -236,11 +240,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
+                    color: Colors.black.withOpacity(Theme.of(context).brightness == Brightness.dark ? 0.3 : 0.08),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -252,12 +256,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   height: 48,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey[200]!, width: 2),
+                    border: Border.all(color: Theme.of(context).dividerColor, width: 2),
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Icon(
                       Icons.arrow_forward_ios_rounded,
-                      color: AppColors.textPrimary,
+                      color: Theme.of(context).textTheme.titleLarge?.color,
                       size: 18,
                     ),
                   ),

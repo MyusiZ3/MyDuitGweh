@@ -29,73 +29,88 @@ class AppColors {
   static const Color expense = Color(0xFFE76F6F);
   static const Color warning = Color(0xFFF4A261);
 
-  // Card shadow
   static const Color shadow = Color(0x0A000000);
+
+  // Dark Mode Palette
+  static const Color backgroundDark = Color(0xFF000000); // True Black for OLED
+  static const Color surfaceDark = Color(0xFF1C1C1E); // Apple SystemGray6 Dark
+  static const Color surfaceVariantDark = Color(0xFF2C2C2E); // Apple SystemGray5 Dark
+  static const Color textPrimaryDark = Color(0xFFFFFFFF);
+  static const Color textSecondaryDark = Color(0xFF8E8E93); // Apple SystemGray
+  static const Color textHintDark = Color(0xFF8E8E93); // Apple SystemGray
 }
 
 class AppTheme {
   static ThemeData get lightTheme {
+    return _buildTheme(Brightness.light);
+  }
+
+  static ThemeData get darkTheme {
+    return _buildTheme(Brightness.dark);
+  }
+
+  static ThemeData _buildTheme(Brightness brightness) {
+    final isDark = brightness == Brightness.dark;
+    final colors = isDark ? _darkColorScheme : _lightColorScheme;
+    final textPrimary = isDark ? AppColors.textPrimaryDark : AppColors.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondaryDark : AppColors.textSecondary;
+    final textHint = isDark ? AppColors.textHintDark : AppColors.textHint;
+    final background = isDark ? AppColors.backgroundDark : AppColors.background;
+    final surface = isDark ? AppColors.surfaceDark : AppColors.surface;
+
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.light,
-      scaffoldBackgroundColor: AppColors.background,
-      colorScheme: const ColorScheme.light(
-        primary: AppColors.primary,
-        onPrimary: Colors.white,
-        secondary: AppColors.deepBlue,
-        onSecondary: Colors.white,
-        surface: AppColors.surface,
-        onSurface: AppColors.textPrimary,
-        error: AppColors.expense,
-      ),
+      brightness: brightness,
+      scaffoldBackgroundColor: background,
+      colorScheme: colors,
       textTheme: GoogleFonts.plusJakartaSansTextTheme(
-        const TextTheme(
+        TextTheme(
           displayLarge: TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.w800,
-            color: AppColors.textPrimary,
+            color: textPrimary,
             letterSpacing: -0.5,
           ),
           displayMedium: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
+            color: textPrimary,
             letterSpacing: -0.5,
           ),
           headlineLarge: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
+            color: textPrimary,
           ),
           headlineMedium: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+            color: textPrimary,
           ),
           titleLarge: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+            color: textPrimary,
           ),
           titleMedium: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+            color: textPrimary,
           ),
           bodyLarge: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w400,
-            color: AppColors.textPrimary,
+            color: textPrimary,
           ),
           bodyMedium: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w400,
-            color: AppColors.textSecondary,
+            color: textSecondary,
           ),
           bodySmall: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w400,
-            color: AppColors.textHint,
+            color: textHint,
           ),
           labelLarge: TextStyle(
             fontSize: 14,
@@ -104,28 +119,16 @@ class AppTheme {
           ),
         ),
       ),
-      appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        centerTitle: true,
-        titleTextStyle: GoogleFonts.plusJakartaSans(
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
-          color: AppColors.textPrimary,
-        ),
-        iconTheme: const IconThemeData(color: AppColors.textPrimary),
-      ),
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: Colors.white,
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: surface,
         selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textHint,
+        unselectedItemColor: textHint,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
         selectedLabelStyle:
-            TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+            const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
         unselectedLabelStyle:
-            TextStyle(fontSize: 11, fontWeight: FontWeight.w400),
+            const TextStyle(fontSize: 11, fontWeight: FontWeight.w400),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -157,7 +160,7 @@ class AppTheme {
         ),
       ),
       cardTheme: CardThemeData(
-        color: AppColors.surface,
+        color: surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
@@ -166,7 +169,7 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.surfaceVariant,
+        fillColor: isDark ? AppColors.surfaceVariantDark : AppColors.surfaceVariant,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
@@ -183,14 +186,71 @@ class AppTheme {
             const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         hintStyle: GoogleFonts.plusJakartaSans(
           fontSize: 14,
-          color: AppColors.textHint,
+          color: textHint,
         ),
       ),
-      dividerTheme: const DividerThemeData(
-        color: Color(0xFFE9ECEF),
+      hintColor: textHint,
+      dividerTheme: DividerThemeData(
+        color: isDark ? const Color(0xFF38383A) : const Color(0xFFE9ECEF),
         thickness: 1,
         space: 0,
       ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: false,
+        iconTheme: IconThemeData(color: isDark ? Colors.white : AppColors.textPrimary),
+        titleTextStyle: GoogleFonts.plusJakartaSans(
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          color: isDark ? Colors.white : AppColors.textPrimary,
+        ),
+      ),
+      radioTheme: RadioThemeData(
+        fillColor: WidgetStateProperty.resolveWith<Color?>((states) {
+          if (states.contains(WidgetState.selected)) {
+            return isDark ? const Color(0xFF0A84FF) : AppColors.primary;
+          }
+          return isDark ? Colors.white.withOpacity(0.7) : AppColors.textHint;
+        }),
+      ),
+      checkboxTheme: CheckboxThemeData(
+        fillColor: WidgetStateProperty.resolveWith<Color?>((states) {
+          if (states.contains(WidgetState.selected)) {
+            return isDark ? const Color(0xFF0A84FF) : AppColors.primary;
+          }
+          return Colors.transparent;
+        }),
+        side: BorderSide(
+          color: isDark ? Colors.white.withOpacity(0.5) : AppColors.textHint,
+          width: 1.5,
+        ),
+      ),
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        linearTrackColor: isDark ? Colors.white.withOpacity(0.25) : const Color(0xFFE9ECEF),
+      ),
     );
   }
+
+  static const _lightColorScheme = ColorScheme.light(
+    primary: AppColors.primary,
+    onPrimary: Colors.white,
+    secondary: AppColors.deepBlue,
+    onSecondary: Colors.white,
+    surface: AppColors.surface,
+    onSurface: AppColors.textPrimary,
+    error: AppColors.expense,
+  );
+
+  static const _darkColorScheme = ColorScheme.dark(
+    primary: AppColors.primary,
+    onPrimary: Colors.white,
+    secondary: AppColors.primaryLight,
+    onSecondary: Colors.white,
+    surface: AppColors.surfaceDark,
+    onSurface: AppColors.textPrimaryDark,
+    error: AppColors.expense,
+    background: AppColors.backgroundDark,
+    onBackground: AppColors.textPrimaryDark,
+  );
 }

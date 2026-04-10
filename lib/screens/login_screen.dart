@@ -126,7 +126,7 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F2F7), // iOS system grouped bg
+      backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF000000) : const Color(0xFFF2F2F7),
       body: Stack(
         children: [
           // Gradient background blobs
@@ -174,7 +174,7 @@ class _LoginScreenState extends State<LoginScreen>
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
                 child: Container(
-                  color: Colors.white.withOpacity(0.6),
+                  color: Theme.of(context).brightness == Brightness.dark ? Colors.black.withOpacity(0.6) : Colors.white.withOpacity(0.6),
                   child: const Center(child: LoadingWidget()),
                 ),
               ),
@@ -270,10 +270,10 @@ class _LoginScreenState extends State<LoginScreen>
           child: Text(
             _isLogin ? 'Selamat Datang' : 'Buat Akun Baru',
             key: ValueKey(_isLogin ? 'login_title' : 'register_title'),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.w800,
-              color: Color(0xFF1C1C1E),
+              color: Theme.of(context).textTheme.titleLarge?.color,
               letterSpacing: -1.2,
               height: 1.15,
             ),
@@ -303,7 +303,7 @@ class _LoginScreenState extends State<LoginScreen>
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -419,21 +419,21 @@ class _LoginScreenState extends State<LoginScreen>
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF2F2F7),
+        color: Theme.of(context).canvasColor,
         borderRadius: BorderRadius.circular(12),
       ),
       child: TextField(
         controller: controller,
         obscureText: obscureText ?? false,
         keyboardType: keyboardType,
-        style: const TextStyle(
+        style: TextStyle(
             fontWeight: FontWeight.w500,
             fontSize: 16,
-            color: Color(0xFF1C1C1E)),
+            color: Theme.of(context).textTheme.bodyLarge?.color),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(
-              color: Color(0xFFC7C7CC),
+          hintStyle: TextStyle(
+              color: Theme.of(context).hintColor,
               fontSize: 16,
               fontWeight: FontWeight.w400),
           prefixIcon: Icon(icon, color: const Color(0xFF8E8E93), size: 20),
@@ -443,7 +443,7 @@ class _LoginScreenState extends State<LoginScreen>
                     obscureText!
                         ? Icons.visibility_off_rounded
                         : Icons.visibility_rounded,
-                    color: const Color(0xFFC7C7CC),
+                    color: Theme.of(context).hintColor,
                     size: 20,
                   ),
                   onPressed: onToggleVisibility,
@@ -459,18 +459,18 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Widget _buildDividerRow() {
-    return const Row(
+    return Row(
       children: [
-        Expanded(child: Divider(color: Color(0xFFE5E5EA), thickness: 0.5)),
+        Expanded(child: Divider(color: Theme.of(context).dividerColor, thickness: 0.5)),
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text('atau',
               style: TextStyle(
-                  color: Color(0xFFC7C7CC),
+                  color: Theme.of(context).hintColor,
                   fontSize: 13,
                   fontWeight: FontWeight.w500)),
         ),
-        Expanded(child: Divider(color: Color(0xFFE5E5EA), thickness: 0.5)),
+        Expanded(child: Divider(color: Theme.of(context).dividerColor, thickness: 0.5)),
       ],
     );
   }
@@ -482,10 +482,10 @@ class _LoginScreenState extends State<LoginScreen>
       child: OutlinedButton(
         onPressed: _isLoading ? null : _handleGoogleSignIn,
         style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: Color(0xFFE5E5EA), width: 1),
+          side: BorderSide(color: Theme.of(context).dividerColor, width: 1),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          backgroundColor: Colors.white,
+          backgroundColor: Theme.of(context).cardColor,
           elevation: 0,
         ),
         child: Row(
@@ -493,9 +493,9 @@ class _LoginScreenState extends State<LoginScreen>
           children: [
             Image.network('https://www.google.com/favicon.ico', height: 18),
             const SizedBox(width: 10),
-            const Text('Masuk dengan Google',
+            Text('Masuk dengan Google',
                 style: TextStyle(
-                    color: Color(0xFF1C1C1E),
+                    color: Theme.of(context).textTheme.titleLarge?.color,
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     letterSpacing: -0.3)),

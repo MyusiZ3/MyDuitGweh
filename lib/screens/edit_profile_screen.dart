@@ -79,11 +79,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       lastDate: DateTime.now(),
       builder: (context, child) {
         return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
+          data: ThemeData(
+            brightness: Theme.of(context).brightness,
+            colorScheme: Theme.of(context).colorScheme.copyWith(
               primary: AppColors.primary,
               onPrimary: Colors.white,
-              onSurface: Colors.black,
             ),
           ),
           child: child!,
@@ -174,10 +174,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             flex: 2,
             child: Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
-                color: Color(0xFF1C1C1E),
+                color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
           ),
@@ -200,7 +200,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       textAlign: TextAlign.right,
       style: TextStyle(
         fontSize: 15,
-        color: _isEditing ? Colors.black : Colors.grey.shade600,
+        color: _isEditing 
+          ? Theme.of(context).textTheme.bodyLarge?.color 
+          : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
       ),
       decoration: InputDecoration(
         hintText: hint,
@@ -215,14 +217,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F2F7), // iOS native grouped background
+      backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF000000) : const Color(0xFFF2F2F7),
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Profil Saya',
           style: TextStyle(
             fontWeight: FontWeight.w700,
             letterSpacing: -0.5,
-            color: Color(0xFF1C1C1E),
+            color: Theme.of(context).textTheme.titleLarge?.color,
           ),
         ),
         backgroundColor: Colors.transparent,
@@ -324,7 +326,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     // Information Card
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).cardColor,
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
@@ -357,8 +359,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                       icon: const Icon(
                                           CupertinoIcons.chevron_down,
                                           size: 16),
-                                      style: const TextStyle(
-                                          fontSize: 15, color: Colors.black),
+                                      style: TextStyle(
+                                          fontSize: 15, color: Theme.of(context).textTheme.bodyLarge?.color),
                                       items: const [
                                         DropdownMenuItem(
                                             value: 'Prefer not to say',
