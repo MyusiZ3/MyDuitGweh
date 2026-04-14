@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
@@ -339,7 +340,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.check_circle_rounded,
+              const Icon(CupertinoIcons.checkmark_circle_fill,
                   color: Colors.green, size: 72),
               const SizedBox(height: 16),
               const Text('Config Updated!',
@@ -396,7 +397,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                       decoration: BoxDecoration(
                           color: Colors.blue.withOpacity(0.1),
                           shape: BoxShape.circle),
-                      child: const Icon(Icons.rocket_launch_rounded,
+                      child: const Icon(CupertinoIcons.rocket_fill,
                           color: Colors.blue),
                     ),
                     const SizedBox(width: 12),
@@ -406,7 +407,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                                 fontSize: 20, fontWeight: FontWeight.bold))),
                     IconButton(
                         onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.close_rounded, size: 20)),
+                        icon: const Icon(CupertinoIcons.clear, size: 20)),
                   ],
                 ),
                 const Divider(height: 32),
@@ -436,7 +437,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(Icons.info_outline_rounded,
+                            const Icon(CupertinoIcons.info_circle,
                                 color: Colors.amber, size: 18),
                             const SizedBox(width: 8),
                             Expanded(
@@ -549,7 +550,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
         actions: [
           IconButton(
             onPressed: _showTutorialDialog,
-            icon: const Icon(Icons.help_outline_rounded),
+            icon: const Icon(CupertinoIcons.question_circle),
             tooltip: 'Tutorial Update',
           ),
         ],
@@ -560,7 +561,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildSectionHeader('System & Utility',
-                Icons.settings_suggest_rounded, Colors.black),
+                CupertinoIcons.gear, Colors.black),
             _buildPremiumCard(
               child: Column(
                 children: [
@@ -598,8 +599,8 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                           ),
                           child: Icon(
                             _maintenanceMode
-                                ? Icons.construction_rounded
-                                : Icons.check_circle_rounded,
+                              ? CupertinoIcons.hammer_fill
+                              : CupertinoIcons.checkmark_circle_fill,
                             color: _maintenanceMode
                                 ? Colors.white
                                 : Colors.blue.shade700,
@@ -649,7 +650,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                   _buildModernTextField(
                     controller: _maintenanceMsgController,
                     label: 'Pesan Maintenance',
-                    icon: Icons.message_rounded,
+                    icon: CupertinoIcons.chat_bubble_fill,
                     color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black,
                     maxLines: 2,
                   ),
@@ -680,28 +681,28 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
             ),
             const SizedBox(height: 32),
             _buildSectionHeader('Versioning & Update',
-                Icons.system_update_rounded, Theme.of(context).textTheme.titleMedium?.color ?? Colors.black),
+                CupertinoIcons.arrow_down_circle_fill, Theme.of(context).textTheme.titleMedium?.color ?? Colors.black),
             _buildPremiumCard(
               child: Column(
                 children: [
                   _buildModernTextField(
                     controller: _minVersionController,
                     label: 'Force Update vMin',
-                    icon: Icons.verified_rounded,
+                    icon: CupertinoIcons.checkmark_seal_fill,
                     color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black,
                   ),
                   const SizedBox(height: 16),
                   _buildModernTextField(
                     controller: _latestVersionController,
                     label: 'Latest Version',
-                    icon: Icons.new_releases_rounded,
+                    icon: CupertinoIcons.sparkles,
                     color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black,
                   ),
                   const SizedBox(height: 16),
                   _buildModernTextField(
                     controller: _downloadUrlController,
                     label: 'Download URL (Direct)',
-                    icon: Icons.link_rounded,
+                    icon: CupertinoIcons.link,
                     color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black,
                   ),
                   const SizedBox(height: 8),
@@ -725,7 +726,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12)),
                           ),
-                          icon: Icon(Icons.rocket_launch_rounded,
+                          icon: Icon(CupertinoIcons.rocket_fill,
                               size: 14, color: Theme.of(context).colorScheme.primary),
                           label: Text('Use GitHub Release',
                               style: TextStyle(
@@ -748,7 +749,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12)),
                           ),
-                          icon: Icon(Icons.cloud_done_rounded,
+                          icon: Icon(CupertinoIcons.cloud_upload_fill,
                               size: 14, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
                           label: Text('Use Firebase Bin',
                               style: TextStyle(
@@ -778,8 +779,8 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                       children: [
                         Icon(
                           _isForceUpdate
-                              ? Icons.error_outline_rounded
-                              : Icons.info_outline_rounded,
+                              ? CupertinoIcons.exclamationmark_circle
+                              : CupertinoIcons.info_circle,
                           color: _isForceUpdate ? Theme.of(context).colorScheme.error : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
                           size: 20,
                         ),
@@ -823,7 +824,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
             ),
             const SizedBox(height: 32),
             _buildSectionHeader(
-                'AI Global Advisor', Icons.psychology_rounded, Theme.of(context).textTheme.titleMedium?.color ?? Colors.black),
+                'AI Global Advisor', CupertinoIcons.lightbulb_fill, Theme.of(context).textTheme.titleMedium?.color ?? Colors.black),
             _buildPremiumCard(
               child: Column(
                 children: [
@@ -856,8 +857,8 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                           ),
                           child: Icon(
                             _advisorEnabled
-                                ? Icons.psychology_rounded
-                                : Icons.power_off_rounded,
+                                ? CupertinoIcons.lightbulb_fill
+                                : CupertinoIcons.power,
                             color: _advisorEnabled ? Colors.white : Theme.of(context).colorScheme.error,
                             size: 22,
                           ),
@@ -907,7 +908,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                       labelStyle: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Theme.of(context).hintColor),
-                      prefixIcon: Icon(Icons.hub_rounded,
+                      prefixIcon: Icon(CupertinoIcons.link,
                           color: Theme.of(context).iconTheme.color, size: 20),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
@@ -916,7 +917,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 12),
                     ),
-                    icon: const Icon(Icons.keyboard_arrow_down_rounded,
+                    icon: const Icon(CupertinoIcons.chevron_down,
                         color: Colors.grey),
                     items: const [
                       DropdownMenuItem(
@@ -935,7 +936,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                     width: double.infinity,
                     height: 52,
                     child: ElevatedButton.icon(
-                      icon: Icon(Icons.vpn_key_rounded,
+                      icon: Icon(CupertinoIcons.lock_fill,
                           size: 18, color: Theme.of(context).textTheme.bodyMedium?.color),
                       label: const Text('MANAGE API KEYS',
                           style: TextStyle(
@@ -960,7 +961,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                           controller: _advisorMinTransController,
                           label: 'Trigger (Trans)',
                           helper: 'Min. tx baru',
-                          icon: Icons.swap_horiz_rounded,
+                          icon: CupertinoIcons.arrow_right_arrow_left,
                           color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black,
                           isNumber: true,
                         ),
@@ -971,7 +972,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                           controller: _advisorCooldownController,
                           label: 'Cooldown (Jam)',
                           helper: 'Jeda analisa',
-                          icon: Icons.hourglass_empty_rounded,
+                          icon: CupertinoIcons.hourglass,
                           color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black,
                           isNumber: true,
                         ),
@@ -983,7 +984,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
             ),
             const SizedBox(height: 32),
             _buildSectionHeader('User Survey (Satisfaction)',
-                Icons.thumbs_up_down_rounded, Theme.of(context).textTheme.titleMedium?.color ?? Colors.black),
+                CupertinoIcons.hand_thumbsup_fill, Theme.of(context).textTheme.titleMedium?.color ?? Colors.black),
             _buildPremiumCard(
               child: Column(
                 children: [
@@ -1020,7 +1021,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
-                            Icons.thumbs_up_down_rounded,
+                            CupertinoIcons.hand_thumbsup_fill,
                             color:
                                 _surveyEnabled ? Colors.white : Theme.of(context).hintColor,
                             size: 22,
@@ -1104,7 +1105,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                         height: 20,
                         child: CircularProgressIndicator(
                             color: Theme.of(context).colorScheme.onPrimary, strokeWidth: 2))
-                    : Icon(Icons.save_rounded, color: Theme.of(context).colorScheme.onPrimary),
+                    : Icon(CupertinoIcons.floppy_disk, color: Theme.of(context).colorScheme.onPrimary),
                 label: Text(_isSaving ? 'Saving...' : 'Publish Configurations'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.primary,
@@ -1288,7 +1289,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Icon(Icons.access_time_rounded,
+                      Icon(CupertinoIcons.time,
                           size: 14,
                           color:
                               value != null ? Theme.of(context).colorScheme.primary : Colors.grey),
@@ -1311,7 +1312,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
             if (value != null)
               GestureDetector(
                 onTap: onClear,
-                child: const Icon(Icons.close_rounded,
+                child: const Icon(CupertinoIcons.clear,
                     size: 16, color: Colors.redAccent),
               ),
           ],
@@ -1408,7 +1409,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                   decoration: BoxDecoration(
                       color: statusColor.withOpacity(0.1),
                       shape: BoxShape.circle),
-                  child: Icon(Icons.settings_backup_restore_rounded,
+                  child: Icon(CupertinoIcons.arrow_counterclockwise,
                       size: 20, color: statusColor),
                 ),
                 title: Row(
@@ -1447,7 +1448,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                 ),
                 trailing: _isSuperAdmin
                     ? IconButton(
-                        icon: const Icon(Icons.delete_outline_rounded,
+                        icon: const Icon(CupertinoIcons.trash,
                             size: 18, color: Colors.redAccent),
                         onPressed: () =>
                             _clearHistory(singleDoc: doc.reference),

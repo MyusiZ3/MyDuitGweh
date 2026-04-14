@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'dart:ui' as ui;
 import '../utils/app_theme.dart';
 import '../utils/tone_dictionary.dart';
@@ -9,21 +10,21 @@ class UIHelper {
 
   static void showSuccessSnackBar(BuildContext context, String message) {
     _showTopToast(
-        context, message, AppColors.income, Icons.check_circle_rounded);
+        context, message, AppColors.income, CupertinoIcons.check_mark_circled_solid);
   }
 
   static void showErrorSnackBar(BuildContext context, String message) {
     _showTopToast(
-        context, message, AppColors.expense, Icons.error_outline_rounded);
+        context, message, AppColors.expense, CupertinoIcons.info);
   }
 
   static void showInfoSnackBar(BuildContext context, String message) {
     _showTopToast(
-        context, message, Colors.blueGrey, Icons.info_outline_rounded);
+        context, message, Colors.blueGrey, CupertinoIcons.info);
   }
 
   static void showGlobalInfoToast(String message,
-      {Color color = Colors.blueGrey, IconData icon = Icons.security_rounded}) {
+      {Color color = Colors.blueGrey, IconData icon = CupertinoIcons.shield_fill}) {
     final context = navigatorKey.currentContext;
     if (context != null) {
       _showTopToast(context, message, color, icon);
@@ -180,7 +181,7 @@ class UIHelper {
                           color: Colors.white24,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.wifi_off_rounded,
+                        child: const Icon(CupertinoIcons.wifi_exclamationmark,
                             color: Colors.white, size: 20),
                       ),
                       const SizedBox(width: 16),
@@ -290,8 +291,8 @@ class UIHelper {
                         ),
                         child: Icon(
                           isDangerous
-                              ? Icons.delete_outline_rounded
-                              : Icons.info_outline_rounded,
+                              ? CupertinoIcons.trash
+                              : CupertinoIcons.info,
                           color: isDangerous
                               ? AppColors.expense
                               : AppColors.primary,
@@ -457,7 +458,7 @@ class UIHelper {
                   color: AppColors.primary.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.receipt_long_rounded,
+                child: Icon(CupertinoIcons.doc_text_fill,
                     color: AppColors.primary, size: 32),
               ),
               const SizedBox(height: 24),
@@ -569,7 +570,7 @@ class UIHelper {
                       shape: BoxShape.circle,
                     ),
                   ),
-                  const Icon(Icons.engineering_rounded,
+                  const Icon(CupertinoIcons.hammer_fill,
                       color: AppColors.expense, size: 40),
                 ],
               ),
@@ -702,7 +703,7 @@ class UIHelper {
                             customBorder: const CircleBorder(),
                             child: const Padding(
                               padding: EdgeInsets.all(8.0),
-                              child: Icon(Icons.close_rounded, size: 20),
+                              child: Icon(CupertinoIcons.xmark, size: 20),
                             ),
                           ),
                         ),
@@ -826,10 +827,10 @@ class UIHelper {
                                           ),
                                         ),
                                         if (isSelected)
-                                          Icon(Icons.check_circle_rounded,
+                                          Icon(CupertinoIcons.check_mark_circled_solid,
                                               color: activeColor, size: 28)
                                         else
-                                          Icon(Icons.arrow_forward_ios_rounded,
+                                          Icon(CupertinoIcons.chevron_right,
                                               color: Theme.of(context)
                                                   .hintColor
                                                   .withOpacity(0.3),

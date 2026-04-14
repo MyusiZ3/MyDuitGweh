@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'dart:ui';
 import '../services/auth_service.dart';
 import '../utils/ui_helper.dart';
@@ -327,7 +328,7 @@ class _LoginScreenState extends State<LoginScreen>
               _buildInput(
                 controller: _nameController,
                 hint: 'Nama',
-                icon: Icons.person_outline_rounded,
+                icon: CupertinoIcons.person,
               ),
               const SizedBox(height: 12),
             ],
@@ -335,7 +336,7 @@ class _LoginScreenState extends State<LoginScreen>
             _buildInput(
               controller: _emailController,
               hint: 'Email',
-              icon: Icons.email_outlined,
+              icon: CupertinoIcons.mail,
               keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 12),
@@ -343,7 +344,7 @@ class _LoginScreenState extends State<LoginScreen>
             _buildInput(
               controller: _passwordController,
               hint: 'Password',
-              icon: Icons.lock_outline_rounded,
+              icon: CupertinoIcons.lock,
               isPassword: true,
               obscureText: _obscurePassword,
               onToggleVisibility: () =>
@@ -355,7 +356,7 @@ class _LoginScreenState extends State<LoginScreen>
               _buildInput(
                 controller: _confirmPasswordController,
                 hint: 'Ulangi Password',
-                icon: Icons.lock_reset_rounded,
+                icon: CupertinoIcons.lock_rotation,
                 isPassword: true,
                 obscureText: _obscureConfirmPassword,
                 onToggleVisibility: () => setState(
@@ -445,8 +446,8 @@ class _LoginScreenState extends State<LoginScreen>
               ? IconButton(
                   icon: Icon(
                     obscureText!
-                        ? Icons.visibility_off_rounded
-                        : Icons.visibility_rounded,
+                        ? CupertinoIcons.eye_slash
+                        : CupertinoIcons.eye,
                     color: Theme.of(context).hintColor,
                     size: 20,
                   ),

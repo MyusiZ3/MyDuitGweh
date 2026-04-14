@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import '../../models/feedback_model.dart';
 import '../../services/firestore_service.dart';
 import '../../utils/ui_helper.dart';
@@ -83,7 +84,7 @@ class _SurveyDataScreenState extends State<SurveyDataScreen> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).iconTheme.color, size: 20),
+          icon: Icon(CupertinoIcons.chevron_back, color: Theme.of(context).iconTheme.color, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -103,7 +104,7 @@ class _SurveyDataScreenState extends State<SurveyDataScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.error_outline_rounded, color: Colors.red, size: 48),
+                        const Icon(CupertinoIcons.exclamationmark_circle, color: Colors.red, size: 48),
                         const SizedBox(height: 16),
                         Text('Gagal memuat data: ${snapshot.error}',
                             style: const TextStyle(color: Colors.red)),
@@ -117,7 +118,7 @@ class _SurveyDataScreenState extends State<SurveyDataScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.sentiment_dissatisfied_rounded,
+                        Icon(CupertinoIcons.hand_thumbsdown,
                             size: 64, color: Colors.grey.withOpacity(0.5)),
                         const SizedBox(height: 16),
                         const Text(
@@ -193,7 +194,7 @@ class _SurveyDataScreenState extends State<SurveyDataScreen> {
                       hintStyle:
                           TextStyle(color: Colors.grey[400], fontSize: 13),
                       prefixIcon:
-                          const Icon(Icons.search_rounded, color: Colors.indigo),
+                          const Icon(CupertinoIcons.search, color: Colors.indigo),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(vertical: 12),
                     ),
@@ -219,8 +220,8 @@ class _SurveyDataScreenState extends State<SurveyDataScreen> {
                   ),
                   child: Icon(
                     _sortByNewest
-                        ? Icons.arrow_downward_rounded
-                        : Icons.arrow_upward_rounded,
+                        ? CupertinoIcons.arrow_down
+                        : CupertinoIcons.arrow_up,
                     color: Colors.indigo,
                     size: 20,
                   ),
@@ -231,7 +232,7 @@ class _SurveyDataScreenState extends State<SurveyDataScreen> {
           const SizedBox(height: 12),
           Row(
             children: [
-              Icon(Icons.sort_rounded, size: 14, color: Colors.grey[400]),
+              Icon(CupertinoIcons.sort_down, size: 14, color: Colors.grey[400]),
               const SizedBox(width: 6),
               Text(
                 _sortByNewest ? 'Urutan Terbaru' : 'Urutan Terlama',
@@ -279,7 +280,7 @@ class _SurveyDataScreenState extends State<SurveyDataScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.star_rounded, color: _getRatingColor(feedback.rating), size: 16),
+                      Icon(CupertinoIcons.star_fill, color: _getRatingColor(feedback.rating), size: 16),
                       const SizedBox(width: 4),
                       Text(
                         feedback.rating.toStringAsFixed(1),
@@ -350,7 +351,7 @@ class _SurveyDataScreenState extends State<SurveyDataScreen> {
                             color: Colors.red.withOpacity(0.1),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.delete_rounded, color: Colors.red, size: 16),
+                          child: const Icon(CupertinoIcons.trash_fill, color: Colors.red, size: 16),
                         ),
                       ),
                     ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import '../utils/app_theme.dart';
 
 class HelpScreen extends StatelessWidget {
@@ -27,19 +28,19 @@ class HelpScreen extends StatelessWidget {
             context,
             'Cara Menambahkan Transaksi',
             'Buka tab Home, klik tombol "+" di navigasi tengah, isi jumlah dan kategori, lalu simpan.',
-            Icons.add_box_rounded,
+            CupertinoIcons.plus_app,
           ),
           _buildHelpCard(
             context,
             'Apa itu Dompet Kolaborasi?',
             'Dompet yang dapat diakses oleh banyak anggota dengan saldo bersama yang transparan.',
-            Icons.groups_rounded,
+            CupertinoIcons.group,
           ),
           _buildHelpCard(
             context,
             'Cara Menggunakan Kode Undangan',
             'Bagikan kode undangan 6 digit ke teman agar mereka dapat bergabung di dompet yang Anda miliki.',
-            Icons.vpn_key_rounded,
+            CupertinoIcons.lock_fill,
           ),
           const SizedBox(height: 32),
           const Divider(),
@@ -61,7 +62,7 @@ class HelpScreen extends StatelessWidget {
             height: 56,
             child: OutlinedButton.icon(
               onPressed: () {},
-              icon: const Icon(Icons.email_outlined),
+              icon: const Icon(CupertinoIcons.mail),
               label: const Text('Kirim Email ke Support'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: primary,

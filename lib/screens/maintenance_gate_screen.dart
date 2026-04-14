@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import '../utils/app_theme.dart';
 import '../services/auth_service.dart';
 import 'dart:ui';
@@ -68,7 +69,7 @@ class MaintenanceGateScreen extends StatelessWidget {
                     ),
                     child: const Center(
                       child: Icon(
-                        Icons.construction_rounded,
+                        CupertinoIcons.hammer_fill,
                         size: 60,
                         color: Colors.white,
                       ),
@@ -131,7 +132,7 @@ class MaintenanceGateScreen extends StatelessWidget {
                   // Logout Button (In case they want to switch to admin account)
                   TextButton.icon(
                     onPressed: () => AuthService().signOut(),
-                    icon: const Icon(Icons.logout_rounded,
+                    icon: const Icon(CupertinoIcons.square_arrow_right,
                         color: Colors.white54, size: 18),
                     label: const Text(
                       'Keluar Akun',

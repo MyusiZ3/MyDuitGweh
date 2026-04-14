@@ -275,7 +275,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                   child: Center(
                     child: Icon(
-                      Icons.arrow_forward_ios_rounded,
+                      CupertinoIcons.chevron_forward,
                       color: Theme.of(context).textTheme.titleLarge?.color,
                       size: 18,
                     ),

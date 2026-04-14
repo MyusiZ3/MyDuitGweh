@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/firestore_service.dart';
 import '../models/wallet_model.dart';
@@ -73,7 +74,7 @@ class ColabScreenState extends State<ColabScreen> {
                 decoration: InputDecoration(
                   hintText: 'Cari dompet ...',
                   hintStyle: TextStyle(color: Theme.of(context).hintColor),
-                  prefixIcon: Icon(Icons.search_rounded,
+                  prefixIcon: Icon(CupertinoIcons.search,
                       color: Theme.of(context).hintColor, size: 20),
                   suffixIcon: _searchQuery.isEmpty
                       ? null
@@ -82,7 +83,7 @@ class ColabScreenState extends State<ColabScreen> {
                             _searchController.clear();
                             setState(() => _searchQuery = "");
                           },
-                          child: Icon(Icons.cancel_rounded,
+                          child: Icon(CupertinoIcons.clear_circled_solid,
                               color: Theme.of(context).hintColor, size: 18),
                         ),
                   border: InputBorder.none,
@@ -150,7 +151,7 @@ class ColabScreenState extends State<ColabScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                Icons.group_outlined,
+                CupertinoIcons.group,
                 size: 64,
                 color: AppColors.textHint.withOpacity(0.4),
               ),
@@ -271,7 +272,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                               borderRadius: BorderRadius.circular(14),
                             ),
                             child: Icon(
-                              Icons.group_rounded,
+                              CupertinoIcons.group_solid,
                               color: Theme.of(context).brightness ==
                                       Brightness.dark
                                   ? const Color(0xFF0A84FF)
@@ -357,8 +358,8 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                       const SizedBox(width: 6),
                       Icon(
                         _expanded
-                            ? Icons.keyboard_arrow_up_rounded
-                            : Icons.keyboard_arrow_down_rounded,
+                            ? CupertinoIcons.chevron_up
+                            : CupertinoIcons.chevron_down,
                         color: Theme.of(context).hintColor.withOpacity(0.3),
                         size: 20,
                       ),
@@ -409,7 +410,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                   onTap: () => _showAddMemberDialog(),
                   child: Row(
                     children: [
-                      const Icon(Icons.person_add_outlined,
+                      const Icon(CupertinoIcons.person_add,
                           size: 16, color: AppColors.primary),
                       const SizedBox(width: 4),
                       Text(
@@ -466,7 +467,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.chat_rounded,
+                        Icon(CupertinoIcons.chat_bubble_fill,
                             size: 18,
                             color:
                                 Theme.of(context).brightness == Brightness.dark
@@ -516,7 +517,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                       border: Border.all(
                           color: AppColors.expense.withOpacity(0.15)),
                     ),
-                    child: const Icon(Icons.logout_rounded,
+                    child: const Icon(CupertinoIcons.square_arrow_right,
                         size: 18, color: AppColors.expense),
                   ),
                 ),
@@ -574,7 +575,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (isOwner) ...[
-                Icon(Icons.star_rounded,
+                Icon(CupertinoIcons.star_fill,
                     size: 14,
                     color: Theme.of(context).brightness == Brightness.dark
                         ? const Color(0xFF0A84FF)
@@ -615,7 +616,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                       }
                     }
                   },
-                  child: Icon(Icons.close_rounded,
+                  child: Icon(CupertinoIcons.xmark,
                       size: 16, color: AppColors.expense.withOpacity(0.7)),
                 ),
               ],
@@ -679,7 +680,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                   color: AppColors.expense.withOpacity(0.8),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Icon(Icons.delete_outline_rounded,
+                child: const Icon(CupertinoIcons.trash,
                     color: Colors.white),
               ),
               child: Padding(
@@ -789,7 +790,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                     color: AppColors.primary.withOpacity(0.08),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.person_add_alt_1_rounded,
+                  child: const Icon(CupertinoIcons.person_add_solid,
                       color: AppColors.primary, size: 36),
                 ),
                 const SizedBox(height: 20),
@@ -813,7 +814,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
                     hintText: 'contoh@email.com',
-                    prefixIcon: const Icon(Icons.email_outlined,
+                    prefixIcon: const Icon(CupertinoIcons.mail,
                         color: AppColors.primary),
                     filled: true,
                     fillColor: Theme.of(context).canvasColor,

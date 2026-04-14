@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'dart:ui';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -138,7 +139,7 @@ class _NotificationPermissionFloatingCardState
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
-                                  Icons.auto_awesome_rounded,
+                                  CupertinoIcons.sparkles,
                                   color: Colors.white,
                                   size: 30,
                                 ),

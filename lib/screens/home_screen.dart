@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -501,7 +502,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       trailing: isSelected
-          ? Icon(CupertinoIcons.check_mark_circle_fill, color: AppColors.primary)
+          ? Icon(CupertinoIcons.checkmark_circle_fill, color: AppColors.primary)
           : null,
       onTap: () {
         ThemeManager.setThemeMode(mode);
@@ -740,9 +741,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                         children: [
                                           Icon(
                                               _isSuperAdmin
-                                                  ? Icons
-                                                      .workspace_premium_rounded
-                                                  : Icons.shield_rounded,
+                                                  ? CupertinoIcons.sparkles
+                                                  : CupertinoIcons.shield_fill,
                                               color: Colors.white,
                                               size: 10),
                                           const SizedBox(width: 4),
@@ -989,7 +989,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         const SizedBox(width: 8),
                                         Expanded(
                                           child: _balanceAction(
-                                              Icons.insights_rounded,
+                                              CupertinoIcons.graph_circle,
                                               ToneManager.t('nav_report'), () {
                                             MainNav.of(context)?.setTab(4);
                                           }),
@@ -1511,7 +1511,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       if (_isAdmin)
                         _buildProfileMenuItem(
-                          icon: Icons.auto_fix_high_rounded,
+                          icon: CupertinoIcons.sparkles,
                           label: 'Admin Control Tools',
                           subtitle: 'Maintenance & Broadcast',
                           onTap: () {
@@ -1559,7 +1559,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       _buildProfileMenuItem(
-                        icon: CupertinoIcons.target,
+                        icon: CupertinoIcons.flag,
                         label: 'Target Budget Bulanan',
                         onTap: () {
                           Navigator.pop(context);
@@ -1914,7 +1914,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             color: AppColors.primary.withOpacity(0.1),
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(Icons.track_changes_rounded,
+                          child: Icon(CupertinoIcons.flag,
                               color: AppColors.primary, size: 32),
                         ),
                         const SizedBox(height: 20),
@@ -2128,7 +2128,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           .withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
-                      Icon(
+                      child: Icon(
                         isMaintenance
                             ? CupertinoIcons.hammer_fill
                             : CupertinoIcons.clock_fill,

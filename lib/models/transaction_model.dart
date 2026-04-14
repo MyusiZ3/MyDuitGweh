@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 
 class TransactionModel {
   final String id;
@@ -118,50 +119,50 @@ class TransactionCategory {
   static IconData getIconForCategory(String category) {
     switch (category) {
       case 'Gaji':
-        return Icons.payments_outlined;
+        return CupertinoIcons.money_dollar;
       case 'Bonus':
-        return Icons.auto_awesome_outlined;
+        return CupertinoIcons.gift;
       case 'Investasi':
-        return Icons.trending_up_rounded;
+        return CupertinoIcons.graph_circle;
       case 'Freelance':
-        return Icons.work_outline_rounded;
+        return CupertinoIcons.briefcase;
       case 'Hadiah':
-        return Icons.card_giftcard_rounded;
+        return CupertinoIcons.gift_fill;
       case 'Penjualan':
-        return Icons.storefront_rounded;
+        return CupertinoIcons.cart;
       case 'Transfer Masuk':
       case 'Transfer Keluar':
-        return Icons.swap_horiz_rounded;
+        return CupertinoIcons.arrow_right_arrow_left;
       case 'Makanan':
-        return Icons.restaurant_rounded;
+        return CupertinoIcons.cart_fill; // Using cart for food/groceries
       case 'Transportasi':
-        return Icons.directions_car_rounded;
+        return CupertinoIcons.car_detailed;
       case 'Belanja':
-        return Icons.shopping_bag_outlined;
+        return CupertinoIcons.bag;
       case 'Cicilan':
-        return Icons.credit_card_rounded;
+        return CupertinoIcons.creditcard;
       case 'Hutang':
-        return Icons.money_off_rounded;
+        return CupertinoIcons.money_dollar_circle;
       case 'Tagihan':
-        return Icons.receipt_long_rounded;
+        return CupertinoIcons.doc_text;
       case 'Kesehatan':
-        return Icons.local_hospital_rounded;
+        return CupertinoIcons.heart_fill;
       case 'Pendidikan':
-        return Icons.school_rounded;
+        return CupertinoIcons.book;
       case 'Hobi':
-        return Icons.sports_esports_rounded;
+        return CupertinoIcons.gamecontroller;
       case 'Pajak':
-        return Icons.account_balance_outlined;
+        return CupertinoIcons.building_2_fill;
       case 'Asuransi':
-        return Icons.verified_user_outlined;
+        return CupertinoIcons.shield_fill;
       case 'Zakat/Donasi':
-        return Icons.volunteer_activism_rounded;
+        return CupertinoIcons.heart_circle;
       case 'Langganan':
-        return Icons.subscriptions_outlined;
+        return CupertinoIcons.play_rectangle;
       case 'Hiburan':
-        return Icons.movie_outlined;
+        return CupertinoIcons.tv;
       default:
-        return Icons.more_horiz_rounded;
+        return CupertinoIcons.ellipsis_circle;
     }
   }
 }

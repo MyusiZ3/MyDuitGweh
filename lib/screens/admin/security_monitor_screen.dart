@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/ui_helper.dart';
@@ -33,7 +34,7 @@ class _SecurityMonitorScreenState extends State<SecurityMonitorScreen> {
             padding: EdgeInsets.fromLTRB(24, 20, 24, 8),
             child: Row(
               children: [
-                Icon(Icons.history_toggle_off_rounded, size: 20, color: Colors.grey),
+                Icon(CupertinoIcons.timer, size: 20, color: Colors.grey),
                 SizedBox(width: 8),
                 Text('SECURITY LOGS', 
                     style: TextStyle(
@@ -57,7 +58,7 @@ class _SecurityMonitorScreenState extends State<SecurityMonitorScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.shield_moon_rounded, size: 64, color: Colors.grey[300]),
+                        Icon(CupertinoIcons.shield_lefthalf_fill, size: 64, color: Colors.grey[300]),
                         const SizedBox(height: 16),
                         const Text('Belum ada log keamanan.', 
                             style: TextStyle(color: Colors.grey)),
@@ -122,7 +123,7 @@ class _SecurityMonitorScreenState extends State<SecurityMonitorScreen> {
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  Icons.power_settings_new_rounded,
+                  CupertinoIcons.power,
                   color: isMaintenance ? Colors.white : Colors.orange[800],
                 ),
               ),
@@ -239,10 +240,10 @@ class _SecurityMonitorScreenState extends State<SecurityMonitorScreen> {
 
   IconData _getIconForType(String type) {
     switch (type) {
-      case 'AUTH_FAILURE': return Icons.no_accounts_rounded;
-      case 'EMERGENCY_ACTION': return Icons.emergency_rounded;
-      case 'DDOS_SUSPECT': return Icons.radar_rounded;
-      default: return Icons.security_rounded;
+      case 'AUTH_FAILURE': return CupertinoIcons.person_badge_minus;
+      case 'EMERGENCY_ACTION': return CupertinoIcons.exclamationmark_triangle_fill;
+      case 'DDOS_SUSPECT': return CupertinoIcons.antenna_radiowaves_left_right;
+      default: return CupertinoIcons.shield_fill;
     }
   }
 

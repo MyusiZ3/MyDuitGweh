@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/notif_listener_bridge.dart';
 import '../utils/app_theme.dart';
@@ -66,7 +67,7 @@ class _NotificationPermissionSliverState extends State<NotificationPermissionSli
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.auto_awesome, color: Colors.white, size: 24),
+                    const Icon(CupertinoIcons.sparkles, color: Colors.white, size: 24),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(

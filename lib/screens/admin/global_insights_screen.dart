@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
@@ -190,7 +191,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                             ? '...'
                             : CurrencyFormatter.formatCurrency(totalBalance),
                         subtitle: 'Total dana beredar di seluruh dompet user',
-                        icon: Icons.account_balance_rounded,
+                        icon: CupertinoIcons.building_2_fill,
                         color: isDark ? const Color(0xFF312E81) : Colors.indigo,
                       );
                     },
@@ -221,7 +222,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                                   ? '...'
                                   : CurrencyFormatter.formatCurrency(
                                       avgBalance),
-                              icon: Icons.analytics_rounded,
+                              icon: CupertinoIcons.chart_bar_alt_fill,
                               color: isDark
                                   ? const Color(0xFF60A5FA)
                                   : Colors.blueAccent,
@@ -235,7 +236,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                                       ConnectionState.waiting
                                   ? '...'
                                   : '$walletCount',
-                              icon: Icons.wallet_rounded,
+                              icon: CupertinoIcons.money_dollar_circle_fill,
                               color: isDark
                                   ? const Color(0xFF2DD4BF)
                                   : Colors.teal,
@@ -282,7 +283,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                                       ConnectionState.waiting
                                   ? '...'
                                   : '$userCount User',
-                              icon: Icons.people_alt_rounded,
+                              icon: CupertinoIcons.person_3_fill,
                               color: isDark
                                   ? const Color(0xFF818CF8)
                                   : Colors.indigo,
@@ -296,7 +297,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                                       ConnectionState.waiting
                                   ? '...'
                                   : '+${growth.toStringAsFixed(1)}%',
-                              icon: Icons.trending_up_rounded,
+                              icon: CupertinoIcons.arrow_up_right,
                               color: isDark
                                   ? const Color(0xFF4ADE80)
                                   : Colors.green,
@@ -317,31 +318,26 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           if (widget.isSuperAdmin) ...[
-                            _buildSectionTitle('AI Macros Analysis',
-                                Icons.auto_awesome_rounded),
+                            _buildSectionTitle('AI Macros Analysis', CupertinoIcons.sparkles),
                             const SizedBox(height: 16),
                             _buildAiAnalysisButton(context),
                             const SizedBox(height: 32),
-                            _buildSectionTitle(
-                                'Leaderboard', Icons.emoji_events_rounded),
+                            _buildSectionTitle('Leaderboard', CupertinoIcons.rosette),
                             const SizedBox(height: 16),
                             _buildLeaderboard(),
                             const SizedBox(height: 32),
                           ],
                           _buildPeriodFilter(),
                           const SizedBox(height: 24),
-                          _buildSectionTitle(
-                              'Tren Keuangan Global', Icons.show_chart_rounded),
+                          _buildSectionTitle('Tren Keuangan Global', CupertinoIcons.chart_bar),
                           const SizedBox(height: 16),
                           _buildCashFlowChart(),
                           const SizedBox(height: 32),
-                          _buildSectionTitle(
-                              'Distribusi Platform', Icons.pie_chart_rounded),
+                          _buildSectionTitle('Distribusi Platform', CupertinoIcons.chart_pie_fill),
                           const SizedBox(height: 16),
                           _buildCategoryPieChart(),
                           const SizedBox(height: 32),
-                          _buildSectionTitle(
-                              'Aktivitas User', Icons.calendar_month_rounded),
+                          _buildSectionTitle('Aktivitas User', CupertinoIcons.calendar),
                           const SizedBox(height: 16),
                           _buildUserActivityHeatmap(),
                           const SizedBox(height: 32),
@@ -351,8 +347,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                   ),
 
                   if (widget.isSuperAdmin) ...[
-                    _buildSectionTitle(
-                        'User Voice & AI Insights', Icons.psychology_rounded),
+                    _buildSectionTitle('User Voice & AI Insights', CupertinoIcons.lightbulb_fill),
                     const SizedBox(height: 16),
                     _buildSurveyControlPanel(),
                     const SizedBox(height: 16),
@@ -363,13 +358,12 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                       title: '💰 Leaderboard & AI',
                       reason:
                           'Data finansial mendalam bersifat rahasia. Hanya SuperAdmin/Owner yang dapat mengakses.',
-                      icon: Icons.lock_rounded,
+                      icon: CupertinoIcons.lock_fill,
                     ),
                     const SizedBox(height: 32),
                   ],
 
-                  _buildSectionTitle(
-                      'Pertumbuhan User Baru', Icons.group_add_rounded),
+                  _buildSectionTitle('Pertumbuhan User Baru', CupertinoIcons.person_add_solid),
                   const SizedBox(height: 16),
                   _buildUserGrowthChart(),
 
@@ -419,17 +413,17 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                             vol24h == 0
                                 ? 'No recent activity'
                                 : '$circulationStatus (${CurrencyFormatter.formatCurrency(vol24h)})',
-                            Icons.bolt_rounded,
+                            CupertinoIcons.bolt_fill,
                             circulationColor),
                         _buildIndicatorTile(
                             'System Integrity',
                             _txError != null
                                 ? 'Issues detected'
                                 : 'Syncing & Encrypted (SSL)',
-                            Icons.verified_user_rounded,
+                            CupertinoIcons.shield_lefthalf_fill,
                             _txError != null ? Colors.red : Colors.green),
                         _buildIndicatorTile('Query Latency', latencyStatus,
-                            Icons.speed_rounded, latencyColor),
+                            CupertinoIcons.speedometer, latencyColor),
                       ],
                     );
                   }),
@@ -981,7 +975,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.local_fire_department_rounded,
+              const Icon(CupertinoIcons.flame_fill,
                   color: Colors.deepOrange, size: 20),
               const SizedBox(width: 8),
               Text(
@@ -1168,7 +1162,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                     color: (isDark ? const Color(0xFF818CF8) : Colors.indigo)
                         .withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12)),
-                child: Icon(Icons.trending_up_rounded,
+                child: Icon(CupertinoIcons.arrow_up_right,
                     color: isDark ? const Color(0xFF818CF8) : Colors.indigo,
                     size: 24),
               )
@@ -1370,7 +1364,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                     color: Colors.white.withOpacity(0.2),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.auto_awesome_rounded,
+                  child: const Icon(CupertinoIcons.sparkles,
                       color: Colors.white, size: 28),
                 ),
                 const SizedBox(width: 16),
@@ -1399,7 +1393,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                const Icon(Icons.arrow_forward_ios_rounded,
+                const Icon(CupertinoIcons.forward,
                     color: Colors.white, size: 16),
               ],
             ),
@@ -1602,7 +1596,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
               color: theme.dividerColor.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.lock_rounded, size: 28, color: theme.hintColor),
+            child: Icon(CupertinoIcons.lock_fill, size: 28, color: theme.hintColor),
           ),
           const SizedBox(height: 16),
           Text(title,
@@ -1688,7 +1682,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
       ),
       child: Row(
         children: [
-          Icon(Icons.error_outline_rounded,
+          Icon(CupertinoIcons.exclamationmark_circle,
               color: isDark ? Colors.red[300] : Colors.red[700], size: 20),
           const SizedBox(width: 12),
           Expanded(
@@ -1712,7 +1706,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
       child: Center(
         child: Column(
           children: [
-            Icon(Icons.bar_chart_rounded,
+            Icon(CupertinoIcons.chart_bar,
                 size: 40, color: Theme.of(context).hintColor),
             const SizedBox(height: 12),
             Text(message,
@@ -1982,8 +1976,8 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                     ),
                     child: Icon(
                       isAvailable
-                          ? Icons.check_circle_rounded
-                          : Icons.cancel_rounded,
+                          ? CupertinoIcons.checkmark_circle_fill
+                          : CupertinoIcons.xmark_circle_fill,
                       color: isAvailable ? Colors.green : Colors.red,
                       size: 20,
                     ),
@@ -2066,7 +2060,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                                 builder: (_) => const SurveyDataScreen()),
                           );
                         },
-                        icon: const Icon(Icons.analytics_rounded, size: 18),
+                        icon: const Icon(CupertinoIcons.chart_bar_alt_fill, size: 18),
                         label: const Text('LIHAT DATA & ISI SURVEI USER',
                             style: TextStyle(
                                 fontWeight: FontWeight.w900, fontSize: 11)),
@@ -2091,7 +2085,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                                 builder: (_) => const AppConfigScreen()),
                           );
                         },
-                        icon: const Icon(Icons.settings_suggest_rounded,
+                        icon: const Icon(CupertinoIcons.gear,
                             size: 18),
                         label: const Text('UBAH KONFIGURASI DI APP SETTINGS',
                             style: TextStyle(
@@ -2186,7 +2180,7 @@ class _AiSentimentAnalysisCardState extends State<_AiSentimentAnalysisCard> {
                   color: Colors.white.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.psychology_alt_rounded,
+                child: const Icon(CupertinoIcons.lightbulb_fill,
                     color: Colors.white, size: 20),
               ),
               const SizedBox(width: 12),
@@ -2207,7 +2201,7 @@ class _AiSentimentAnalysisCardState extends State<_AiSentimentAnalysisCard> {
               IconButton(
                 onPressed: _isAnalyzingFeedback ? null : _runAiFeedbackAnalysis,
                 icon: Icon(
-                  Icons.refresh_rounded,
+                  CupertinoIcons.refresh,
                   color: _isAnalyzingFeedback ? Colors.white24 : Colors.white70,
                   size: 20,
                 ),
@@ -2290,7 +2284,7 @@ class _AiSentimentAnalysisCardState extends State<_AiSentimentAnalysisCard> {
                 padding: const EdgeInsets.only(bottom: 6),
                 child: Row(
                   children: [
-                    const Icon(Icons.circle, size: 6, color: Colors.blueAccent),
+                    const Icon(CupertinoIcons.circle_fill, size: 6, color: Colors.blueAccent),
                     const SizedBox(width: 10),
                     Expanded(
                         child: Text(r.toString(),
@@ -2309,13 +2303,13 @@ class _AiSentimentAnalysisCardState extends State<_AiSentimentAnalysisCard> {
     IconData icon;
     if (score.contains('Positif')) {
       color = Colors.greenAccent;
-      icon = Icons.sentiment_very_satisfied_rounded;
+      icon = CupertinoIcons.smiley;
     } else if (score.contains('Negatif')) {
       color = Colors.redAccent;
-      icon = Icons.sentiment_very_dissatisfied_rounded;
+      icon = CupertinoIcons.hand_thumbsdown_fill;
     } else {
       color = Colors.amberAccent;
-      icon = Icons.sentiment_neutral_rounded;
+      icon = CupertinoIcons.minus_circle_fill;
     }
 
     return Container(

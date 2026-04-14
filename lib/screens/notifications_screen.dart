@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
@@ -58,7 +59,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 fontWeight: FontWeight.w800,
                 color: Theme.of(context).textTheme.titleLarge?.color)),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded,
+          icon: Icon(CupertinoIcons.chevron_back,
               color: Theme.of(context).iconTheme.color, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
@@ -176,7 +177,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.delete_outline_rounded,
+            Icon(CupertinoIcons.delete,
                 color: AppColors.expense, size: 22),
             const SizedBox(height: 2),
             Text('Hapus',
@@ -218,7 +219,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 color: accentColor.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.campaign_rounded, color: accentColor, size: 20),
+              child: Icon(CupertinoIcons.speaker_2_fill, color: accentColor, size: 20),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -379,15 +380,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
     switch (type) {
       case 'invite':
-        icon = Icons.group_add_rounded;
+        icon = CupertinoIcons.person_add_solid;
         color = AppColors.deepBlue;
         break;
       case 'transaction':
-        icon = Icons.receipt_long_rounded;
+        icon = CupertinoIcons.doc_text_fill;
         color = AppColors.income;
         break;
       default:
-        icon = Icons.notifications_rounded;
+        icon = CupertinoIcons.bell_fill;
         color = AppColors.primary;
     }
 
@@ -444,7 +445,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.notifications_off_rounded,
+          Icon(CupertinoIcons.bell_slash_fill,
               size: 80, color: Colors.black12),
           const SizedBox(height: 16),
           const Text('Belum ada notifikasi',

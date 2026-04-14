@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'notification_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import '../utils/ui_helper.dart';
 
 class SecurityListenerService {
@@ -99,8 +100,8 @@ class SecurityListenerService {
       '$emoji SECURITY ALERT: $type\n$message',
       color: color,
       icon: severity == 'critical'
-          ? Icons.security_rounded
-          : Icons.warning_amber_rounded,
+          ? CupertinoIcons.shield_fill
+          : CupertinoIcons.exclamationmark_triangle_fill,
     );
 
     // 2. Also keep system notification for when app is in background

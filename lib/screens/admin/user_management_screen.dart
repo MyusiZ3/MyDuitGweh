@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import '../../utils/app_theme.dart';
@@ -98,10 +99,10 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                   ),
                   child: Icon(
                     roles[index] == 'superadmin'
-                        ? Icons.shield_rounded
+                        ? CupertinoIcons.shield_fill
                         : (roles[index] == 'admin'
-                            ? Icons.verified_user_rounded
-                            : Icons.person_rounded),
+                            ? CupertinoIcons.checkmark_shield_fill
+                            : CupertinoIcons.person_solid),
                     color: isCurrent
                         ? AppColors.primary
                         : (roles[index] == 'superadmin'
@@ -119,7 +120,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                         color: isCurrent ? AppColors.primary : Theme.of(context).textTheme.titleMedium?.color,
                     )),
                 trailing: isCurrent
-                    ? Icon(Icons.check_circle_rounded, color: AppColors.primary)
+                    ? Icon(CupertinoIcons.check_mark_circled, color: AppColors.primary)
                     : null,
               );
             }),
@@ -221,7 +222,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 color: AppColors.expense.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.gavel_rounded,
+              child: const Icon(CupertinoIcons.hammer_fill,
                   color: AppColors.expense, size: 32),
             ),
             const SizedBox(height: 20),
@@ -255,7 +256,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 ),
                 filled: true,
                 fillColor: Theme.of(context).dividerColor.withOpacity(0.05),
-                prefixIcon: const Icon(Icons.description_outlined, size: 20),
+                prefixIcon: const Icon(CupertinoIcons.doc_text, size: 20),
               ),
             ),
             const SizedBox(height: 16),
@@ -265,7 +266,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                   color: Theme.of(context).textTheme.bodyLarge?.color),
-              icon: const Icon(Icons.keyboard_arrow_down_rounded),
+              icon: const Icon(CupertinoIcons.chevron_down),
               items: durations.entries
                   .map((e) => DropdownMenuItem(
                         value: e.key,
@@ -285,7 +286,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 ),
                 filled: true,
                 fillColor: Theme.of(context).dividerColor.withOpacity(0.05),
-                prefixIcon: const Icon(Icons.timer_outlined, size: 20),
+                prefixIcon: const Icon(CupertinoIcons.timer, size: 20),
               ),
             ),
             const SizedBox(height: 32),
@@ -458,7 +459,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.check_circle_rounded,
+            const Icon(CupertinoIcons.check_mark_circled,
                 color: Colors.green, size: 64),
             const SizedBox(height: 16),
             Text(title,
@@ -504,7 +505,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           actions: [
             IconButton(
               onPressed: () => _checkRole(),
-              icon: const Icon(Icons.refresh_rounded, color: AppColors.primary),
+              icon: const Icon(CupertinoIcons.refresh, color: AppColors.primary),
               tooltip: 'Segarkan Data',
             ),
           ],
@@ -530,7 +531,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 child: TextField(
                   decoration: InputDecoration(
                     hintText: 'Cari nama atau email...',
-                    prefixIcon: const Icon(Icons.search_rounded,
+                    prefixIcon: const Icon(CupertinoIcons.search,
                         color: AppColors.primary),
                     fillColor: Theme.of(context).dividerColor.withOpacity(0.05),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
@@ -612,8 +613,8 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         children: [
           Icon(
               isStaff
-                  ? Icons.admin_panel_settings_rounded
-                  : Icons.person_off_rounded,
+                  ? CupertinoIcons.shield_fill
+                  : CupertinoIcons.person_badge_minus,
               color: Theme.of(context).disabledColor,
               size: 64),
           const SizedBox(height: 16),
@@ -677,7 +678,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                         : null,
                     child: (user['photoURL'] == null ||
                             user['photoURL'].toString().isEmpty)
-                        ? const Icon(Icons.person)
+                        ? const Icon(CupertinoIcons.person)
                         : null,
                   ),
                   Positioned(
@@ -771,7 +772,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     final bool canDelete = _isSuperAdmin;
 
     return PopupMenuButton<String>(
-      icon: const Icon(Icons.more_vert_rounded, color: Colors.grey),
+      icon: const Icon(CupertinoIcons.ellipsis_vertical, color: Colors.grey),
       onSelected: (val) {
         if (val == 'role') _showRoleSelection(uid, role, name);
         if (val == 'status') _confirmToggleStatus(uid, isDeactivated, name);
@@ -783,7 +784,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
             value: 'role',
             child: Row(
               children: [
-                Icon(Icons.theater_comedy_rounded,
+                Icon(CupertinoIcons.person_crop_circle_badge_checkmark,
                     size: 20, color: Colors.blue[700]),
                 const SizedBox(width: 12),
                 const Text('Ubah Role Akun', style: TextStyle(fontSize: 13)),
@@ -797,8 +798,8 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               children: [
                 Icon(
                     isDeactivated
-                        ? Icons.check_circle_rounded
-                        : Icons.block_flipped,
+                        ? CupertinoIcons.check_mark_circled
+                        : CupertinoIcons.slash_circle,
                     size: 20,
                     color: isDeactivated ? Colors.green : Colors.red),
                 const SizedBox(width: 12),
@@ -815,7 +816,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
             value: 'delete',
             child: Row(
               children: [
-                const Icon(Icons.delete_forever_rounded,
+                const Icon(CupertinoIcons.trash_fill,
                     size: 20, color: Colors.black),
                 const SizedBox(width: 12),
                 const Text('Hapus Permanen',

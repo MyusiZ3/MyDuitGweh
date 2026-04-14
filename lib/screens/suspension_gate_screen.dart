@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import '../services/auth_service.dart';
 import 'dart:ui';
 import 'package:intl/intl.dart';
@@ -72,7 +73,7 @@ class SuspensionGateScreen extends StatelessWidget {
                     ),
                     child: const Center(
                       child: Icon(
-                        Icons.gavel_rounded,
+                        CupertinoIcons.hammer_fill,
                         size: 60,
                         color: Colors.white,
                       ),
@@ -172,7 +173,7 @@ class SuspensionGateScreen extends StatelessWidget {
                       onPressed: () {
                         // Just trigger a rebuild/re-read
                       },
-                      icon: const Icon(Icons.refresh_rounded),
+                      icon: const Icon(CupertinoIcons.refresh),
                       label: const Text('SEGARKAN STATUS'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white10,
@@ -189,7 +190,7 @@ class SuspensionGateScreen extends StatelessWidget {
                   // Logout Button
                   TextButton.icon(
                     onPressed: () => AuthService().signOut(),
-                    icon: const Icon(Icons.logout_rounded,
+                    icon: const Icon(CupertinoIcons.square_arrow_right,
                         color: Colors.white54, size: 18),
                     label: const Text(
                       'Keluar Akun',

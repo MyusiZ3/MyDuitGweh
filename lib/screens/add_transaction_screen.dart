@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -662,7 +663,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                                 ),
                               ),
                               trailing: isSelected
-                                  ? const Icon(CupertinoIcons.check_mark_circle_fill,
+                                  ? const Icon(CupertinoIcons.checkmark_circle_fill,
                                       color: AppColors.primary)
                                   : null,
                               onTap: () {

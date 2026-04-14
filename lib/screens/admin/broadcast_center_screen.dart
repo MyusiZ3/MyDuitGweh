@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import '../../services/firestore_service.dart';
@@ -104,10 +105,10 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
                     const SizedBox(height: 24),
                     Icon(
                       _selectedType == 'urgent'
-                          ? Icons.priority_high_rounded
+                          ? CupertinoIcons.exclamationmark_circle_fill
                           : _selectedType == 'news'
-                              ? Icons.auto_awesome_rounded
-                              : Icons.info_rounded,
+                              ? CupertinoIcons.sparkles
+                              : CupertinoIcons.info_circle_fill,
                       color: effectiveColor,
                       size: 32,
                     ),
@@ -185,7 +186,7 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
                 color: Colors.blue.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.rocket_launch_rounded,
+              child: const Icon(CupertinoIcons.rocket_fill,
                   color: Colors.blue, size: 48),
             ),
             const SizedBox(height: 32),
@@ -290,7 +291,7 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
                     _msgController.text.isNotEmpty)
                 ? _showPreview
                 : null,
-            icon: const Icon(Icons.remove_red_eye_rounded),
+            icon: const Icon(CupertinoIcons.eye),
             tooltip: 'Preview Tampilan',
           )
         ],
@@ -317,16 +318,16 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
                   Row(
                     children: [
                       _buildTypeButton(
-                          'info', Icons.info_outline_rounded, Colors.blue),
+                          'info', CupertinoIcons.info_circle, Colors.blue),
                       const SizedBox(width: 8),
                       _buildTypeButton(
-                          'news', Icons.auto_awesome_rounded, Colors.purple),
+                          'news', CupertinoIcons.sparkles, Colors.purple),
                       const SizedBox(width: 8),
                       _buildTypeButton(
-                          'urgent', Icons.priority_high_rounded, Colors.orange),
+                          'urgent', CupertinoIcons.exclamationmark_triangle_fill, Colors.orange),
                       const SizedBox(width: 8),
                       _buildTypeButton(
-                          'reminder', Icons.alarm_rounded, Colors.teal),
+                          'reminder', CupertinoIcons.alarm, Colors.teal),
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -395,7 +396,7 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.calendar_month_rounded,
+                          const Icon(CupertinoIcons.calendar,
                               size: 20, color: AppColors.primary),
                           const SizedBox(width: 12),
                           Text(
@@ -409,7 +410,7 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
                           const Spacer(),
                           if (_scheduledTime != null)
                             IconButton(
-                              icon: const Icon(Icons.close_rounded, size: 18),
+                              icon: const Icon(CupertinoIcons.clear, size: 18),
                               onPressed: () =>
                                   setState(() => _scheduledTime = null),
                             )
@@ -490,7 +491,7 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
                     : const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.rocket_launch_rounded,
+                          Icon(CupertinoIcons.rocket_fill,
                               color: Colors.white, size: 20),
                           SizedBox(width: 12),
                           Text('LUNCURKAN PESAN',
@@ -605,7 +606,7 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
                   style: const TextStyle(fontSize: 10, color: Colors.grey)),
               if (status == 'ongoing')
                 IconButton(
-                  icon: const Icon(Icons.stop_circle_outlined,
+                  icon: const Icon(CupertinoIcons.stop_circle,
                       size: 16, color: Colors.orange),
                   tooltip: 'Akhiri Broadcast',
                   onPressed: () async {
@@ -626,7 +627,7 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
                   },
                 ),
               IconButton(
-                icon: const Icon(Icons.delete_outline_rounded,
+                icon: const Icon(CupertinoIcons.trash,
                     size: 16, color: Colors.grey),
                 onPressed: () async {
                   final confirm = await UIHelper.showConfirmDialog(

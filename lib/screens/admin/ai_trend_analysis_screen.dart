@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -98,7 +99,7 @@ class _AiTrendAnalysisScreenState extends State<AiTrendAnalysisScreen> {
         iconTheme: IconThemeData(color: Theme.of(context).iconTheme.color),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded),
+            icon: const Icon(CupertinoIcons.refresh),
             tooltip: 'Refresh Analysis',
             onPressed: _isLoading ? null : _fetchAnalysis,
           ),
@@ -154,7 +155,7 @@ class _AiTrendAnalysisScreenState extends State<AiTrendAnalysisScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline_rounded,
+            const Icon(CupertinoIcons.exclamationmark_circle,
                 size: 64, color: Colors.redAccent),
             const SizedBox(height: 16),
             const Text('Gagal Menganalisis',
@@ -216,7 +217,7 @@ class _AiTrendAnalysisScreenState extends State<AiTrendAnalysisScreen> {
                     color: Colors.white.withOpacity(0.2),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.auto_awesome_rounded,
+                  child: const Icon(CupertinoIcons.sparkles,
                       color: Colors.white, size: 28),
                 ),
                 const SizedBox(width: 16),

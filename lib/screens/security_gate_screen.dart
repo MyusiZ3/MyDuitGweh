@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 
 class SecurityGateScreen extends StatelessWidget {
@@ -25,7 +26,7 @@ class SecurityGateScreen extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
-                    Icons.security_update_warning_rounded,
+                    CupertinoIcons.lock_shield,
                     color: Colors.red,
                     size: 60,
                   ),

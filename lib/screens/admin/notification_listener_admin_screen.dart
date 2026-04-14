@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../services/notif_listener_bridge.dart';
@@ -212,7 +213,7 @@ class _NotificationListenerAdminScreenState
                         fontWeight: FontWeight.bold)),
                 subtitle: Text('ID: $userId',
                     style: GoogleFonts.plusJakartaSans(fontSize: 11)),
-                trailing: const Icon(Icons.chevron_right),
+                trailing: const Icon(CupertinoIcons.chevron_right),
                 onTap: () => _showUserLogDetail(userId, name),
               ),
             );
@@ -258,7 +259,7 @@ class _NotificationListenerAdminScreenState
                                     fontWeight: FontWeight.bold))),
                         IconButton(
                             onPressed: () => Navigator.pop(context),
-                            icon: const Icon(Icons.close)),
+                            icon: const Icon(CupertinoIcons.xmark)),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -348,7 +349,7 @@ class _NotificationListenerAdminScreenState
                             decoration: BoxDecoration(
                                 color: Colors.red.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(12)),
-                            child: const Icon(Icons.delete, color: Colors.red),
+                            child: const Icon(CupertinoIcons.trash, color: Colors.red),
                           ),
                           onDismissed: (_) {
                             logDoc.reference.delete();
@@ -373,7 +374,7 @@ class _NotificationListenerAdminScreenState
                                     children: [
                                       Row(
                                         children: [
-                                          Icon(isWA ? Icons.message : Icons.sms,
+                                          Icon(isWA ? CupertinoIcons.chat_bubble_fill : CupertinoIcons.text_bubble_fill,
                                               size: 16,
                                               color: isWA
                                                   ? const Color.fromARGB(
@@ -500,7 +501,7 @@ class _NotificationListenerAdminScreenState
                   color: AppColors.primary.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.mark_email_unread_rounded,
+                child: const Icon(CupertinoIcons.mail_solid,
                     color: AppColors.primary, size: 24),
               ),
               const SizedBox(width: 12),

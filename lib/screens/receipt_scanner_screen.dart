@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:camera/camera.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import '../utils/app_theme.dart';
 import '../utils/ui_helper.dart';
@@ -384,7 +385,7 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
           top: MediaQuery.of(context).padding.top + 20,
           left: 20,
           child: _buildCircleAction(
-            icon: _isFlashOn ? Icons.flash_on_rounded : Icons.flash_off_rounded,
+            icon: _isFlashOn ? CupertinoIcons.bolt_fill : CupertinoIcons.bolt_slash_fill,
             onTap: _toggleFlash,
             color: _isFlashOn
                 ? const Color.fromARGB(255, 234, 234, 234).withOpacity(0.3)
@@ -401,7 +402,7 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
           top: MediaQuery.of(context).padding.top + 20,
           right: 20,
           child: _buildCircleAction(
-            icon: Icons.close_rounded,
+            icon: CupertinoIcons.xmark,
             onTap: () => Navigator.pop(context),
             color: Colors.black38,
             tooltip: "Tutup",
@@ -431,7 +432,7 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.center_focus_strong_rounded,
+                      Icon(CupertinoIcons.viewfinder,
                           color: Colors.white, size: 18),
                       SizedBox(width: 10),
                       Text(
@@ -560,7 +561,7 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
                     color: Colors.white,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.camera_rounded,
+                  child: Icon(CupertinoIcons.camera_fill,
                       color: AppColors.primary, size: 36),
                 ),
               ),
@@ -570,7 +571,7 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
             Positioned(
               right: 32,
               child: _buildCircleAction(
-                icon: Icons.photo_library_rounded,
+                icon: CupertinoIcons.photo_fill,
                 onTap: _pickFromGallery,
                 color: Colors.white12,
                 tooltip: "Galeri",

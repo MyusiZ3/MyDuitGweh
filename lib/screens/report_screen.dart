@@ -1,5 +1,6 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:convert';
 import 'package:flutter_markdown/flutter_markdown.dart';
@@ -212,7 +213,7 @@ class _ReportScreenState extends State<ReportScreen> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
-                  Icons.ios_share_rounded,
+                  CupertinoIcons.share,
                   size: 24,
                   color: Theme.of(context).brightness == Brightness.dark
                       ? Colors.indigoAccent
@@ -370,7 +371,7 @@ class _ReportScreenState extends State<ReportScreen> {
                     fontWeight: FontWeight.bold, color: Colors.white)),
         icon: _isCheckingAi
             ? const SizedBox.shrink()
-            : Icon(Icons.auto_awesome_rounded, color: Colors.white),
+            : Icon(CupertinoIcons.sparkles, color: Colors.white),
         backgroundColor: Theme.of(context).primaryColor,
         elevation: 4,
       ),
@@ -447,7 +448,7 @@ class _ReportScreenState extends State<ReportScreen> {
               style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
             ),
             const Spacer(),
-            Icon(Icons.unfold_more_rounded,
+            Icon(CupertinoIcons.chevron_up_chevron_down,
                 color: Theme.of(context).hintColor.withOpacity(0.5), size: 18),
           ],
         ),
@@ -532,7 +533,7 @@ class _ReportScreenState extends State<ReportScreen> {
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      Icons.auto_awesome_rounded,
+                      CupertinoIcons.sparkles,
                       color: Theme.of(context).primaryColor,
                       size: 24,
                     ),
@@ -598,8 +599,8 @@ class _ReportScreenState extends State<ReportScreen> {
                   children: [
                     Icon(
                       _isNotifAccessGranted
-                          ? Icons.check_circle_rounded
-                          : Icons.error_outline_rounded,
+                          ? CupertinoIcons.check_mark_circled_solid
+                          : CupertinoIcons.info,
                       color:
                           _isNotifAccessGranted ? Colors.green : Colors.orange,
                       size: 20,
@@ -633,7 +634,7 @@ class _ReportScreenState extends State<ReportScreen> {
                         Future.delayed(
                             const Duration(seconds: 2), _checkNotifStatus);
                       },
-                      icon: Icon(Icons.settings_suggest_rounded,
+                      icon: Icon(CupertinoIcons.settings,
                           color: Colors.white, size: 20),
                       label: Text('Buka Pengaturan Perizinan'),
                       style: ElevatedButton.styleFrom(
@@ -733,12 +734,12 @@ class _ReportScreenState extends State<ReportScreen> {
               children: [
                 Expanded(
                   child: _buildMiniStat('Pemasukan', income,
-                      Icons.arrow_downward_rounded, Colors.white),
+                      CupertinoIcons.arrow_down, Colors.white),
                 ),
                 Container(width: 1, height: 24, color: Colors.white24),
                 Expanded(
                   child: _buildMiniStat('Pengeluaran', expense,
-                      Icons.arrow_upward_rounded, Colors.white),
+                      CupertinoIcons.arrow_up, Colors.white),
                 ),
               ],
             ),
@@ -1103,7 +1104,7 @@ class _ReportScreenState extends State<ReportScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.analytics_outlined,
+          Icon(CupertinoIcons.chart_pie_fill,
               size: 80, color: Theme.of(context).hintColor.withOpacity(0.2)),
           const SizedBox(height: 16),
           Text(title,
@@ -1297,7 +1298,7 @@ class _ReportScreenState extends State<ReportScreen> {
                     Expanded(
                       child: _buildExportButton(
                         label: 'PDF',
-                        icon: Icons.picture_as_pdf_rounded,
+                        icon: CupertinoIcons.doc_text_fill,
                         color: Colors.red,
                         onPressed: selectedCategories.isEmpty
                             ? null
@@ -1309,7 +1310,7 @@ class _ReportScreenState extends State<ReportScreen> {
                     Expanded(
                       child: _buildExportButton(
                         label: 'CSV',
-                        icon: Icons.table_view_rounded,
+                        icon: CupertinoIcons.table,
                         color: Colors.green,
                         onPressed: selectedCategories.isEmpty
                             ? null
@@ -1698,7 +1699,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.key_rounded,
+                              Icon(CupertinoIcons.lock_fill,
                                   color: Theme.of(context).brightness ==
                                           Brightness.dark
                                       ? Colors.indigoAccent
@@ -1712,7 +1713,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                               const Spacer(),
                               IconButton(
                                   onPressed: () => Navigator.pop(context),
-                                  icon: Icon(Icons.close_rounded,
+                                  icon: Icon(CupertinoIcons.xmark,
                                       size: 20,
                                       color: Theme.of(context)
                                           .textTheme
@@ -1727,7 +1728,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                 child: _buildPlatformToggle(
                                   label: 'Gemini',
                                   isSelected: selectedPlatform == 'gemini',
-                                  icon: Icons.auto_awesome_rounded,
+                                  icon: CupertinoIcons.sparkles,
                                   onTap: () => setDialogState(
                                       () => selectedPlatform = 'gemini'),
                                 ),
@@ -1737,7 +1738,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                 child: _buildPlatformToggle(
                                   label: 'Groq',
                                   isSelected: selectedPlatform == 'groq',
-                                  icon: Icons.bolt_rounded,
+                                  icon: CupertinoIcons.bolt_fill,
                                   onTap: () => setDialogState(
                                       () => selectedPlatform = 'groq'),
                                 ),
@@ -1772,7 +1773,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                 borderRadius: BorderRadius.circular(16),
                                 borderSide: BorderSide.none,
                               ),
-                              prefixIcon: Icon(Icons.vpn_key_outlined,
+                              prefixIcon: Icon(CupertinoIcons.lock,
                                   size: 20, color: Theme.of(context).hintColor),
                             ),
                           ),
@@ -1790,7 +1791,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                       controller.text = clipboardData.text!;
                                     }
                                   },
-                                  icon: Icon(Icons.paste_rounded,
+                                  icon: Icon(CupertinoIcons.doc_on_clipboard,
                                       size: 16,
                                       color: Theme.of(context).brightness ==
                                               Brightness.dark
@@ -1920,7 +1921,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                             child: CircularProgressIndicator(
                                                 color: Colors.white,
                                                 strokeWidth: 2))
-                                        : Icon(Icons.add_circle_outline_rounded,
+                                        : Icon(CupertinoIcons.plus_circle,
                                             size: 18, color: Colors.white),
                                     label: Text(
                                         isCheckingKey
@@ -2006,8 +2007,8 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                   children: [
                                     Icon(
                                         isActive
-                                            ? Icons.radio_button_checked
-                                            : Icons.radio_button_off,
+                                            ? CupertinoIcons.circle_fill
+                                            : CupertinoIcons.circle,
                                         size: 16,
                                         color: isActive
                                             ? (Theme.of(context).brightness ==
@@ -2140,11 +2141,10 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                               ),
                                               child: Icon(
                                                 isActive
-                                                    ? Icons.check_rounded
+                                                    ? CupertinoIcons.check_mark
                                                     : (platform == 'groq'
-                                                        ? Icons.bolt_rounded
-                                                        : Icons
-                                                            .auto_awesome_rounded),
+                                                        ? CupertinoIcons.bolt_fill
+                                                        : CupertinoIcons.sparkles),
                                                 size: 14,
                                                 color: isActive
                                                     ? Colors.white
@@ -2210,7 +2210,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                             const SizedBox(width: 8),
                                             IconButton(
                                               icon: Icon(
-                                                  Icons.delete_sweep_rounded,
+                                                  CupertinoIcons.trash_fill,
                                                   size: 20,
                                                   color: Theme.of(context)
                                                               .brightness ==
@@ -2273,7 +2273,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                 Navigator.pop(context); // Close dialog first
                                 _showAPITutorial();
                               },
-                              icon: Icon(Icons.help_outline_rounded,
+                              icon: Icon(CupertinoIcons.question_circle,
                                   size: 14, color: Theme.of(context).hintColor),
                               label: Text('Bingung cara dapetin API Key-nya?',
                                   style: TextStyle(
@@ -2330,10 +2330,10 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                       IconButton(
                         onPressed: () =>
                             setState(() => _currentSessionId = null),
-                        icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+                        icon: Icon(CupertinoIcons.chevron_back, size: 20),
                         tooltip: 'Pilih Chat',
                       ),
-                    Icon(Icons.auto_awesome_rounded,
+                    Icon(CupertinoIcons.sparkles,
                         color: Theme.of(context).brightness == Brightness.dark
                             ? Colors.indigoAccent
                             : Theme.of(context).primaryColor),
@@ -2356,7 +2356,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                             _currentSessionId = null;
                           });
                         },
-                        icon: Icon(Icons.settings_suggest_rounded,
+                        icon: Icon(CupertinoIcons.settings,
                             color: Theme.of(context).hintColor),
                         tooltip: 'Ganti Mode AI',
                       ),
@@ -2451,7 +2451,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                                 shape: BoxShape.circle,
                                               ),
                                               child: Icon(
-                                                Icons.warning_amber_rounded,
+                                                CupertinoIcons.exclamationmark_triangle_fill,
                                                 color: AppColors.expense,
                                                 size: 32,
                                               ),
@@ -2540,7 +2540,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                             ),
                           );
                         },
-                        icon: Icon(Icons.help_outline_rounded,
+                        icon: Icon(CupertinoIcons.question_circle,
                             color: Theme.of(context).hintColor)),
                   ],
                 ),
@@ -2591,7 +2591,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                     const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                 child: Row(
                   children: [
-                    Icon(Icons.lightbulb_rounded, color: Colors.amber),
+                    Icon(CupertinoIcons.lightbulb_fill, color: Colors.amber),
                     const SizedBox(width: 12),
                     Text('Tutorial Dapatkan API Key',
                         style: TextStyle(
@@ -2599,7 +2599,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                     const Spacer(),
                     IconButton(
                         onPressed: () => Navigator.pop(context),
-                        icon: Icon(Icons.close_rounded,
+                        icon: Icon(CupertinoIcons.xmark,
                             color:
                                 Theme.of(context).textTheme.bodyLarge?.color)),
                   ],
@@ -2660,7 +2660,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.info_outline_rounded,
+                          Icon(CupertinoIcons.info,
                               color: Theme.of(context).brightness ==
                                       Brightness.dark
                                   ? Colors.indigoAccent
@@ -2755,7 +2755,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.auto_awesome_rounded,
+          Icon(CupertinoIcons.sparkles,
               size: 48,
               color: Theme.of(context).brightness == Brightness.dark
                   ? Colors.indigoAccent
@@ -2780,7 +2780,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
           _buildOptionCard(
             title: 'AI Bawaan (Terintegrasi)',
             subtitle: 'Gunakan API Key aplikasi Langsung.',
-            icon: Icons.flash_on_rounded,
+            icon: CupertinoIcons.bolt_fill,
             color: Theme.of(context).brightness == Brightness.dark
                 ? Colors.indigoAccent
                 : Theme.of(context).primaryColor,
@@ -2803,7 +2803,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
           _buildOptionCard(
             title: 'API Key Sendiri',
             subtitle: 'Atur & pilih dari daftar API Key Kamu.',
-            icon: Icons.key_rounded,
+            icon: CupertinoIcons.lock_fill,
             color: Theme.of(context).brightness == Brightness.dark
                 ? Colors.grey
                 : Colors.blueGrey,
@@ -2813,7 +2813,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
           const SizedBox(height: 16),
           TextButton.icon(
             onPressed: _showAPITutorial,
-            icon: Icon(Icons.help_outline_rounded, size: 14),
+            icon: Icon(CupertinoIcons.question_circle, size: 14),
             label: Text('Cara dapetin API Key gratis?',
                 style: TextStyle(
                     fontSize: 12,
@@ -2953,7 +2953,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                       ),
                       child: const Row(
                         children: [
-                          Icon(Icons.security_rounded,
+                          Icon(CupertinoIcons.shield_fill,
                               color: Colors.white, size: 14),
                           SizedBox(width: 6),
                           Text('AI Health Diagnose',
@@ -3014,8 +3014,8 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                       child: AnimatedHeartbeat(
                         score: score,
                         icon: score > 50
-                            ? Icons.favorite_rounded
-                            : Icons.warning_rounded,
+                            ? CupertinoIcons.heart_fill
+                            : CupertinoIcons.exclamationmark_triangle_fill,
                       ),
                     ),
                   ],
@@ -3123,7 +3123,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                   child: const Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(Icons.battery_alert_rounded,
+                                      Icon(CupertinoIcons.battery_empty,
                                           color: Colors.amberAccent, size: 16),
                                       SizedBox(width: 8),
                                       Text('Status: Cooldown',
@@ -3182,7 +3182,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                               : 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.bolt_rounded,
+                child: Icon(CupertinoIcons.bolt_fill,
                     size: 16,
                     color: isHigh
                         ? Colors.red
@@ -3273,7 +3273,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.add_comment_rounded, color: Colors.white, size: 20),
+            Icon(CupertinoIcons.chat_bubble_text_fill, color: Colors.white, size: 20),
             const SizedBox(height: 12),
             Text('Tanya Archen',
                 style: TextStyle(
@@ -3284,7 +3284,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
             Text('Mulai chat baru',
                 style: TextStyle(color: Colors.white70, fontSize: 10)),
             const Spacer(),
-            Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 14),
+            Icon(CupertinoIcons.arrow_right, color: Colors.white, size: 14),
             const SizedBox(height: 8),
             Text(
               'AI Assist',
@@ -3305,7 +3305,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
       alignment: Alignment.center,
       child: Column(
         children: [
-          Icon(Icons.chat_bubble_outline_rounded,
+          Icon(CupertinoIcons.chat_bubble,
               size: 48,
               color: Theme.of(context).brightness == Brightness.dark
                   ? Colors.white.withOpacity(0.15)
@@ -3343,7 +3343,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                     width: 1)
                 : null,
           ),
-          child: Icon(Icons.chat_rounded,
+          child: Icon(CupertinoIcons.chat_bubble_fill,
               size: 18,
               color: Theme.of(context).brightness == Brightness.dark
                   ? Colors.white
@@ -3358,7 +3358,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                 .format(DateTime.parse(session['lastUpdate'])),
             style: TextStyle(fontSize: 10, color: Theme.of(context).hintColor)),
         trailing: IconButton(
-          icon: Icon(Icons.delete_outline_rounded,
+          icon: Icon(CupertinoIcons.trash,
               size: 20,
               color: Theme.of(context).brightness == Brightness.dark
                   ? Colors.white54
@@ -3447,7 +3447,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right_rounded, color: color.withOpacity(0.5)),
+            Icon(CupertinoIcons.chevron_right, color: color.withOpacity(0.5)),
           ],
         ),
       ),
@@ -3700,7 +3700,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
             ),
             child: IconButton(
               onPressed: () => _handleQuery(_queryController.text),
-              icon: Icon(Icons.send_rounded, color: Colors.white, size: 20),
+              icon: Icon(CupertinoIcons.paperplane_fill, color: Colors.white, size: 20),
             ),
           ),
         ],

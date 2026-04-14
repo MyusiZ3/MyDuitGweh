@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../../services/firestore_service.dart';
@@ -151,8 +152,8 @@ class _ExperienceSurveySheetState extends State<ExperienceSurveySheet> {
                                   const EdgeInsets.symmetric(horizontal: 4),
                               child: Icon(
                                 _rating > index
-                                    ? Icons.star_rounded
-                                    : Icons.star_border_rounded,
+                                    ? CupertinoIcons.star_fill
+                                    : CupertinoIcons.star,
                                 color: _rating > index
                                     ? Colors.amber
                                     : Colors.grey[400],
