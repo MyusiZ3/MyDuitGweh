@@ -139,7 +139,10 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
               color: Theme.of(context).cardColor,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(Theme.of(context).brightness == Brightness.dark ? 0.3 : 0.04),
+                  color: Colors.black.withOpacity(
+                      Theme.of(context).brightness == Brightness.dark
+                          ? 0.3
+                          : 0.04),
                   blurRadius: 20,
                   offset: const Offset(0, -4),
                 ),
@@ -173,7 +176,7 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
     final isActive = _currentIndex == index;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final activeColor = isDark ? const Color(0xFF0A84FF) : AppColors.primary;
-    
+
     return GestureDetector(
       onTap: () => _onTabTapped(index),
       behavior: HitTestBehavior.opaque,
@@ -181,9 +184,7 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isActive
-              ? activeColor.withOpacity(0.12)
-              : Colors.transparent,
+          color: isActive ? activeColor.withOpacity(0.12) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -217,7 +218,10 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
             child: Container(
-              color: (Theme.of(context).brightness == Brightness.dark ? Colors.black : Colors.black).withOpacity(0.4),
+              color: (Theme.of(context).brightness == Brightness.dark
+                      ? Colors.black
+                      : Colors.black)
+                  .withOpacity(0.4),
             ),
           ),
         ),
@@ -297,10 +301,14 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
                 color: Theme.of(context).cardColor.withOpacity(0.95),
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
-                    color: Theme.of(context).dividerColor.withOpacity(0.5), width: 1.5),
+                    color: Theme.of(context).dividerColor.withOpacity(0.5),
+                    width: 1.5),
                 boxShadow: [
                   BoxShadow(
-                    color: color.withOpacity(Theme.of(context).brightness == Brightness.dark ? 0.4 : 0.2),
+                    color: color.withOpacity(
+                        Theme.of(context).brightness == Brightness.dark
+                            ? 0.4
+                            : 0.2),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -350,8 +358,13 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A84FF) : AppColors.primary).withOpacity(0.85),
-                  (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A84FF) : AppColors.primary),
+                  (Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF0A84FF)
+                          : AppColors.primary)
+                      .withOpacity(0.85),
+                  (Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF0A84FF)
+                      : AppColors.primary),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -359,7 +372,10 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
               borderRadius: BorderRadius.circular(20), // iOS squircle shape
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(Theme.of(context).brightness == Brightness.dark ? 0.4 : 0.15),
+                  color: Colors.black.withOpacity(
+                      Theme.of(context).brightness == Brightness.dark
+                          ? 0.4
+                          : 0.15),
                   blurRadius: 12,
                   spreadRadius: 0,
                   offset: const Offset(0, 4),
@@ -430,7 +446,10 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
               borderRadius: BorderRadius.circular(28),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(Theme.of(context).brightness == Brightness.dark ? 0.4 : 0.12),
+                  color: Colors.black.withOpacity(
+                      Theme.of(context).brightness == Brightness.dark
+                          ? 0.4
+                          : 0.12),
                   blurRadius: 30,
                   offset: const Offset(0, 15),
                 ),
