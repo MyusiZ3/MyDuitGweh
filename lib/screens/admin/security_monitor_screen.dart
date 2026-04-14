@@ -18,18 +18,18 @@ class _SecurityMonitorScreenState extends State<SecurityMonitorScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FE),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Security Monitor', 
-            style: TextStyle(fontWeight: FontWeight.w900, color: Colors.black)),
+        title: Text('Security Monitor', 
+            style: TextStyle(fontWeight: FontWeight.w900, color: Theme.of(context).textTheme.titleLarge?.color)),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
       ),
       body: Column(
         children: [
           _buildMaintenanceQuickPanel(),
-          const Padding(
+          Padding(
             padding: EdgeInsets.fromLTRB(24, 20, 24, 8),
             child: Row(
               children: [
@@ -39,7 +39,7 @@ class _SecurityMonitorScreenState extends State<SecurityMonitorScreen> {
                     style: TextStyle(
                         fontSize: 12, 
                         fontWeight: FontWeight.w900, 
-                        color: Colors.grey,
+                        color: Theme.of(context).textTheme.bodySmall?.color,
                         letterSpacing: 1.5)),
               ],
             ),
@@ -99,7 +99,7 @@ class _SecurityMonitorScreenState extends State<SecurityMonitorScreen> {
           margin: const EdgeInsets.all(16),
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: isMaintenance ? Colors.red[900] : Colors.white,
+            color: isMaintenance ? Colors.red[900] : Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
@@ -109,7 +109,7 @@ class _SecurityMonitorScreenState extends State<SecurityMonitorScreen> {
               ),
             ],
             border: Border.all(
-              color: isMaintenance ? Colors.redAccent.withOpacity(0.3) : Colors.transparent,
+              color: isMaintenance ? Colors.redAccent.withOpacity(0.3) : Theme.of(context).dividerColor.withOpacity(0.05),
               width: 1,
             ),
           ),
@@ -135,14 +135,14 @@ class _SecurityMonitorScreenState extends State<SecurityMonitorScreen> {
                       'Emergency Shutdown',
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
-                        color: isMaintenance ? Colors.white : Colors.black87,
+                        color: isMaintenance ? Colors.white : Theme.of(context).textTheme.titleMedium?.color,
                       ),
                     ),
                     Text(
                       isMaintenance ? 'Mode Pemeliharaan AKTIF' : 'Semua Berjalan Normal',
                       style: TextStyle(
                         fontSize: 12,
-                        color: isMaintenance ? Colors.white70 : Colors.grey,
+                        color: isMaintenance ? Colors.white70 : Theme.of(context).textTheme.bodySmall?.color,
                       ),
                     ),
                   ],
@@ -177,10 +177,10 @@ class _SecurityMonitorScreenState extends State<SecurityMonitorScreen> {
       duration: const Duration(milliseconds: 300),
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: isRead ? Colors.white : severityColor.withOpacity(0.05),
+        color: isRead ? Theme.of(context).cardColor : severityColor.withOpacity(0.05),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isRead ? Colors.grey.withOpacity(0.1) : severityColor.withOpacity(0.2),
+          color: isRead ? Theme.of(context).dividerColor.withOpacity(0.1) : severityColor.withOpacity(0.2),
           width: 1,
         ),
       ),
@@ -218,10 +218,10 @@ class _SecurityMonitorScreenState extends State<SecurityMonitorScreen> {
           children: [
             const SizedBox(height: 4),
             Text(message, 
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 14, 
                     fontWeight: FontWeight.w600, 
-                    color: Colors.black87)),
+                    color: Theme.of(context).textTheme.bodyLarge?.color)),
             if (data['userEmail'] != 'N/A')
               Padding(
                 padding: const EdgeInsets.only(top: 4),

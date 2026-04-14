@@ -88,14 +88,14 @@ class _AiTrendAnalysisScreenState extends State<AiTrendAnalysisScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('AI Trend Analysis',
-            style: TextStyle(fontWeight: FontWeight.w900, color: Colors.black)),
+        title: Text('AI Trend Analysis',
+            style: TextStyle(fontWeight: FontWeight.w900, color: Theme.of(context).textTheme.titleLarge?.color)),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme: IconThemeData(color: Theme.of(context).iconTheme.color),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
@@ -138,9 +138,9 @@ class _AiTrendAnalysisScreenState extends State<AiTrendAnalysisScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Mencari pola dari jutaan titik data.',
-            style: TextStyle(color: Colors.grey),
+            style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color),
           ),
         ],
       ),
@@ -162,13 +162,13 @@ class _AiTrendAnalysisScreenState extends State<AiTrendAnalysisScreen> {
             const SizedBox(height: 8),
             Text(_error ?? 'Unknown error',
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.grey)),
+                style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: _fetchAnalysis,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
-                foregroundColor: Colors.white,
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -192,13 +192,15 @@ class _AiTrendAnalysisScreenState extends State<AiTrendAnalysisScreen> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF1E3A8A), Color(0xFF3B82F6)],
+              gradient: LinearGradient(
+                colors: Theme.of(context).brightness == Brightness.dark
+                    ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
+                    : [const Color(0xFF1E3A8A), const Color(0xFF3B82F6)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(24),
-              boxShadow: [
+              boxShadow: Theme.of(context).brightness == Brightness.dark ? [] : [
                 BoxShadow(
                   color: Colors.blueAccent.withOpacity(0.3),
                   blurRadius: 10,
@@ -248,52 +250,66 @@ class _AiTrendAnalysisScreenState extends State<AiTrendAnalysisScreen> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Colors.grey[50],
+              color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.grey.withOpacity(0.1)),
+              border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.02),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: MarkdownBody(
               data: _analysisResult ?? 'Tidak ada hasil analisis.',
               styleSheet: MarkdownStyleSheet(
-                h1: const TextStyle(
+                h1: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w900,
-                    color: Colors.black,
+                    color: Theme.of(context).textTheme.titleLarge?.color,
                     letterSpacing: -0.5,
                     height: 1.5),
-                h2: const TextStyle(
+                h2: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
-                    color: Colors.black87,
+                    color: Theme.of(context).textTheme.titleMedium?.color,
                     letterSpacing: -0.5,
                     height: 1.5),
-                h3: const TextStyle(
+                h3: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: Theme.of(context).textTheme.titleSmall?.color,
                     height: 1.5),
                 p: TextStyle(
                     fontSize: 14,
-                    color: Colors.grey[800],
+                    color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.8),
                     height: 1.6,
                     letterSpacing: 0.2),
-                listBullet: TextStyle(color: Colors.blueAccent[700]),
+                listBullet: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? Colors.blueAccent[100] : Colors.blueAccent[700]),
                 strong: const TextStyle(fontWeight: FontWeight.w900),
                 code: TextStyle(
                   backgroundColor: Colors.transparent,
-                  color: Colors.blueAccent[700],
+                  color: Theme.of(context).brightness == Brightness.dark ? Colors.blueAccent[100] : Colors.blueAccent[700],
                   fontSize: 13,
                   fontFamily: 'monospace',
                 ),
                 codeblockDecoration: BoxDecoration(
-                  color: Colors.transparent,
+                  color: Theme.of(context).dividerColor.withOpacity(0.05),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 blockquoteDecoration: BoxDecoration(
-                  color: Colors.blue[50]?.withOpacity(0.3),
+                  color: (Theme.of(context).brightness == Brightness.dark
+                          ? (Colors.blueAccent[100] ?? Colors.blue)
+                          : Colors.blue)
+                      .withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
-                  border: const Border(
-                      left: BorderSide(color: Colors.blueAccent, width: 4)),
+                  border: Border(
+                      left: BorderSide(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? (Colors.blueAccent[100] ?? Colors.blueAccent)
+                              : Colors.blueAccent,
+                          width: 4)),
                 ),
               ),
             ),

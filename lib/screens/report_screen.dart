@@ -1973,28 +1973,34 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                           horizontal: 16, vertical: 12),
                                       decoration: BoxDecoration(
                                         color: isActive
-                                            ? Theme.of(context)
-                                                .primaryColor
-                                                .withOpacity(0.08)
-                                            : Theme.of(context).cardColor,
+                                            ? (Theme.of(context).brightness == Brightness.dark
+                                                ? Colors.indigoAccent.withOpacity(0.15)
+                                                : Theme.of(context).primaryColor.withOpacity(0.08))
+                                            : (Theme.of(context).brightness == Brightness.dark
+                                                ? AppColors.surfaceVariantDark.withOpacity(0.3)
+                                                : Theme.of(context).cardColor),
                                         borderRadius: BorderRadius.circular(20),
                                         border: Border.all(
                                             color: isActive
-                                                ? Theme.of(context)
-                                                    .primaryColor
-                                                    .withOpacity(0.2)
-                                                : (Theme.of(context)
-                                                                .brightness ==
-                                                            Brightness.dark
-                                                        ? Colors.white10
-                                                        : AppColors
-                                                            .surfaceVariant),
+                                                ? (Theme.of(context).brightness ==
+                                                        Brightness.dark
+                                                    ? Colors.indigoAccent
+                                                    : Theme.of(context)
+                                                        .primaryColor)
+                                                : (Theme.of(context).brightness ==
+                                                        Brightness.dark
+                                                    ? Colors.white10
+                                                    : AppColors.surfaceVariant),
                                             width: 1.5),
                                         boxShadow: isActive
                                             ? [
                                                 BoxShadow(
-                                                    color: Theme.of(context)
-                                                        .primaryColor
+                                                    color: (Theme.of(context)
+                                                                    .brightness ==
+                                                                Brightness.dark
+                                                            ? Colors.indigoAccent
+                                                            : Theme.of(context)
+                                                                .primaryColor)
                                                         .withOpacity(0.1),
                                                     blurRadius: 8,
                                                     offset: const Offset(0, 4))
@@ -2042,8 +2048,9 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                                 size: 14,
                                                 color: isActive
                                                     ? Colors.white
-                                                    : Theme.of(context)
-                                                        .hintColor,
+                                                    : (Theme.of(context).brightness == Brightness.dark
+                                                        ? Colors.white54
+                                                        : Theme.of(context).hintColor),
                                               ),
                                             ),
                                             const SizedBox(width: 12),
@@ -2060,15 +2067,12 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                                             : FontWeight.w600,
                                                         fontSize: 13,
                                                         color: isActive
-                                                            ? Theme.of(context)
-                                                                .primaryColor
-                                                            : (Theme.of(context)
-                                                                        .brightness ==
-                                                                    Brightness
-                                                                        .dark
+                                                            ? (Theme.of(context).brightness == Brightness.dark
+                                                                ? Colors.white
+                                                                : Theme.of(context).primaryColor)
+                                                            : (Theme.of(context).brightness == Brightness.dark
                                                                 ? Colors.white70
-                                                                : AppColors
-                                                                    .textPrimary)),
+                                                                : AppColors.textPrimary)),
                                                   ),
                                                   if (isActive)
                                                     Text(
@@ -2080,8 +2084,9 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                                                 fontWeight:
                                                                     FontWeight
                                                                         .bold,
-                                                                color: AppColors
-                                                                    .primary,
+                                                                color: Theme.of(context).brightness == Brightness.dark
+                                                                    ? Colors.indigoAccent
+                                                                    : AppColors.primary,
                                                                 letterSpacing:
                                                                     0.5)),
                                                 ],

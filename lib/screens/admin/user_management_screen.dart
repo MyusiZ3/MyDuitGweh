@@ -61,9 +61,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -72,7 +72,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: Theme.of(context).dividerColor,
                     borderRadius: BorderRadius.circular(2))),
             const SizedBox(height: 24),
             Text('Atur Role untuk ${name.split(' ')[0]}',
@@ -80,7 +80,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
             const SizedBox(height: 8),
             Text('Pilih role baru untuk pengguna ini',
-                style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 13)),
             const SizedBox(height: 24),
             ...List.generate(roles.length, (index) {
               final isCurrent = currentRole == roles[index];
@@ -93,7 +93,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                   decoration: BoxDecoration(
                     color: isCurrent
                         ? AppColors.primary.withOpacity(0.1)
-                        : Colors.grey[100],
+                        : Theme.of(context).dividerColor.withOpacity(0.05),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -108,7 +108,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                             ? Colors.indigo
                             : (roles[index] == 'admin'
                                 ? Colors.blue
-                                : Colors.grey)),
+                                : Theme.of(context).disabledColor)),
                     size: 20,
                   ),
                 ),
@@ -116,7 +116,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     style: TextStyle(
                       fontWeight:
                           isCurrent ? FontWeight.w900 : FontWeight.normal,
-                      color: isCurrent ? AppColors.primary : Colors.black,
+                        color: isCurrent ? AppColors.primary : Theme.of(context).textTheme.titleMedium?.color,
                     )),
                 trailing: isCurrent
                     ? Icon(Icons.check_circle_rounded, color: AppColors.primary)
@@ -235,7 +235,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
             Text('Berikan alasan dan tentukan durasi pembekuan.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    fontSize: 13, color: Colors.grey[600], height: 1.4)),
+                    fontSize: 13, color: Theme.of(context).textTheme.bodySmall?.color, height: 1.4)),
             const SizedBox(height: 24),
             TextField(
               controller: reasonController,
@@ -246,25 +246,25 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 labelStyle:
                     const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                 hintText: 'Contoh: Melanggar aturan komunitas',
-                hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
+                hintStyle: TextStyle(color: Theme.of(context).disabledColor, fontSize: 13),
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
+                  borderSide: BorderSide(color: Theme.of(context).dividerColor),
                 ),
                 filled: true,
-                fillColor: Colors.grey[50],
+                fillColor: Theme.of(context).dividerColor.withOpacity(0.05),
                 prefixIcon: const Icon(Icons.description_outlined, size: 20),
               ),
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               value: duration,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: Colors.black),
+                  color: Theme.of(context).textTheme.bodyLarge?.color),
               icon: const Icon(Icons.keyboard_arrow_down_rounded),
               items: durations.entries
                   .map((e) => DropdownMenuItem(
@@ -281,10 +281,10 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
+                  borderSide: BorderSide(color: Theme.of(context).dividerColor),
                 ),
                 filled: true,
-                fillColor: Colors.grey[50],
+                fillColor: Theme.of(context).dividerColor.withOpacity(0.05),
                 prefixIcon: const Icon(Icons.timer_outlined, size: 20),
               ),
             ),
@@ -298,12 +298,12 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                        border: Border.all(color: Theme.of(context).dividerColor),
                       ),
-                      child: const Center(
+                      child: Center(
                         child: Text('Batal',
                             style: TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 13)),
+                                fontWeight: FontWeight.bold, fontSize: 13, color: Theme.of(context).textTheme.bodyMedium?.color)),
                       ),
                     ),
                   ),
@@ -451,9 +451,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       builder: (ctx) => Container(
         padding: EdgeInsets.fromLTRB(
             32, 32, 32, MediaQuery.of(ctx).padding.bottom + 32),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -467,7 +467,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
             const SizedBox(height: 8),
             Text(message,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.grey)),
+                style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)),
             const SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
@@ -485,7 +485,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: Center(
           child: CircularProgressIndicator(color: AppColors.primary),
         ),
@@ -495,11 +495,12 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-          title: const Text('User Control Center',
-              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
+          title: Text('User Control Center',
+              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: Theme.of(context).textTheme.titleLarge?.color)),
           centerTitle: true,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           actions: [
             IconButton(
               onPressed: () => _checkRole(),
@@ -509,7 +510,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           ],
           bottom: TabBar(
             labelColor: AppColors.primary,
-            unselectedLabelColor: Colors.grey,
+            unselectedLabelColor: Theme.of(context).textTheme.bodySmall?.color,
             indicatorColor: AppColors.primary,
             indicatorWeight: 3,
             labelStyle:
@@ -531,7 +532,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     hintText: 'Cari nama atau email...',
                     prefixIcon: const Icon(Icons.search_rounded,
                         color: AppColors.primary),
-                    fillColor: AppColors.surfaceVariant.withOpacity(0.5),
+                    fillColor: Theme.of(context).dividerColor.withOpacity(0.05),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                    filled: true,
                   ),
                   onChanged: (val) =>
                       setState(() => _searchQuery = val.toLowerCase()),
@@ -611,14 +614,14 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               isStaff
                   ? Icons.admin_panel_settings_rounded
                   : Icons.person_off_rounded,
-              color: Colors.grey[300],
+              color: Theme.of(context).disabledColor,
               size: 64),
           const SizedBox(height: 16),
           Text(
               isStaff
                   ? 'Tidak ada staff ditemukan'
                   : 'Tidak ada user ditemukan',
-              style: const TextStyle(color: Colors.grey)),
+              style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)),
         ],
       ));
     }
@@ -647,12 +650,12 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           margin: const EdgeInsets.only(bottom: 16),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
                 color: role == 'superadmin'
                     ? Colors.amber.withOpacity(0.3)
-                    : AppColors.surfaceVariant),
+                    : Theme.of(context).dividerColor.withOpacity(0.1)),
             boxShadow: [
               BoxShadow(
                   color: role == 'superadmin'
@@ -701,9 +704,10 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                       children: [
                         Flexible(
                           child: Text(user['displayName'] ?? 'User',
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontWeight: FontWeight.w900,
                                   fontSize: 16,
+                                  color: Theme.of(context).textTheme.titleMedium?.color,
                                   overflow: TextOverflow.ellipsis)),
                         ),
                         const SizedBox(width: 8),
@@ -741,12 +745,12 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                       scrollDirection: Axis.horizontal,
                       child: Text(user['email'] ?? 'No email',
                           style:
-                              TextStyle(color: Colors.grey[600], fontSize: 12)),
+                              TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 12)),
                     ),
                     const SizedBox(height: 4),
                     Text('Joined: $joinDateStr',
                         style:
-                            TextStyle(color: Colors.grey[400], fontSize: 10)),
+                            TextStyle(color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.5), fontSize: 10)),
                   ],
                 ),
               ),

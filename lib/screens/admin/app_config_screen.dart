@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
-import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../utils/app_theme.dart';
@@ -153,6 +152,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
     );
 
     if (pickedDate != null) {
+      if (!mounted) return;
       final TimeOfDay? pickedTime = await showTimePicker(
         context: context,
         initialTime: TimeOfDay.now(),
@@ -332,9 +332,9 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
       builder: (ctx) => SafeArea(
         child: Container(
           padding: const EdgeInsets.all(32),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -375,7 +375,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
           margin: const EdgeInsets.all(20),
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(28),
             boxShadow: [
               BoxShadow(
@@ -433,12 +433,12 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                           border:
                               Border.all(color: Colors.amber.withOpacity(0.3)),
                         ),
-                        child: const Row(
+                        child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(Icons.info_outline_rounded,
+                            const Icon(Icons.info_outline_rounded,
                                 color: Colors.amber, size: 18),
-                            SizedBox(width: 8),
+                            const SizedBox(width: 8),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -447,11 +447,16 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 12,
-                                          color: Colors.brown)),
+                                          color: Theme.of(context).brightness == Brightness.dark 
+                                              ? Colors.amber.shade200 
+                                              : Colors.brown)),
                                   Text(
                                       "Jika kamu isi vMin lebih tinggi dari versi yang dipakai user, user TIDAK BISA pakai aplikasi sebelum dia update (WAJIB UPDATE). Gunakan ini hanya untuk update kritikal!",
                                       style: TextStyle(
-                                          fontSize: 10, color: Colors.brown)),
+                                          fontSize: 10, 
+                                          color: Theme.of(context).brightness == Brightness.dark 
+                                              ? Colors.amber.shade100.withOpacity(0.9) 
+                                              : Colors.brown)),
                                 ],
                               ),
                             ),
@@ -519,7 +524,9 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                 Text(desc,
                     style: TextStyle(
                         fontSize: 12,
-                        color: Colors.black.withOpacity(0.6),
+                        color: Theme.of(context).brightness == Brightness.dark 
+                            ? Colors.white70 
+                            : AppColors.textSecondary,
                         height: 1.4)),
               ],
             ),
@@ -532,13 +539,13 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Global Settings'),
+        title: Text('Global Settings', style: TextStyle(color: Theme.of(context).textTheme.titleLarge?.color, fontWeight: FontWeight.w900)),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: Colors.black,
+        foregroundColor: Theme.of(context).iconTheme.color,
         actions: [
           IconButton(
             onPressed: _showTutorialDialog,
@@ -561,13 +568,13 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: _maintenanceMode
-                          ? Colors.black
-                          : Colors.blue.withOpacity(0.04),
+                          ? Colors.blue.shade700
+                          : Theme.of(context).dividerColor.withOpacity(0.04),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: _maintenanceMode
-                            ? Colors.black
-                            : Colors.blue.withOpacity(0.1),
+                            ? Theme.of(context).colorScheme.primary
+                            : Theme.of(context).dividerColor.withOpacity(0.1),
                       ),
                       boxShadow: _maintenanceMode
                           ? [
@@ -612,8 +619,8 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                                     fontWeight: FontWeight.w900,
                                     fontSize: 16,
                                     color: _maintenanceMode
-                                        ? Colors.white
-                                        : Colors.black87,
+                                        ? Theme.of(context).colorScheme.onPrimaryContainer
+                                        : Theme.of(context).textTheme.bodyLarge?.color,
                                     letterSpacing: -0.5),
                               ),
                               Text(
@@ -623,15 +630,15 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                                   style: TextStyle(
                                       fontSize: 11,
                                       color: _maintenanceMode
-                                          ? Colors.white70
-                                          : Colors.blueGrey)),
+                                          ? Theme.of(context).colorScheme.onPrimaryContainer.withOpacity(0.7)
+                                          : Theme.of(context).textTheme.bodySmall?.color)),
                             ],
                           ),
                         ),
                         Switch.adaptive(
                           value: _maintenanceMode,
-                          activeColor: Colors.white,
-                          activeTrackColor: Colors.white24,
+                          activeColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                          activeTrackColor: Theme.of(context).colorScheme.onPrimaryContainer.withOpacity(0.2),
                           onChanged: (v) =>
                               setState(() => _maintenanceMode = v),
                         ),
@@ -643,7 +650,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                     controller: _maintenanceMsgController,
                     label: 'Pesan Maintenance',
                     icon: Icons.message_rounded,
-                    color: Colors.black,
+                    color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black,
                     maxLines: 2,
                   ),
                   const SizedBox(height: 16),
@@ -673,7 +680,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
             ),
             const SizedBox(height: 32),
             _buildSectionHeader('Versioning & Update',
-                Icons.system_update_rounded, Colors.black),
+                Icons.system_update_rounded, Theme.of(context).textTheme.titleMedium?.color ?? Colors.black),
             _buildPremiumCard(
               child: Column(
                 children: [
@@ -681,21 +688,21 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                     controller: _minVersionController,
                     label: 'Force Update vMin',
                     icon: Icons.verified_rounded,
-                    color: Colors.black,
+                    color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black,
                   ),
                   const SizedBox(height: 16),
                   _buildModernTextField(
                     controller: _latestVersionController,
                     label: 'Latest Version',
                     icon: Icons.new_releases_rounded,
-                    color: Colors.black,
+                    color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black,
                   ),
                   const SizedBox(height: 16),
                   _buildModernTextField(
                     controller: _downloadUrlController,
                     label: 'Download URL (Direct)',
                     icon: Icons.link_rounded,
-                    color: Colors.black,
+                    color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black,
                   ),
                   const SizedBox(height: 8),
                   Align(
@@ -712,19 +719,19 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                           },
                           style: TextButton.styleFrom(
                             backgroundColor:
-                                AppColors.primary.withOpacity(0.08),
+                                Theme.of(context).colorScheme.primary.withOpacity(0.08),
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 8),
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12)),
                           ),
-                          icon: const Icon(Icons.rocket_launch_rounded,
-                              size: 14, color: AppColors.primary),
-                          label: const Text('Use GitHub Release',
+                          icon: Icon(Icons.rocket_launch_rounded,
+                              size: 14, color: Theme.of(context).colorScheme.primary),
+                          label: Text('Use GitHub Release',
                               style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.primary)),
+                                  color: Theme.of(context).colorScheme.primary)),
                         ),
                         const SizedBox(width: 8),
                         TextButton.icon(
@@ -735,19 +742,19 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                             });
                           },
                           style: TextButton.styleFrom(
-                            backgroundColor: Colors.black.withOpacity(0.05),
+                            backgroundColor: Theme.of(context).dividerColor.withOpacity(0.1),
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 8),
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12)),
                           ),
-                          icon: const Icon(Icons.cloud_done_rounded,
-                              size: 14, color: Colors.black54),
-                          label: const Text('Use Firebase Bin',
+                          icon: Icon(Icons.cloud_done_rounded,
+                              size: 14, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
+                          label: Text('Use Firebase Bin',
                               style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.black87)),
+                                  color: Theme.of(context).textTheme.bodyMedium?.color)),
                         ),
                       ],
                     ),
@@ -758,12 +765,12 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
                       color: _isForceUpdate
-                          ? Colors.red.withOpacity(0.05)
-                          : Colors.black.withOpacity(0.03),
+                          ? Theme.of(context).colorScheme.errorContainer.withOpacity(0.3)
+                          : Theme.of(context).dividerColor.withOpacity(0.03),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: _isForceUpdate
-                            ? Colors.red.withOpacity(0.2)
+                            ? Theme.of(context).colorScheme.error.withOpacity(0.2)
                             : Colors.transparent,
                       ),
                     ),
@@ -773,7 +780,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                           _isForceUpdate
                               ? Icons.error_outline_rounded
                               : Icons.info_outline_rounded,
-                          color: _isForceUpdate ? Colors.red : Colors.black54,
+                          color: _isForceUpdate ? Theme.of(context).colorScheme.error : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
                           size: 20,
                         ),
                         const SizedBox(width: 12),
@@ -787,17 +794,17 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                   color: _isForceUpdate
-                                      ? Colors.red
-                                      : Colors.black87,
+                                      ? Theme.of(context).colorScheme.error
+                                      : Theme.of(context).textTheme.bodyMedium?.color,
                                 ),
                               ),
                               Text(
                                 _isForceUpdate
                                     ? 'User tidak bisa mengabaikan update ini'
                                     : 'User masih bisa memilih "Nanti Saja"',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11,
-                                  color: Colors.black54,
+                                  color: Theme.of(context).textTheme.bodySmall?.color,
                                 ),
                               ),
                             ],
@@ -806,7 +813,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                         Switch(
                           value: _isForceUpdate,
                           onChanged: (v) => setState(() => _isForceUpdate = v),
-                          activeColor: Colors.red,
+                          activeColor: Theme.of(context).colorScheme.error,
                         ),
                       ],
                     ),
@@ -816,7 +823,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
             ),
             const SizedBox(height: 32),
             _buildSectionHeader(
-                'AI Global Advisor', Icons.psychology_rounded, Colors.black),
+                'AI Global Advisor', Icons.psychology_rounded, Theme.of(context).textTheme.titleMedium?.color ?? Colors.black),
             _buildPremiumCard(
               child: Column(
                 children: [
@@ -824,14 +831,14 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: _advisorEnabled
-                          ? Colors.black
-                          : Colors.red.withOpacity(0.05),
+                          ? Colors.blue.shade700
+                          : Theme.of(context).colorScheme.errorContainer.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: _advisorEnabled
                           ? [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
-                                blurRadius: 10,
+                                color: Colors.blue.shade700.withOpacity(0.3),
+                                blurRadius: 12,
                                 offset: const Offset(0, 4),
                               )
                             ]
@@ -844,14 +851,14 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                           decoration: BoxDecoration(
                             color: _advisorEnabled
                                 ? Colors.white.withOpacity(0.2)
-                                : Colors.red.withOpacity(0.1),
+                                : Theme.of(context).colorScheme.error.withOpacity(0.1),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
                             _advisorEnabled
                                 ? Icons.psychology_rounded
                                 : Icons.power_off_rounded,
-                            color: _advisorEnabled ? Colors.white : Colors.red,
+                            color: _advisorEnabled ? Colors.white : Theme.of(context).colorScheme.error,
                             size: 22,
                           ),
                         ),
@@ -861,30 +868,30 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                _advisorEnabled
-                                    ? 'Engine Active'
-                                    : 'Engine Suspended',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: 16,
-                                    color: _advisorEnabled
-                                        ? Colors.white
-                                        : Colors.black87,
-                                    letterSpacing: -0.5),
-                              ),
+                                  _advisorEnabled
+                                      ? 'Engine Active'
+                                      : 'Engine Suspended',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 16,
+                                      color: _advisorEnabled
+                                          ? Colors.white
+                                          : Theme.of(context).textTheme.bodyLarge?.color,
+                                      letterSpacing: -0.5),
+                                ),
                               Text('Global toggle untuk AI Advisor',
                                   style: TextStyle(
                                       fontSize: 11,
                                       color: _advisorEnabled
-                                          ? Colors.white70
-                                          : Colors.grey)),
+                                          ? Colors.white.withOpacity(0.8)
+                                          : Theme.of(context).textTheme.bodySmall?.color)),
                             ],
                           ),
                         ),
                         Switch.adaptive(
                           value: _advisorEnabled,
                           activeColor: Colors.white,
-                          activeTrackColor: Colors.white24,
+                          activeTrackColor: Colors.white.withOpacity(0.3),
                           onChanged: (v) => setState(() => _advisorEnabled = v),
                         ),
                       ],
@@ -895,13 +902,13 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                     value: _advisorProvider,
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: Colors.black.withOpacity(0.02),
+                      fillColor: Theme.of(context).dividerColor.withOpacity(0.04),
                       labelText: 'Engine Provider',
                       labelStyle: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: Colors.black.withOpacity(0.6)),
-                      prefixIcon: const Icon(Icons.hub_rounded,
-                          color: Colors.black, size: 20),
+                          color: Theme.of(context).hintColor),
+                      prefixIcon: Icon(Icons.hub_rounded,
+                          color: Theme.of(context).iconTheme.color, size: 20),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide.none,
@@ -928,20 +935,20 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                     width: double.infinity,
                     height: 52,
                     child: ElevatedButton.icon(
-                      icon: const Icon(Icons.vpn_key_rounded,
-                          size: 18, color: Colors.black87),
+                      icon: Icon(Icons.vpn_key_rounded,
+                          size: 18, color: Theme.of(context).textTheme.bodyMedium?.color),
                       label: const Text('MANAGE API KEYS',
                           style: TextStyle(
                               fontWeight: FontWeight.w900, letterSpacing: 0.5)),
                       onPressed: _showAdvisorKeysManager,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black.withOpacity(0.05),
-                        foregroundColor: Colors.black,
+                        backgroundColor: Theme.of(context).dividerColor.withOpacity(0.05),
+                        foregroundColor: Theme.of(context).textTheme.bodyMedium?.color,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                             side: BorderSide(
-                                color: Colors.black.withOpacity(0.1))),
+                                color: Theme.of(context).dividerColor.withOpacity(0.1))),
                       ),
                     ),
                   ),
@@ -954,7 +961,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                           label: 'Trigger (Trans)',
                           helper: 'Min. tx baru',
                           icon: Icons.swap_horiz_rounded,
-                          color: Colors.black,
+                          color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black,
                           isNumber: true,
                         ),
                       ),
@@ -965,7 +972,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                           label: 'Cooldown (Jam)',
                           helper: 'Jeda analisa',
                           icon: Icons.hourglass_empty_rounded,
-                          color: Colors.black,
+                          color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black,
                           isNumber: true,
                         ),
                       ),
@@ -976,7 +983,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
             ),
             const SizedBox(height: 32),
             _buildSectionHeader('User Survey (Satisfaction)',
-                Icons.thumbs_up_down_rounded, Colors.black),
+                Icons.thumbs_up_down_rounded, Theme.of(context).textTheme.titleMedium?.color ?? Colors.black),
             _buildPremiumCard(
               child: Column(
                 children: [
@@ -984,18 +991,18 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: _surveyEnabled
-                          ? Colors.black
-                          : Colors.blueGrey.withOpacity(0.05),
+                          ? Colors.blue.shade700
+                          : Theme.of(context).dividerColor.withOpacity(0.05),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: _surveyEnabled
-                            ? Colors.black
-                            : Colors.blueGrey.withOpacity(0.1),
+                            ? Colors.blue.shade800
+                            : Theme.of(context).dividerColor.withOpacity(0.1),
                       ),
                       boxShadow: _surveyEnabled
                           ? [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
+                                color: Colors.blue.shade700.withOpacity(0.3),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
                               )
@@ -1009,13 +1016,13 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                           decoration: BoxDecoration(
                             color: _surveyEnabled
                                 ? Colors.white.withOpacity(0.2)
-                                : Colors.blueGrey.withOpacity(0.1),
+                                : Theme.of(context).dividerColor.withOpacity(0.1),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
                             Icons.thumbs_up_down_rounded,
                             color:
-                                _surveyEnabled ? Colors.white : Colors.blueGrey,
+                                _surveyEnabled ? Colors.white : Theme.of(context).hintColor,
                             size: 22,
                           ),
                         ),
@@ -1033,23 +1040,22 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                                     fontSize: 16,
                                     color: _surveyEnabled
                                         ? Colors.white
-                                        : Colors.black87,
+                                        : Theme.of(context).textTheme.bodyLarge?.color,
                                     letterSpacing: -0.5),
                               ),
                               Text('Aktifkan survei kepuasan user',
                                   style: TextStyle(
                                       fontSize: 11,
                                       color: _surveyEnabled
-                                          ? Colors.white70
-                                          : Colors.blueGrey)),
+                                          ? Colors.white.withOpacity(0.8)
+                                          : Theme.of(context).textTheme.bodySmall?.color)),
                             ],
                           ),
                         ),
                         Switch.adaptive(
                           value: _surveyEnabled,
                           activeColor: Colors.white,
-                          activeTrackColor:
-                              const Color.fromARGB(60, 255, 255, 255),
+                          activeTrackColor: Colors.white.withOpacity(0.3),
                           onChanged: (v) => setState(() => _surveyEnabled = v),
                         ),
                       ],
@@ -1064,7 +1070,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                     min: 0,
                     max: 50,
                     divisions: 10,
-                    color: Colors.black,
+                    color: Theme.of(context).colorScheme.primary,
                     onChanged: (val) => setState(() =>
                         _surveyMinTransactionsController.text =
                             val.toInt().toString()),
@@ -1074,11 +1080,11 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                     label: 'Umur Akun (Hari)',
                     value:
                         double.tryParse(_surveyMinAccountAgeController.text) ??
-                            0,
+                        0,
                     min: 0,
                     max: 30,
                     divisions: 30,
-                    color: Colors.black,
+                    color: Theme.of(context).colorScheme.primary,
                     onChanged: (val) => setState(() =>
                         _surveyMinAccountAgeController.text =
                             val.toInt().toString()),
@@ -1093,16 +1099,16 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
               child: ElevatedButton.icon(
                 onPressed: _isSaving ? null : _saveConfig,
                 icon: _isSaving
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2))
-                    : const Icon(Icons.save_rounded, color: Colors.white),
+                            color: Theme.of(context).colorScheme.onPrimary, strokeWidth: 2))
+                    : Icon(Icons.save_rounded, color: Theme.of(context).colorScheme.onPrimary),
                 label: Text(_isSaving ? 'Saving...' : 'Publish Configurations'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  foregroundColor: Colors.white,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16)),
                   elevation: 5,
@@ -1142,10 +1148,10 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(label,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87)),
+                    color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.8))),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
@@ -1168,7 +1174,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
             overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
             activeTrackColor: color,
             inactiveTrackColor: color.withOpacity(0.1),
-            thumbColor: Colors.white,
+            thumbColor: Theme.of(context).colorScheme.surface,
             overlayColor: color.withOpacity(0.2),
           ),
           child: Slider(
@@ -1191,9 +1197,10 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
           Icon(icon, color: color, size: 20),
           const SizedBox(width: 8),
           Text(title,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
+                  color: Theme.of(context).textTheme.titleMedium?.color,
                   letterSpacing: -0.5)),
         ],
       ),
@@ -1216,12 +1223,12 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(
-            fontWeight: FontWeight.bold, color: Colors.black.withOpacity(0.6)),
+            fontWeight: FontWeight.bold, color: Theme.of(context).hintColor),
         helperText: helper,
         helperStyle: const TextStyle(fontSize: 10),
-        prefixIcon: Icon(icon, color: color, size: 20),
+        prefixIcon: Icon(icon, color: color == Colors.black ? Theme.of(context).iconTheme.color : color, size: 20),
         filled: true,
-        fillColor: Colors.black.withOpacity(0.02),
+        fillColor: Theme.of(context).dividerColor.withOpacity(0.04),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
@@ -1240,7 +1247,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -1248,7 +1255,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
               blurRadius: 15,
               offset: const Offset(0, 8)),
         ],
-        border: Border.all(color: Colors.black.withOpacity(0.04)),
+        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.08)),
       ),
       child: child,
     );
@@ -1266,9 +1273,9 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         decoration: BoxDecoration(
-          color: const Color(0xFFF8F9FA),
+          color: Theme.of(context).dividerColor.withOpacity(0.04),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.black.withOpacity(0.05)),
+          border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
         ),
         child: Row(
           children: [
@@ -1284,7 +1291,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                       Icon(Icons.access_time_rounded,
                           size: 14,
                           color:
-                              value != null ? AppColors.primary : Colors.grey),
+                              value != null ? Theme.of(context).colorScheme.primary : Colors.grey),
                       const SizedBox(width: 4),
                       Text(
                         value != null
@@ -1293,7 +1300,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
-                          color: value != null ? Colors.black : Colors.grey,
+                          color: value != null ? Theme.of(context).textTheme.bodyMedium?.color : Colors.grey,
                         ),
                       ),
                     ],
@@ -1389,9 +1396,9 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
             return Container(
               margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
-                color: AppColors.surfaceVariant.withOpacity(0.3),
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.black.withOpacity(0.05)),
+                border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
               ),
               child: ListTile(
                 contentPadding:
@@ -1470,9 +1477,9 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
           return StatefulBuilder(builder: (context, setModalState) {
             return Container(
               height: MediaQuery.of(context).size.height * 0.85,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
               ),
               child: Column(
                 children: [
@@ -1481,7 +1488,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.grey[300],
+                      color: Theme.of(context).dividerColor.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -1490,8 +1497,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                     child: Text('Kelola API Keys Advisor',
                         style: TextStyle(
                             fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87)),
+                            fontWeight: FontWeight.bold)),
                   ),
                   Expanded(
                       child: ListView(
@@ -1501,10 +1507,10 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.02),
+                              color: Theme.of(context).dividerColor.withOpacity(0.05),
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                  color: Colors.black.withOpacity(0.05)),
+                                  color: Theme.of(context).dividerColor.withOpacity(0.1)),
                             ),
                             child: Column(
                               children: [
@@ -1512,10 +1518,12 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                                   children: [
                                     DropdownButtonFormField<String>(
                                       value: addType,
+                                      dropdownColor: Theme.of(context).cardColor,
                                       decoration: InputDecoration(
                                         labelText: 'Tipe Key',
+                                        labelStyle: TextStyle(color: Theme.of(context).hintColor),
                                         filled: true,
-                                        fillColor: Colors.white,
+                                        fillColor: Theme.of(context).cardColor,
                                         border: OutlineInputBorder(
                                             borderRadius:
                                                 BorderRadius.circular(12),
@@ -1534,10 +1542,12 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                                     const SizedBox(height: 12),
                                     TextField(
                                       controller: newKeyController,
+                                      style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                                       decoration: InputDecoration(
                                         labelText: 'API Key',
+                                        labelStyle: TextStyle(color: Theme.of(context).hintColor),
                                         filled: true,
-                                        fillColor: Colors.white,
+                                        fillColor: Theme.of(context).cardColor,
                                         border: OutlineInputBorder(
                                             borderRadius:
                                                 BorderRadius.circular(12),
@@ -1604,7 +1614,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                                                 } else {
                                                   setModalState(() =>
                                                       isVerifying = false);
-                                                  if (mounted) {
+                                                  if (context.mounted) {
                                                     UIHelper.showErrorSnackBar(
                                                         context,
                                                         'Key tidak valid: ${res.message}');
@@ -1613,18 +1623,18 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                                               }
                                             },
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.black,
-                                        foregroundColor: Colors.white,
+                                        backgroundColor: Theme.of(context).colorScheme.primary,
+                                        foregroundColor: Theme.of(context).colorScheme.onPrimary,
                                         shape: RoundedRectangleBorder(
                                             borderRadius:
                                                 BorderRadius.circular(12)),
                                       ),
                                       child: isVerifying
-                                          ? const SizedBox(
+                                          ? SizedBox(
                                               width: 16,
                                               height: 16,
                                               child: CircularProgressIndicator(
-                                                  color: Colors.white,
+                                                  color: Theme.of(context).colorScheme.onPrimary,
                                                   strokeWidth: 2))
                                           : const Text('Simpan Key'),
                                     ),
@@ -1647,8 +1657,8 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                               onPressed: () =>
                                   setModalState(() => isAdding = true),
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.black,
-                                side: const BorderSide(color: Colors.black87),
+                                foregroundColor: Theme.of(context).textTheme.bodyMedium?.color,
+                                side: BorderSide(color: Theme.of(context).dividerColor),
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(14)),
                               ),
@@ -1661,8 +1671,8 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                                 fontWeight: FontWeight.bold, fontSize: 16)),
                         const SizedBox(height: 8),
                         if (_geminiKeys.isEmpty)
-                          const Text('Belum ada data.',
-                              style: TextStyle(color: Colors.grey)),
+                          Text('Belum ada data.',
+                              style: TextStyle(color: Theme.of(context).hintColor)),
                         ..._geminiKeys.asMap().entries.map((entry) =>
                             _buildKeyItem(entry.value, 'gemini', entry.key,
                                 () async {
@@ -1681,7 +1691,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                                   .doc('global')
                                   .update({'advisor_gemini_keys': _geminiKeys});
 
-                              if (mounted) {
+                              if (context.mounted) {
                                 UIHelper.showSuccessSnackBar(
                                     context, 'API Key Gemini berhasil dihapus');
                               }
@@ -1712,7 +1722,7 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
                                   .doc('global')
                                   .update({'advisor_groq_keys': _groqKeys});
 
-                              if (mounted) {
+                              if (context.mounted) {
                                 UIHelper.showSuccessSnackBar(
                                     context, 'API Key Groq berhasil dihapus');
                               }
@@ -1744,12 +1754,12 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
       return Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.black.withOpacity(0.04)),
+          border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.04)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.02),
+              color: Colors.black.withOpacity(Theme.of(context).brightness == Brightness.dark ? 0.2 : 0.02),
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),
@@ -1769,16 +1779,17 @@ class _AppConfigScreenState extends State<AppConfigScreen> {
               ),
               title: Text(
                 obscuredKey,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Monospace',
                   fontWeight: FontWeight.w900,
                   fontSize: 14,
                   letterSpacing: -0.5,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
                 ),
               ),
               subtitle: Text(
                 '${isGroq ? "Groq" : "Gemini"} Config #${index + 1}',
-                style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                style: TextStyle(fontSize: 11, color: Theme.of(context).hintColor),
               ),
               trailing: IconButton(
                 icon: const Icon(Icons.delete_outline_rounded,

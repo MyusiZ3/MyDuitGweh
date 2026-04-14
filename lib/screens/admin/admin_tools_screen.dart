@@ -105,18 +105,19 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FE),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Admin Control Panel',
+        title: Text('Admin Control Panel',
             style: TextStyle(
                 fontWeight: FontWeight.w900,
-                color: Colors.black,
+                color: Theme.of(context).textTheme.titleLarge?.color,
                 letterSpacing: -0.5)),
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         centerTitle: false,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme: IconThemeData(color: Theme.of(context).iconTheme.color),
       ),
       body: _isConfigLoading
           ? const Center(child: CircularProgressIndicator())
@@ -323,10 +324,10 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                             return Container(
                               padding: const EdgeInsets.all(20),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: Theme.of(context).cardColor,
                                 borderRadius: BorderRadius.circular(24),
                                 border: Border.all(
-                                    color: Colors.black.withOpacity(0.05)),
+                                    color: Theme.of(context).dividerColor.withOpacity(0.05)),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -484,7 +485,7 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                                                       horizontal: 6,
                                                       vertical: 2),
                                               decoration: BoxDecoration(
-                                                  color: Colors.grey[50],
+                                                  color: Theme.of(context).brightness == Brightness.dark ? Colors.white10 : AppColors.surfaceVariant.withOpacity(0.3),
                                                   borderRadius:
                                                       BorderRadius.circular(4)),
                                               child: Text(
@@ -514,10 +515,10 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
             ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
               blurRadius: 10,
               offset: const Offset(0, -5),
             )
@@ -535,7 +536,7 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                     MaterialPageRoute(
                         builder: (_) => const BroadcastCenterScreen())),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
+                  backgroundColor: isDark ? AppColors.primary : Colors.black,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16)),
@@ -584,7 +585,9 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                 gradient: LinearGradient(
                   colors: hasAlert
                       ? [Colors.red[900]!, Colors.red[700]!]
-                      : [const Color(0xFF1E1E2E), const Color(0xFF2D2D44)],
+                      : (Theme.of(context).brightness == Brightness.dark
+                          ? [const Color(0xFF1E1E2E), const Color(0xFF2D2D44)]
+                          : [const Color(0xFF2D2D44), const Color(0xFF434361)]),
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -647,14 +650,16 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
     required VoidCallback onTap,
     bool isRestricted = false,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: color.withOpacity(0.1)),
         boxShadow: [
           BoxShadow(
-              color: color.withOpacity(0.04),
+              color: color.withOpacity(isDark ? 0.08 : 0.04),
               blurRadius: 20,
               offset: const Offset(0, 8)),
         ],
@@ -708,7 +713,7 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                     child: Text(subtitle,
                         style: TextStyle(
                             fontSize: 11,
-                            color: Colors.grey[600],
+                            color: Theme.of(context).textTheme.bodySmall?.color,
                             fontWeight: FontWeight.w500)),
                   ),
                 ],
@@ -742,14 +747,16 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
   }
 
   Widget _buildStatsHeader() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
               blurRadius: 40,
               offset: const Offset(0, 10))
         ],
@@ -769,7 +776,7 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                    color: Colors.green[50],
+                    color: Colors.green.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12)),
                 child: const Row(
                   children: [
@@ -833,7 +840,7 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                     style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
-                        color: Colors.grey[600])),
+                        color: Theme.of(context).textTheme.bodySmall?.color)),
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
@@ -865,9 +872,9 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
         builder: (context, setModalState) => Container(
           padding: EdgeInsets.fromLTRB(
               24, 32, 24, MediaQuery.of(context).padding.bottom + 32),
-          decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+          decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(32))),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -993,13 +1000,15 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(builder: (context, setModalState) {
+        final theme = Theme.of(context);
+        final isDark = theme.brightness == Brightness.dark;
         final bottomInset = MediaQuery.of(context).viewInsets.bottom;
         return Container(
           height: MediaQuery.of(context).size.height * 0.8,
           padding: EdgeInsets.only(bottom: bottomInset),
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
           ),
           child: SafeArea(
             top: false,
@@ -1011,7 +1020,7 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                   height: 4,
                   margin: const EdgeInsets.symmetric(vertical: 16),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
+                    color: Theme.of(context).dividerColor,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -1061,14 +1070,14 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                             children: [
                               Container(
                                 padding: const EdgeInsets.all(8),
-                                decoration: const BoxDecoration(
-                                    color: Colors.white,
+                                decoration: BoxDecoration(
+                                    color: (Theme.of(context).brightness == Brightness.dark) ? Colors.blue.withOpacity(0.2) : Colors.white,
                                     shape: BoxShape.circle),
                                 child: const Icon(Icons.info_outline_rounded,
                                     size: 16, color: Colors.blue),
                               ),
                               const SizedBox(width: 16),
-                              const Expanded(
+                              Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -1085,7 +1094,7 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                                       'Sistem menggunakan Fixed Window. Kuota user akan di-reset (kembali ke 0) setiap interval yang ditentukan sejak chat pertama mereka dalam siklus tersebut.',
                                       style: TextStyle(
                                           fontSize: 11,
-                                          color: Colors.blueGrey,
+                                          color: isDark ? Colors.blue[200] : Colors.blueGrey,
                                           height: 1.4),
                                     ),
                                   ],
@@ -1196,13 +1205,13 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: Theme.of(context).cardColor,
                             borderRadius: BorderRadius.circular(28),
                             border: Border.all(
-                                color: Colors.black.withOpacity(0.03)),
+                                color: Theme.of(context).dividerColor.withOpacity(0.1)),
                             boxShadow: [
                               BoxShadow(
-                                  color: Colors.black.withOpacity(0.02),
+                                  color: Colors.black.withOpacity(isDark ? 0.2 : 0.02),
                                   blurRadius: 20,
                                   offset: const Offset(0, 10))
                             ],
@@ -1348,8 +1357,8 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
         return Container(
           height: MediaQuery.of(context).size.height * 0.8,
           padding: EdgeInsets.only(bottom: bottomInset),
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
           ),
           child: SafeArea(
@@ -1362,7 +1371,7 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                   height: 4,
                   margin: const EdgeInsets.symmetric(vertical: 16),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
+                    color: Theme.of(context).dividerColor,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -1408,6 +1417,9 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                       final List<String> groqKeys =
                           List<String>.from(data['groq_keys'] ?? []);
 
+                      final theme = Theme.of(context);
+                      final isDark = theme.brightness == Brightness.dark;
+
                       Widget buildKeyCard(String key, int index,
                           String provider, List<String> allKeys) {
                         final obscuredKey = key.length > 12
@@ -1430,13 +1442,14 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                               margin: const EdgeInsets.symmetric(
                                   horizontal: 24, vertical: 8),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: isDark ? theme.cardColor : Colors.white,
                                 borderRadius: BorderRadius.circular(24),
                                 border: Border.all(
-                                    color: Colors.black.withOpacity(0.04)),
+                                    color: (isDark ? Colors.white : Colors.black)
+                                        .withOpacity(0.04)),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.02),
+                                    color: Colors.black.withOpacity(isDark ? 0.2 : 0.02),
                                     blurRadius: 20,
                                     offset: const Offset(0, 8),
                                   ),
@@ -1458,18 +1471,19 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                                     ),
                                     title: Text(
                                       obscuredKey,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontFamily: 'Monospace',
                                         fontWeight: FontWeight.w900,
                                         fontSize: 14,
                                         letterSpacing: -0.5,
+                                        color: Theme.of(context).textTheme.bodyLarge?.color,
                                       ),
                                     ),
                                     subtitle: Text(
                                       '${isGroq ? "Groq" : "Gemini"} Config #${index + 1}',
                                       style: TextStyle(
                                           fontSize: 11,
-                                          color: Colors.grey[500]),
+                                          color: Theme.of(context).hintColor),
                                     ),
                                     trailing: IconButton(
                                       icon: const Icon(
@@ -1514,7 +1528,7 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                                     margin: const EdgeInsets.symmetric(
                                         horizontal: 20),
                                     height: 1,
-                                    color: Colors.black.withOpacity(0.03),
+                                    color: Theme.of(context).dividerColor.withOpacity(0.05),
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.fromLTRB(
@@ -1708,12 +1722,13 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                                 margin: const EdgeInsets.symmetric(
                                     horizontal: 24, vertical: 8),
                                 decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(24)),
-                                child: const Center(
+                                    color: theme.cardColor,
+                                    borderRadius: BorderRadius.circular(24),
+                                    border: Border.all(color: theme.dividerColor.withOpacity(0.1))),
+                                child: Center(
                                     child: Text('No Gemini keys configured',
                                         style: TextStyle(
-                                            color: Colors.grey,
+                                            color: theme.hintColor,
                                             fontSize: 13,
                                             fontWeight: FontWeight.w500))))
                           else
@@ -1733,12 +1748,13 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                                 margin: const EdgeInsets.symmetric(
                                     horizontal: 24, vertical: 8),
                                 decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(24)),
-                                child: const Center(
+                                    color: theme.cardColor,
+                                    borderRadius: BorderRadius.circular(24),
+                                    border: Border.all(color: theme.dividerColor.withOpacity(0.1))),
+                                child: Center(
                                     child: Text('No Groq keys configured',
                                         style: TextStyle(
-                                            color: Colors.grey,
+                                            color: theme.hintColor,
                                             fontSize: 13,
                                             fontWeight: FontWeight.w500))))
                           else

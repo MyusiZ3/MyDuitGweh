@@ -65,16 +65,16 @@ class _NotificationListenerAdminScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('Notification Control',
             style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).cardColor,
         elevation: 0,
         bottom: TabBar(
           controller: _tabController,
           labelColor: AppColors.primary,
-          unselectedLabelColor: Colors.grey,
+          unselectedLabelColor: Theme.of(context).textTheme.bodySmall?.color,
           indicatorColor: AppColors.primary,
           labelStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
           tabs: const [
@@ -101,10 +101,10 @@ class _NotificationListenerAdminScreenState
         const SizedBox(height: 12),
         Card(
           elevation: 0,
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: Colors.grey.shade200)),
+              side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1))),
           child: SwitchListTile(
             title: Text('Aktifkan untuk Semua User',
                 style:
@@ -122,10 +122,10 @@ class _NotificationListenerAdminScreenState
         const SizedBox(height: 12),
         Card(
           elevation: 0,
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: Colors.grey.shade200)),
+              side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1))),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -149,7 +149,11 @@ class _NotificationListenerAdminScreenState
                   },
                   decoration: InputDecoration(
                     border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Theme.of(context).dividerColor)),
+                    enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.2))),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                   ),
                 ),
@@ -157,7 +161,7 @@ class _NotificationListenerAdminScreenState
                 Text(
                   'Catatan: Sistem menggunakan Workmanager Android. Interval minimum OS adalah 15 menit.',
                   style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11, color: Colors.grey),
+                      fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color),
                 ),
               ],
             ),
@@ -193,10 +197,10 @@ class _NotificationListenerAdminScreenState
 
             return Card(
               elevation: 0,
-              color: Colors.white,
+              color: Theme.of(context).cardColor,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(color: Colors.grey.shade200)),
+                  side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1))),
               child: ListTile(
                 leading: CircleAvatar(
                   backgroundColor: AppColors.primary.withOpacity(0.1),
@@ -228,9 +232,9 @@ class _NotificationListenerAdminScreenState
         maxChildSize: 0.95,
         minChildSize: 0.5,
         builder: (_, controller) => Container(
-          decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+          decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24))),
           child: Column(
             children: [
               const SizedBox(height: 12),
@@ -238,7 +242,7 @@ class _NotificationListenerAdminScreenState
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
+                      color: Theme.of(context).dividerColor,
                       borderRadius: BorderRadius.circular(2))),
               Padding(
                 padding: const EdgeInsets.all(20),
@@ -342,7 +346,7 @@ class _NotificationListenerAdminScreenState
                             margin: const EdgeInsets.only(bottom: 12),
                             padding: const EdgeInsets.only(right: 20),
                             decoration: BoxDecoration(
-                                color: Colors.red.shade100,
+                                color: Colors.red.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(12)),
                             child: const Icon(Icons.delete, color: Colors.red),
                           ),
@@ -352,9 +356,9 @@ class _NotificationListenerAdminScreenState
                           child: Container(
                             margin: const EdgeInsets.only(bottom: 12),
                             decoration: BoxDecoration(
-                              color: Colors.grey.shade50,
+                              color: Theme.of(context).dividerColor.withOpacity(0.05),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.grey.shade100),
+                              border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
                             ),
                             child: Material(
                               color: Colors.transparent,
@@ -398,13 +402,15 @@ class _NotificationListenerAdminScreenState
                                       const SizedBox(height: 4),
                                       Text(log['text'] ?? log['body'] ?? '',
                                           style: GoogleFonts.plusJakartaSans(
-                                              fontSize: 12),
+                                              fontSize: 12,
+                                              color: Theme.of(context).textTheme.bodyMedium?.color),
                                           maxLines: 2,
                                           overflow: TextOverflow.ellipsis),
                                       const SizedBox(height: 4),
                                       Text('App: $package',
                                           style: GoogleFonts.plusJakartaSans(
-                                              fontSize: 9, color: Colors.grey)),
+                                              fontSize: 9, 
+                                              color: Theme.of(context).textTheme.bodySmall?.color)),
                                     ],
                                   ),
                                 ),
@@ -514,21 +520,21 @@ class _NotificationListenerAdminScreenState
             'App: ${log['package']}',
             style: GoogleFonts.plusJakartaSans(
                 fontSize: 13,
-                color: Colors.grey.shade600,
+                color: Theme.of(context).textTheme.bodySmall?.color,
                 fontWeight: FontWeight.w600),
           ),
           Text(
             'Waktu Diterima: ${DateFormat('dd MMM yyyy, HH:mm:ss').format(time)}',
             style: GoogleFonts.plusJakartaSans(
                 fontSize: 13,
-                color: Colors.grey.shade600,
+                color: Theme.of(context).textTheme.bodySmall?.color,
                 fontWeight: FontWeight.w600),
           ),
           if (syncTime != null)
             Text(
               'Synced: ${DateFormat('dd MMM yyyy, HH:mm:ss').format(syncTime)}',
               style: GoogleFonts.plusJakartaSans(
-                  fontSize: 11, color: Colors.grey.shade400),
+                  fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.5)),
             ),
           const SizedBox(height: 16),
           Container(
@@ -538,15 +544,17 @@ class _NotificationListenerAdminScreenState
             ),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.grey.shade50,
+              color: Theme.of(context).dividerColor.withOpacity(0.05),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey.shade200),
+              border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
             ),
             child: SingleChildScrollView(
               child: Text(
                 log['text'] ?? log['body'] ?? 'Tidak ada pesan',
                 style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14, height: 1.5, color: Colors.black87),
+                    fontSize: 14, 
+                    height: 1.5, 
+                    color: Theme.of(context).textTheme.bodyMedium?.color),
               ),
             ),
           ),
@@ -557,7 +565,7 @@ class _NotificationListenerAdminScreenState
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 14),
               decoration: BoxDecoration(
-                color: Colors.black,
+                color: Theme.of(context).colorScheme.primary,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: const Center(
@@ -579,7 +587,7 @@ class _NotificationListenerAdminScreenState
         style: GoogleFonts.plusJakartaSans(
             fontSize: 12,
             fontWeight: FontWeight.bold,
-            color: Colors.grey.shade600,
+            color: Theme.of(context).textTheme.bodySmall?.color,
             letterSpacing: 1.2));
   }
 }

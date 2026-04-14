@@ -99,7 +99,7 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
           CustomScrollView(
@@ -129,8 +129,8 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
       pinned: true,
       elevation: 0,
       stretch: true,
-      backgroundColor: AppColors.background,
-      surfaceTintColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
         onPressed: () => Navigator.pop(context),
@@ -154,10 +154,10 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
             return AnimatedOpacity(
               duration: const Duration(milliseconds: 200),
               opacity: isCollapsed ? 1.0 : 0.0,
-              child: const Text(
+              child: Text(
                 'Log Riwayat',
                 style: TextStyle(
-                  color: AppColors.textPrimary,
+                  color: Theme.of(context).textTheme.titleLarge?.color,
                   fontWeight: FontWeight.w800,
                   fontSize: 16,
                   letterSpacing: -0.5,
@@ -183,7 +183,7 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
                 Text(
                   'Log aktifitas administratif.',
                   style: TextStyle(
-                    color: AppColors.textSecondary,
+                    color: Theme.of(context).textTheme.bodySmall?.color,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
@@ -222,12 +222,12 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
                       duration: const Duration(milliseconds: 200),
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
-                        color: isSelected ? AppColors.primary : Colors.white,
+                        color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).cardColor,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: isSelected
-                              ? AppColors.primary
-                              : Colors.black.withOpacity(0.05),
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(context).dividerColor.withOpacity(0.1),
                         ),
                       ),
                       child: Row(
@@ -244,8 +244,8 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
                             cat['label'],
                             style: TextStyle(
                               color: isSelected
-                                  ? Colors.white
-                                  : AppColors.textSecondary,
+                                  ? Theme.of(context).colorScheme.onPrimary
+                                  : Theme.of(context).textTheme.bodyMedium?.color,
                               fontSize: 12,
                               fontWeight: isSelected
                                   ? FontWeight.bold
@@ -271,7 +271,7 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
       child: Container(
         height: 46,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
@@ -544,7 +544,7 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
@@ -553,6 +553,7 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
             offset: const Offset(0, 4),
           ),
         ],
+        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.05)),
       ),
       child: Material(
         color: Colors.transparent,
@@ -611,7 +612,7 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: AppColors.background,
+                              color: Theme.of(context).dividerColor.withOpacity(0.05),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Row(
@@ -665,9 +666,9 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
         child: Container(
           padding: EdgeInsets.fromLTRB(
               24, 32, 24, MediaQuery.of(context).padding.bottom + 24),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -678,7 +679,7 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                      color: Colors.grey[200],
+                      color: Theme.of(context).dividerColor.withOpacity(0.4),
                       borderRadius: BorderRadius.circular(2)),
                 ),
               ),
@@ -698,11 +699,12 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(title,
-                            style: const TextStyle(
+                            style: TextStyle(
+                                color: Theme.of(context).textTheme.titleLarge?.color,
                                 fontSize: 20, fontWeight: FontWeight.w900)),
                         Text('System Audit Detail',
                             style: TextStyle(
-                                color: Colors.grey[500],
+                                color: Theme.of(context).hintColor,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500)),
                       ],
@@ -730,9 +732,9 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: AppColors.background,
+                          color: Theme.of(context).dividerColor.withOpacity(0.05),
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.black.withOpacity(0.04)),
+                          border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
                         ),
                         child: SelectableText(
                           data.entries
@@ -740,10 +742,12 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
                                   .contains(e.key))
                               .map((e) => '${e.key}: ${e.value}')
                               .join('\n'),
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontFamily: 'monospace',
                               fontSize: 12,
-                              color: Colors.blueGrey,
+                              color: Theme.of(context).brightness == Brightness.dark 
+                                  ? Colors.blueAccent[100] 
+                                  : Colors.blueGrey[700],
                               height: 1.5),
                         ),
                       ),
@@ -795,10 +799,10 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
                   letterSpacing: 0.5)),
           const SizedBox(height: 4),
           Text(value,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary)),
+                  color: Theme.of(context).textTheme.bodyLarge?.color)),
         ],
       ),
     );
@@ -903,15 +907,16 @@ class _AdminLogsScreenState extends State<AdminLogsScreen> {
   }
 
   Widget _buildStatsFloating() {
+    final bgColor = Theme.of(context).scaffoldBackgroundColor;
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            AppColors.background.withOpacity(0),
-            AppColors.background.withOpacity(0.8),
-            AppColors.background,
+            bgColor.withOpacity(0),
+            bgColor.withOpacity(0.8),
+            bgColor,
           ],
           stops: const [0.0, 0.4, 1.0],
         ),

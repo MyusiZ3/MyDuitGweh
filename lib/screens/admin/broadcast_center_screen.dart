@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
@@ -30,6 +29,7 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
     );
 
     if (pickedDate != null) {
+      if (!mounted) return;
       final TimeOfDay? pickedTime = await showTimePicker(
         context: context,
         initialTime: TimeOfDay.now(),
@@ -56,29 +56,40 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
       barrierLabel: '',
       barrierColor: Colors.black.withOpacity(0.4),
       transitionDuration: const Duration(milliseconds: 300),
-      pageBuilder: (ctx, anim1, anim2) => Center(
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 24),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 40,
-                  offset: const Offset(0, 15)),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(28),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+      pageBuilder: (ctx, anim1, anim2) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final urgentColor = isDark ? Colors.orangeAccent : Colors.orange[800]!;
+        final newsColor = isDark ? Colors.purpleAccent : Colors.deepPurple;
+        final infoColor = AppColors.primary;
+
+        final effectiveColor = _selectedType == 'urgent'
+            ? urgentColor
+            : _selectedType == 'news'
+                ? newsColor
+                : infoColor;
+
+        return Center(
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 24),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 40,
+                    offset: const Offset(0, 15)),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(28),
               child: Container(
                 padding: const EdgeInsets.all(28),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.85),
+                  color: Theme.of(context).cardColor.withOpacity(0.9),
                   borderRadius: BorderRadius.circular(28),
                   border: Border.all(
-                      color: Colors.white.withOpacity(0.5), width: 1),
+                      color: Theme.of(context).dividerColor.withOpacity(0.2),
+                      width: 1),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -97,11 +108,7 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
                           : _selectedType == 'news'
                               ? Icons.auto_awesome_rounded
                               : Icons.info_rounded,
-                      color: _selectedType == 'urgent'
-                          ? Colors.orange[800]
-                          : _selectedType == 'news'
-                              ? Colors.deepPurple
-                              : AppColors.primary,
+                      color: effectiveColor,
                       size: 32,
                     ),
                     const SizedBox(height: 16),
@@ -111,20 +118,18 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
                             fontSize: 13,
                             fontWeight: FontWeight.w900,
                             letterSpacing: 2,
-                            color: _selectedType == 'urgent'
-                                ? Colors.orange[800]
-                                : _selectedType == 'news'
-                                    ? Colors.deepPurple
-                                    : AppColors.primary,
+                            color: effectiveColor,
                             decoration: TextDecoration.none)),
                     const SizedBox(height: 12),
                     Material(
                         color: Colors.transparent,
                         child: Text(_msgController.text,
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 15,
-                                color: AppColors.textSecondary,
+                                color: isDark
+                                    ? Colors.white70
+                                    : AppColors.textSecondary,
                                 height: 1.5,
                                 decoration: TextDecoration.none))),
                     const SizedBox(height: 32),
@@ -134,13 +139,13 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
                         width: double.infinity,
                         height: 54,
                         decoration: BoxDecoration(
-                          color: Colors.black,
+                          color: Theme.of(context).colorScheme.primary,
                           borderRadius: BorderRadius.circular(18),
                         ),
-                        child: const Center(
+                        child: Center(
                           child: Text('OK, PREVIEW TUTUP',
                               style: TextStyle(
-                                  color: Colors.white,
+                                  color: Theme.of(context).colorScheme.onPrimary,
                                   fontWeight: FontWeight.w800,
                                   letterSpacing: 0.5,
                                   fontSize: 13,
@@ -153,8 +158,8 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -166,9 +171,9 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
       builder: (ctx) => Container(
         padding: EdgeInsets.fromLTRB(
             40, 48, 40, MediaQuery.of(ctx).padding.bottom + 48),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(40)),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(40)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -200,7 +205,8 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
               child: ElevatedButton(
                 onPressed: () => Navigator.pop(ctx),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20)),
                 ),
@@ -272,7 +278,7 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Broadcast Center',
             style: TextStyle(fontWeight: FontWeight.w900)),
@@ -379,9 +385,9 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 12),
                       decoration: BoxDecoration(
-                        color: AppColors.surfaceVariant.withOpacity(0.5),
+                        color: Theme.of(context).dividerColor.withOpacity(0.05),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.black12),
+                        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
                       ),
                       child: Row(
                         children: [
@@ -451,8 +457,9 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
         ],
       ),
       bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          border: Border(top: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1))),
         ),
         child: SafeArea(
           child: Padding(
@@ -496,6 +503,9 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
 
   Widget _buildTypeButton(String type, IconData icon, Color color) {
     bool isSelected = _selectedType == type;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final unselectedColor = isDark ? Colors.white38 : Colors.black38;
+    
     return Expanded(
       child: GestureDetector(
         onTap: () => setState(() => _selectedType = type),
@@ -504,17 +514,17 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
           decoration: BoxDecoration(
             color: isSelected ? color.withOpacity(0.1) : Colors.transparent,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: isSelected ? color : Colors.black12),
+            border: Border.all(color: isSelected ? color : Theme.of(context).dividerColor.withOpacity(0.2)),
           ),
           child: Column(
             children: [
-              Icon(icon, color: isSelected ? color : Colors.black38, size: 20),
+              Icon(icon, color: isSelected ? color : (isDark ? Colors.white70 : unselectedColor), size: 20),
               const SizedBox(height: 4),
               Text(type.toUpperCase(),
                   style: TextStyle(
                       fontSize: 8,
                       fontWeight: FontWeight.bold,
-                      color: isSelected ? color : Colors.black38)),
+                      color: isSelected ? color : unselectedColor)),
             ],
           ),
         ),
@@ -542,9 +552,9 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surfaceVariant.withOpacity(0.3),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.black.withOpacity(0.05)),
+        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -594,9 +604,10 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
                     );
                     if (confirm == true) {
                       await _firestoreService.endBroadcast(b['id']);
-                      if (mounted)
+                      if (mounted) {
                         UIHelper.showSuccessSnackBar(
                             context, 'Broadcast berhasil diakhiri.');
+                      }
                     }
                   },
                 ),
@@ -614,9 +625,10 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
                   );
                   if (confirm == true) {
                     await _firestoreService.deleteBroadcast(b['id']);
-                    if (mounted)
+                    if (mounted) {
                       UIHelper.showSuccessSnackBar(
                           context, 'Broadcast dihapus.');
+                    }
                   }
                 },
               ),
@@ -662,9 +674,12 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
           });
         },
         label: Text(label,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        side: BorderSide(color: Colors.grey.shade200),
+            style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).textTheme.bodyMedium?.color)),
+        backgroundColor: Theme.of(context).cardColor,
+        side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.2)),
       ),
     );
   }

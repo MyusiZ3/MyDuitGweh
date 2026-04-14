@@ -73,17 +73,17 @@ class _SurveyDataScreenState extends State<SurveyDataScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Data Respon Survei',
-          style: TextStyle(fontWeight: FontWeight.w900, color: Colors.black),
+          style: TextStyle(fontWeight: FontWeight.w900, color: Theme.of(context).textTheme.titleLarge?.color),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black, size: 20),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).iconTheme.color, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -175,8 +175,9 @@ class _SurveyDataScreenState extends State<SurveyDataScreen> {
                 child: Container(
                   height: 48,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
                     boxShadow: [
                       BoxShadow(
                           color: Colors.black.withOpacity(0.04),
@@ -206,8 +207,9 @@ class _SurveyDataScreenState extends State<SurveyDataScreen> {
                   height: 48,
                   width: 48,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
                     boxShadow: [
                       BoxShadow(
                           color: Colors.black.withOpacity(0.04),
@@ -249,16 +251,16 @@ class _SurveyDataScreenState extends State<SurveyDataScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Theme.of(context).shadowColor.withOpacity(0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           )
         ],
-        border: Border.all(color: Colors.grey.withOpacity(0.05)),
+        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -387,7 +389,9 @@ class _SurveyDataScreenState extends State<SurveyDataScreen> {
                 Text(
                   feedback.comment.isEmpty ? "(Tidak ada komentar)" : feedback.comment,
                   style: TextStyle(
-                    color: feedback.comment.isEmpty ? Colors.grey : Colors.black87,
+                    color: feedback.comment.isEmpty 
+                        ? Theme.of(context).hintColor 
+                        : Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.9),
                     fontStyle: feedback.comment.isEmpty ? FontStyle.italic : FontStyle.normal,
                     fontSize: 14,
                     height: 1.5,
@@ -400,7 +404,9 @@ class _SurveyDataScreenState extends State<SurveyDataScreen> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.grey.withOpacity(0.03),
+              color: Theme.of(context).brightness == Brightness.dark 
+                  ? Colors.white.withOpacity(0.05) 
+                  : Colors.grey.withOpacity(0.03),
               borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(20),
                 bottomRight: Radius.circular(20),

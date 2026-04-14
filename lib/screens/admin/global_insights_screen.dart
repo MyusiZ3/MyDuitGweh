@@ -10,6 +10,7 @@ import '../../models/transaction_model.dart';
 import '../../services/firestore_service.dart';
 import 'ai_trend_analysis_screen.dart';
 import '../../utils/ui_helper.dart';
+import '../../utils/app_theme.dart';
 
 import '../../models/survey_config_model.dart';
 import '../../services/ai_service.dart';
@@ -47,7 +48,6 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
   bool _isLoadingGrowth = true;
 
   // Survey & AI Feedback
-  final AIService _aiService = AIService();
   StateSetter? _txSetState;
 
   // Streams
@@ -157,93 +157,89 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
         slivers: [
           _buildAppBar(context),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // ═══ STATS: Realtime Liquidity ═══
-                  Column(
-                    children: [
-                      StreamBuilder<QuerySnapshot>(
-                        stream: _walletsStream,
-                        builder: (context, snapshot) {
-                          double totalBalance = 0;
-                          if (snapshot.hasData) {
-                            for (var w in snapshot.data!.docs) {
-                              totalBalance += (w.data()
-                                      as Map<String, dynamic>)['balance'] ??
+                  StreamBuilder<QuerySnapshot>(
+                    stream: _walletsStream,
+                    builder: (context, snapshot) {
+                      double totalBalance = 0;
+                      if (snapshot.hasData) {
+                        for (var w in snapshot.data!.docs) {
+                          totalBalance +=
+                              (w.data() as Map<String, dynamic>)['balance'] ??
                                   0;
-                            }
-                          }
-                          return _buildMainMetric(
-                            context,
-                            title: 'Total System Liquidity',
-                            value: snapshot.connectionState ==
-                                    ConnectionState.waiting
-                                ? '...'
-                                : CurrencyFormatter.formatCurrency(
-                                    totalBalance),
-                            subtitle: 'Total dana beredar di seluruh user',
-                            icon: Icons.account_balance_rounded,
-                            color: Colors.deepOrangeAccent,
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      StreamBuilder<QuerySnapshot>(
-                        stream: _walletsStream,
-                        builder: (context, snapshot) {
-                          double totalBalance = 0;
-                          int walletCount = 0;
-                          if (snapshot.hasData) {
-                            walletCount = snapshot.data!.docs.length;
-                            for (var w in snapshot.data!.docs) {
-                              totalBalance += (w.data()
-                                      as Map<String, dynamic>)['balance'] ??
+                        }
+                      }
+                      return _buildMainMetric(
+                        context,
+                        title: 'LIKUIDITAS SISTEM',
+                        value: snapshot.connectionState ==
+                                ConnectionState.waiting
+                            ? '...'
+                            : CurrencyFormatter.formatCurrency(totalBalance),
+                        subtitle: 'Total dana beredar di seluruh dompet user',
+                        icon: Icons.account_balance_rounded,
+                        color: isDark ? const Color(0xFF312E81) : Colors.indigo,
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  StreamBuilder<QuerySnapshot>(
+                    stream: _walletsStream,
+                    builder: (context, snapshot) {
+                      double totalBalance = 0;
+                      int walletCount = 0;
+                      if (snapshot.hasData) {
+                        walletCount = snapshot.data!.docs.length;
+                        for (var w in snapshot.data!.docs) {
+                          totalBalance +=
+                              (w.data() as Map<String, dynamic>)['balance'] ??
                                   0;
-                            }
-                          }
-                          double avgBalance =
-                              walletCount == 0 ? 0 : totalBalance / walletCount;
-                          return Row(
-                            children: [
-                              Expanded(
-                                child: _buildSmallMetric(
-                                  title: 'Avg. Wallet',
-                                  value: snapshot.connectionState ==
-                                          ConnectionState.waiting
-                                      ? '...'
-                                      : CurrencyFormatter.formatCurrency(
-                                          avgBalance),
-                                  icon: Icons.analytics_rounded,
-                                  color: Colors.blueAccent,
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: _buildSmallMetric(
-                                  title: 'Active Wallets',
-                                  value: snapshot.connectionState ==
-                                          ConnectionState.waiting
-                                      ? '...'
-                                      : '$walletCount',
-                                  icon: Icons.wallet_rounded,
-                                  color: Colors.teal,
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                    ],
+                        }
+                      }
+                      double avgBalance =
+                          walletCount == 0 ? 0 : totalBalance / walletCount;
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: _buildSmallMetric(
+                              title: 'Rata-rata Dompet',
+                              value: snapshot.connectionState ==
+                                      ConnectionState.waiting
+                                  ? '...'
+                                  : CurrencyFormatter.formatCurrency(
+                                      avgBalance),
+                              icon: Icons.analytics_rounded,
+                              color: isDark ? const Color(0xFF60A5FA) : Colors.blueAccent,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _buildSmallMetric(
+                              title: 'Dompet Aktif',
+                              value: snapshot.connectionState ==
+                                      ConnectionState.waiting
+                                  ? '...'
+                                  : '$walletCount',
+                              icon: Icons.wallet_rounded,
+                              color: isDark ? const Color(0xFF2DD4BF) : Colors.teal,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                   const SizedBox(height: 16),
 
@@ -252,16 +248,18 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                     stream: _usersStream,
                     builder: (context, userSnap) {
                       final now = DateTime.now();
-                      final sevenDaysAgo = now.subtract(const Duration(days: 7));
+                      final sevenDaysAgo =
+                          now.subtract(const Duration(days: 7));
                       final allUsers = userSnap.data?.docs ?? [];
                       final userCount = allUsers.length;
 
-                      // Calculate real growth (new users in last 7 days vs previous total)
                       int newUsersCount = 0;
                       for (var doc in allUsers) {
                         final data = doc.data() as Map<String, dynamic>;
-                        final createdAt = (data['createdAt'] as Timestamp?)?.toDate();
-                        if (createdAt != null && createdAt.isAfter(sevenDaysAgo)) {
+                        final createdAt =
+                            (data['createdAt'] as Timestamp?)?.toDate();
+                        if (createdAt != null &&
+                            createdAt.isAfter(sevenDaysAgo)) {
                           newUsersCount++;
                         }
                       }
@@ -275,25 +273,25 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                         children: [
                           Expanded(
                             child: _buildSmallMetric(
-                              title: 'Aggregated Users',
+                              title: 'Total Pengguna',
                               value: userSnap.connectionState ==
                                       ConnectionState.waiting
                                   ? '...'
-                                  : '$userCount Users',
+                                  : '$userCount User',
                               icon: Icons.people_alt_rounded,
-                              color: Colors.indigo,
+                              color: isDark ? const Color(0xFF818CF8) : Colors.indigo,
                             ),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
                             child: _buildSmallMetric(
-                              title: 'Network Growth',
+                              title: 'Pertumbuhan',
                               value: userSnap.connectionState ==
                                       ConnectionState.waiting
                                   ? '...'
                                   : '+${growth.toStringAsFixed(1)}%',
                               icon: Icons.trending_up_rounded,
-                              color: Colors.green,
+                              color: isDark ? const Color(0xFF4ADE80) : Colors.green,
                             ),
                           ),
                         ],
@@ -303,16 +301,13 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
 
                   const SizedBox(height: 32),
 
-                  // ═══════════════════════════════════════
-                  // ALL TX-DEPENDENT WIDGETS (wrapped in StatefulBuilder)
-                  // ═══════════════════════════════════════
+                  // ═══ ALL TX-DEPENDENT WIDGETS ═══
                   StatefulBuilder(
                     builder: (context, setTxState) {
                       _txSetState = setTxState;
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // FITUR #4: AI Trend Analysis (SuperAdmin Only)
                           if (widget.isSuperAdmin) ...[
                             _buildSectionTitle('AI Macros Analysis',
                                 Icons.auto_awesome_rounded),
@@ -320,7 +315,6 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                             _buildAiAnalysisButton(context),
                             const SizedBox(height: 32),
 
-                            // Leaderboard
                             _buildSectionTitle(
                                 'Leaderboard', Icons.emoji_events_rounded),
                             const SizedBox(height: 16),
@@ -331,32 +325,28 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                           _buildPeriodFilter(),
                           const SizedBox(height: 24),
 
-                          // FITUR #1: Cash Flow Chart
                           _buildSectionTitle(
                               'Tren Keuangan Global', Icons.show_chart_rounded),
                           const SizedBox(height: 16),
                           _buildCashFlowChart(),
                           const SizedBox(height: 32),
 
-                          // FITUR #2: Top Spending Categories
                           _buildSectionTitle(
                               'Distribusi Platform', Icons.pie_chart_rounded),
                           const SizedBox(height: 16),
                           _buildCategoryPieChart(),
                           const SizedBox(height: 32),
 
-                          // FITUR #5: User Activity Heatmap
                           _buildSectionTitle(
                               'Aktivitas User', Icons.calendar_month_rounded),
                           const SizedBox(height: 16),
-                          _buildActivityHeatmap(),
+                          _buildUserActivityHeatmap(),
                           const SizedBox(height: 32),
                         ],
                       );
                     },
                   ),
 
-                  // Survey Control & AI Insights (not TX-dependent)
                   if (widget.isSuperAdmin) ...[
                     _buildSectionTitle(
                         'User Voice & AI Insights', Icons.psychology_rounded),
@@ -375,38 +365,31 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                     const SizedBox(height: 32),
                   ],
 
-                  // FITUR #6: New User Growth Chart
                   _buildSectionTitle(
                       'Pertumbuhan User Baru', Icons.group_add_rounded),
                   const SizedBox(height: 16),
                   _buildUserGrowthChart(),
 
-                  // ═══ SuperAdmin Zone (Empty since moved up) ═══
                   const SizedBox(height: 32),
-
-                  const SizedBox(height: 32),
-                  const Text('Economy Health Index',
-                      style: TextStyle(
+                  Text('Economy Health Index',
+                      style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w900,
-                          fontSize: 18,
-                          letterSpacing: -0.5)),
+                          letterSpacing: -0.5,
+                          color: theme.textTheme.titleLarge?.color)),
                   const SizedBox(height: 16),
                   Builder(builder: (context) {
-                    // Logic for Dynamic Economy Index
                     final now = DateTime.now();
                     final last24h = now.subtract(const Duration(hours: 24));
                     final vol24h = _transactions
                         .where((tx) => tx.date.isAfter(last24h))
-                        .fold(0.0, (sum, tx) => sum + tx.amount);
+                        .fold(0.0, (acc, tx) => acc + tx.amount);
 
                     String circulationStatus = 'Quiet';
                     Color circulationColor = Colors.grey;
                     if (vol24h > 10000000) {
-                      // Above 10M
                       circulationStatus = 'Hyper Active';
                       circulationColor = Colors.orange;
                     } else if (vol24h > 1000000) {
-                      // Above 1M
                       circulationStatus = 'Active Flow';
                       circulationColor = Colors.amber;
                     }
@@ -462,6 +445,8 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
   // ══════════════════════════════════════════════════
 
   Widget _buildPeriodFilter() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       physics: const BouncingScrollPhysics(),
@@ -476,12 +461,12 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                 style: TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 12,
-                  color: isSelected ? Colors.white : Colors.grey[700],
+                  color: isSelected ? Colors.white : (isDark ? Colors.white70 : Colors.grey[700]),
                 ),
               ),
               selected: isSelected,
-              selectedColor: Colors.black,
-              backgroundColor: Colors.grey[100],
+              selectedColor: isDark ? AppColors.primary : Colors.black,
+              backgroundColor: isDark ? theme.cardColor : Colors.grey[100],
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -504,21 +489,23 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
   }
 
   Widget _buildSectionTitle(String title, IconData icon) {
+    final theme = Theme.of(context);
     return Row(
       children: [
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.04),
+            color: theme.dividerColor.withOpacity(0.04),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, size: 18, color: Colors.black87),
+          child: Icon(icon, size: 18, color: theme.iconTheme.color?.withOpacity(0.8)),
         ),
         const SizedBox(width: 12),
         Text(title,
-            style: const TextStyle(
+            style: TextStyle(
                 fontWeight: FontWeight.w900,
                 fontSize: 18,
+                color: theme.textTheme.titleLarge?.color,
                 letterSpacing: -0.5)),
       ],
     );
@@ -578,6 +565,9 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
     maxY = maxY * 1.15; // padding top
     if (maxY == 0) maxY = 100;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+
     return SizedBox(
       height: 280,
       child: AnimatedSwitcher(
@@ -589,9 +579,9 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                 : Container(
                     padding: const EdgeInsets.fromLTRB(8, 16, 16, 8),
                     decoration: BoxDecoration(
-                      color: Colors.grey[50],
+                      color: theme.cardColor,
                       borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: Colors.grey.withOpacity(0.08)),
+                      border: Border.all(color: theme.dividerColor.withOpacity(0.05)),
                     ),
                     child: LineChart(
                       LineChartData(
@@ -600,7 +590,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                           drawVerticalLine: false,
                           horizontalInterval: maxY > 0 ? maxY / 4 : 1,
                           getDrawingHorizontalLine: (value) => FlLine(
-                            color: Colors.grey.withOpacity(0.1),
+                            color: theme.dividerColor.withOpacity(0.1),
                             strokeWidth: 1,
                           ),
                         ),
@@ -615,7 +605,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                                 return Text(
                                   _formatCompact(value),
                                   style: TextStyle(
-                                      fontSize: 9, color: Colors.grey[500]),
+                                      fontSize: 9, color: theme.hintColor),
                                 );
                               },
                             ),
@@ -637,7 +627,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                                   child: Text(displayKeys[idx],
                                       style: TextStyle(
                                           fontSize: 9,
-                                          color: Colors.grey[500])),
+                                          color: theme.hintColor)),
                                 );
                               },
                             ),
@@ -654,7 +644,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                         maxY: maxY,
                         lineTouchData: LineTouchData(
                           touchTooltipData: LineTouchTooltipData(
-                            tooltipBgColor: Colors.black87,
+                            tooltipBgColor: isDark ? const Color(0xFF1E293B) : Colors.black87,
                             tooltipRoundedRadius: 12,
                             getTooltipItems: (spots) {
                               return spots.map((spot) {
@@ -703,23 +693,23 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                           ),
                         ],
                       ),
-                      duration: const Duration(milliseconds: 400),
-                      curve: Curves.easeInOut,
                     ),
-                  ),
+        ),
       ),
     );
   }
 
   // ── FITUR #2: Category Pie Chart ──
   Widget _buildCategoryPieChart() {
+    final theme = Theme.of(context);
+
     return Container(
       height: 480,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.grey.withOpacity(0.08)),
+        border: Border.all(color: theme.dividerColor.withOpacity(0.05)),
       ),
       child: AnimatedSwitcher(
         duration: const Duration(milliseconds: 300),
@@ -748,10 +738,12 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                     final top5 = sorted.take(5).toList();
                     if (sorted.length > 5) {
                       double othersTotal = 0;
-                      for (int i = 5; i < sorted.length; i++)
+                      for (int i = 5; i < sorted.length; i++) {
                         othersTotal += sorted[i].value;
-                      if (othersTotal > 0)
+                      }
+                      if (othersTotal > 0) {
                         top5.add(MapEntry('Lainnya', othersTotal));
+                      }
                     }
 
                     final pieColors = [
@@ -860,14 +852,14 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                                                 : FontWeight.w600,
                                             fontSize: 13,
                                             color: isSelected
-                                                ? Colors.black
-                                                : Colors.grey[800])),
+                                                ? theme.textTheme.titleMedium?.color
+                                                : theme.textTheme.bodyMedium?.color)),
                                   ),
                                   Text('${pct.toStringAsFixed(1)}%',
                                       style: TextStyle(
                                           fontWeight: FontWeight.w800,
                                           fontSize: 12,
-                                          color: Colors.grey[600])),
+                                          color: theme.hintColor)),
                                   const SizedBox(width: 12),
                                   Text(
                                       CurrencyFormatter.formatCurrency(
@@ -876,8 +868,8 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                                           fontWeight: FontWeight.w700,
                                           fontSize: 11,
                                           color: isSelected
-                                              ? Colors.black
-                                              : Colors.grey[700])),
+                                              ? theme.textTheme.titleMedium?.color
+                                              : theme.textTheme.bodyMedium?.color)),
                                 ],
                               ),
                             );
@@ -891,17 +883,20 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
   }
 
   // ── FITUR #5: User Activity Heatmap ──
-  Widget _buildActivityHeatmap() {
+  Widget _buildUserActivityHeatmap() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+
     if (_isLoadingTx) return _buildShimmerChart(height: 250);
     if (_transactions.isEmpty) {
       return Container(
         height: 250,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.grey.withOpacity(0.1)),
+          border: Border.all(color: theme.dividerColor.withOpacity(0.05)),
         ),
-        child: const Center(child: Text("Belum ada data transaksi")),
+        child: Center(child: Text("Belum ada data transaksi", style: TextStyle(color: theme.hintColor))),
       );
     }
 
@@ -909,19 +904,36 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
     List<List<int>> counts = List.generate(7, (_) => List.filled(4, 0));
     int maxCount = 0;
 
+    final dayNamesFull = [
+      'Senin',
+      'Selasa',
+      'Rabu',
+      'Kamis',
+      'Jumat',
+      'Sabtu',
+      'Minggu'
+    ];
+    final slotNames = [
+      'Pagi (06-12)',
+      'Siang (12-17)',
+      'Sore (17-21)',
+      'Malam (21-06)'
+    ];
+
     for (var tx in _transactions) {
       final date = tx.date;
       int day = date.weekday - 1; // 0=Monday..6=Sunday
       int h = date.hour;
       int col = 0;
-      if (h >= 6 && h < 12)
+      if (h >= 6 && h < 12) {
         col = 0; // Pagi: 06-11
-      else if (h >= 12 && h < 17)
+      } else if (h >= 12 && h < 17) {
         col = 1; // Siang: 12-16
-      else if (h >= 17 && h < 21)
+      } else if (h >= 17 && h < 21) {
         col = 2; // Sore: 17-20
-      else
+      } else {
         col = 3; // Malam: 21-05
+      }
 
       counts[day][col]++;
       if (counts[day][col] > maxCount) maxCount = counts[day][col];
@@ -940,33 +952,15 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
           }
         }
       }
-      final dayNamesFull = [
-        'Senin',
-        'Selasa',
-        'Rabu',
-        'Kamis',
-        'Jumat',
-        'Sabtu',
-        'Minggu'
-      ];
-      final slotNames = [
-        'Pagi (06-12)',
-        'Siang (12-17)',
-        'Sore (17-21)',
-        'Malam (21-06)'
-      ];
       peakText = 'Peak: ${dayNamesFull[peakDay]} ${slotNames[peakSlot]}';
     }
-
-    final days = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
-    final timeSlots = ['Pagi', 'Siang', 'Sore', 'Malam'];
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+        border: Border.all(color: theme.dividerColor.withOpacity(0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -989,7 +983,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
           Row(
             children: [
               const SizedBox(width: 32),
-              ...timeSlots.map((t) => Expanded(
+              ...slotNames.map((t) => Expanded(
                     child: Center(
                         child: Text(t,
                             style: TextStyle(
@@ -1002,29 +996,27 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
           const SizedBox(height: 8),
           ...List.generate(7, (r) {
             return Padding(
-              padding: const EdgeInsets.only(bottom: 4),
+              padding: const EdgeInsets.symmetric(vertical: 2),
               child: Row(
                 children: [
                   SizedBox(
                     width: 32,
-                    child: Text(days[r],
-                        style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey[600])),
+                    child: Text(['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'][r],
+                        style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold)),
                   ),
                   ...List.generate(4, (c) {
                     final val = counts[r][c];
                     final intensity = maxCount == 0 ? 0.0 : val / maxCount;
                     Color color;
-                    if (intensity == 0)
-                      color = Colors.grey[100]!;
-                    else if (intensity < 0.25)
-                      color = Colors.amber[200]!;
-                    else if (intensity < 0.6)
-                      color = Colors.amber[500]!;
-                    else
-                      color = Colors.deepOrange;
+                    if (intensity == 0) {
+                      color = isDark ? Colors.white.withOpacity(0.05) : Colors.grey[100]!;
+                    } else if (intensity < 0.25) {
+                      color = isDark ? Colors.amber[900]!.withOpacity(0.4) : Colors.amber[200]!;
+                    } else if (intensity < 0.6) {
+                      color = isDark ? Colors.amber[600]! : Colors.amber[500]!;
+                    } else {
+                      color = isDark ? Colors.orangeAccent : Colors.deepOrange;
+                    }
 
                     return Expanded(
                       child: Container(
@@ -1034,7 +1026,6 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                           color: color,
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        // Tooltip on tap? Not required, but visual is enough
                       ),
                     );
                   }),
@@ -1046,13 +1037,13 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildLegendNode(Colors.grey[100]!, 'Kosong'),
+              _buildLegendNode(isDark ? Colors.white.withOpacity(0.1) : Colors.grey[100]!, 'Kosong'),
               const SizedBox(width: 12),
-              _buildLegendNode(Colors.amber[200]!, 'Rendah'),
+              _buildLegendNode(isDark ? Colors.amber[900]!.withOpacity(0.4) : Colors.amber[200]!, 'Rendah'),
               const SizedBox(width: 12),
-              _buildLegendNode(Colors.amber[500]!, 'Sedang'),
+              _buildLegendNode(isDark ? Colors.amber[600]! : Colors.amber[500]!, 'Sedang'),
               const SizedBox(width: 12),
-              _buildLegendNode(Colors.deepOrange, 'Tinggi'),
+              _buildLegendNode(isDark ? Colors.orangeAccent : Colors.deepOrange, 'Tinggi'),
             ],
           )
         ],
@@ -1061,6 +1052,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
   }
 
   Widget _buildLegendNode(Color color, String label) {
+    final theme = Theme.of(context);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -1070,11 +1062,11 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
           decoration: BoxDecoration(
             color: color,
             borderRadius: BorderRadius.circular(3),
-            border: Border.all(color: Colors.grey.withOpacity(0.2)),
+            border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
           ),
         ),
         const SizedBox(width: 4),
-        Text(label, style: TextStyle(fontSize: 10, color: Colors.grey[600])),
+        Text(label, style: theme.textTheme.bodySmall?.copyWith(fontSize: 10)),
       ],
     );
   }
@@ -1095,7 +1087,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
       final difference = now.difference(createdAt).inDays;
       if (difference < 56) {
         int weekIndex =
-            7 - (difference ~/ 7); // 7 is newest week, 0 is 8 weeks ago
+            7 - (difference ~/ 7);
         if (weekIndex >= 0 && weekIndex < 8) {
           weeklyCounts[weekIndex]++;
           totalNewUsersIn8Weeks++;
@@ -1107,12 +1099,15 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
         weeklyCounts.isEmpty ? 5 : weeklyCounts.reduce(max).toDouble() * 1.2;
     if (maxY == 0) maxY = 5;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+        border: Border.all(color: theme.dividerColor.withOpacity(0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1123,30 +1118,29 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Total User Baru (8 Minggu)',
-                    style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                        color: theme.textTheme.bodySmall?.color,
                         fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     '$totalNewUsersIn8Weeks User',
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w900,
-                        color: Colors.indigo),
+                        color: isDark ? const Color(0xFF818CF8) : Colors.indigo),
                   ),
                 ],
               ),
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                    color: Colors.indigo.withOpacity(0.1),
+                    color: (isDark ? const Color(0xFF818CF8) : Colors.indigo).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12)),
-                child: const Icon(Icons.trending_up_rounded,
-                    color: Colors.indigo, size: 24),
+                child: Icon(Icons.trending_up_rounded,
+                    color: isDark ? const Color(0xFF818CF8) : Colors.indigo, size: 24),
               )
             ],
           ),
@@ -1158,7 +1152,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                 maxY: maxY,
                 barTouchData: BarTouchData(
                   touchTooltipData: BarTouchTooltipData(
-                    tooltipBgColor: Colors.indigo,
+                    tooltipBgColor: isDark ? const Color(0xFF334155) : Colors.indigo,
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
                       return BarTooltipItem(
                         'Minggu ${(groupIndex + 1)}\n',
@@ -1193,7 +1187,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                             'W${value.toInt() + 1}',
                             style: TextStyle(
                                 fontSize: 10,
-                                color: Colors.grey[500],
+                                color: isDark ? Colors.white54 : Colors.grey[500],
                                 fontWeight: FontWeight.bold),
                           ),
                         );
@@ -1205,12 +1199,13 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                       showTitles: true,
                       reservedSize: 28,
                       getTitlesWidget: (value, meta) {
-                        if (value % 1 != 0)
-                          return const SizedBox.shrink(); // Hide decimals
+                        if (value % 1 != 0) {
+                          return const SizedBox.shrink();
+                        }
                         return Text(
                           value.toInt().toString(),
                           style:
-                              TextStyle(color: Colors.grey[400], fontSize: 10),
+                              TextStyle(color: isDark ? Colors.white38 : Colors.grey[400], fontSize: 10),
                         );
                       },
                     ),
@@ -1223,7 +1218,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                   horizontalInterval:
                       maxY / 5 > 0 ? (maxY / 5).ceilToDouble() : 1,
                   getDrawingHorizontalLine: (value) => FlLine(
-                    color: Colors.grey.withOpacity(0.1),
+                    color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey.withOpacity(0.1),
                     strokeWidth: 1,
                     dashArray: [5, 5],
                   ),
@@ -1234,7 +1229,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                     barRods: [
                       BarChartRodData(
                         toY: weeklyCounts[index].toDouble(),
-                        color: Colors.indigo,
+                        color: isDark ? const Color(0xFF818CF8) : Colors.indigo,
                         width: 16,
                         borderRadius: const BorderRadius.only(
                           topLeft: Radius.circular(6),
@@ -1243,7 +1238,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                         backDrawRodData: BackgroundBarChartRodData(
                           show: true,
                           toY: maxY,
-                          color: Colors.grey.withOpacity(0.05),
+                          color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey.withOpacity(0.05),
                         ),
                       )
                     ],
@@ -1262,18 +1257,22 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
     if (_isLoadingTx) {
       return _buildShimmerChart(height: 80);
     }
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1E3A8A), Color(0xFF3B82F6)],
+        gradient: LinearGradient(
+          colors: isDark 
+            ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
+            : [const Color(0xFF1E3A8A), const Color(0xFF3B82F6)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.blueAccent.withOpacity(0.3),
+            color: Colors.blueAccent.withOpacity(isDark ? 0.1 : 0.3),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -1284,7 +1283,6 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(24),
           onTap: () async {
-            // Show loading dialog
             showDialog(
               context: context,
               barrierDismissible: false,
@@ -1292,7 +1290,6 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
             );
 
             try {
-              // Fetch latest counts
               final userSnap = await _firestore.collection('users').get();
               final walletSnap =
                   await _firestore.collectionGroup('wallets').get();
@@ -1303,7 +1300,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
               }
 
               if (context.mounted) {
-                Navigator.pop(context); // close dialog
+                Navigator.pop(context);
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -1377,9 +1374,9 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
 
   // ── FITUR #3: Leaderboard (SuperAdmin Only) ──
   Widget _buildLeaderboard() {
-    if (_isLoadingTx) return _buildShimmerChart(height: 200);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
 
-    // Group by createdBy UID
     final Map<String, double> spenderMap = {};
     final Map<String, double> earnerMap = {};
     final Map<String, String> userNames = {};
@@ -1402,26 +1399,27 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
       length: 2,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.grey[50],
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.grey.withOpacity(0.08)),
+          border: Border.all(color: theme.dividerColor.withOpacity(0.05)),
         ),
         child: Column(
           children: [
             Container(
               margin: const EdgeInsets.fromLTRB(8, 8, 8, 0),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? theme.scaffoldBackgroundColor : Colors.white,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: TabBar(
-                labelColor: Colors.white,
-                unselectedLabelColor: Colors.grey[600],
+                labelColor: isDark ? Colors.white : Colors.black,
+                unselectedLabelColor: theme.textTheme.bodySmall?.color,
                 labelStyle:
                     const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
                 indicator: BoxDecoration(
-                  color: Colors.black,
+                  color: isDark ? AppColors.primary.withOpacity(0.2) : Colors.grey[200],
                   borderRadius: BorderRadius.circular(12),
+                  border: isDark ? Border.all(color: AppColors.primary.withOpacity(0.5)) : null,
                 ),
                 indicatorSize: TabBarIndicatorSize.tab,
                 dividerColor: Colors.transparent,
@@ -1455,12 +1453,13 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
   Widget _buildLeaderList(
       List<MapEntry<String, double>> entries, Map<String, String> names,
       {required bool isExpense}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (entries.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Text('Belum ada data.',
-              style: TextStyle(color: Colors.grey[400], fontSize: 13)),
+              style: TextStyle(color: Theme.of(context).hintColor, fontSize: 13)),
         ),
       );
     }
@@ -1484,8 +1483,9 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             color:
-                index < 3 ? Colors.amber.withOpacity(0.03 * (3 - index)) : null,
+                index < 3 ? Colors.amber.withOpacity(isDark ? 0.1 : 0.05) : null,
             borderRadius: BorderRadius.circular(12),
+            border: index < 3 && isDark ? Border.all(color: Colors.amber.withOpacity(0.2)) : null,
           ),
           child: Row(
             children: [
@@ -1539,36 +1539,38 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
     required String reason,
     required IconData icon,
   }) {
+    final theme = Theme.of(context);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+        border: Border.all(color: theme.dividerColor.withOpacity(0.05)),
       ),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.grey[200],
+              color: theme.dividerColor.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.lock_rounded, size: 28, color: Colors.grey),
+            child: Icon(Icons.lock_rounded, size: 28, color: theme.hintColor),
           ),
           const SizedBox(height: 16),
           Text(title,
-              style: const TextStyle(
+              style: TextStyle(
                   fontWeight: FontWeight.w900,
                   fontSize: 16,
-                  color: Colors.grey)),
+                  color: theme.textTheme.bodyMedium?.color)),
           const SizedBox(height: 8),
           Text(
             reason,
             textAlign: TextAlign.center,
             style:
-                TextStyle(fontSize: 12, color: Colors.grey[500], height: 1.5),
+                TextStyle(fontSize: 12, color: theme.hintColor, height: 1.5),
           ),
           const SizedBox(height: 12),
           Container(
@@ -1590,19 +1592,22 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
 
   // ── Helpers ──
   String _formatCompact(double value) {
-    if (value >= 1000000000)
+    if (value >= 1000000000) {
       return '${(value / 1000000000).toStringAsFixed(1)}B';
+    }
     if (value >= 1000000) return '${(value / 1000000).toStringAsFixed(1)}M';
     if (value >= 1000) return '${(value / 1000).toStringAsFixed(0)}K';
     return value.toStringAsFixed(0);
   }
 
   Widget _buildShimmerChart({double height = 220}) {
+    final theme = Theme.of(context);
     return Container(
       height: height,
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: theme.dividerColor.withOpacity(0.05)),
       ),
       child: Center(
         child: Column(
@@ -1613,14 +1618,14 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
               height: 24,
               child: CircularProgressIndicator(
                 strokeWidth: 2.5,
-                color: Colors.grey[400],
+                color: theme.hintColor,
               ),
             ),
             const SizedBox(height: 12),
             Text('Memuat data...',
                 style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey[400],
+                    color: theme.hintColor,
                     fontWeight: FontWeight.w600)),
           ],
         ),
@@ -1629,19 +1634,21 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
   }
 
   Widget _buildChartError(String error) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.red[50],
+        color: Colors.red.withOpacity(isDark ? 0.2 : 0.1),
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.red.withOpacity(isDark ? 0.3 : 0.1)),
       ),
       child: Row(
         children: [
-          Icon(Icons.error_outline_rounded, color: Colors.red[300], size: 20),
+          Icon(Icons.error_outline_rounded, color: isDark ? Colors.red[300] : Colors.red[700], size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Text('Gagal memuat: $error',
-                style: TextStyle(fontSize: 12, color: Colors.red[400])),
+                style: TextStyle(fontSize: 12, color: isDark ? Colors.red[200] : Colors.red[800])),
           ),
         ],
       ),
@@ -1652,17 +1659,17 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: Theme.of(context).dividerColor.withOpacity(0.05),
         borderRadius: BorderRadius.circular(24),
       ),
       child: Center(
         child: Column(
           children: [
-            Icon(Icons.bar_chart_rounded, size: 40, color: Colors.grey[300]),
+            Icon(Icons.bar_chart_rounded, size: 40, color: Theme.of(context).hintColor),
             const SizedBox(height: 12),
             Text(message,
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13, color: Colors.grey[400])),
+                style: TextStyle(fontSize: 13, color: Theme.of(context).hintColor)),
           ],
         ),
       ),
@@ -1674,11 +1681,12 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
   // ══════════════════════════════════════════════════
 
   Widget _buildAppBar(BuildContext context) {
+    final theme = Theme.of(context);
     return SliverAppBar(
       expandedHeight: 140,
       floating: false,
       pinned: true,
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       elevation: 0,
       flexibleSpace: FlexibleSpaceBar(
         titlePadding: const EdgeInsets.only(left: 56, bottom: 16),
@@ -1686,9 +1694,9 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('LIVE INSIGHTS',
+            Text('LIVE INSIGHTS',
                 style: TextStyle(
-                    color: Colors.black,
+                    color: theme.textTheme.titleLarge?.color,
                     fontWeight: FontWeight.w900,
                     letterSpacing: -1,
                     fontSize: 24)),
@@ -1699,7 +1707,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                 style: TextStyle(
                     color: widget.isSuperAdmin
                         ? Colors.amber[700]
-                        : Colors.grey[400],
+                        : theme.hintColor,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1,
                     fontSize: 10)),
@@ -1715,118 +1723,9 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                 height: 150,
                 decoration: BoxDecoration(
                     color:
-                        widget.isSuperAdmin ? Colors.amber[50] : Colors.red[50],
+                        widget.isSuperAdmin ? Colors.amber.withOpacity(0.1) : Colors.red.withOpacity(0.1),
                     shape: BoxShape.circle),
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildErrorState(BuildContext context, String error) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 80),
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.red[50],
-            borderRadius: BorderRadius.circular(32),
-            border: Border.all(color: Colors.red[100]!),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: const BoxDecoration(
-                    color: Colors.red, shape: BoxShape.circle),
-                child: const Icon(Icons.warning_amber_rounded,
-                    size: 32, color: Colors.white),
-              ),
-              const SizedBox(height: 20),
-              const Text('Sinkronisasi Mesin Data',
-                  style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 20,
-                      color: Colors.indigo)),
-              const SizedBox(height: 12),
-              const Text(
-                'Sistem membutuhkan Composite Index di Firestore untuk menampilkan statistik ini.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                    height: 1.5,
-                    color: Colors.blueGrey),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Cek file log di terminal atau buka Firebase Console untuk mengaktifkan indeks yang diperlukan.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey, fontSize: 11),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: () {
-                  UIHelper.showInfoSnackBar(context,
-                      'Silakan hubungi tim IT atau buka Firebase Console untuk mengaktifkan indeks.');
-                },
-                icon: const Icon(Icons.bolt_rounded, size: 18),
-                label: const Text('AKTIFKAN ANALYTICS',
-                    style: TextStyle(fontWeight: FontWeight.w900)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.indigo,
-                  foregroundColor: Colors.white,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16)),
-                  elevation: 0,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 100),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                  color: Colors.blueAccent.withOpacity(0.05),
-                  shape: BoxShape.circle),
-              child: const Icon(Icons.analytics_rounded,
-                  size: 48, color: Colors.blueAccent),
-            ),
-            const SizedBox(height: 24),
-            const Text('Data Sedang Disiapkan',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 20,
-                    letterSpacing: -0.5)),
-            const SizedBox(height: 12),
-            const Text(
-              'Sistem sedang mengumpulkan data agregat dari seluruh dompet. Jika ini pertama kali, silakan buat minimal satu dompet.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey, height: 1.5),
-            ),
-            const SizedBox(height: 24),
-            TextButton.icon(
-              onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.arrow_back_rounded),
-              label: const Text('KEMBALI KE PANEL'),
             ),
           ],
         ),
@@ -1906,12 +1805,14 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
       required String value,
       required IconData icon,
       required Color color}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.05),
+        color: color.withOpacity(isDark ? 0.15 : 0.05),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: color.withOpacity(0.1)),
+        border: Border.all(color: color.withOpacity(isDark ? 0.3 : 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1927,14 +1828,14 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
               style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
-                  color: Colors.grey[600])),
+                  color: theme.hintColor)),
           const SizedBox(height: 4),
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
             child: Text(value,
                 style:
-                    const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                    TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: theme.textTheme.titleLarge?.color)),
           ),
         ],
       ),
@@ -1947,9 +1848,9 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.withOpacity(0.05)),
+        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.05)),
       ),
       child: Row(
         children: [
@@ -1993,15 +1894,17 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
         }
 
         final config = snapshot.data;
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final theme = Theme.of(context);
         final isAvailable = config?.isAvailable ?? false;
 
         return Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: theme.cardColor,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.grey.withOpacity(0.1)),
-            boxShadow: [
+            border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
+            boxShadow: isDark ? [] : [
               BoxShadow(
                 color: Colors.black.withOpacity(0.02),
                 blurRadius: 10,
@@ -2047,7 +1950,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                               ? 'User dapat mengisi survei kepuasan.'
                               : 'Fitur survei ditutup untuk sementara.',
                           style:
-                              const TextStyle(color: Colors.grey, fontSize: 11),
+                              TextStyle(color: theme.hintColor, fontSize: 11),
                         ),
                       ],
                     ),
@@ -2112,8 +2015,8 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                             style: TextStyle(
                                 fontWeight: FontWeight.w900, fontSize: 11)),
                         style: TextButton.styleFrom(
-                          foregroundColor: Colors.teal,
-                          backgroundColor: Colors.teal.withOpacity(0.05),
+                          foregroundColor: isDark ? Colors.tealAccent : Colors.teal,
+                          backgroundColor: (isDark ? Colors.tealAccent : Colors.teal).withOpacity(0.1),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           minimumSize: const Size(double.infinity, 48),
                           shape: RoundedRectangleBorder(
@@ -2158,17 +2061,16 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label,
-            style: const TextStyle(
-                fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600)),
+            style: TextStyle(
+                fontSize: 12, color: Theme.of(context).hintColor, fontWeight: FontWeight.w600)),
         Text(value,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w900,
-                color: Colors.black87)),
+                color: Theme.of(context).textTheme.bodyMedium?.color)),
       ],
     );
   }
-
 }
 
 class _AiSentimentAnalysisCard extends StatefulWidget {
@@ -2186,22 +2088,26 @@ class _AiSentimentAnalysisCardState extends State<_AiSentimentAnalysisCard> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1E1E1E), Color(0xFF2D2D2D)],
+        gradient: LinearGradient(
+          colors: isDark
+              ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
+              : [const Color(0xFF1E3A8A), const Color(0xFF3B82F6)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: isDark ? [] : [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          )
+            color: Colors.blueAccent.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
         ],
       ),
       child: Column(
@@ -2210,7 +2116,7 @@ class _AiSentimentAnalysisCardState extends State<_AiSentimentAnalysisCard> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),

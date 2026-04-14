@@ -54,7 +54,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: CustomScrollView(
         slivers: [
           _buildAppBar(context),
@@ -67,8 +67,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 children: [
                   Row(
                     children: [
-                      const Text('Admin Console',
+                      Text('Admin Console',
                           style: TextStyle(
+                              color: Theme.of(context).textTheme.displayLarge?.color,
                               fontWeight: FontWeight.w900,
                               fontSize: 28,
                               letterSpacing: -1.2)),
@@ -76,7 +77,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: (_isSuper ? Colors.amber : AppColors.primary)
+                          color: (_isSuper ? Colors.amber : Theme.of(context).primaryColor)
                               .withOpacity(0.1),
                           shape: BoxShape.circle,
                         ),
@@ -85,8 +86,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                 ? Icons.stars_rounded
                                 : Icons.shield_rounded,
                             color: _isSuper
-                                ? Colors.amber[900]
-                                : AppColors.primary,
+                                ? Colors.amber[700]
+                                : Theme.of(context).primaryColor,
                             size: 20),
                       ),
                     ],
@@ -95,8 +96,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       _isSuper
                           ? 'Selamat datang kembali, Owner.'
                           : 'Akses dashboard administrator.',
-                      style: const TextStyle(
-                          color: Colors.grey,
+                      style: TextStyle(
+                          color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
                           fontSize: 13,
                           fontWeight: FontWeight.w500)),
                   const SizedBox(height: 32),
@@ -163,8 +164,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     const SizedBox(height: 32),
                     _buildSecurityHubBanner(context),
                     const SizedBox(height: 32),
-                    const Text('System Health',
+                    Text('System Health',
                         style: TextStyle(
+                            color: Theme.of(context).textTheme.titleLarge?.color,
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
                             letterSpacing: -0.5)),
@@ -212,13 +214,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 gradient: LinearGradient(
                   colors: hasAlert
                       ? [Colors.red[900]!, Colors.red[700]!]
-                      : [const Color(0xFF1E1E2E), const Color(0xFF2D2D44)],
+                      : (Theme.of(context).brightness == Brightness.dark
+                          ? [const Color(0xFF1E1E2E), const Color(0xFF2D2D44)]
+                          : [const Color(0xFF2D2D44), const Color(0xFF434361)]),
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: (hasAlert ? Colors.red : Colors.black).withOpacity(0.2),
+                    color: (hasAlert ? Colors.red : Colors.black).withOpacity(Theme.of(context).brightness == Brightness.dark ? 0.3 : 0.1),
                     blurRadius: 15,
                     offset: const Offset(0, 8),
                   ),
@@ -276,7 +280,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       pinned: true,
       elevation: 0,
       scrolledUnderElevation: 0,
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.transparent,
       foregroundColor: Colors.white,
       flexibleSpace: FlexibleSpaceBar(
         background: Stack(
@@ -290,11 +294,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   colors: _isSuper
                       ? [
                           const Color(0xFFB8860B), // Dark Goldenrod
-                          const Color(0xFF000000), // Black for premium look
+                          Theme.of(context).brightness == Brightness.dark 
+                              ? Colors.black 
+                              : const Color(0xFF8B6B00),
                         ]
                       : [
-                          AppColors.primary,
-                          AppColors.primaryDark.withOpacity(0.9),
+                          Theme.of(context).primaryColor,
+                          Theme.of(context).primaryColorDark.withOpacity(0.9),
                         ],
                 ),
               ),
@@ -340,11 +346,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   Widget _buildStatusTile(
       String label, String status, IconData icon, Color color) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: AppColors.surfaceVariant.withOpacity(0.5),
+        color: isDark
+            ? AppColors.surfaceVariantDark.withOpacity(0.5)
+            : AppColors.surfaceVariant.withOpacity(0.5),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -370,7 +379,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       required Color color,
       required VoidCallback onTap}) {
     return Material(
-      color: Colors.white,
+      color: Theme.of(context).cardColor,
       borderRadius: BorderRadius.circular(36),
       child: InkWell(
         onTap: onTap,
@@ -379,7 +388,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           padding: const EdgeInsets.all(24.0),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(36),
-            border: Border.all(color: AppColors.surfaceVariant),
+            border: Border.all(
+              color: Theme.of(context).dividerColor.withOpacity(0.05),
+            ),
             boxShadow: [
               BoxShadow(
                   color: color.withOpacity(0.08),
@@ -406,9 +417,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       letterSpacing: -0.5)),
               const SizedBox(height: 4),
               Text(subtitle,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 9,
-                      color: Colors.grey,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
                       fontWeight: FontWeight.w500)),
             ],
           ),
@@ -466,12 +477,12 @@ class _PulseIconState extends State<_PulseIcon> with SingleTickerProviderStateMi
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: widget.isActive ? Colors.white : Colors.white10,
+            color: widget.isActive ? Colors.white : (Theme.of(context).brightness == Brightness.dark ? Colors.white10 : Colors.black.withOpacity(0.05)),
             shape: BoxShape.circle,
           ),
           child: Icon(
             widget.isActive ? Icons.gpp_maybe_rounded : Icons.security_rounded,
-            color: widget.isActive ? Colors.red[900] : Colors.cyanAccent,
+            color: widget.isActive ? Colors.red[900] : (Theme.of(context).brightness == Brightness.dark ? Colors.cyanAccent : Colors.indigo),
             size: 24,
           ),
         ),
