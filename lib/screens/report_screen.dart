@@ -21,6 +21,8 @@ import '../services/ai_service.dart';
 import '../utils/ui_helper.dart';
 import '../utils/tone_dictionary.dart';
 import '../services/notif_listener_bridge.dart';
+import '../services/debt_service.dart';
+import '../models/debt_model.dart';
 
 class ReportScreen extends StatefulWidget {
   const ReportScreen({super.key});
@@ -188,6 +190,7 @@ class _ReportScreenState extends State<ReportScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
+        centerTitle: true,
         title: const Text('Laporan Keuangan',
             style: TextStyle(
                 fontWeight: FontWeight.w800,
@@ -2143,8 +2146,10 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                                 isActive
                                                     ? CupertinoIcons.check_mark
                                                     : (platform == 'groq'
-                                                        ? CupertinoIcons.bolt_fill
-                                                        : CupertinoIcons.sparkles),
+                                                        ? CupertinoIcons
+                                                            .bolt_fill
+                                                        : CupertinoIcons
+                                                            .sparkles),
                                                 size: 14,
                                                 color: isActive
                                                     ? Colors.white
@@ -2451,7 +2456,8 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                                 shape: BoxShape.circle,
                                               ),
                                               child: Icon(
-                                                CupertinoIcons.exclamationmark_triangle_fill,
+                                                CupertinoIcons
+                                                    .exclamationmark_triangle_fill,
                                                 color: AppColors.expense,
                                                 size: 32,
                                               ),
@@ -3024,14 +3030,17 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                 // REAL AI ANALYSIS TEXT
                 FutureBuilder<String>(
                   future: (snapshot.hasData && snapshot.data!.isNotEmpty)
-                      ? AIService.getAdvisorAnalysis(
-                          transactions: snapshot.data!,
-                          wallets: widget.wallets,
-                          dateRange: widget.selectedDateRange,
-                          score: score,
-                          status: status,
-                          tone: ToneManager.notifier.value,
-                        )
+                      ? DebtService().getUserDebts(widget.uid).first.then((debts) {
+                          return AIService.getAdvisorAnalysis(
+                            transactions: snapshot.data!,
+                            wallets: widget.wallets,
+                            debts: debts,
+                            dateRange: widget.selectedDateRange,
+                            score: score,
+                            status: status,
+                            tone: ToneManager.notifier.value,
+                          );
+                        })
                       : Future.value(initialAnalysis),
                   builder: (context, analysisSnapshot) {
                     String cleanedData = (analysisSnapshot.data ?? '').trim();
@@ -3273,7 +3282,8 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(CupertinoIcons.chat_bubble_text_fill, color: Colors.white, size: 20),
+            Icon(CupertinoIcons.chat_bubble_text_fill,
+                color: Colors.white, size: 20),
             const SizedBox(height: 12),
             Text('Tanya Archen',
                 style: TextStyle(
@@ -3700,7 +3710,8 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
             ),
             child: IconButton(
               onPressed: () => _handleQuery(_queryController.text),
-              icon: Icon(CupertinoIcons.paperplane_fill, color: Colors.white, size: 20),
+              icon: Icon(CupertinoIcons.paperplane_fill,
+                  color: Colors.white, size: 20),
             ),
           ),
         ],
@@ -3720,7 +3731,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
     _scrollToBottom();
 
     try {
-      // 1. Ambil data wallet & transaksi untuk konteks AI
+      // 1. Ambil data wallet, transaksi & hutang untuk konteks AI
       final wallets =
           await widget.firestoreService.getWalletsStream(widget.uid).first;
       final walletIds = wallets.map((w) => w.id).toList();
@@ -3730,6 +3741,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
               startDate: widget.selectedDateRange.start,
               endDate: widget.selectedDateRange.end)
           .first;
+      final debts = await DebtService().getUserDebts(widget.uid).first;
 
       // 2. Siapkan history chat
       final history = _messages.take(_messages.length - 1).map((m) {
@@ -3746,6 +3758,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
         apiPlatform: _localApiPlatform,
         transactions: txns,
         wallets: widget.wallets,
+        debts: debts,
         userQuery: text,
         dateRange: widget.selectedDateRange,
         tone: ToneManager.notifier.value,

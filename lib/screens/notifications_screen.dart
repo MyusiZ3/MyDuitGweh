@@ -54,6 +54,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        centerTitle: true,
         title: Text('Notifikasi',
             style: TextStyle(
                 fontWeight: FontWeight.w800,

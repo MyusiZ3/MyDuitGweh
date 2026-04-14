@@ -12,6 +12,7 @@ class HelpScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
+        centerTitle: true,
         title: const Text('Bantuan & Dukungan'),
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       ),

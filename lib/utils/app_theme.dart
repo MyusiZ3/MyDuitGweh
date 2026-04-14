@@ -198,7 +198,7 @@ class AppTheme {
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        centerTitle: false,
+        centerTitle: true,
         iconTheme: IconThemeData(color: isDark ? Colors.white : AppColors.textPrimary),
         titleTextStyle: GoogleFonts.plusJakartaSans(
           fontSize: 18,

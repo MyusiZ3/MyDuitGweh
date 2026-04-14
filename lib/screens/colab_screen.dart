@@ -42,6 +42,7 @@ class ColabScreenState extends State<ColabScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
+        centerTitle: true,
         title: const Text('Kolaborasi',
             style: TextStyle(
                 fontWeight: FontWeight.w800,

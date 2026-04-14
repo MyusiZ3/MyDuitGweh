@@ -5,6 +5,7 @@ import '../services/firestore_service.dart';
 import '../models/chat_message_model.dart';
 import '../utils/app_theme.dart';
 import '../utils/ui_helper.dart';
+import '../services/ai_service.dart';
 import 'package:intl/intl.dart';
 
 class WalletChatScreen extends StatefulWidget {
@@ -260,7 +261,7 @@ class _WalletChatScreenState extends State<WalletChatScreen>
       appBar: AppBar(
         backgroundColor: Theme.of(context).cardColor,
         elevation: 0.5,
-        centerTitle: false,
+        centerTitle: true,
         leading: IconButton(
           icon: Icon(CupertinoIcons.chevron_left,
               size: 22, color: Theme.of(context).textTheme.titleLarge?.color),
@@ -552,7 +553,7 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                         )
                       else
                         Text(
-                          msg.message,
+                          AIService.cleanMessage(msg.message),
                           style: TextStyle(
                             fontSize: 14,
                             color: isMe
@@ -662,7 +663,9 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                         offset: const Offset(0, 3))
                   ]),
               child: Icon(
-                _isEditing ? CupertinoIcons.check_mark : CupertinoIcons.arrow_up,
+                _isEditing
+                    ? CupertinoIcons.check_mark
+                    : CupertinoIcons.arrow_up,
                 color: Colors.white,
                 size: 20,
               ),
