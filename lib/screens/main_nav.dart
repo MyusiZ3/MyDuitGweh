@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:camera/camera.dart';
 import '../utils/app_theme.dart';
 import '../services/receipt_ocr_service.dart';
@@ -154,12 +155,11 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildNavItem(Icons.home_rounded, 'Home', 0),
-                    _buildNavItem(
-                        Icons.account_balance_wallet_outlined, 'Wallet', 1),
+                    _buildNavItem(0),
+                    _buildNavItem(1),
                     _buildAddButton(),
-                    _buildNavItem(Icons.group_outlined, 'Colab', 3),
-                    _buildNavItem(Icons.bar_chart_rounded, 'Report', 4),
+                    _buildNavItem(3),
+                    _buildNavItem(4),
                   ],
                 ),
               ),
@@ -172,7 +172,32 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label, int index) {
+  Widget _buildNavItem(int index) {
+    IconData icon;
+    String label;
+
+    switch (index) {
+      case 0:
+        icon = _currentIndex == 0 ? CupertinoIcons.house_fill : CupertinoIcons.house;
+        label = 'Home';
+        break;
+      case 1:
+        icon = _currentIndex == 1 ? CupertinoIcons.creditcard_fill : CupertinoIcons.creditcard;
+        label = 'Wallet';
+        break;
+      case 3:
+        icon = _currentIndex == 3 ? CupertinoIcons.person_2_fill : CupertinoIcons.person_2;
+        label = 'Colab';
+        break;
+      case 4:
+        icon = _currentIndex == 4 ? CupertinoIcons.chart_pie_fill : CupertinoIcons.chart_pie;
+        label = 'Report';
+        break;
+      default:
+        icon = CupertinoIcons.question;
+        label = '';
+    }
+
     final isActive = _currentIndex == index;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final activeColor = isDark ? const Color(0xFF0A84FF) : AppColors.primary;
@@ -239,9 +264,9 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           _buildSpeedDialItem(
-            icon: Icons.qr_code_scanner_rounded,
-            label: 'Scan Struk (OCR)',
-            color: AppColors.primary,
+            icon: CupertinoIcons.viewfinder,
+            label: 'Scan Struk (AI)',
+            color: const Color(0xFF5856D6), // iOS Purple
             onTap: () {
               _toggleFAB();
               _startOCRScan();
@@ -250,9 +275,9 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
           ),
           const SizedBox(height: 16),
           _buildSpeedDialItem(
-            icon: Icons.edit_note_rounded,
+            icon: CupertinoIcons.pencil_ellipsis_rectangle,
             label: 'Input Manual',
-            color: AppColors.income,
+            color: const Color(0xFF007AFF), // iOS Blue
             onTap: () {
               _toggleFAB();
               _showAddTransaction();
@@ -388,7 +413,7 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
                 angle: _expandAnimation.value *
                     (3.14159 / 4), // Rotate to forms an 'X'
                 child: const Icon(
-                  Icons.add_rounded,
+                  CupertinoIcons.plus,
                   color: Colors.white,
                   size: 32,
                 ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/firestore_service.dart';
 import '../models/chat_message_model.dart';
@@ -163,7 +164,7 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                   color: Colors.blue.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.edit_rounded,
+                child: const Icon(CupertinoIcons.pencil,
                     color: Colors.blue, size: 20),
               ),
               title: const Text('Edit Pesan',
@@ -188,7 +189,7 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                     color: AppColors.expense.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.delete_outline_rounded,
+                  child: const Icon(CupertinoIcons.trash,
                       color: AppColors.expense, size: 20),
                 ),
                 title: const Text('Hapus Pesan',
@@ -213,7 +214,7 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                     color: AppColors.textHint.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(Icons.timer_off_rounded,
+                  child: Icon(CupertinoIcons.timer,
                       color: AppColors.textHint.withOpacity(0.5), size: 20),
                 ),
                 title: Text('Hapus Pesan',
@@ -261,8 +262,8 @@ class _WalletChatScreenState extends State<WalletChatScreen>
         elevation: 0.5,
         centerTitle: false,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded,
-              size: 20, color: Theme.of(context).textTheme.titleLarge?.color),
+          icon: Icon(CupertinoIcons.chevron_left,
+              size: 22, color: Theme.of(context).textTheme.titleLarge?.color),
           onPressed: () => Navigator.pop(context),
         ),
         title: Row(
@@ -274,7 +275,7 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                 color: AppColors.primary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.group_rounded,
+              child: const Icon(CupertinoIcons.person_2_fill,
                   color: AppColors.primary, size: 18),
             ),
             const SizedBox(width: 12),
@@ -341,7 +342,7 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                             color: AppColors.primary.withOpacity(0.05),
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(Icons.chat_bubble_outline_rounded,
+                          child: Icon(CupertinoIcons.chat_bubble_2,
                               size: 48,
                               color: AppColors.primary.withOpacity(0.4)),
                         ),
@@ -422,7 +423,7 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                         color: AppColors.textHint.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: const Icon(Icons.close_rounded,
+                      child: const Icon(CupertinoIcons.xmark,
                           size: 16, color: AppColors.textSecondary),
                     ),
                   ),
@@ -531,7 +532,7 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.block_rounded,
+                            Icon(CupertinoIcons.slash_circle,
                                 size: 14,
                                 color: isMe
                                     ? Colors.white.withOpacity(0.7)
@@ -661,9 +662,9 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                         offset: const Offset(0, 3))
                   ]),
               child: Icon(
-                _isEditing ? Icons.check_rounded : Icons.arrow_upward_rounded,
+                _isEditing ? CupertinoIcons.check_mark : CupertinoIcons.arrow_up,
                 color: Colors.white,
-                size: 22,
+                size: 20,
               ),
             ),
           ),

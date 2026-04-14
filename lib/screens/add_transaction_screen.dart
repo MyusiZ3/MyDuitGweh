@@ -286,7 +286,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                       ),
                       child: Icon(
                         _selectedCategory == null
-                            ? Icons.category_outlined
+                            ? CupertinoIcons.square_grid_2x2
                             : TransactionCategory.getIconForCategory(
                                 _selectedCategory!),
                         color: _selectedCategory == null
@@ -312,7 +312,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                         ),
                       ),
                     ),
-                    Icon(Icons.chevron_right_rounded,
+                    Icon(CupertinoIcons.chevron_right,
                         size: 20,
                         color: Theme.of(context).hintColor.withOpacity(0.5)),
                   ],
@@ -351,7 +351,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
-                        Icons.account_balance_wallet_outlined,
+                        CupertinoIcons.creditcard,
                         color: _selectedWalletId == null
                             ? AppColors.textHint
                             : (isDark
@@ -385,7 +385,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                         ),
                       ),
                     ),
-                    Icon(Icons.chevron_right_rounded,
+                    Icon(CupertinoIcons.chevron_right,
                         size: 20,
                         color: Theme.of(context).hintColor.withOpacity(0.5)),
                   ],
@@ -423,7 +423,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
-                      Icons.note_outlined,
+                      CupertinoIcons.doc_text,
                       color: Theme.of(context).hintColor.withOpacity(0.7),
                       size: 20,
                     ),
@@ -477,11 +477,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       children: [
         Expanded(
             child: _buildTypeButton('expense', 'Pengeluaran',
-                Icons.arrow_downward_rounded, AppColors.expense)),
+                CupertinoIcons.arrow_down_circle, AppColors.expense)),
         const SizedBox(width: 12),
         Expanded(
             child: _buildTypeButton('income', 'Pemasukan',
-                Icons.arrow_upward_rounded, AppColors.income)),
+                CupertinoIcons.arrow_up_circle, AppColors.income)),
       ],
     );
   }
@@ -559,10 +559,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                   autofocus: true,
                   decoration: InputDecoration(
                     hintText: 'Cari kategori...',
-                    prefixIcon: const Icon(Icons.search_rounded),
+                    prefixIcon: const Icon(CupertinoIcons.search),
                     suffixIcon: searchController.text.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.clear),
+                            icon: const Icon(CupertinoIcons.xmark_circle_fill),
                             onPressed: () {
                               searchController.clear();
                               setModalState(
@@ -596,7 +596,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.search_off_rounded,
+                              Icon(CupertinoIcons.search,
                                   size: 48, color: AppColors.textHint),
                               const SizedBox(height: 16),
                               Text(
@@ -662,7 +662,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                                 ),
                               ),
                               trailing: isSelected
-                                  ? const Icon(Icons.check_circle,
+                                  ? const Icon(CupertinoIcons.check_mark_circle_fill,
                                       color: AppColors.primary)
                                   : null,
                               onTap: () {
@@ -715,10 +715,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                   autofocus: true,
                   decoration: InputDecoration(
                     hintText: 'Cari dompet...',
-                    prefixIcon: const Icon(Icons.search_rounded),
+                    prefixIcon: const Icon(CupertinoIcons.search),
                     suffixIcon: searchController.text.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.clear),
+                            icon: const Icon(CupertinoIcons.xmark_circle_fill),
                             onPressed: () {
                               searchController.clear();
                               setModalState(
@@ -753,7 +753,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.account_balance_wallet_outlined,
+                              Icon(CupertinoIcons.creditcard,
                                   size: 48, color: AppColors.textHint),
                               const SizedBox(height: 16),
                               Text(
@@ -791,7 +791,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                                   shape: BoxShape.circle,
                                 ),
                                 child: Icon(
-                                  Icons.account_balance_wallet_outlined,
+                                  CupertinoIcons.creditcard,
                                   color: isSelected
                                       ? (Theme.of(context).brightness ==
                                               Brightness.dark

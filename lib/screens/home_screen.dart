@@ -261,7 +261,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           borderRadius: BorderRadius.circular(2)),
                     ),
                     const SizedBox(height: 24),
-                    Icon(Icons.auto_awesome_rounded,
+                    Icon(CupertinoIcons.sparkles,
                         color: AppColors.primary, size: 32),
                     const SizedBox(height: 16),
                     Text(title.toUpperCase(),
@@ -417,7 +417,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       color: AppColors.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(Icons.palette_outlined,
+                    child: Icon(CupertinoIcons.paintbrush,
                         color: AppColors.primary, size: 24),
                   ),
                   const SizedBox(width: 16),
@@ -452,19 +452,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     _buildThemeOption(
                       title: 'Sesuai Sistem',
-                      icon: Icons.brightness_auto_rounded,
+                      icon: CupertinoIcons.circle_lefthalf_fill,
                       mode: ThemeMode.system,
                       isSelected: currentMode == ThemeMode.system,
                     ),
                     _buildThemeOption(
                       title: 'Terang',
-                      icon: Icons.light_mode_rounded,
+                      icon: CupertinoIcons.sun_max_fill,
                       mode: ThemeMode.light,
                       isSelected: currentMode == ThemeMode.light,
                     ),
                     _buildThemeOption(
                       title: 'Gelap',
-                      icon: Icons.dark_mode_rounded,
+                      icon: CupertinoIcons.moon_fill,
                       mode: ThemeMode.dark,
                       isSelected: currentMode == ThemeMode.dark,
                     ),
@@ -501,7 +501,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       trailing: isSelected
-          ? Icon(Icons.check_circle_rounded, color: AppColors.primary)
+          ? Icon(CupertinoIcons.check_mark_circle_fill, color: AppColors.primary)
           : null,
       onTap: () {
         ThemeManager.setThemeMode(mode);
@@ -799,7 +799,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       // Reload dismissed list (user might have swiped some)
                                       _loadSettings();
                                     },
-                                    icon: Icon(Icons.notifications_none_rounded,
+                                    icon: Icon(CupertinoIcons.bell,
                                         color: Theme.of(context)
                                             .textTheme
                                             .titleLarge
@@ -853,7 +853,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                           ? NetworkImage(user!.photoURL!)
                                           : null,
                                       child: user?.photoURL == null
-                                          ? Icon(Icons.person_rounded,
+                                          ? Icon(CupertinoIcons.person_fill,
                                               size: 22,
                                               color: AppColors.primary)
                                           : null,
@@ -880,7 +880,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                       : Colors.transparent,
                                                   width: 0.5)),
                                           child: Icon(
-                                            Icons.verified_rounded,
+                                            CupertinoIcons.checkmark_seal_fill,
                                             color: AppColors.primary,
                                             size: 14,
                                           ),
@@ -950,8 +950,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                     },
                                     child: Icon(
                                       _isBalanceVisible
-                                          ? Icons.visibility_outlined
-                                          : Icons.visibility_off_outlined,
+                                          ? CupertinoIcons.eye
+                                          : CupertinoIcons.eye_slash,
                                       color: Colors.white70,
                                       size: 18,
                                     ),
@@ -1046,7 +1046,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.account_balance_wallet_outlined,
+                                  Icon(CupertinoIcons.creditcard,
                                       color: Theme.of(context)
                                           .textTheme
                                           .bodySmall
@@ -1294,7 +1294,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.history_toggle_off_rounded,
+                  Icon(CupertinoIcons.clock,
                       color: Theme.of(context)
                           .textTheme
                           .bodySmall
@@ -1438,7 +1438,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ? NetworkImage(user!.photoURL!)
                     : null,
                 child: user?.photoURL == null
-                    ? Icon(Icons.person, size: 40)
+                    ? Icon(CupertinoIcons.person_fill, size: 40)
                     : null,
               ),
               const SizedBox(height: 16),
@@ -1472,8 +1472,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           Icon(
                             _isSuperAdmin
-                                ? Icons.stars_rounded
-                                : Icons.verified_user_rounded,
+                                ? CupertinoIcons.star_fill
+                                : CupertinoIcons.checkmark_shield_fill,
                             size: 10,
                             color: _isSuperAdmin
                                 ? (Theme.of(context).brightness ==
@@ -1521,11 +1521,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                 MaterialPageRoute(
                                     builder: (_) => const AdminToolsScreen()));
                           },
-                          trailing: Icon(Icons.arrow_forward_ios_rounded,
+                          trailing: Icon(CupertinoIcons.chevron_forward,
                               size: 16, color: AppColors.primary),
                         ),
-                      _buildProfileMenuItem(
-                        icon: Icons.shield_outlined,
+                        _buildProfileMenuItem(
+                        icon: CupertinoIcons.shield,
                         label: 'Kunci Sidik Jari/Wajah',
                         onTap: () async {
                           final newVal = !_isBiometricEnabled;
@@ -1559,7 +1559,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       _buildProfileMenuItem(
-                        icon: Icons.track_changes_rounded,
+                        icon: CupertinoIcons.target,
                         label: 'Target Budget Bulanan',
                         onTap: () {
                           Navigator.pop(context);
@@ -1575,7 +1575,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 fontWeight: FontWeight.bold)),
                       ),
                       _buildProfileMenuItem(
-                        icon: Icons.notifications_none_rounded,
+                        icon: CupertinoIcons.bell,
                         label: 'Pengingat Harian',
                         subtitle: _isNotificationEnabled
                             ? 'Ingatkan setiap pukul ${_reminderTime.format(context)}'
@@ -1590,7 +1590,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       _buildProfileMenuItem(
-                        icon: Icons.palette_outlined,
+                        icon: CupertinoIcons.paintbrush,
                         label: 'Tampilan',
                         subtitle:
                             _getThemeModeLabel(ThemeManager.notifier.value),
@@ -1598,12 +1598,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           Navigator.pop(context);
                           _showThemeSelector();
                         },
-                        trailing: Icon(Icons.arrow_forward_ios_rounded,
+                        trailing: Icon(CupertinoIcons.chevron_forward,
                             size: 16, color: AppColors.primary),
                       ),
                       const Divider(),
                       _buildProfileMenuItem(
-                        icon: Icons.language_rounded,
+                        icon: CupertinoIcons.globe,
                         label: ToneManager.t('profile_tone'),
                         onTap: () {
                           Navigator.pop(context);
@@ -1616,28 +1616,28 @@ class _HomeScreenState extends State<HomeScreen> {
                                 fontWeight: FontWeight.bold)),
                       ),
                       _buildProfileMenuItem(
-                          icon: Icons.person_outline,
+                          icon: CupertinoIcons.person,
                           label: 'Edit Profil',
                           onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
                                   builder: (_) => const EditProfileScreen()))),
                       _buildProfileMenuItem(
-                          icon: Icons.help_outline,
+                          icon: CupertinoIcons.question_circle,
                           label: 'Bantuan',
                           onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
                                   builder: (_) => const HelpScreen()))),
                       _buildProfileMenuItem(
-                          icon: Icons.info_outline_rounded,
+                          icon: CupertinoIcons.info,
                           label: 'Tentang Aplikasi',
                           onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
                                   builder: (_) => const AboutScreen()))),
                       _buildProfileMenuItem(
-                        icon: Icons.rate_review_outlined,
+                        icon: CupertinoIcons.square_pencil,
                         label: 'Survei Kepuasan',
                         onTap: () {
                           Navigator.pop(context);
@@ -1645,7 +1645,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         },
                       ),
                       _buildProfileMenuItem(
-                          icon: Icons.logout,
+                          icon: CupertinoIcons.power,
                           label: ToneManager.t('profile_logout'),
                           iconColor: AppColors.expense,
                           textColor: AppColors.expense,
@@ -2073,7 +2073,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       : Colors.black.withOpacity(0.6)))
           : null,
       trailing: trailing ??
-          Icon(Icons.chevron_right,
+          Icon(CupertinoIcons.chevron_right,
               size: 16, color: Theme.of(context).iconTheme.color),
       onTap: onTap,
     );
@@ -2128,10 +2128,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           .withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
-                      isMaintenance
-                          ? Icons.construction_rounded
-                          : Icons.pending_actions_rounded,
+                      Icon(
+                        isMaintenance
+                            ? CupertinoIcons.hammer_fill
+                            : CupertinoIcons.clock_fill,
                       color: isMaintenance ? Colors.red : Colors.orange,
                       size: 20,
                     ),
@@ -2245,7 +2245,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.info_rounded, color: Colors.blue, size: 24),
+                    Icon(CupertinoIcons.info_circle_fill, color: Colors.blue, size: 24),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Column(
@@ -2267,7 +2267,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     IconButton(
                       onPressed: () => _saveDismissedBroadcast(id),
-                      icon: Icon(Icons.close_rounded,
+                      icon: Icon(CupertinoIcons.xmark,
                           size: 16, color: Theme.of(context).iconTheme.color),
                       visualDensity: VisualDensity.compact,
                     ),
@@ -2285,17 +2285,17 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!mounted) return;
     final id = broadcast['id'] as String;
     final type = broadcast['type'] ?? 'info';
-    IconData displayIcon = Icons.notifications_active_rounded;
+    IconData displayIcon = CupertinoIcons.bell_fill;
     Color displayColor = Colors.blue;
 
     if (type == 'urgent') {
-      displayIcon = Icons.warning_rounded;
+      displayIcon = CupertinoIcons.exclamationmark_triangle_fill;
       displayColor = Colors.red;
     } else if (type == 'news') {
-      displayIcon = Icons.auto_awesome_rounded;
+      displayIcon = CupertinoIcons.sparkles;
       displayColor = Colors.purple;
     } else if (type == 'reminder') {
-      displayIcon = Icons.alarm_on_rounded;
+      displayIcon = CupertinoIcons.alarm_fill;
       displayColor = Colors.teal;
     }
 

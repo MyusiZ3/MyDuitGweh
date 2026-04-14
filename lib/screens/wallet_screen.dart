@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/firestore_service.dart';
 import '../services/connectivity_service.dart';
@@ -78,7 +79,7 @@ class WalletScreenState extends State<WalletScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
-                    Icons.add_rounded,
+                    CupertinoIcons.plus,
                     size: 26,
                     color: isDark ? const Color(0xFF0A84FF) : AppColors.primary,
                   ),
@@ -113,9 +114,9 @@ class WalletScreenState extends State<WalletScreen> {
                       color: Theme.of(context).hintColor.withOpacity(0.5),
                       fontSize: 15,
                     ),
-                    prefixIcon: Icon(Icons.search_rounded,
+                    prefixIcon: Icon(CupertinoIcons.search,
                         color: Theme.of(context).hintColor.withOpacity(0.5),
-                        size: 20),
+                        size: 18),
                     suffixIcon: _searchQuery.isEmpty
                         ? null
                         : GestureDetector(
@@ -123,7 +124,7 @@ class WalletScreenState extends State<WalletScreen> {
                               _searchController.clear();
                               setState(() => _searchQuery = "");
                             },
-                            child: Icon(Icons.cancel_rounded,
+                            child: Icon(CupertinoIcons.xmark_circle_fill,
                                 color: Theme.of(context).hintColor, size: 18),
                           ),
                     border: InputBorder.none,
@@ -298,7 +299,7 @@ class WalletScreenState extends State<WalletScreen> {
                         setModalState,
                         'personal',
                         'Pribadi',
-                        Icons.person_outline,
+                        CupertinoIcons.person,
                         selectedType,
                         (val) => selectedType = val),
                     const SizedBox(width: 8),
@@ -306,7 +307,7 @@ class WalletScreenState extends State<WalletScreen> {
                         setModalState,
                         'colab',
                         'Bersama',
-                        Icons.groups_outlined,
+                        CupertinoIcons.person_2,
                         selectedType,
                         (val) => selectedType = val),
                     const SizedBox(width: 8),
@@ -314,7 +315,7 @@ class WalletScreenState extends State<WalletScreen> {
                         setModalState,
                         'debt',
                         'Hutang',
-                        Icons.handshake_outlined,
+                        CupertinoIcons.doc_plaintext,
                         selectedType,
                         (val) => selectedType = val),
                   ],
@@ -387,7 +388,7 @@ class WalletScreenState extends State<WalletScreen> {
                                     borderRadius: BorderRadius.circular(12),
                                     borderSide: BorderSide.none),
                                 suffixIcon: IconButton(
-                                    icon: Icon(Icons.contacts,
+                                    icon: Icon(CupertinoIcons.person_crop_circle_fill_badge_plus,
                                         color: Theme.of(context).brightness ==
                                                 Brightness.dark
                                             ? const Color(0xFF0A84FF)
@@ -516,16 +517,11 @@ class WalletScreenState extends State<WalletScreen> {
                                                                     InputDecoration(
                                                                   hintText:
                                                                       'Cari nama atau nomor...',
-                                                                  prefixIcon: Icon(
-                                                                      Icons
-                                                                          .search_rounded,
+                                                                  prefixIcon: Icon(CupertinoIcons.search,
                                                                       color: Theme.of(context).brightness ==
-                                                                              Brightness
-                                                                                  .dark
-                                                                          ? const Color(
-                                                                              0xFF0A84FF)
-                                                                          : Theme.of(context)
-                                                                              .primaryColor),
+                                                                              Brightness.dark
+                                                                          ? const Color(0xFF0A84FF)
+                                                                          : Theme.of(context).primaryColor),
                                                                   border:
                                                                       InputBorder
                                                                           .none,
@@ -678,10 +674,10 @@ class WalletScreenState extends State<WalletScreen> {
                             : 'Nama dompet (misal: Jajan)',
                     prefixIcon: Icon(
                         selectedType == 'colab'
-                            ? Icons.groups_rounded
+                            ? CupertinoIcons.person_2
                             : selectedType == 'debt'
-                                ? Icons.receipt_long
-                                : Icons.account_balance_wallet_outlined,
+                                ? CupertinoIcons.doc_text
+                                : CupertinoIcons.creditcard,
                         color: Theme.of(context).brightness == Brightness.dark
                             ? const Color(0xFF0A84FF)
                             : Theme.of(context).primaryColor),
@@ -902,7 +898,7 @@ class WalletScreenState extends State<WalletScreen> {
                         .withOpacity(0.08),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.group_add_rounded,
+                  child: Icon(CupertinoIcons.person_badge_plus,
                       color: Theme.of(context).brightness == Brightness.dark
                           ? const Color(0xFF0A84FF)
                           : Theme.of(context).primaryColor,
@@ -1074,7 +1070,7 @@ class WalletScreenState extends State<WalletScreen> {
                       ),
                     ),
                     PopupMenuButton<String>(
-                      icon: Icon(Icons.more_vert_rounded,
+                      icon: Icon(CupertinoIcons.ellipsis,
                           color: Theme.of(context).brightness == Brightness.dark
                               ? Colors.white
                               : (Theme.of(context).textTheme.bodyLarge?.color ??
@@ -1147,7 +1143,7 @@ class WalletScreenState extends State<WalletScreen> {
                             value: 'rename',
                             child: Row(
                               children: [
-                                Icon(Icons.edit_outlined, size: 20),
+                                Icon(CupertinoIcons.pencil, size: 20),
                                 SizedBox(width: 12),
                                 Text('Ubah Nama'),
                               ],
@@ -1157,7 +1153,7 @@ class WalletScreenState extends State<WalletScreen> {
                             value: 'delete',
                             child: Row(
                               children: [
-                                Icon(Icons.delete_outline_rounded,
+                                Icon(CupertinoIcons.trash,
                                     size: 20, color: AppColors.expense),
                                 SizedBox(width: 12),
                                 Text('Hapus Dompet',
@@ -1170,7 +1166,7 @@ class WalletScreenState extends State<WalletScreen> {
                             value: 'leave',
                             child: Row(
                               children: [
-                                Icon(Icons.exit_to_app_rounded,
+                                Icon(CupertinoIcons.square_arrow_right,
                                     size: 20, color: AppColors.expense),
                                 SizedBox(width: 12),
                                 Text('Keluar dari Dompet',
@@ -1258,7 +1254,7 @@ class WalletScreenState extends State<WalletScreen> {
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.copy_rounded,
+                              Icon(CupertinoIcons.doc_on_doc,
                                   size: 18, color: Colors.white),
                               SizedBox(width: 8),
                               Text('Salin',
@@ -1370,7 +1366,7 @@ class WalletScreenState extends State<WalletScreen> {
                                         else if (wallet.owner == _uid)
                                           IconButton(
                                             icon: Icon(
-                                                Icons.person_remove_rounded,
+                                                CupertinoIcons.person_badge_minus,
                                                 color: AppColors.expense,
                                                 size: 18),
                                             onPressed: () async {
@@ -1425,8 +1421,8 @@ class WalletScreenState extends State<WalletScreen> {
                         children: [
                           Icon(
                             wallet.debtType == 'payable'
-                                ? Icons.arrow_upward_rounded
-                                : Icons.arrow_downward_rounded,
+                                ? CupertinoIcons.arrow_up_circle
+                                : CupertinoIcons.arrow_down_circle,
                             size: 18,
                             color: wallet.debtType == 'payable'
                                 ? AppColors.expense
@@ -1461,7 +1457,7 @@ class WalletScreenState extends State<WalletScreen> {
                                   : Colors.white,
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: Icon(Icons.person_rounded,
+                            child: Icon(CupertinoIcons.person_fill,
                                 color: Theme.of(context).brightness ==
                                         Brightness.dark
                                     ? const Color(0xFF0A84FF)
@@ -1546,7 +1542,7 @@ class WalletScreenState extends State<WalletScreen> {
                               color: AppColors.expense.withOpacity(0.9),
                               borderRadius: BorderRadius.circular(16),
                             ),
-                            child: Icon(Icons.delete_outline_rounded,
+                            child: Icon(CupertinoIcons.trash,
                                 color: Colors.white),
                           ),
                           child: ListTile(
@@ -1657,7 +1653,7 @@ class WalletScreenState extends State<WalletScreen> {
               autofocus: true,
               decoration: InputDecoration(
                 hintText: 'Masukkan nama baru',
-                prefixIcon: Icon(Icons.edit_rounded,
+                prefixIcon: Icon(CupertinoIcons.pencil,
                     color: Theme.of(context).primaryColor),
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
@@ -1741,7 +1737,7 @@ class WalletScreenState extends State<WalletScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.account_balance_wallet_outlined,
+              Icon(CupertinoIcons.creditcard,
                   size: 80,
                   color: Theme.of(context).hintColor.withOpacity(0.3)),
               const SizedBox(height: 20),
@@ -1813,9 +1809,9 @@ class _WalletCard extends StatelessWidget {
   }
 
   IconData get _cardIcon {
-    if (wallet.isDebt) return Icons.handshake_rounded;
-    if (wallet.isColab) return Icons.group_rounded;
-    return Icons.account_balance_wallet_rounded;
+    if (wallet.isDebt) return CupertinoIcons.rectangle_stack_person_crop;
+    if (wallet.isColab) return CupertinoIcons.person_2_fill;
+    return CupertinoIcons.creditcard_fill;
   }
 
   String get _subtitle {
@@ -1947,9 +1943,9 @@ class _WalletCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 6),
                     Icon(
-                      Icons.chevron_right_rounded,
+                      CupertinoIcons.chevron_right,
                       color: Theme.of(context).hintColor.withOpacity(0.3),
-                      size: 20,
+                      size: 18,
                     ),
                   ],
                 ),
