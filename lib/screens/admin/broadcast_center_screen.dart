@@ -145,7 +145,8 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
                         child: Center(
                           child: Text('OK, PREVIEW TUTUP',
                               style: TextStyle(
-                                  color: Theme.of(context).colorScheme.onPrimary,
+                                  color:
+                                      Theme.of(context).colorScheme.onPrimary,
                                   fontWeight: FontWeight.w800,
                                   letterSpacing: 0.5,
                                   fontSize: 13,
@@ -387,7 +388,10 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
                       decoration: BoxDecoration(
                         color: Theme.of(context).dividerColor.withOpacity(0.05),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                        border: Border.all(
+                            color: Theme.of(context)
+                                .dividerColor
+                                .withOpacity(0.1)),
                       ),
                       child: Row(
                         children: [
@@ -459,7 +463,9 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
-          border: Border(top: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1))),
+          border: Border(
+              top: BorderSide(
+                  color: Theme.of(context).dividerColor.withOpacity(0.1))),
         ),
         child: SafeArea(
           child: Padding(
@@ -505,7 +511,7 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
     bool isSelected = _selectedType == type;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final unselectedColor = isDark ? Colors.white38 : Colors.black38;
-    
+
     return Expanded(
       child: GestureDetector(
         onTap: () => setState(() => _selectedType = type),
@@ -514,11 +520,18 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
           decoration: BoxDecoration(
             color: isSelected ? color.withOpacity(0.1) : Colors.transparent,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: isSelected ? color : Theme.of(context).dividerColor.withOpacity(0.2)),
+            border: Border.all(
+                color: isSelected
+                    ? color
+                    : Theme.of(context).dividerColor.withOpacity(0.2)),
           ),
           child: Column(
             children: [
-              Icon(icon, color: isSelected ? color : (isDark ? Colors.white70 : unselectedColor), size: 20),
+              Icon(icon,
+                  color: isSelected
+                      ? color
+                      : (isDark ? Colors.white70 : unselectedColor),
+                  size: 20),
               const SizedBox(height: 4),
               Text(type.toUpperCase(),
                   style: TextStyle(
@@ -554,7 +567,8 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+        border:
+            Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -679,7 +693,8 @@ class _BroadcastCenterScreenState extends State<BroadcastCenterScreen> {
                 fontWeight: FontWeight.bold,
                 color: Theme.of(context).textTheme.bodyMedium?.color)),
         backgroundColor: Theme.of(context).cardColor,
-        side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.2)),
+        side:
+            BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.2)),
       ),
     );
   }
