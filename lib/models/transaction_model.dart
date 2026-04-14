@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'dart:math';
 
 class TransactionModel {
   final String id;
@@ -12,6 +13,8 @@ class TransactionModel {
   final String createdBy;
   final String createdByName;
   final DateTime date;
+  final String? debtId;
+  final String? targetWalletId; // For transfers
 
   TransactionModel({
     required this.id,
@@ -23,7 +26,31 @@ class TransactionModel {
     required this.createdBy,
     required this.createdByName,
     required this.date,
+    this.debtId,
+    this.targetWalletId,
   });
+
+  static String generateId({String prefix = 'TX'}) {
+    final now = DateTime.now();
+    // Format: PREFIX-YYMMDDXX-RANDOM (XX is hour or millisecond fragment)
+    final year = now.year.toString().substring(2);
+    final month = now.month.toString().padLeft(2, '0');
+    final day = now.day.toString().padLeft(2, '0');
+    
+    // To make it look like TX-00035053-NHBX (8 digits middle)
+    // We'll use a portion of the timestamp for the middle part
+    final middlePart = now.millisecondsSinceEpoch.toString().padLeft(13, '0').substring(5);
+    final suffix = _generateRandomString(4);
+    
+    return '$prefix-$middlePart-$suffix';
+  }
+
+  static String _generateRandomString(int length) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final random = Random();
+    return List.generate(length, (index) => chars[random.nextInt(chars.length)])
+        .join();
+  }
 
   factory TransactionModel.fromJson(Map<String, dynamic> json,
       {String? docId}) {
@@ -37,6 +64,8 @@ class TransactionModel {
       createdBy: json['createdBy'] as String,
       createdByName: json['createdByName'] as String? ?? 'Teman Kamu',
       date: (json['date'] as Timestamp).toDate(),
+      debtId: json['debtId'] as String?,
+      targetWalletId: json['targetWalletId'] as String?,
     );
   }
 
@@ -50,11 +79,14 @@ class TransactionModel {
       'createdBy': createdBy,
       'createdByName': createdByName,
       'date': Timestamp.fromDate(date),
+      if (debtId != null) 'debtId': debtId,
+      if (targetWalletId != null) 'targetWalletId': targetWalletId,
     };
   }
 
   bool get isIncome => type == 'income';
   bool get isExpense => type == 'expense';
+  bool get isTransfer => type == 'transfer';
 
   TransactionModel copyWith({
     String? id,
@@ -66,6 +98,8 @@ class TransactionModel {
     String? createdBy,
     String? createdByName,
     DateTime? date,
+    String? debtId,
+    String? targetWalletId,
   }) {
     return TransactionModel(
       id: id ?? this.id,
@@ -77,6 +111,8 @@ class TransactionModel {
       createdBy: createdBy ?? this.createdBy,
       createdByName: createdByName ?? this.createdByName,
       date: date ?? this.date,
+      debtId: debtId ?? this.debtId,
+      targetWalletId: targetWalletId ?? this.targetWalletId,
     );
   }
 }

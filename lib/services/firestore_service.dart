@@ -13,12 +13,7 @@ class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   String _generateProfessionalId(String prefix) {
-    final now = DateTime.now().millisecondsSinceEpoch.toString().substring(5);
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    final random =
-        List.generate(4, (index) => chars[Random().nextInt(chars.length)])
-            .join();
-    return '$prefix-$now-$random';
+    return TransactionModel.generateId(prefix: prefix);
   }
 
   Stream<List<WalletModel>> getWalletsStream(String uid) {
@@ -114,6 +109,8 @@ class FirestoreService {
     }
   }
 
+
+
   Future<void> addTransaction(TransactionModel transaction) async {
     final customTxId = _generateProfessionalId('TX');
     final batch = _firestore.batch();
@@ -125,10 +122,17 @@ class FirestoreService {
     final userRef = _firestore.collection('users').doc(transaction.createdBy);
 
     batch.set(transactionRef, transaction.copyWith(id: customTxId).toJson());
-
-    final incrementVal =
-        transaction.isIncome ? transaction.amount : -transaction.amount;
-    batch.update(walletRef, {'balance': FieldValue.increment(incrementVal)});
+    
+    if (transaction.isTransfer && transaction.targetWalletId != null) {
+      // HANDLE TRANSFER: Out from source, In to target
+      final targetWalletRef = _firestore.collection('wallets').doc(transaction.targetWalletId);
+      batch.update(walletRef, {'balance': FieldValue.increment(-transaction.amount)});
+      batch.update(targetWalletRef, {'balance': FieldValue.increment(transaction.amount)});
+    } else {
+      // HANDLE INCOME/EXPENSE
+      final incrementVal = transaction.isIncome ? transaction.amount : -transaction.amount;
+      batch.update(walletRef, {'balance': FieldValue.increment(incrementVal)});
+    }
 
     // Update lastTransactionAt for rate limiting in Security Rules
     batch.update(userRef, {'lastTransactionAt': FieldValue.serverTimestamp()});
@@ -198,6 +202,38 @@ class FirestoreService {
     return _firestore
         .collection('transactions')
         .where('walletId', whereIn: walletIds.take(30).toList())
+        .orderBy('date', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => TransactionModel.fromJson(doc.data(), docId: doc.id))
+            .toList());
+  }
+
+  Stream<double> getMonthlyExpenseStream(String uid) {
+    final now = DateTime.now();
+    final startOfMonth = DateTime(now.year, now.month, 1);
+    final endOfMonth = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
+
+    return _firestore
+        .collection('transactions')
+        .where('createdBy', isEqualTo: uid)
+        .where('type', isEqualTo: 'expense')
+        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth))
+        .where('date', isLessThanOrEqualTo: Timestamp.fromDate(endOfMonth))
+        .snapshots()
+        .map((snapshot) {
+      double total = 0;
+      for (var doc in snapshot.docs) {
+        total += (doc.data()['amount'] ?? 0).toDouble();
+      }
+      return total;
+    });
+  }
+
+  Stream<List<TransactionModel>> getTransactionsByDebtId(String debtId) {
+    return _firestore
+        .collection('transactions')
+        .where('debtId', isEqualTo: debtId)
         .orderBy('date', descending: true)
         .snapshots()
         .map((snapshot) => snapshot.docs
@@ -276,9 +312,16 @@ class FirestoreService {
 
     batch.delete(transactionRef);
 
-    final incrementVal =
-        transaction.isIncome ? -transaction.amount : transaction.amount;
-    batch.update(walletRef, {'balance': FieldValue.increment(incrementVal)});
+    if (transaction.isTransfer && transaction.targetWalletId != null) {
+      // REVERSE TRANSFER: In back to source, Out back from target
+      final targetWalletRef = _firestore.collection('wallets').doc(transaction.targetWalletId);
+      batch.update(walletRef, {'balance': FieldValue.increment(transaction.amount)});
+      batch.update(targetWalletRef, {'balance': FieldValue.increment(-transaction.amount)});
+    } else {
+      // REVERSE INCOME/EXPENSE
+      final incrementVal = transaction.isIncome ? -transaction.amount : transaction.amount;
+      batch.update(walletRef, {'balance': FieldValue.increment(incrementVal)});
+    }
 
     await batch.commit();
   }
@@ -532,6 +575,75 @@ class FirestoreService {
     return snap.docs
         .map((doc) => TransactionModel.fromJson(doc.data(), docId: doc.id))
         .toList();
+  }
+
+  // ══════════════════════════════════════════════════
+  // DATA INTEGRITY: RECONCILIATION
+  // ══════════════════════════════════════════════════
+
+  /// Recalculates all wallet balances based on transaction history.
+  /// This is the "Source of Truth" repair tool to fix balance discrepancies.
+  Future<void> syncAllBalances(String uid) async {
+    final batch = _firestore.batch();
+
+    // 1. Get all wallets where user is a member
+    final walletsSnap = await _firestore
+        .collection('wallets')
+        .where('members', arrayContains: uid)
+        .get();
+
+    for (var walletDoc in walletsSnap.docs) {
+      final walletId = walletDoc.id;
+
+      // 2. Query ALL transactions where this wallet is EITHER the source OR the target
+      // Note: We need to check both fields to handle transfers correctly
+      final sourceTxSnap = await _firestore
+          .collection('transactions')
+          .where('walletId', isEqualTo: walletId)
+          .get();
+          
+      final targetTxSnap = await _firestore
+          .collection('transactions')
+          .where('targetWalletId', isEqualTo: walletId)
+          .get();
+
+      // Combine both results into a set to avoid duplicates
+      Map<String, TransactionModel> allRelatedTxs = {};
+      
+      for (var doc in sourceTxSnap.docs) {
+        allRelatedTxs[doc.id] = TransactionModel.fromJson(doc.data(), docId: doc.id);
+      }
+      for (var doc in targetTxSnap.docs) {
+        allRelatedTxs[doc.id] = TransactionModel.fromJson(doc.data(), docId: doc.id);
+      }
+
+      double calculatedBalance = 0;
+
+      for (var tx in allRelatedTxs.values) {
+        if (tx.type == 'income') {
+          // Normal income to this wallet
+          if (tx.walletId == walletId) calculatedBalance += tx.amount;
+        } else if (tx.type == 'expense') {
+          // Normal expense from this wallet
+          if (tx.walletId == walletId) calculatedBalance -= tx.amount;
+        } else if (tx.type == 'transfer') {
+          // If this is the source wallet, money goes out
+          if (tx.walletId == walletId) calculatedBalance -= tx.amount;
+          // If this is the target wallet, money comes in
+          if (tx.targetWalletId == walletId) calculatedBalance += tx.amount;
+        }
+      }
+
+      // 3. Update the wallet with the reconciled balance
+      batch.update(walletDoc.reference, {'balance': calculatedBalance});
+    }
+
+    // 4. Record sync time for the user
+    batch.update(_firestore.collection('users').doc(uid), {
+      'lastSyncAt': FieldValue.serverTimestamp(),
+    });
+
+    await batch.commit();
   }
 
   /// Query new user registrations within a period for growth chart
