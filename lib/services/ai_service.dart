@@ -1437,7 +1437,7 @@ Output yang tidak mengikuti format dianggap gagal.
             'advisor_last_update', DateTime.now().toIso8601String());
       }
 
-      return result;
+      return AIService.cleanMessage(result);
     } catch (e) {
       debugPrint('Error getAdvisorAnalysis: $e');
       return 'Terjadi kerusakan pada koneksi server kesehatan.';
@@ -1626,8 +1626,8 @@ Pastikan:
         finalAnalysis = await tryGeminiList() ?? await tryGroqList();
       }
 
-      return finalAnalysis ??
-          'Sistem Gagal. Semua API AI limit atau error. Server Data macet.';
+      return AIService.cleanMessage(finalAnalysis ??
+          'Sistem Gagal. Semua API AI limit atau error. Server Data macet.');
     } catch (e) {
       debugPrint('Error getEagleEyeAnalysis: $e');
       return 'Terjadi kerusakan pada koneksi server kesehatan: $e';

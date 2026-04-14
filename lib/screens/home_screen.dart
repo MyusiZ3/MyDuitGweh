@@ -672,7 +672,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   if (debtSnapshot.hasData) {
                     for (var debt in debtSnapshot.data!) {
-                      if (debt.status == 'active') {
+                      if (debt.status != 'completed') {
                         final remaining = debt.totalAmount - debt.paidAmount;
                         if (debt.type == 'utang') {
                           totalDebt += remaining;

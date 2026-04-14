@@ -125,6 +125,7 @@ class TransactionCategory {
     'Freelance',
     'Hadiah',
     'Penjualan',
+    'Pinjaman',
     'Transfer Masuk',
     'Lainnya',
   ];
@@ -166,6 +167,8 @@ class TransactionCategory {
         return CupertinoIcons.gift_fill;
       case 'Penjualan':
         return CupertinoIcons.cart;
+      case 'Pinjaman':
+        return CupertinoIcons.money_dollar_circle;
       case 'Transfer Masuk':
       case 'Transfer Keluar':
         return CupertinoIcons.arrow_right_arrow_left;

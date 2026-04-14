@@ -553,7 +553,7 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                         )
                       else
                         Text(
-                          AIService.cleanMessage(msg.message),
+                          msg.message,
                           style: TextStyle(
                             fontSize: 14,
                             color: isMe
