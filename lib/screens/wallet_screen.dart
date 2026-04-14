@@ -54,7 +54,7 @@ class WalletScreenState extends State<WalletScreen> {
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-          title: const Text('Dompet SAYA',
+          title: const Text('Daftar Dompet',
               style: TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 22,
@@ -67,8 +67,8 @@ class WalletScreenState extends State<WalletScreen> {
             IconButton(
               onPressed: _showCreateWalletDialog,
               icon: Icon(Icons.add_circle_rounded,
-                  color: Theme.of(context).brightness == Brightness.dark 
-                      ? const Color(0xFF0A84FF) 
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF0A84FF)
                       : Theme.of(context).primaryColor),
             ),
             const SizedBox(width: 8),
@@ -119,7 +119,8 @@ class WalletScreenState extends State<WalletScreen> {
               margin: const EdgeInsets.fromLTRB(24, 0, 24, 16),
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1C1C1E) : const Color(0xFFE3E3E8),
+                color:
+                    isDark ? const Color(0xFF1C1C1E) : const Color(0xFFE3E3E8),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: TabBar(
@@ -139,9 +140,10 @@ class WalletScreenState extends State<WalletScreen> {
                   ],
                 ),
                 labelColor: Theme.of(context).textTheme.titleLarge?.color,
-                unselectedLabelColor: Theme.of(context).brightness == Brightness.dark 
-                    ? const Color(0xFF8E8E93) // Apple System Gray for Dark
-                    : Theme.of(context).hintColor,
+                unselectedLabelColor:
+                    Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF8E8E93) // Apple System Gray for Dark
+                        : Theme.of(context).hintColor,
                 labelStyle:
                     TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
                 unselectedLabelStyle:
@@ -299,8 +301,8 @@ class WalletScreenState extends State<WalletScreen> {
                       padding: const EdgeInsets.all(12),
                       margin: const EdgeInsets.only(bottom: 16),
                       decoration: BoxDecoration(
-                          color: Theme.of(context).brightness == Brightness.dark 
-                              ? Colors.white.withOpacity(0.05) 
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white.withOpacity(0.05)
                               : AppColors.surfaceVariant,
                           borderRadius: BorderRadius.circular(16)),
                       child: Column(
@@ -325,8 +327,9 @@ class WalletScreenState extends State<WalletScreen> {
                                       setModalState(() => debtType = val!),
                                   contentPadding: EdgeInsets.zero,
                                   dense: true,
-                                  activeColor: Theme.of(context).brightness == Brightness.dark 
-                                      ? const Color(0xFF0A84FF) 
+                                  activeColor: Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? const Color(0xFF0A84FF)
                                       : Theme.of(context).primaryColor,
                                 )),
                                 Expanded(
@@ -341,8 +344,9 @@ class WalletScreenState extends State<WalletScreen> {
                                       setModalState(() => debtType = val!),
                                   contentPadding: EdgeInsets.zero,
                                   dense: true,
-                                  activeColor: Theme.of(context).brightness == Brightness.dark 
-                                      ? const Color(0xFF0A84FF) 
+                                  activeColor: Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? const Color(0xFF0A84FF)
                                       : Theme.of(context).primaryColor,
                                 )),
                               ],
@@ -360,8 +364,9 @@ class WalletScreenState extends State<WalletScreen> {
                                     borderSide: BorderSide.none),
                                 suffixIcon: IconButton(
                                     icon: Icon(Icons.contacts,
-                                        color: Theme.of(context).brightness == Brightness.dark 
-                                            ? const Color(0xFF0A84FF) 
+                                        color: Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? const Color(0xFF0A84FF)
                                             : Theme.of(context).primaryColor),
                                     onPressed: () async {
                                       var status =
@@ -406,9 +411,11 @@ class WalletScreenState extends State<WalletScreen> {
                                                           .height *
                                                       0.8,
                                                   decoration: BoxDecoration(
-                                                    color: Theme.of(context).cardColor,
+                                                    color: Theme.of(context)
+                                                        .cardColor,
                                                     borderRadius:
-                                                        const BorderRadius.vertical(
+                                                        const BorderRadius
+                                                            .vertical(
                                                             top:
                                                                 Radius.circular(
                                                                     24)),
@@ -422,7 +429,11 @@ class WalletScreenState extends State<WalletScreen> {
                                                           width: 40,
                                                           height: 4,
                                                           decoration: BoxDecoration(
-                                                              color: Theme.of(context).hintColor.withOpacity(0.3),
+                                                              color: Theme.of(
+                                                                      context)
+                                                                  .hintColor
+                                                                  .withOpacity(
+                                                                      0.3),
                                                               borderRadius:
                                                                   BorderRadius
                                                                       .circular(
@@ -438,8 +449,7 @@ class WalletScreenState extends State<WalletScreen> {
                                                               CrossAxisAlignment
                                                                   .start,
                                                           children: [
-                                                            Text(
-                                                                'Pilih Kontak',
+                                                            Text('Pilih Kontak',
                                                                 style: TextStyle(
                                                                     fontSize:
                                                                         20,
@@ -452,7 +462,18 @@ class WalletScreenState extends State<WalletScreen> {
                                                               height: 48,
                                                               decoration:
                                                                   BoxDecoration(
-                                                                color: Theme.of(context).brightness == Brightness.dark ? Colors.white.withOpacity(0.15) : Theme.of(context).inputDecorationTheme.fillColor,
+                                                                color: Theme.of(context)
+                                                                            .brightness ==
+                                                                        Brightness
+                                                                            .dark
+                                                                    ? Colors
+                                                                        .white
+                                                                        .withOpacity(
+                                                                            0.15)
+                                                                    : Theme.of(
+                                                                            context)
+                                                                        .inputDecorationTheme
+                                                                        .fillColor,
                                                                 borderRadius:
                                                                     BorderRadius
                                                                         .circular(
@@ -471,10 +492,16 @@ class WalletScreenState extends State<WalletScreen> {
                                                                     InputDecoration(
                                                                   hintText:
                                                                       'Cari nama atau nomor...',
-                                                                  prefixIcon: Icon(Icons.search_rounded,
-                                                                      color: Theme.of(context).brightness == Brightness.dark 
-                                                                          ? const Color(0xFF0A84FF) 
-                                                                          : Theme.of(context).primaryColor),
+                                                                  prefixIcon: Icon(
+                                                                      Icons
+                                                                          .search_rounded,
+                                                                      color: Theme.of(context).brightness ==
+                                                                              Brightness
+                                                                                  .dark
+                                                                          ? const Color(
+                                                                              0xFF0A84FF)
+                                                                          : Theme.of(context)
+                                                                              .primaryColor),
                                                                   border:
                                                                       InputBorder
                                                                           .none,
@@ -500,10 +527,20 @@ class WalletScreenState extends State<WalletScreen> {
                                                                   ListTile(
                                                             leading:
                                                                 CircleAvatar(
-                                                              backgroundColor:
-                                                                  Theme.of(context).brightness == Brightness.dark 
-                                                                      ? const Color(0xFF0A84FF).withOpacity(0.25) 
-                                                                      : Theme.of(context).primaryColor.withOpacity(0.1),
+                                                              backgroundColor: Theme.of(
+                                                                              context)
+                                                                          .brightness ==
+                                                                      Brightness
+                                                                          .dark
+                                                                  ? const Color(
+                                                                          0xFF0A84FF)
+                                                                      .withOpacity(
+                                                                          0.25)
+                                                                  : Theme.of(
+                                                                          context)
+                                                                      .primaryColor
+                                                                      .withOpacity(
+                                                                          0.1),
                                                               child: Text(
                                                                   filteredContacts[i]
                                                                           .displayName
@@ -513,9 +550,13 @@ class WalletScreenState extends State<WalletScreen> {
                                                                           0]
                                                                       : '?',
                                                                   style: TextStyle(
-                                                                      color: Theme.of(context).brightness == Brightness.dark 
-                                                                          ? const Color(0xFF0A84FF) 
-                                                                          : Theme.of(context).primaryColor,
+                                                                      color: Theme.of(context).brightness ==
+                                                                              Brightness
+                                                                                  .dark
+                                                                          ? const Color(
+                                                                              0xFF0A84FF)
+                                                                          : Theme.of(context)
+                                                                              .primaryColor,
                                                                       fontWeight:
                                                                           FontWeight
                                                                               .bold)),
@@ -592,7 +633,9 @@ class WalletScreenState extends State<WalletScreen> {
                               decoration: InputDecoration(
                                 hintText: 'Nomor HP (bisa via kontak)',
                                 filled: true,
-                                fillColor: Theme.of(context).inputDecorationTheme.fillColor,
+                                fillColor: Theme.of(context)
+                                    .inputDecorationTheme
+                                    .fillColor,
                                 border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
                                     borderSide: BorderSide.none),
@@ -615,21 +658,23 @@ class WalletScreenState extends State<WalletScreen> {
                             : selectedType == 'debt'
                                 ? Icons.receipt_long
                                 : Icons.account_balance_wallet_outlined,
-                        color: Theme.of(context).brightness == Brightness.dark 
-                            ? const Color(0xFF0A84FF) 
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF0A84FF)
                             : Theme.of(context).primaryColor),
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide(
-                            color: Theme.of(context).brightness == Brightness.dark 
-                                ? const Color(0xFF0A84FF).withOpacity(0.5) 
-                                : Theme.of(context).primaryColor)),
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? const Color(0xFF0A84FF).withOpacity(0.5)
+                                    : Theme.of(context).primaryColor)),
                     focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide(
-                            color: Theme.of(context).brightness == Brightness.dark 
-                                ? const Color(0xFF0A84FF) 
-                                : Theme.of(context).primaryColor, 
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? const Color(0xFF0A84FF)
+                                    : Theme.of(context).primaryColor,
                             width: 2)),
                   ),
                 ),
@@ -694,9 +739,10 @@ class WalletScreenState extends State<WalletScreen> {
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).brightness == Brightness.dark 
-                          ? const Color(0xFF0A84FF) 
-                          : Theme.of(context).primaryColor,
+                      backgroundColor:
+                          Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFF0A84FF)
+                              : Theme.of(context).primaryColor,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16)),
@@ -715,12 +761,12 @@ class WalletScreenState extends State<WalletScreen> {
                       Navigator.pop(context);
                       _showJoinWalletDialog();
                     },
-                    child: Text(
-                        'Sudah punya kode undangan? Gabung di sini',
+                    child: Text('Sudah punya kode undangan? Gabung di sini',
                         style: TextStyle(
-                            color: Theme.of(context).brightness == Brightness.dark 
-                                ? const Color(0xFF0A84FF) 
-                                : Theme.of(context).primaryColor,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? const Color(0xFF0A84FF)
+                                    : Theme.of(context).primaryColor,
                             fontWeight: FontWeight.w600)),
                   ),
                 ),
@@ -743,15 +789,15 @@ class WalletScreenState extends State<WalletScreen> {
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
             color: isSelected
-                ? (isDark 
-                    ? const Color(0xFF0A84FF).withOpacity(0.25) 
+                ? (isDark
+                    ? const Color(0xFF0A84FF).withOpacity(0.25)
                     : Theme.of(context).primaryColor.withOpacity(0.1))
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
                 color: isSelected
-                    ? (isDark 
-                        ? const Color(0xFF0A84FF) 
+                    ? (isDark
+                        ? const Color(0xFF0A84FF)
                         : Theme.of(context).primaryColor)
                     : Theme.of(context).dividerColor.withOpacity(0.1),
                 width: 1.5),
@@ -759,18 +805,24 @@ class WalletScreenState extends State<WalletScreen> {
           child: Column(
             children: [
               Icon(icon,
-                  color: isSelected 
-                      ? (isDark ? const Color(0xFF0A84FF) : Theme.of(context).primaryColor)
-                      : (isDark 
-                          ? Colors.white.withOpacity(0.5) 
+                  color: isSelected
+                      ? (isDark
+                          ? const Color(0xFF0A84FF)
+                          : Theme.of(context).primaryColor)
+                      : (isDark
+                          ? Colors.white.withOpacity(0.5)
                           : Theme.of(context).hintColor),
                   size: 24),
               const SizedBox(height: 4),
               Text(label,
                   style: TextStyle(
-                      color: isSelected 
-                          ? (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A84FF) : Theme.of(context).primaryColor)
-                          : (Theme.of(context).brightness == Brightness.dark ? Colors.white.withOpacity(0.7) : Theme.of(context).hintColor),
+                      color: isSelected
+                          ? (Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFF0A84FF)
+                              : Theme.of(context).primaryColor)
+                          : (Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white.withOpacity(0.7)
+                              : Theme.of(context).hintColor),
                       fontWeight:
                           isSelected ? FontWeight.bold : FontWeight.normal)),
             ],
@@ -820,15 +872,17 @@ class WalletScreenState extends State<WalletScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: (Theme.of(context).brightness == Brightness.dark 
-                        ? const Color(0xFF0A84FF) 
-                        : Theme.of(context).primaryColor).withOpacity(0.08),
+                    color: (Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF0A84FF)
+                            : Theme.of(context).primaryColor)
+                        .withOpacity(0.08),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(Icons.group_add_rounded,
-                      color: Theme.of(context).brightness == Brightness.dark 
-                          ? const Color(0xFF0A84FF) 
-                          : Theme.of(context).primaryColor, size: 36),
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF0A84FF)
+                          : Theme.of(context).primaryColor,
+                      size: 36),
                 ),
                 const SizedBox(height: 20),
                 Text('Gabung Dompet Bersama',
@@ -841,7 +895,9 @@ class WalletScreenState extends State<WalletScreen> {
                   'Masukkan 6 digit kode undangan dari temanmu\nuntuk mulai mencatat bersama.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                      color: Theme.of(context).hintColor, fontSize: 13, height: 1.5),
+                      color: Theme.of(context).hintColor,
+                      fontSize: 13,
+                      height: 1.5),
                 ),
                 const SizedBox(height: 24),
                 TextField(
@@ -853,8 +909,8 @@ class WalletScreenState extends State<WalletScreen> {
                       fontSize: 28,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 8,
-                      color: Theme.of(context).brightness == Brightness.dark 
-                          ? const Color(0xFF0A84FF) 
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF0A84FF)
                           : Theme.of(context).primaryColor),
                   decoration: InputDecoration(
                     hintText: '• • • • • •',
@@ -873,9 +929,11 @@ class WalletScreenState extends State<WalletScreen> {
                     focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide(
-                            color: Theme.of(context).brightness == Brightness.dark 
-                                ? const Color(0xFF0A84FF) 
-                                : Theme.of(context).primaryColor, width: 2)),
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? const Color(0xFF0A84FF)
+                                    : Theme.of(context).primaryColor,
+                            width: 2)),
                     contentPadding: const EdgeInsets.symmetric(
                         vertical: 18, horizontal: 16),
                   ),
@@ -907,9 +965,10 @@ class WalletScreenState extends State<WalletScreen> {
                             }
                           },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).brightness == Brightness.dark 
-                          ? const Color(0xFF0A84FF) 
-                          : Theme.of(context).primaryColor,
+                      backgroundColor:
+                          Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFF0A84FF)
+                              : Theme.of(context).primaryColor,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16)),
@@ -992,7 +1051,10 @@ class WalletScreenState extends State<WalletScreen> {
                     ),
                     PopupMenuButton<String>(
                       icon: Icon(Icons.more_vert_rounded,
-                          color: Theme.of(context).brightness == Brightness.dark ? Colors.white : (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black87)),
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white
+                              : (Theme.of(context).textTheme.bodyLarge?.color ??
+                                  Colors.black87)),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16)),
                       onSelected: (value) async {
@@ -1031,11 +1093,11 @@ class WalletScreenState extends State<WalletScreen> {
                               UIHelper.showSuccessSnackBar(
                                   context, 'Dompet berhasil dihapus');
                             } catch (e) {
-                                  if (mounted) {
-                                    Navigator.of(context).pop();
-                                    UIHelper.showInfoSnackBar(context,
-                                        'Proses hapus tertunda koneksi.');
-                                  }
+                              if (mounted) {
+                                Navigator.of(context).pop();
+                                UIHelper.showInfoSnackBar(
+                                    context, 'Proses hapus tertunda koneksi.');
+                              }
                             }
                           }
                         } else if (value == 'leave') {
@@ -1103,14 +1165,16 @@ class WalletScreenState extends State<WalletScreen> {
                   margin: const EdgeInsets.symmetric(horizontal: 24),
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: (Theme.of(context).brightness == Brightness.dark 
-                        ? const Color(0xFF0A84FF) 
-                        : Theme.of(context).primaryColor).withOpacity(0.12),
+                    color: (Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF0A84FF)
+                            : Theme.of(context).primaryColor)
+                        .withOpacity(0.12),
                     borderRadius: BorderRadius.circular(20),
-                    border:
-                        Border.all(color: (Theme.of(context).brightness == Brightness.dark 
-                            ? const Color(0xFF0A84FF) 
-                            : Theme.of(context).primaryColor).withOpacity(0.2)),
+                    border: Border.all(
+                        color: (Theme.of(context).brightness == Brightness.dark
+                                ? const Color(0xFF0A84FF)
+                                : Theme.of(context).primaryColor)
+                            .withOpacity(0.2)),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1122,7 +1186,10 @@ class WalletScreenState extends State<WalletScreen> {
                               style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
-                                  color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A84FF).withOpacity(0.9) : Theme.of(context).hintColor,
+                                  color: Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? const Color(0xFF0A84FF).withOpacity(0.9)
+                                      : Theme.of(context).hintColor,
                                   letterSpacing: 1)),
                           const SizedBox(height: 6),
                           Text(wallet.inviteCode ?? '-',
@@ -1130,7 +1197,8 @@ class WalletScreenState extends State<WalletScreen> {
                                   fontSize: 22,
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: 2,
-                                  color: Theme.of(context).brightness == Brightness.dark 
+                                  color: Theme.of(context).brightness ==
+                                          Brightness.dark
                                       ? Colors.white
                                       : Theme.of(context).primaryColor)),
                         ],
@@ -1147,15 +1215,18 @@ class WalletScreenState extends State<WalletScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 10),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).brightness == Brightness.dark 
-                                ? const Color(0xFF0A84FF) 
-                                : Theme.of(context).primaryColor,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? const Color(0xFF0A84FF)
+                                    : Theme.of(context).primaryColor,
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
-                                  color: (Theme.of(context).brightness == Brightness.dark 
-                                      ? const Color(0xFF0A84FF) 
-                                      : Theme.of(context).primaryColor).withOpacity(0.3),
+                                  color: (Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? const Color(0xFF0A84FF)
+                                          : Theme.of(context).primaryColor)
+                                      .withOpacity(0.3),
                                   blurRadius: 8,
                                   offset: const Offset(0, 4))
                             ],
@@ -1208,9 +1279,13 @@ class WalletScreenState extends State<WalletScreen> {
                                       children: [
                                         CircleAvatar(
                                           radius: 14,
-                                          backgroundColor: (Theme.of(context).brightness == Brightness.dark 
-                                              ? const Color(0xFF0A84FF) 
-                                              : Theme.of(context).primaryColor).withOpacity(0.1),
+                                          backgroundColor:
+                                              (Theme.of(context).brightness ==
+                                                          Brightness.dark
+                                                      ? const Color(0xFF0A84FF)
+                                                      : Theme.of(context)
+                                                          .primaryColor)
+                                                  .withOpacity(0.1),
                                           child: Text(
                                               name.isNotEmpty
                                                   ? name[0].toUpperCase()
@@ -1218,9 +1293,12 @@ class WalletScreenState extends State<WalletScreen> {
                                               style: TextStyle(
                                                   fontSize: 10,
                                                   fontWeight: FontWeight.bold,
-                                                  color: Theme.of(context).brightness == Brightness.dark 
-                                                      ? const Color(0xFF0A84FF) 
-                                                      : Theme.of(context).primaryColor)),
+                                                  color: Theme.of(context)
+                                                              .brightness ==
+                                                          Brightness.dark
+                                                      ? const Color(0xFF0A84FF)
+                                                      : Theme.of(context)
+                                                          .primaryColor)),
                                         ),
                                         const SizedBox(width: 12),
                                         Expanded(
@@ -1231,7 +1309,10 @@ class WalletScreenState extends State<WalletScreen> {
                                               fontWeight: isMe
                                                   ? FontWeight.w700
                                                   : FontWeight.w500,
-                                              color: Theme.of(context).textTheme.bodyLarge?.color,
+                                              color: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyLarge
+                                                  ?.color,
                                             ),
                                           ),
                                         ),
@@ -1240,9 +1321,13 @@ class WalletScreenState extends State<WalletScreen> {
                                             padding: const EdgeInsets.symmetric(
                                                 horizontal: 6, vertical: 2),
                                             decoration: BoxDecoration(
-                                              color: (Theme.of(context).brightness == Brightness.dark 
-                                                  ? const Color(0xFF0A84FF) 
-                                                  : Theme.of(context).primaryColor).withOpacity(0.1),
+                                              color: (Theme.of(context)
+                                                              .brightness ==
+                                                          Brightness.dark
+                                                      ? const Color(0xFF0A84FF)
+                                                      : Theme.of(context)
+                                                          .primaryColor)
+                                                  .withOpacity(0.1),
                                               borderRadius:
                                                   BorderRadius.circular(4),
                                             ),
@@ -1250,9 +1335,13 @@ class WalletScreenState extends State<WalletScreen> {
                                                 style: TextStyle(
                                                     fontSize: 8,
                                                     fontWeight: FontWeight.w800,
-                                                    color: Theme.of(context).brightness == Brightness.dark 
-                                                        ? const Color(0xFF0A84FF) 
-                                                        : Theme.of(context).primaryColor)),
+                                                    color: Theme.of(context)
+                                                                .brightness ==
+                                                            Brightness.dark
+                                                        ? const Color(
+                                                            0xFF0A84FF)
+                                                        : Theme.of(context)
+                                                            .primaryColor)),
                                           )
                                         else if (wallet.owner == _uid)
                                           IconButton(
@@ -1342,14 +1431,16 @@ class WalletScreenState extends State<WalletScreen> {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: Theme.of(context).brightness == Brightness.dark 
-                                  ? const Color(0xFF2C2C2E) 
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? const Color(0xFF2C2C2E)
                                   : Colors.white,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Icon(Icons.person_rounded,
-                                color: Theme.of(context).brightness == Brightness.dark 
-                                    ? const Color(0xFF0A84FF) 
+                                color: Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? const Color(0xFF0A84FF)
                                     : Theme.of(context).hintColor),
                           ),
                           const SizedBox(width: 12),
@@ -1367,7 +1458,8 @@ class WalletScreenState extends State<WalletScreen> {
                                 Text(
                                   wallet.debtorPhone!,
                                   style: TextStyle(
-                                      fontSize: 12, color: Theme.of(context).hintColor),
+                                      fontSize: 12,
+                                      color: Theme.of(context).hintColor),
                                 ),
                             ],
                           ),
@@ -1389,7 +1481,8 @@ class WalletScreenState extends State<WalletScreen> {
                     if (txns.isEmpty)
                       return Center(
                           child: Text('Belum ada transaksi',
-                              style: TextStyle(color: Theme.of(context).hintColor)));
+                              style: TextStyle(
+                                  color: Theme.of(context).hintColor)));
 
                     return ListView.builder(
                       controller: scrollController,
@@ -1453,8 +1546,7 @@ class WalletScreenState extends State<WalletScreen> {
                               ),
                             ),
                             title: Text(t.category,
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold)),
+                                style: TextStyle(fontWeight: FontWeight.bold)),
                             subtitle: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -1541,11 +1633,12 @@ class WalletScreenState extends State<WalletScreen> {
               autofocus: true,
               decoration: InputDecoration(
                 hintText: 'Masukkan nama baru',
-                prefixIcon:
-                    Icon(Icons.edit_rounded, color: Theme.of(context).primaryColor),
+                prefixIcon: Icon(Icons.edit_rounded,
+                    color: Theme.of(context).primaryColor),
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: Theme.of(context).primaryColor)),
+                    borderSide:
+                        BorderSide(color: Theme.of(context).primaryColor)),
               ),
             ),
             const SizedBox(height: 24),
@@ -1625,13 +1718,13 @@ class WalletScreenState extends State<WalletScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.account_balance_wallet_outlined,
-                  size: 80, color: Theme.of(context).hintColor.withOpacity(0.3)),
+                  size: 80,
+                  color: Theme.of(context).hintColor.withOpacity(0.3)),
               const SizedBox(height: 20),
               Text(
                 ToneManager.t('wallet_empty_title'),
                 textAlign: TextAlign.center,
-                style:
-                    TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
               Text(
@@ -1646,7 +1739,10 @@ class WalletScreenState extends State<WalletScreen> {
                 child: ElevatedButton(
                   onPressed: _showCreateWalletDialog,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A84FF) : Theme.of(context).primaryColor,
+                    backgroundColor:
+                        Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF0A84FF)
+                            : Theme.of(context).primaryColor,
                     foregroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
@@ -1677,8 +1773,12 @@ class _WalletCard extends StatelessWidget {
           ? AppColors.expense
           : AppColors.income;
     }
-    if (wallet.isColab) { return (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A84FF) : AppColors.primary); }
-    
+    if (wallet.isColab) {
+      return (Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF0A84FF)
+          : AppColors.primary);
+    }
+
     // In dark mode, use a slightly lighter primary color for icons if the primary is too dark
     final primary = Theme.of(context).primaryColor;
     if (Theme.of(context).brightness == Brightness.dark) {
@@ -1735,10 +1835,14 @@ class _WalletCard extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: _getCardAccent(context).withOpacity(Theme.of(context).brightness == Brightness.dark ? 0.25 : 0.12),
+                    color: _getCardAccent(context).withOpacity(
+                        Theme.of(context).brightness == Brightness.dark
+                            ? 0.25
+                            : 0.12),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Icon(_cardIcon, color: _getCardAccent(context), size: 24),
+                  child:
+                      Icon(_cardIcon, color: _getCardAccent(context), size: 24),
                 ),
                 const SizedBox(width: 16),
                 // Info
@@ -1816,7 +1920,8 @@ class _WalletCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 Icon(Icons.chevron_right_rounded,
-                    color: Theme.of(context).hintColor.withOpacity(0.5), size: 20),
+                    color: Theme.of(context).hintColor.withOpacity(0.5),
+                    size: 20),
               ],
             ),
           ),
