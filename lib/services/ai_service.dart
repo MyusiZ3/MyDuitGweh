@@ -8,6 +8,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 import '../models/transaction_model.dart';
 import '../models/wallet_model.dart';
+import '../models/debt_model.dart';
 import '../utils/tone_dictionary.dart';
 import 'package:intl/intl.dart';
 
@@ -40,6 +41,18 @@ class AIService {
   static const String _modelName = 'gemini-3.1-pro-preview';
   static final ValueNotifier<String> statusNotifier = ValueNotifier("ok");
   static List<String> _integratedApiKeys = [];
+
+  /// Membersihkan respons AI dari tag <think> dan karakter informal yang tidak diinginkan.
+  static String cleanMessage(String text) {
+    var cleaned = text;
+    // Hapus blok <think>...</think> (biasanya dari model reasoning/R1)
+    cleaned = cleaned.replaceAll(RegExp(r'<think>[\s\S]*?<\/think>'), '');
+    
+    // Hapus jika ada teks "Thought:" atau sejenisnya di awal (opsional)
+    cleaned = cleaned.replaceAll(RegExp(r'^Thought:\s*', caseSensitive: false, multiLine: true), '');
+    
+    return cleaned.trim();
+  }
 
   static Future<Map<String, dynamic>> getGlobalConfig() async {
     try {
@@ -596,7 +609,7 @@ class AIService {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      return data['choices']?[0]?['message']?['content'];
+      return cleanMessage(data['choices']?[0]?['message']?['content'] ?? '');
     }
     final errorBody = jsonDecode(response.body);
     final errorMsg = errorBody['error']?['message'] ?? 'Unknown error';
@@ -674,6 +687,7 @@ class AIService {
     required DateTimeRange dateRange,
     AppTone tone = AppTone.normal,
     List<Content>? history,
+    List<DebtModel>? debts,
   }) async {
     final isCustomApi = apiKey != null && apiKey.trim().isNotEmpty;
     final currentUser = FirebaseAuth.instance.currentUser;
@@ -720,8 +734,8 @@ class AIService {
       if (!uniqueGroqKeys.contains(k)) uniqueGroqKeys.add(k);
     }
 
-    final summary =
-        _generateDataSummary(transactions, dateRange, wallets: wallets);
+    final summary = _generateDataSummary(transactions, dateRange,
+        wallets: wallets, debtData: debts);
 
     // Get user name and gender for pasangan mode
     final userName = currentUser?.displayName ?? 'Sayang';
@@ -895,6 +909,8 @@ INSTRUKSI:
 6. JIKA PENGGUNA HANYA MENYAPA (Halo, Hai, Pagi, Malam, dll) atau memberikan input singkat yang tidak memerlukan analisis mendalam, JANGAN memberondong dengan ringkasan data atau saran panjang. Balaslah sesingkat dan seramah mungkin sesuai kepribadianmu.
 7. JANGAN sertakan nama AI atau prefix apapun (seperti "**Archen...**") di awal jawabanmu. Langsung berikan isi jawaban.
 8. WAJIB gunakan pemisah ribuan titik (.) untuk setiap nominal angka (contoh: 50.000, 1.250.000). Pastikan angka tidak menyatu tanpa pemisah agar mudah dibaca.
+9. DILARANG KERAS menyertakan tag pemikiran internal seperti <think>...</think> atau menaruh proses pemikiran di chat di dalam jawaban. Jawaban harus langsung to-the-point dan profesional.
+10. Pastikan setiap kalimat yang dihasilkan Selesai Terbentuk Sempurna, jangan sampai terpotong di akhir.
 ''';
 
     try {
@@ -1019,7 +1035,7 @@ INSTRUKSI:
                 );
                 if (result != null && result.isNotEmpty) {
                   statusNotifier.value = isPersonalGroq ? 'ok' : 'limit';
-                  return result;
+                  return AIService.cleanMessage(result);
                 }
               } catch (e) {
                 final errStr = e.toString().toLowerCase();
@@ -1057,7 +1073,7 @@ INSTRUKSI:
         }
       }
 
-      return finalResponse?.text ?? 'Maaf, jawaban kosong.';
+      return AIService.cleanMessage(finalResponse?.text ?? 'Maaf, jawaban kosong.');
     } catch (e) {
       if (e.toString().contains('QUOTA_EXCEEDED')) rethrow;
       if (e.toString().contains('Invalid API key')) {
@@ -1069,7 +1085,7 @@ INSTRUKSI:
 
   String _generateDataSummary(
       List<TransactionModel> transactions, DateTimeRange range,
-      {List<WalletModel>? wallets}) {
+      {List<WalletModel>? wallets, List<DebtModel>? debtData}) {
     double totalIncome = 0;
     double totalExpense = 0;
     Map<String, double> categoryBreakdown = {};
@@ -1085,30 +1101,56 @@ INSTRUKSI:
       }
     }
 
-    String _format(double amount) =>
+    String formatNumber(double amount) =>
         NumberFormat('#,###', 'id_ID').format(amount);
 
     String breakdownStr = categoryBreakdown.entries
-        .map((e) => "- ${e.key}: Rp ${_format(e.value)}")
+        .map((e) => "- ${e.key}: Rp ${formatNumber(e.value)}")
         .join("\n");
 
     String walletsStr = "";
     if (wallets != null && wallets.isNotEmpty) {
       walletsStr =
-          "\nSTATUS DOMPET SAAT INI:\n${wallets.map((w) => "- ${w.walletName} (${w.type == 'colab' ? 'Tabungan Bersama' : w.type == 'debt' ? 'Hutang/Piutang' : 'Pribadi'}): Rp ${_format(w.balance)}").join("\n")}\n";
+          "\nSTATUS DOMPET SAAT INI:\n${wallets.map((w) => "- ${w.walletName} (${w.type == 'colab' ? 'Tabungan Bersama' : w.type == 'debt' ? 'Hutang/Piutang' : 'Pribadi'}): Rp ${formatNumber(w.balance)}").join("\n")}\n";
+    }
+
+    String debtsStr = "";
+    if (debtData != null && debtData.isNotEmpty) {
+      double totalDebtToPay = 0;
+      double totalDebtToReceive = 0;
+      List<String> debtItems = [];
+
+      for (var d in debtData) {
+        if (d.status == 'completed') continue;
+        final amount = d.remainingAmount;
+        if (d.type == 'utang') {
+          totalDebtToPay += amount;
+          debtItems.add("- Hutang ke ${d.title}: Rp ${formatNumber(amount)}");
+        } else {
+          totalDebtToReceive += amount;
+          debtItems
+              .add("- Piutang dari ${d.title}: Rp ${formatNumber(amount)}");
+        }
+      }
+
+      debtsStr = "\nDAFTAR HUTANG & PIUTANG AKTIF:\n"
+          "Total Hutang (Harus Dibayar): Rp ${formatNumber(totalDebtToPay)}\n"
+          "Total Piutang (Akan Diterima): Rp ${formatNumber(totalDebtToReceive)}\n"
+          "${debtItems.join("\n")}\n";
     }
 
     return '''
  RINGKASAN DATA KEUANGAN (${DateFormat('dd/MM').format(range.start)} - ${DateFormat('dd/MM').format(range.end)}):
- - Total Pemasukan: Rp ${_format(totalIncome)}
- - Total Pengeluaran: Rp ${_format(totalExpense)}
- - Saldo Bersih: Rp ${_format(totalIncome - totalExpense)}
+ - Total Pemasukan: Rp ${formatNumber(totalIncome)}
+ - Total Pengeluaran: Rp ${formatNumber(totalExpense)}
+ - Saldo Bersih: Rp ${formatNumber(totalIncome - totalExpense)}
  $walletsStr
+ $debtsStr
  RINCIAN PENGELUARAN PER KATEGORI:
  $breakdownStr
  
  DAFTAR TRANSAKSI TERAKHIR (Sample 20 item):
- ${transactions.take(20).map((t) => "[${DateFormat('dd/MM').format(t.date)}] ${t.type == 'income' ? '+' : '-'} Rp ${_format(t.amount)} (${t.category}: ${t.note})").join("\n")}
+ ${transactions.take(20).map((t) => "[${DateFormat('dd/MM').format(t.date)}] ${t.type == 'income' ? '+' : '-'} Rp ${formatNumber(t.amount)} (${t.category}: ${t.note})").join("\n")}
  ''';
   }
 
@@ -1120,6 +1162,7 @@ INSTRUKSI:
     required double score,
     required String status,
     AppTone tone = AppTone.normal,
+    List<DebtModel>? debts,
   }) async {
     try {
       final config = await getGlobalConfig();
@@ -1177,8 +1220,8 @@ INSTRUKSI:
         }
       }
 
-      final summary = AIService()
-          ._generateDataSummary(transactions, dateRange, wallets: wallets);
+      final summary = AIService()._generateDataSummary(transactions, dateRange,
+          wallets: wallets, debtData: debts);
 
       final currentUser = FirebaseAuth.instance.currentUser;
       final userName = currentUser?.displayName ?? 'Sayang';
@@ -1279,6 +1322,8 @@ INSTRUKSI FORMAT:
 - Mulailah jawabanmu LANGSUNG dengan teks analisis.
 - JANGAN sertakan nama AI atau prefix apapun (seperti "**Archen...**").
 - Gunakan bahasa Indonesia.
+- JANGAN berhenti di tengah kalimat. Pastikan respon selasai sepenuhnya dan tidak menggantung.
+- DILARANG KERAS menyertakan tag pemikiran internal seperti <think>...</think> atau menaruh proses pemikiran di chat di dalam jawaban. Jawaban harus langsung to-the-point dan profesional.
 
 ====================
 
@@ -1291,6 +1336,8 @@ SELF-CHECK:
 - Jika lebih dari 30 kata → perpendek
 - Jika tidak ada saran konkret → perbaiki
 - Jika format awal salah → perbaiki
+- Jika ada tag <think> → hapus
+- Jika kalimat terpotong → perbaiki
 
 Output yang tidak mengikuti format dianggap gagal.
 ''';
@@ -1404,6 +1451,7 @@ Output yang tidak mengikuti format dianggap gagal.
     required int walletCount,
     required int userCount,
     required double totalLiquidity,
+    List<DebtModel>? debts,
   }) async {
     try {
       final config = await getGlobalConfig();
@@ -1428,7 +1476,8 @@ Output yang tidak mengikuti format dianggap gagal.
         return '**AI Analysis Error:** Konfigurasi API Kosong. Anda harus memasukkannya di panel Server Admin.';
       }
 
-      final summary = AIService()._generateDataSummary(transactions, dateRange);
+      final summary = AIService()
+          ._generateDataSummary(transactions, dateRange, debtData: debts);
 
       final systemPrompt = '''
 Kamu adalah "Archen Eye Insight", analis makroekonomi khusus untuk performa agregat pengguna aplikasi keuangan.
@@ -1460,6 +1509,8 @@ ATURAN ANALISIS (WAJIB DIPATUHI):
 5. Anggap data ini merepresentasikan jutaan pengguna.
 6. Jika data terbatas, lakukan inferensi MAKRO yang logis tanpa turun ke level individu.
 7. WAJIB gunakan pemisah ribuan titik (.) untuk setiap nominal angka yang disebutkan (contoh: 1.000.000, 250.000.000).
+8. DILARANG KERAS menyertakan tag pemikiran internal seperti <think>...</think> di dalam jawaban.
+9. JANGAN berhenti di tengah kalimat. Respon harus lengkap, full kalimat, dan tidak boleh terpotong menggantung.
 
 ====================
 
@@ -1801,8 +1852,8 @@ ATURAN KETAT:
       } else {
         finalAnalysis = await tryGeminiList() ?? await tryGroqList();
       }
-      return finalAnalysis ??
-          "Gagal mendapatkan respon analisis. Semua limit telah tercapai.";
+      return AIService.cleanMessage(finalAnalysis ??
+          "Gagal mendapatkan respon analisis. Semua limit telah tercapai.");
     } catch (e) {
       debugPrint('Error analyzeFeedbackSentiment: $e');
       return "Terjadi kesalahan saat analisis AI: $e";
