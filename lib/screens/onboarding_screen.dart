@@ -24,7 +24,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             'Semua transaksi harian tercatat otomatis dan rapi dalam satu genggaman.',
         icon: CupertinoIcons.chart_pie_fill,
         iconColor: AppColors.primary,
-        backgroundColor: isDark ? const Color(0xFF1A1A2E) : const Color(0xFFD6E4FF),
+        backgroundColor:
+            isDark ? const Color(0xFF1A1A2E) : const Color(0xFFD6E4FF),
       ),
       OnboardingData(
         title: 'Pantau Bersama\nDgn Sahabat',
@@ -32,7 +33,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             'Bikin dompet bareng teman atau pasangan, biar makin transparan dan seru!',
         icon: CupertinoIcons.person_3_fill,
         iconColor: Colors.deepOrange,
-        backgroundColor: isDark ? const Color(0xFF2E1A1A) : const Color(0xFFFFE0B2),
+        backgroundColor:
+            isDark ? const Color(0xFF2E1A1A) : const Color(0xFFFFE0B2),
       ),
       OnboardingData(
         title: 'Laporan Praktis\nSecepat Kilat',
@@ -40,7 +42,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             'Download laporan bulanan dalam format PDF yang rapi, siap untuk dicetak kapan saja.',
         icon: CupertinoIcons.doc_chart_fill,
         iconColor: Colors.pink,
-        backgroundColor: isDark ? const Color(0xFF2E1A2E) : const Color(0xFFFFD1DC),
+        backgroundColor:
+            isDark ? const Color(0xFF2E1A2E) : const Color(0xFFFFD1DC),
       ),
     ];
   }
@@ -186,7 +189,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
-                    color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.7),
+                    color: Theme.of(context)
+                        .textTheme
+                        .bodyLarge
+                        ?.color
+                        ?.withOpacity(0.7),
                     height: 1.5,
                   ),
                 ),
@@ -217,7 +224,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 decoration: BoxDecoration(
                   color: _currentPage == index
                       ? Theme.of(context).textTheme.titleLarge?.color
-                      : Theme.of(context).textTheme.titleLarge?.color?.withOpacity(0.2),
+                      : Theme.of(context)
+                          .textTheme
+                          .titleLarge
+                          ?.color
+                          ?.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(3),
                 ),
               ),
@@ -244,7 +255,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(Theme.of(context).brightness == Brightness.dark ? 0.3 : 0.08),
+                    color: Colors.black.withOpacity(
+                        Theme.of(context).brightness == Brightness.dark
+                            ? 0.3
+                            : 0.08),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -256,7 +270,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   height: 48,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Theme.of(context).dividerColor, width: 2),
+                    border: Border.all(
+                        color: Theme.of(context).dividerColor, width: 2),
                   ),
                   child: Center(
                     child: Icon(

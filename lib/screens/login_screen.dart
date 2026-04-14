@@ -126,7 +126,9 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF000000) : const Color(0xFFF2F2F7),
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF000000)
+          : const Color(0xFFF2F2F7),
       body: Stack(
         children: [
           // Gradient background blobs
@@ -174,7 +176,9 @@ class _LoginScreenState extends State<LoginScreen>
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
                 child: Container(
-                  color: Theme.of(context).brightness == Brightness.dark ? Colors.black.withOpacity(0.6) : Colors.white.withOpacity(0.6),
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.black.withOpacity(0.6)
+                      : Colors.white.withOpacity(0.6),
                   child: const Center(child: LoadingWidget()),
                 ),
               ),
@@ -461,7 +465,9 @@ class _LoginScreenState extends State<LoginScreen>
   Widget _buildDividerRow() {
     return Row(
       children: [
-        Expanded(child: Divider(color: Theme.of(context).dividerColor, thickness: 0.5)),
+        Expanded(
+            child:
+                Divider(color: Theme.of(context).dividerColor, thickness: 0.5)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text('atau',
@@ -470,7 +476,9 @@ class _LoginScreenState extends State<LoginScreen>
                   fontSize: 13,
                   fontWeight: FontWeight.w500)),
         ),
-        Expanded(child: Divider(color: Theme.of(context).dividerColor, thickness: 0.5)),
+        Expanded(
+            child:
+                Divider(color: Theme.of(context).dividerColor, thickness: 0.5)),
       ],
     );
   }

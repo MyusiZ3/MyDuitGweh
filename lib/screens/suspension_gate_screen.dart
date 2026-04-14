@@ -60,8 +60,8 @@ class SuspensionGateScreen extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: Colors.red.withOpacity(0.1),
                       shape: BoxShape.circle,
-                      border:
-                          Border.all(color: Colors.red.withOpacity(0.2), width: 2),
+                      border: Border.all(
+                          color: Colors.red.withOpacity(0.2), width: 2),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.red.withOpacity(0.2),
@@ -137,8 +137,7 @@ class SuspensionGateScreen extends StatelessWidget {
                               ),
                               textAlign: TextAlign.center,
                             ),
-                            const Divider(
-                                color: Colors.white10, height: 32),
+                            const Divider(color: Colors.white10, height: 32),
                             const Text(
                               'AKTIF KEMBALI PADA:',
                               style: TextStyle(

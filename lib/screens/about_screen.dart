@@ -10,7 +10,9 @@ class AboutScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF000000) : const Color(0xFFF2F2F7),
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF000000)
+          : const Color(0xFFF2F2F7),
       appBar: AppBar(
         title: Text(
           'Tentang Aplikasi',
@@ -122,7 +124,10 @@ class AboutScreen extends StatelessWidget {
                                       style: TextStyle(
                                         fontSize: 22,
                                         fontWeight: FontWeight.w800,
-                                        color: Theme.of(context).textTheme.titleLarge?.color,
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .titleLarge
+                                            ?.color,
                                         letterSpacing: -0.5,
                                       ),
                                     ),
@@ -242,26 +247,26 @@ class AboutScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 16),
-                    _buildChangelogItem(
-                      context,
-                      title: 'Archen AI: Personality Update',
-                      desc:
-                          'Gaya bahasa Archen AI lebih asik, rame, dan relatable!',
-                    ),
-                    const SizedBox(height: 12),
-                    _buildChangelogItem(
-                      context,
-                      title: 'BUG FIXES',
-                      desc:
-                          'Perbaikan beebrapa BUG dan error yang ada di aplikasi.',
-                    ),
-                    const SizedBox(height: 12),
-                    _buildChangelogItem(
-                      context,
-                      title: 'UI/UX Improvements',
-                      desc:
-                          'Perbaikan sistem pengaturan UI dan UX agar lebih nyaman digunakan.',
-                    ),
+                  _buildChangelogItem(
+                    context,
+                    title: 'Archen AI: Personality Update',
+                    desc:
+                        'Gaya bahasa Archen AI lebih asik, rame, dan relatable!',
+                  ),
+                  const SizedBox(height: 12),
+                  _buildChangelogItem(
+                    context,
+                    title: 'BUG FIXES',
+                    desc:
+                        'Perbaikan beebrapa BUG dan error yang ada di aplikasi.',
+                  ),
+                  const SizedBox(height: 12),
+                  _buildChangelogItem(
+                    context,
+                    title: 'UI/UX Improvements',
+                    desc:
+                        'Perbaikan sistem pengaturan UI dan UX agar lebih nyaman digunakan.',
+                  ),
                 ],
               ),
             ),
@@ -297,7 +302,10 @@ class AboutScreen extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700,
-                                color: Theme.of(context).textTheme.titleLarge?.color,
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.color,
                                 letterSpacing: -0.3,
                               ),
                             ),
@@ -332,7 +340,10 @@ class AboutScreen extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700,
-                                color: Theme.of(context).textTheme.titleLarge?.color,
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.color,
                                 letterSpacing: -0.3,
                               ),
                             ),
@@ -381,7 +392,8 @@ class AboutScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildBentoCard(BuildContext context, {
+  Widget _buildBentoCard(
+    BuildContext context, {
     required Widget child,
     Color? color,
   }) {
@@ -391,7 +403,11 @@ class AboutScreen extends StatelessWidget {
         color: color ?? Theme.of(context).cardColor,
         borderRadius:
             BorderRadius.circular(28), // iOS style large border radius
-        border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.02), width: 1.5),
+        border: Border.all(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white.withOpacity(0.05)
+                : Colors.black.withOpacity(0.02),
+            width: 1.5),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
@@ -404,7 +420,8 @@ class AboutScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildChangelogItem(BuildContext context, {required String title, required String desc}) {
+  Widget _buildChangelogItem(BuildContext context,
+      {required String title, required String desc}) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
