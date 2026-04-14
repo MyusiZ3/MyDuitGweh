@@ -6,7 +6,8 @@ import 'package:flutter/material.dart';
 import '../utils/ui_helper.dart';
 
 class SecurityListenerService {
-  static final SecurityListenerService _instance = SecurityListenerService._internal();
+  static final SecurityListenerService _instance =
+      SecurityListenerService._internal();
   factory SecurityListenerService() => _instance;
   SecurityListenerService._internal();
 
@@ -16,7 +17,7 @@ class SecurityListenerService {
 
   void startListening(String adminUid) async {
     if (_subscription != null) return;
-    
+
     // Load last notification time from preferences
     final prefs = await SharedPreferences.getInstance();
     final lastTimeMillis = prefs.getInt(_prefKey);
@@ -42,9 +43,10 @@ class SecurityListenerService {
         if (change.type == DocumentChangeType.added) {
           final data = change.doc.data() as Map<String, dynamic>;
           final timestamp = data['timestamp'] as Timestamp?;
-          
-          debugPrint('--- SECURITY LISTENER: Detected Change: ${change.type}, Data: $data');
-          
+
+          debugPrint(
+              '--- SECURITY LISTENER: Detected Change: ${change.type}, Data: $data');
+
           if (timestamp == null) {
             debugPrint('--- SECURITY LISTENER: Timestamp is NULL');
             continue;
@@ -54,15 +56,20 @@ class SecurityListenerService {
           final type = data['type'] ?? 'UNKNOWN';
           final message = data['message'] ?? '';
 
-          final isRecent = timestamp.toDate().isAfter(_lastNotifiedTime.subtract(const Duration(seconds: 5)));
-          final isSevere = (severity == 'high' || severity == 'critical' || severity == 'medium');
+          final isRecent = timestamp
+              .toDate()
+              .isAfter(_lastNotifiedTime.subtract(const Duration(seconds: 5)));
+          final isSevere = (severity == 'high' ||
+              severity == 'critical' ||
+              severity == 'medium');
 
-          debugPrint('--- SECURITY LISTENER CHECK: isRecent=$isRecent, isSevere=$isSevere, severity=$severity, time=${timestamp.toDate()}, lastNotified=$_lastNotifiedTime');
+          debugPrint(
+              '--- SECURITY LISTENER CHECK: isRecent=$isRecent, isSevere=$isSevere, severity=$severity, time=${timestamp.toDate()}, lastNotified=$_lastNotifiedTime');
 
           if (isRecent && isSevere) {
             _lastNotifiedTime = timestamp.toDate();
             _triggerPopup(type, message, severity);
-            
+
             // Persist the last notification time
             SharedPreferences.getInstance().then((prefs) {
               prefs.setInt(_prefKey, _lastNotifiedTime.millisecondsSinceEpoch);
@@ -83,15 +90,17 @@ class SecurityListenerService {
 
   void _triggerPopup(String type, String message, String severity) {
     String emoji = severity == 'critical' ? '🚨' : '⚠️';
-    Color color = (severity == 'critical' || severity == 'high') 
-      ? const Color(0xFFF43F5E) // Red
-      : Colors.orange;
+    Color color = (severity == 'critical' || severity == 'high')
+        ? const Color(0xFFF43F5E) // Red
+        : Colors.orange;
 
     // 1. Show stylized in-app toast (Snackbar-like)
     UIHelper.showGlobalInfoToast(
       '$emoji SECURITY ALERT: $type\n$message',
       color: color,
-      icon: severity == 'critical' ? Icons.security_rounded : Icons.warning_amber_rounded,
+      icon: severity == 'critical'
+          ? Icons.security_rounded
+          : Icons.warning_amber_rounded,
     );
 
     // 2. Also keep system notification for when app is in background

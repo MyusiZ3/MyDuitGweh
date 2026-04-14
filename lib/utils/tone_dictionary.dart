@@ -411,6 +411,20 @@ class ToneManager {
       AppTone.boomer: 'Hanya bisa menghapus catatan milik sendiri ya.',
       AppTone.pasangan: 'Jangan hapus punya aku dong sayang.. ihh ￣へ￣',
     },
+    'category_not_found': {
+      AppTone.normal: 'Kategori tidak ditemukan',
+      AppTone.genZ: 'Kaga nemu jirr, typo kali?',
+      AppTone.milenial: 'Oops, category not found!',
+      AppTone.boomer: 'Maaf nak, kategorinya tidak ada.',
+      AppTone.pasangan: 'Gak ada itu sayang, coba yang lain ya.. (✿◠‿◠)',
+    },
+    'wallet_not_found': {
+      AppTone.normal: 'Dompet tidak ditemukan',
+      AppTone.genZ: 'Asli, kaga ada nih dompet!',
+      AppTone.milenial: 'Wallet not found, check again?',
+      AppTone.boomer: 'Bapak ga nemu dompet itu.',
+      AppTone.pasangan: 'Dompet kita yang ini gak ada sayang.. ┌( ಠ_ಠ)┘',
+    },
   };
 
   // Helper function untuk menarik terjemahan seketika!
