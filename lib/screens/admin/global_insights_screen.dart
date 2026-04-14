@@ -222,7 +222,9 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                                   : CurrencyFormatter.formatCurrency(
                                       avgBalance),
                               icon: Icons.analytics_rounded,
-                              color: isDark ? const Color(0xFF60A5FA) : Colors.blueAccent,
+                              color: isDark
+                                  ? const Color(0xFF60A5FA)
+                                  : Colors.blueAccent,
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -234,7 +236,9 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                                   ? '...'
                                   : '$walletCount',
                               icon: Icons.wallet_rounded,
-                              color: isDark ? const Color(0xFF2DD4BF) : Colors.teal,
+                              color: isDark
+                                  ? const Color(0xFF2DD4BF)
+                                  : Colors.teal,
                             ),
                           ),
                         ],
@@ -279,7 +283,9 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                                   ? '...'
                                   : '$userCount User',
                               icon: Icons.people_alt_rounded,
-                              color: isDark ? const Color(0xFF818CF8) : Colors.indigo,
+                              color: isDark
+                                  ? const Color(0xFF818CF8)
+                                  : Colors.indigo,
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -291,7 +297,9 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                                   ? '...'
                                   : '+${growth.toStringAsFixed(1)}%',
                               icon: Icons.trending_up_rounded,
-                              color: isDark ? const Color(0xFF4ADE80) : Colors.green,
+                              color: isDark
+                                  ? const Color(0xFF4ADE80)
+                                  : Colors.green,
                             ),
                           ),
                         ],
@@ -314,29 +322,24 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                             const SizedBox(height: 16),
                             _buildAiAnalysisButton(context),
                             const SizedBox(height: 32),
-
                             _buildSectionTitle(
                                 'Leaderboard', Icons.emoji_events_rounded),
                             const SizedBox(height: 16),
                             _buildLeaderboard(),
                             const SizedBox(height: 32),
                           ],
-
                           _buildPeriodFilter(),
                           const SizedBox(height: 24),
-
                           _buildSectionTitle(
                               'Tren Keuangan Global', Icons.show_chart_rounded),
                           const SizedBox(height: 16),
                           _buildCashFlowChart(),
                           const SizedBox(height: 32),
-
                           _buildSectionTitle(
                               'Distribusi Platform', Icons.pie_chart_rounded),
                           const SizedBox(height: 16),
                           _buildCategoryPieChart(),
                           const SizedBox(height: 32),
-
                           _buildSectionTitle(
                               'Aktivitas User', Icons.calendar_month_rounded),
                           const SizedBox(height: 16),
@@ -461,7 +464,9 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                 style: TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 12,
-                  color: isSelected ? Colors.white : (isDark ? Colors.white70 : Colors.grey[700]),
+                  color: isSelected
+                      ? Colors.white
+                      : (isDark ? Colors.white70 : Colors.grey[700]),
                 ),
               ),
               selected: isSelected,
@@ -498,7 +503,8 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
             color: theme.dividerColor.withOpacity(0.04),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, size: 18, color: theme.iconTheme.color?.withOpacity(0.8)),
+          child: Icon(icon,
+              size: 18, color: theme.iconTheme.color?.withOpacity(0.8)),
         ),
         const SizedBox(width: 12),
         Text(title,
@@ -581,7 +587,8 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                     decoration: BoxDecoration(
                       color: theme.cardColor,
                       borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: theme.dividerColor.withOpacity(0.05)),
+                      border: Border.all(
+                          color: theme.dividerColor.withOpacity(0.05)),
                     ),
                     child: LineChart(
                       LineChartData(
@@ -626,8 +633,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                                   padding: const EdgeInsets.only(top: 6),
                                   child: Text(displayKeys[idx],
                                       style: TextStyle(
-                                          fontSize: 9,
-                                          color: theme.hintColor)),
+                                          fontSize: 9, color: theme.hintColor)),
                                 );
                               },
                             ),
@@ -644,7 +650,9 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                         maxY: maxY,
                         lineTouchData: LineTouchData(
                           touchTooltipData: LineTouchTooltipData(
-                            tooltipBgColor: isDark ? const Color(0xFF1E293B) : Colors.black87,
+                            tooltipBgColor: isDark
+                                ? const Color(0xFF1E293B)
+                                : Colors.black87,
                             tooltipRoundedRadius: 12,
                             getTooltipItems: (spots) {
                               return spots.map((spot) {
@@ -694,7 +702,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                         ],
                       ),
                     ),
-        ),
+                  ),
       ),
     );
   }
@@ -852,8 +860,10 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                                                 : FontWeight.w600,
                                             fontSize: 13,
                                             color: isSelected
-                                                ? theme.textTheme.titleMedium?.color
-                                                : theme.textTheme.bodyMedium?.color)),
+                                                ? theme.textTheme.titleMedium
+                                                    ?.color
+                                                : theme.textTheme.bodyMedium
+                                                    ?.color)),
                                   ),
                                   Text('${pct.toStringAsFixed(1)}%',
                                       style: TextStyle(
@@ -868,8 +878,10 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                                           fontWeight: FontWeight.w700,
                                           fontSize: 11,
                                           color: isSelected
-                                              ? theme.textTheme.titleMedium?.color
-                                              : theme.textTheme.bodyMedium?.color)),
+                                              ? theme
+                                                  .textTheme.titleMedium?.color
+                                              : theme.textTheme.bodyMedium
+                                                  ?.color)),
                                 ],
                               ),
                             );
@@ -896,7 +908,9 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: theme.dividerColor.withOpacity(0.05)),
         ),
-        child: Center(child: Text("Belum ada data transaksi", style: TextStyle(color: theme.hintColor))),
+        child: Center(
+            child: Text("Belum ada data transaksi",
+                style: TextStyle(color: theme.hintColor))),
       );
     }
 
@@ -1001,17 +1015,23 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                 children: [
                   SizedBox(
                     width: 32,
-                    child: Text(['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'][r],
-                        style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold)),
+                    child: Text(
+                        ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'][r],
+                        style: theme.textTheme.labelSmall
+                            ?.copyWith(fontWeight: FontWeight.bold)),
                   ),
                   ...List.generate(4, (c) {
                     final val = counts[r][c];
                     final intensity = maxCount == 0 ? 0.0 : val / maxCount;
                     Color color;
                     if (intensity == 0) {
-                      color = isDark ? Colors.white.withOpacity(0.05) : Colors.grey[100]!;
+                      color = isDark
+                          ? Colors.white.withOpacity(0.05)
+                          : Colors.grey[100]!;
                     } else if (intensity < 0.25) {
-                      color = isDark ? Colors.amber[900]!.withOpacity(0.4) : Colors.amber[200]!;
+                      color = isDark
+                          ? Colors.amber[900]!.withOpacity(0.4)
+                          : Colors.amber[200]!;
                     } else if (intensity < 0.6) {
                       color = isDark ? Colors.amber[600]! : Colors.amber[500]!;
                     } else {
@@ -1037,13 +1057,21 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildLegendNode(isDark ? Colors.white.withOpacity(0.1) : Colors.grey[100]!, 'Kosong'),
+              _buildLegendNode(
+                  isDark ? Colors.white.withOpacity(0.1) : Colors.grey[100]!,
+                  'Kosong'),
               const SizedBox(width: 12),
-              _buildLegendNode(isDark ? Colors.amber[900]!.withOpacity(0.4) : Colors.amber[200]!, 'Rendah'),
+              _buildLegendNode(
+                  isDark
+                      ? Colors.amber[900]!.withOpacity(0.4)
+                      : Colors.amber[200]!,
+                  'Rendah'),
               const SizedBox(width: 12),
-              _buildLegendNode(isDark ? Colors.amber[600]! : Colors.amber[500]!, 'Sedang'),
+              _buildLegendNode(
+                  isDark ? Colors.amber[600]! : Colors.amber[500]!, 'Sedang'),
               const SizedBox(width: 12),
-              _buildLegendNode(isDark ? Colors.orangeAccent : Colors.deepOrange, 'Tinggi'),
+              _buildLegendNode(
+                  isDark ? Colors.orangeAccent : Colors.deepOrange, 'Tinggi'),
             ],
           )
         ],
@@ -1086,8 +1114,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
 
       final difference = now.difference(createdAt).inDays;
       if (difference < 56) {
-        int weekIndex =
-            7 - (difference ~/ 7);
+        int weekIndex = 7 - (difference ~/ 7);
         if (weekIndex >= 0 && weekIndex < 8) {
           weeklyCounts[weekIndex]++;
           totalNewUsersIn8Weeks++;
@@ -1130,17 +1157,20 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                     style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w900,
-                        color: isDark ? const Color(0xFF818CF8) : Colors.indigo),
+                        color:
+                            isDark ? const Color(0xFF818CF8) : Colors.indigo),
                   ),
                 ],
               ),
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                    color: (isDark ? const Color(0xFF818CF8) : Colors.indigo).withOpacity(0.1),
+                    color: (isDark ? const Color(0xFF818CF8) : Colors.indigo)
+                        .withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12)),
                 child: Icon(Icons.trending_up_rounded,
-                    color: isDark ? const Color(0xFF818CF8) : Colors.indigo, size: 24),
+                    color: isDark ? const Color(0xFF818CF8) : Colors.indigo,
+                    size: 24),
               )
             ],
           ),
@@ -1152,7 +1182,8 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                 maxY: maxY,
                 barTouchData: BarTouchData(
                   touchTooltipData: BarTouchTooltipData(
-                    tooltipBgColor: isDark ? const Color(0xFF334155) : Colors.indigo,
+                    tooltipBgColor:
+                        isDark ? const Color(0xFF334155) : Colors.indigo,
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
                       return BarTooltipItem(
                         'Minggu ${(groupIndex + 1)}\n',
@@ -1187,7 +1218,8 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                             'W${value.toInt() + 1}',
                             style: TextStyle(
                                 fontSize: 10,
-                                color: isDark ? Colors.white54 : Colors.grey[500],
+                                color:
+                                    isDark ? Colors.white54 : Colors.grey[500],
                                 fontWeight: FontWeight.bold),
                           ),
                         );
@@ -1204,8 +1236,9 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                         }
                         return Text(
                           value.toInt().toString(),
-                          style:
-                              TextStyle(color: isDark ? Colors.white38 : Colors.grey[400], fontSize: 10),
+                          style: TextStyle(
+                              color: isDark ? Colors.white38 : Colors.grey[400],
+                              fontSize: 10),
                         );
                       },
                     ),
@@ -1218,7 +1251,9 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                   horizontalInterval:
                       maxY / 5 > 0 ? (maxY / 5).ceilToDouble() : 1,
                   getDrawingHorizontalLine: (value) => FlLine(
-                    color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey.withOpacity(0.1),
+                    color: isDark
+                        ? Colors.white.withOpacity(0.05)
+                        : Colors.grey.withOpacity(0.1),
                     strokeWidth: 1,
                     dashArray: [5, 5],
                   ),
@@ -1238,7 +1273,9 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                         backDrawRodData: BackgroundBarChartRodData(
                           show: true,
                           toY: maxY,
-                          color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey.withOpacity(0.05),
+                          color: isDark
+                              ? Colors.white.withOpacity(0.05)
+                              : Colors.grey.withOpacity(0.05),
                         ),
                       )
                     ],
@@ -1263,9 +1300,9 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
       width: double.infinity,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: isDark 
-            ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
-            : [const Color(0xFF1E3A8A), const Color(0xFF3B82F6)],
+          colors: isDark
+              ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
+              : [const Color(0xFF1E3A8A), const Color(0xFF3B82F6)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -1417,9 +1454,13 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                 labelStyle:
                     const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
                 indicator: BoxDecoration(
-                  color: isDark ? AppColors.primary.withOpacity(0.2) : Colors.grey[200],
+                  color: isDark
+                      ? AppColors.primary.withOpacity(0.2)
+                      : Colors.grey[200],
                   borderRadius: BorderRadius.circular(12),
-                  border: isDark ? Border.all(color: AppColors.primary.withOpacity(0.5)) : null,
+                  border: isDark
+                      ? Border.all(color: AppColors.primary.withOpacity(0.5))
+                      : null,
                 ),
                 indicatorSize: TabBarIndicatorSize.tab,
                 dividerColor: Colors.transparent,
@@ -1459,7 +1500,8 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Text('Belum ada data.',
-              style: TextStyle(color: Theme.of(context).hintColor, fontSize: 13)),
+              style:
+                  TextStyle(color: Theme.of(context).hintColor, fontSize: 13)),
         ),
       );
     }
@@ -1482,10 +1524,13 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
           margin: const EdgeInsets.only(bottom: 4),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color:
-                index < 3 ? Colors.amber.withOpacity(isDark ? 0.1 : 0.05) : null,
+            color: index < 3
+                ? Colors.amber.withOpacity(isDark ? 0.1 : 0.05)
+                : null,
             borderRadius: BorderRadius.circular(12),
-            border: index < 3 && isDark ? Border.all(color: Colors.amber.withOpacity(0.2)) : null,
+            border: index < 3 && isDark
+                ? Border.all(color: Colors.amber.withOpacity(0.2))
+                : null,
           ),
           child: Row(
             children: [
@@ -1569,8 +1614,7 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
           Text(
             reason,
             textAlign: TextAlign.center,
-            style:
-                TextStyle(fontSize: 12, color: theme.hintColor, height: 1.5),
+            style: TextStyle(fontSize: 12, color: theme.hintColor, height: 1.5),
           ),
           const SizedBox(height: 12),
           Container(
@@ -1644,11 +1688,14 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
       ),
       child: Row(
         children: [
-          Icon(Icons.error_outline_rounded, color: isDark ? Colors.red[300] : Colors.red[700], size: 20),
+          Icon(Icons.error_outline_rounded,
+              color: isDark ? Colors.red[300] : Colors.red[700], size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Text('Gagal memuat: $error',
-                style: TextStyle(fontSize: 12, color: isDark ? Colors.red[200] : Colors.red[800])),
+                style: TextStyle(
+                    fontSize: 12,
+                    color: isDark ? Colors.red[200] : Colors.red[800])),
           ),
         ],
       ),
@@ -1665,11 +1712,13 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
       child: Center(
         child: Column(
           children: [
-            Icon(Icons.bar_chart_rounded, size: 40, color: Theme.of(context).hintColor),
+            Icon(Icons.bar_chart_rounded,
+                size: 40, color: Theme.of(context).hintColor),
             const SizedBox(height: 12),
             Text(message,
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13, color: Theme.of(context).hintColor)),
+                style: TextStyle(
+                    fontSize: 13, color: Theme.of(context).hintColor)),
           ],
         ),
       ),
@@ -1722,8 +1771,9 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                 width: 150,
                 height: 150,
                 decoration: BoxDecoration(
-                    color:
-                        widget.isSuperAdmin ? Colors.amber.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                    color: widget.isSuperAdmin
+                        ? Colors.amber.withOpacity(0.1)
+                        : Colors.red.withOpacity(0.1),
                     shape: BoxShape.circle),
               ),
             ),
@@ -1834,8 +1884,10 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
             child: Text(value,
-                style:
-                    TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: theme.textTheme.titleLarge?.color)),
+                style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 16,
+                    color: theme.textTheme.titleLarge?.color)),
           ),
         ],
       ),
@@ -1850,7 +1902,8 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.05)),
+        border:
+            Border.all(color: Theme.of(context).dividerColor.withOpacity(0.05)),
       ),
       child: Row(
         children: [
@@ -1904,13 +1957,15 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
             color: theme.cardColor,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
-            boxShadow: isDark ? [] : [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.02),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              )
-            ],
+            boxShadow: isDark
+                ? []
+                : [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.02),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    )
+                  ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1981,7 +2036,8 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                     final totalUsers = users.length;
                     final doneCount = users
                         .where((doc) =>
-                            (doc.data() as Map<String, dynamic>)['surveyDone'] ==
+                            (doc.data()
+                                as Map<String, dynamic>)['surveyDone'] ==
                             true)
                         .length;
                     final pendingCount = totalUsers - doneCount;
@@ -2015,8 +2071,11 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                             style: TextStyle(
                                 fontWeight: FontWeight.w900, fontSize: 11)),
                         style: TextButton.styleFrom(
-                          foregroundColor: isDark ? Colors.tealAccent : Colors.teal,
-                          backgroundColor: (isDark ? Colors.tealAccent : Colors.teal).withOpacity(0.1),
+                          foregroundColor:
+                              isDark ? Colors.tealAccent : Colors.teal,
+                          backgroundColor:
+                              (isDark ? Colors.tealAccent : Colors.teal)
+                                  .withOpacity(0.1),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           minimumSize: const Size(double.infinity, 48),
                           shape: RoundedRectangleBorder(
@@ -2032,7 +2091,8 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
                                 builder: (_) => const AppConfigScreen()),
                           );
                         },
-                        icon: const Icon(Icons.settings_suggest_rounded, size: 18),
+                        icon: const Icon(Icons.settings_suggest_rounded,
+                            size: 18),
                         label: const Text('UBAH KONFIGURASI DI APP SETTINGS',
                             style: TextStyle(
                                 fontWeight: FontWeight.w900, fontSize: 11)),
@@ -2062,7 +2122,9 @@ class _GlobalInsightsScreenState extends State<GlobalInsightsScreen> {
       children: [
         Text(label,
             style: TextStyle(
-                fontSize: 12, color: Theme.of(context).hintColor, fontWeight: FontWeight.w600)),
+                fontSize: 12,
+                color: Theme.of(context).hintColor,
+                fontWeight: FontWeight.w600)),
         Text(value,
             style: TextStyle(
                 fontSize: 12,
@@ -2077,7 +2139,8 @@ class _AiSentimentAnalysisCard extends StatefulWidget {
   const _AiSentimentAnalysisCard();
 
   @override
-  State<_AiSentimentAnalysisCard> createState() => _AiSentimentAnalysisCardState();
+  State<_AiSentimentAnalysisCard> createState() =>
+      _AiSentimentAnalysisCardState();
 }
 
 class _AiSentimentAnalysisCardState extends State<_AiSentimentAnalysisCard> {
@@ -2102,13 +2165,15 @@ class _AiSentimentAnalysisCardState extends State<_AiSentimentAnalysisCard> {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(24),
-        boxShadow: isDark ? [] : [
-          BoxShadow(
-            color: Colors.blueAccent.withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.blueAccent.withOpacity(0.3),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2180,9 +2245,10 @@ class _AiSentimentAnalysisCardState extends State<_AiSentimentAnalysisCard> {
   Widget _buildAiResultContent() {
     final sentiment = _aiSentimentResult!['sentiment_score'] ?? 'N/A';
     final summary = _aiSentimentResult!['summary'] ?? '';
-    final requests = (_aiSentimentResult!['top_feature_requests'] as List? ?? [])
-        .where((r) => r.toString().trim().isNotEmpty)
-        .toList();
+    final requests =
+        (_aiSentimentResult!['top_feature_requests'] as List? ?? [])
+            .where((r) => r.toString().trim().isNotEmpty)
+            .toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

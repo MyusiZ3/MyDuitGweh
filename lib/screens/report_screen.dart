@@ -183,6 +183,7 @@ class _ReportScreenState extends State<ReportScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -196,148 +197,123 @@ class _ReportScreenState extends State<ReportScreen> {
         titleSpacing: 24,
         toolbarHeight: 70,
         actions: [
-          IconButton(
-            onPressed: _showExportDialog,
-            icon: Icon(Icons.download_rounded,
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.indigoAccent
-                    : Theme.of(context).primaryColor),
-            tooltip: 'Export PDF',
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Filter Tanggal
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.only(right: 8),
             child: InkWell(
-              onTap: _selectDateRange,
+              onTap: _showExportDialog,
+              borderRadius: BorderRadius.circular(12),
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.black.withOpacity(0.3)
-                            : Colors.black.withOpacity(0.02),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4))
-                  ],
+                  color: (Theme.of(context).brightness == Brightness.dark
+                          ? Colors.indigoAccent
+                          : Theme.of(context).primaryColor)
+                      .withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: Row(
-                  children: [
-                    Icon(Icons.calendar_today_rounded,
-                        color: Theme.of(context).primaryColor, size: 20),
-                    const SizedBox(width: 12),
-                    Text(
-                      '${DateFormat('dd MMM').format(selectedDateRange.start)} - ${DateFormat('dd MMM yyyy').format(selectedDateRange.end)}',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const Spacer(),
-                    Icon(Icons.keyboard_arrow_down_rounded,
-                        color: Theme.of(context).hintColor),
-                  ],
+                child: Icon(
+                  Icons.ios_share_rounded,
+                  size: 24,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.indigoAccent
+                      : Theme.of(context).primaryColor,
                 ),
               ),
             ),
           ),
-
-          Expanded(
-            child: StreamBuilder<List<WalletModel>>(
-              stream: _walletStream,
-              builder: (context, walletSnapshot) {
-                if (walletSnapshot.connectionState == ConnectionState.waiting) {
-                  return const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 24),
-                      child: ShimmerTransactionList());
-                }
-
-                final wallets = walletSnapshot.data ?? [];
-                if (wallets.isEmpty) {
-                  return _buildNoData(
-                      'Belum ada dompet', 'Buat dompet dulu yuk!');
-                }
-
-                final walletIds = wallets.map((w) => w.id).toList();
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (mounted) {
-                    // Update current wallets list for AI context
-                    _allWallets = wallets;
-
-                    // Use set comparison to avoid rebuild loop (List != List is always true for new instances)
-                    final set1 = _currentWalletIds.toSet();
-                    final set2 = walletIds.toSet();
-                    if (set1.length != set2.length || !set1.containsAll(set2)) {
-                      setState(() => _currentWalletIds = walletIds);
-                    }
-                  }
-                });
-
-                return StreamBuilder<List<TransactionModel>>(
-                  stream: _getTxnStream(walletIds),
-                  builder: (context, txnSnapshot) {
-                    if (txnSnapshot.connectionState ==
-                        ConnectionState.waiting) {
-                      return const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 24),
-                          child: ShimmerTransactionList());
-                    }
-
-                    final transactions = txnSnapshot.data ?? [];
-                    if (transactions.isEmpty) {
-                      return _buildNoData('Belum ada transaksi',
-                          'Tidak ada catatan di periode ini.');
-                    }
-
-                    double totalIncome = 0;
-                    double totalExpense = 0;
-                    Map<String, double> categoryTotals = {};
-
-                    for (var txn in transactions) {
-                      if (txn.isIncome) {
-                        totalIncome += txn.amount;
-                      } else {
-                        totalExpense += txn.amount;
-                        categoryTotals[txn.category] =
-                            (categoryTotals[txn.category] ?? 0) + txn.amount;
-                      }
-                    }
-
-                    return ListView(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      children: [
-                        _buildSummaryCard(totalIncome - totalExpense,
-                            totalIncome, totalExpense),
-                        const SizedBox(height: 24),
-                        const SizedBox(height: 24),
-                        _buildInsightToggle(),
-                        const SizedBox(height: 24),
-                        if (_isCategoryMode)
-                          if (totalExpense > 0)
-                            _buildInteractivePieChart(
-                                categoryTotals, totalExpense)
-                          else
-                            const Center(child: Text('Belum ada pengeluaran'))
-                        else
-                          _buildWeeklyTrendChart(transactions),
-                        const SizedBox(height: 24),
-                        if (_isCategoryMode && totalExpense > 0)
-                          _buildCategoryList(categoryTotals, totalExpense),
-                        const SizedBox(height: 32),
-                        _buildNotifSettingsCard(),
-                        const SizedBox(height: 100),
-                      ],
-                    );
-                  },
-                );
-              },
-            ),
-          ),
+          const SizedBox(width: 16),
         ],
+      ),
+      body: StreamBuilder<List<WalletModel>>(
+        stream: _walletStream,
+        builder: (context, walletSnapshot) {
+          if (walletSnapshot.connectionState == ConnectionState.waiting) {
+            return const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24),
+                child: ShimmerTransactionList());
+          }
+
+          final wallets = walletSnapshot.data ?? [];
+          if (wallets.isEmpty) {
+            return _buildNoData('Belum ada dompet', 'Buat dompet dulu yuk!');
+          }
+
+          final walletIds = wallets.map((w) => w.id).toList();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              _allWallets = wallets;
+              final set1 = _currentWalletIds.toSet();
+              final set2 = walletIds.toSet();
+              if (set1.length != set2.length || !set1.containsAll(set2)) {
+                setState(() => _currentWalletIds = walletIds);
+              }
+            }
+          });
+
+          return StreamBuilder<List<TransactionModel>>(
+            stream: _getTxnStream(walletIds),
+            builder: (context, txnSnapshot) {
+              if (txnSnapshot.connectionState == ConnectionState.waiting) {
+                return const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24),
+                    child: ShimmerTransactionList());
+              }
+
+              final transactions = txnSnapshot.data ?? [];
+              if (transactions.isEmpty) {
+                return ListView(
+                  children: [
+                    _buildDateFilter(),
+                    _buildNoData('Belum ada transaksi',
+                        'Tidak ada catatan di periode ini.'),
+                  ],
+                );
+              }
+
+              double totalIncome = 0;
+              double totalExpense = 0;
+              Map<String, double> categoryTotals = {};
+
+              for (var txn in transactions) {
+                if (txn.isIncome) {
+                  totalIncome += txn.amount;
+                } else {
+                  totalExpense += txn.amount;
+                  categoryTotals[txn.category] =
+                      (categoryTotals[txn.category] ?? 0) + txn.amount;
+                }
+              }
+
+              return ListView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                children: [
+                  const SizedBox(height: 16),
+                  _buildDateFilter(),
+                  const SizedBox(height: 16),
+                  _buildSummaryCard(
+                      totalIncome - totalExpense, totalIncome, totalExpense),
+                  const SizedBox(height: 24),
+                  _buildInsightToggle(),
+                  const SizedBox(height: 24),
+                  if (_isCategoryMode)
+                    if (totalExpense > 0)
+                      _buildInteractivePieChart(categoryTotals, totalExpense)
+                    else
+                      const Center(child: Text('Belum ada pengeluaran'))
+                  else
+                    _buildWeeklyTrendChart(transactions),
+                  const SizedBox(height: 24),
+                  if (_isCategoryMode && totalExpense > 0)
+                    _buildCategoryList(categoryTotals, totalExpense),
+                  const SizedBox(height: 32),
+                  _buildNotifSettingsCard(),
+                  const SizedBox(height: 100),
+                ],
+              );
+            },
+          );
+        },
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
@@ -401,7 +377,86 @@ class _ReportScreenState extends State<ReportScreen> {
     );
   }
 
+  Widget _buildDateFilter() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return InkWell(
+      onTap: _selectDateRange,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: isDark
+              ? const Color(0xFF1C1C1E)
+              : const Color(0xFF767680).withOpacity(0.12),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            // Modern Custom Calendar Icon
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF2C2C2E) : Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withOpacity(0.1)
+                      : Colors.black.withOpacity(0.05),
+                  width: 0.5,
+                ),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color:
+                          isDark ? const Color(0xFF0A84FF) : AppColors.primary,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(10),
+                        topRight: Radius.circular(10),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        DateFormat('dd').format(selectedDateRange.end),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                          color: isDark ? Colors.white : AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 14),
+            Text(
+              '${DateFormat('dd MMM').format(selectedDateRange.start)} - ${DateFormat('dd MMM yyyy').format(selectedDateRange.end)}',
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+            ),
+            const Spacer(),
+            Icon(Icons.unfold_more_rounded,
+                color: Theme.of(context).hintColor.withOpacity(0.5), size: 18),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _selectDateRange() async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final range = await showDateRangePicker(
       context: context,
       initialDateRange: selectedDateRange,
@@ -410,18 +465,30 @@ class _ReportScreenState extends State<ReportScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: Theme.of(context).primaryColor,
-              onPrimary: Colors.white,
-              onSurface: Theme.of(context).textTheme.bodyLarge?.color ??
-                  Colors.black87,
-              secondaryContainer: const Color.fromARGB(255, 144, 142, 180)
-                  .withOpacity(
-                      0.12), // Warna blok rentang (sekarang dipaksa biru muda)
+            colorScheme: isDark
+                ? ColorScheme.dark(
+                    primary: const Color(0xFF0A84FF),
+                    onPrimary: Colors.white,
+                    surface: const Color(0xFF1C1C1E),
+                    onSurface: Colors.white,
+                    secondaryContainer:
+                        const Color(0xFF0A84FF).withOpacity(0.15),
+                  )
+                : ColorScheme.light(
+                    primary: AppColors.primary,
+                    onPrimary: Colors.white,
+                    onSurface: AppColors.textPrimary,
+                    secondaryContainer: AppColors.primary.withOpacity(0.12),
+                  ),
+            dialogTheme: DialogTheme(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
             ),
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
-                foregroundColor: Theme.of(context).primaryColor,
+                foregroundColor:
+                    isDark ? const Color(0xFF0A84FF) : AppColors.primary,
+                textStyle: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
           ),
@@ -1164,16 +1231,18 @@ class _ReportScreenState extends State<ReportScreen> {
                                 horizontal: 14, vertical: 10),
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? (Theme.of(context).brightness == Brightness.dark 
-                                      ? Colors.indigoAccent 
-                                      : Theme.of(context).primaryColor)
+                                  ? (Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? Colors.indigoAccent
+                                          : Theme.of(context).primaryColor)
                                       .withOpacity(0.1)
                                   : Theme.of(context).scaffoldBackgroundColor,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: isSelected
-                                    ? (Theme.of(context).brightness == Brightness.dark 
-                                        ? Colors.indigoAccent 
+                                    ? (Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? Colors.indigoAccent
                                         : Theme.of(context).primaryColor)
                                     : Colors.transparent,
                                 width: 1.5,
@@ -1186,8 +1255,9 @@ class _ReportScreenState extends State<ReportScreen> {
                                   TransactionCategory.getIconForCategory(cat),
                                   size: 16,
                                   color: isSelected
-                                      ? (Theme.of(context).brightness == Brightness.dark 
-                                          ? Colors.indigoAccent 
+                                      ? (Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? Colors.indigoAccent
                                           : Theme.of(context).primaryColor)
                                       : Theme.of(context).hintColor,
                                 ),
@@ -1200,8 +1270,9 @@ class _ReportScreenState extends State<ReportScreen> {
                                         ? FontWeight.bold
                                         : FontWeight.normal,
                                     color: isSelected
-                                        ? (Theme.of(context).brightness == Brightness.dark 
-                                            ? Colors.indigoAccent 
+                                        ? (Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? Colors.indigoAccent
                                             : Theme.of(context).primaryColor)
                                         : Theme.of(context)
                                                 .textTheme
@@ -1268,16 +1339,16 @@ class _ReportScreenState extends State<ReportScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isActive 
-              ? (Theme.of(context).brightness == Brightness.dark 
-                  ? Colors.indigoAccent 
-                  : Theme.of(context).primaryColor) 
+          color: isActive
+              ? (Theme.of(context).brightness == Brightness.dark
+                  ? Colors.indigoAccent
+                  : Theme.of(context).primaryColor)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
               color: isActive
-                  ? (Theme.of(context).brightness == Brightness.dark 
-                      ? Colors.indigoAccent 
+                  ? (Theme.of(context).brightness == Brightness.dark
+                      ? Colors.indigoAccent
                       : Theme.of(context).primaryColor)
                   : Theme.of(context).hintColor.withOpacity(0.3)),
         ),
@@ -1731,10 +1802,13 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                           color: Theme.of(context).brightness ==
                                                   Brightness.dark
                                               ? Colors.indigoAccent
-                                              : Theme.of(context).primaryColor)),
+                                              : Theme.of(context)
+                                                  .primaryColor)),
                                   style: ElevatedButton.styleFrom(
                                     elevation: 0,
-                                    backgroundColor: (Theme.of(context).brightness == Brightness.dark
+                                    backgroundColor: (Theme.of(context)
+                                                    .brightness ==
+                                                Brightness.dark
                                             ? Colors.indigoAccent
                                             : Theme.of(context).primaryColor)
                                         .withOpacity(0.12),
@@ -1743,10 +1817,13 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(16),
                                       side: BorderSide(
-                                          color: (Theme.of(context).brightness == Brightness.dark
-                                                  ? Colors.indigoAccent
-                                                  : Theme.of(context).primaryColor)
-                                              .withOpacity(0.3),
+                                          color:
+                                              (Theme.of(context).brightness ==
+                                                          Brightness.dark
+                                                      ? Colors.indigoAccent
+                                                      : Theme.of(context)
+                                                          .primaryColor)
+                                                  .withOpacity(0.3),
                                           width: 1.5),
                                     ),
                                   ),
@@ -1758,9 +1835,16 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                 child: Container(
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
-                                      colors: Theme.of(context).brightness == Brightness.dark
-                                          ? [Colors.indigoAccent, Color(0xFF9333EA)]
-                                          : [Theme.of(context).primaryColor, Color(0xFF8B5CF6)],
+                                      colors: Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? [
+                                              Colors.indigoAccent,
+                                              Color(0xFF9333EA)
+                                            ]
+                                          : [
+                                              Theme.of(context).primaryColor,
+                                              Color(0xFF8B5CF6)
+                                            ],
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                     ),
@@ -1929,7 +2013,8 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                             ? (Theme.of(context).brightness ==
                                                     Brightness.dark
                                                 ? Colors.indigoAccent
-                                                : Theme.of(context).primaryColor)
+                                                : Theme.of(context)
+                                                    .primaryColor)
                                             : (Theme.of(context).brightness ==
                                                     Brightness.dark
                                                 ? Colors.white30
@@ -1979,21 +2064,29 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                           horizontal: 16, vertical: 12),
                                       decoration: BoxDecoration(
                                         color: isActive
-                                            ? (Theme.of(context).brightness == Brightness.dark
-                                                ? Colors.indigoAccent.withOpacity(0.15)
-                                                : Theme.of(context).primaryColor.withOpacity(0.08))
-                                            : (Theme.of(context).brightness == Brightness.dark
-                                                ? AppColors.surfaceVariantDark.withOpacity(0.3)
+                                            ? (Theme.of(context).brightness ==
+                                                    Brightness.dark
+                                                ? Colors.indigoAccent
+                                                    .withOpacity(0.15)
+                                                : Theme.of(context)
+                                                    .primaryColor
+                                                    .withOpacity(0.08))
+                                            : (Theme.of(context).brightness ==
+                                                    Brightness.dark
+                                                ? AppColors.surfaceVariantDark
+                                                    .withOpacity(0.3)
                                                 : Theme.of(context).cardColor),
                                         borderRadius: BorderRadius.circular(20),
                                         border: Border.all(
                                             color: isActive
-                                                ? (Theme.of(context).brightness ==
+                                                ? (Theme.of(context)
+                                                            .brightness ==
                                                         Brightness.dark
                                                     ? Colors.indigoAccent
                                                     : Theme.of(context)
                                                         .primaryColor)
-                                                : (Theme.of(context).brightness ==
+                                                : (Theme.of(context)
+                                                            .brightness ==
                                                         Brightness.dark
                                                     ? Colors.white10
                                                     : AppColors.surfaceVariant),
@@ -2004,7 +2097,8 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                                     color: (Theme.of(context)
                                                                     .brightness ==
                                                                 Brightness.dark
-                                                            ? Colors.indigoAccent
+                                                            ? Colors
+                                                                .indigoAccent
                                                             : Theme.of(context)
                                                                 .primaryColor)
                                                         .withOpacity(0.1),
@@ -2054,9 +2148,12 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                                 size: 14,
                                                 color: isActive
                                                     ? Colors.white
-                                                    : (Theme.of(context).brightness == Brightness.dark
+                                                    : (Theme.of(context)
+                                                                .brightness ==
+                                                            Brightness.dark
                                                         ? Colors.white54
-                                                        : Theme.of(context).hintColor),
+                                                        : Theme.of(context)
+                                                            .hintColor),
                                               ),
                                             ),
                                             const SizedBox(width: 12),
@@ -2073,28 +2170,40 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                                             : FontWeight.w600,
                                                         fontSize: 13,
                                                         color: isActive
-                                                            ? (Theme.of(context).brightness == Brightness.dark
+                                                            ? (Theme.of(context)
+                                                                        .brightness ==
+                                                                    Brightness
+                                                                        .dark
                                                                 ? Colors.white
-                                                                : Theme.of(context).primaryColor)
-                                                            : (Theme.of(context).brightness == Brightness.dark
+                                                                : Theme.of(
+                                                                        context)
+                                                                    .primaryColor)
+                                                            : (Theme.of(context)
+                                                                        .brightness ==
+                                                                    Brightness
+                                                                        .dark
                                                                 ? Colors.white70
-                                                                : AppColors.textPrimary)),
+                                                                : AppColors
+                                                                    .textPrimary)),
                                                   ),
                                                   if (isActive)
                                                     Text(
                                                         ToneManager.t(
                                                             'dialog_api_active'),
-                                                        style:
-                                                            TextStyle(
-                                                                fontSize: 9,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                                color: Theme.of(context).brightness == Brightness.dark
-                                                                    ? Colors.indigoAccent
-                                                                    : AppColors.primary,
-                                                                letterSpacing:
-                                                                    0.5)),
+                                                        style: TextStyle(
+                                                            fontSize: 9,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color: Theme.of(context)
+                                                                        .brightness ==
+                                                                    Brightness
+                                                                        .dark
+                                                                ? Colors
+                                                                    .indigoAccent
+                                                                : AppColors
+                                                                    .primary,
+                                                            letterSpacing:
+                                                                0.5)),
                                                 ],
                                               ),
                                             ),
@@ -2104,10 +2213,10 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                                                   Icons.delete_sweep_rounded,
                                                   size: 20,
                                                   color: Theme.of(context)
-                                                                  .brightness ==
-                                                              Brightness.dark
-                                                          ? Colors.white38
-                                                          : Colors.grey),
+                                                              .brightness ==
+                                                          Brightness.dark
+                                                      ? Colors.white38
+                                                      : Colors.grey),
                                               padding: EdgeInsets.zero,
                                               constraints:
                                                   const BoxConstraints(),
@@ -2491,14 +2600,12 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                     IconButton(
                         onPressed: () => Navigator.pop(context),
                         icon: Icon(Icons.close_rounded,
-                            color: Theme.of(context)
-                                .textTheme
-                                .bodyLarge
-                                ?.color)),
+                            color:
+                                Theme.of(context).textTheme.bodyLarge?.color)),
                   ],
                 ),
               ),
-               Divider(
+              Divider(
                 color: Theme.of(context).brightness == Brightness.dark
                     ? Colors.white10
                     : null,
@@ -2545,15 +2652,17 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                             .withOpacity(0.08),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                            color: (Theme.of(context).brightness == Brightness.dark
-                                    ? Colors.indigoAccent
-                                    : Colors.blue)
-                                .withOpacity(0.2)),
+                            color:
+                                (Theme.of(context).brightness == Brightness.dark
+                                        ? Colors.indigoAccent
+                                        : Colors.blue)
+                                    .withOpacity(0.2)),
                       ),
                       child: Row(
                         children: [
                           Icon(Icons.info_outline_rounded,
-                              color: Theme.of(context).brightness == Brightness.dark
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
                                   ? Colors.indigoAccent
                                   : Colors.blue,
                               size: 20),
