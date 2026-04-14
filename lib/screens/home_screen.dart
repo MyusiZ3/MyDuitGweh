@@ -16,6 +16,8 @@ import '../models/transaction_model.dart';
 import '../models/wallet_model.dart';
 import '../widgets/shimmer_loading.dart';
 import '../widgets/connection_badge.dart';
+import '../models/debt_model.dart';
+import '../services/debt_service.dart';
 import '../utils/app_theme.dart';
 import '../utils/currency_formatter.dart';
 import '../utils/ui_helper.dart';
@@ -31,6 +33,13 @@ import '../models/survey_config_model.dart';
 import '../utils/debouncer.dart';
 import '../utils/theme_manager.dart';
 
+import '../widgets/home/home_sliver_app_bar.dart';
+import '../widgets/home/home_balance_card.dart';
+import '../widgets/home/home_budget_tracker.dart';
+import '../widgets/home/home_wallet_list.dart';
+import '../widgets/home/home_recent_transactions.dart';
+import '../widgets/home/home_recent_transactions_header.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -43,6 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final AuthService _authService = AuthService();
   final SecurityService _securityService = SecurityService();
   final NotificationService _notificationService = NotificationService();
+  final DebtService _debtService = DebtService();
   final RefreshThrottle _refreshThrottle = RefreshThrottle();
   final String _uid = FirebaseAuth.instance.currentUser!.uid;
 
@@ -608,41 +618,31 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (mounted) {
       final isOnline = await ConnectivityService.isOnline();
-      await _loadSettings();
 
       if (isOnline) {
-        UIHelper.showSuccessSnackBar(context, 'Data berhasil diperbarui!');
+        // Source of Truth Repair: Recalculate all balances from transactions
+        await _firestoreService.syncAllBalances(_uid);
+        await _loadSettings();
+        UIHelper.showSuccessSnackBar(
+            context, 'Data berhasil disinkronkan & diperbarui!');
       } else {
+        await _loadSettings();
         UIHelper.showInfoSnackBar(context, 'Data dimuat dari cache (Offline)');
       }
     }
   }
 
-  String _getGreeting() {
-    final now = DateTime.now();
-    final hour = now.hour;
-    final minute = now.minute;
-    final totalMinutes = hour * 60 + minute;
-
-    // Pagi: 03:00 - 11:30
-    if (totalMinutes >= 180 && totalMinutes <= 690) {
-      return ToneManager.t('greeting_pagi');
-    }
-    // Siang: 11:31 - 14:30
-    if (totalMinutes >= 691 && totalMinutes <= 870) {
-      return ToneManager.t('greeting_siang');
-    }
-    // Sore: 14:31 - 17:59
-    if (totalMinutes >= 871 && totalMinutes <= 1079) {
-      return ToneManager.t('greeting_sore');
-    }
-    // Malam: 18:00 - 02:59
-    return ToneManager.t('greeting_malam');
+  void _handleNotificationsTap() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+    );
   }
+
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = FirebaseAuth.instance.currentUser; // Test edit
 
     return ValueListenableBuilder<AppTone>(
       valueListenable: ToneManager.notifier,
@@ -655,513 +655,129 @@ class _HomeScreenState extends State<HomeScreen> {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const ShimmerHomeScreen();
               }
-              if (!snapshot.hasData)
+              if (!snapshot.hasData) {
                 return const Center(child: Text('Tidak ada data'));
+              }
 
               final wallets = snapshot.data!;
-              final totalBalance =
-                  wallets.fold<double>(0, (sum, w) => sum + w.balance);
               final walletIds = wallets.map((w) => w.id).toList();
+              final totalBalance =
+                  wallets.fold<double>(0, (acc, w) => acc + w.balance);
 
-              return RefreshIndicator(
-                onRefresh: _handleRefresh,
-                color: AppColors.primary,
-                backgroundColor: Colors.white,
-                child: CustomScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(
-                      parent: BouncingScrollPhysics()),
-                  slivers: [
-                    // 1. STICKY APP BAR & GREETING
-                    SliverAppBar(
-                      pinned: true,
-                      floating: true,
-                      elevation: 0,
-                      backgroundColor:
-                          Theme.of(context).scaffoldBackgroundColor,
-                      expandedHeight: 90,
-                      toolbarHeight: 80,
-                      centerTitle: false,
-                      automaticallyImplyLeading: false,
-                      titleSpacing: 24,
-                      title: Row(
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(_getGreeting(),
-                                  style: TextStyle(
-                                      fontSize: 12,
-                                      color: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall
-                                          ?.color,
-                                      fontWeight: FontWeight.w500)),
-                              Row(
-                                children: [
-                                  Text(user?.displayName ?? 'Pengguna',
-                                      style: TextStyle(
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.w800,
-                                          color: Theme.of(context)
-                                              .textTheme
-                                              .titleLarge
-                                              ?.color,
-                                          letterSpacing: -0.5)),
-                                  if (_isAdmin) ...[
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          colors: _isSuperAdmin
-                                              ? [
-                                                  const Color(0xFFFFD700),
-                                                  const Color(0xFFFFA500)
-                                                ]
-                                              : [
-                                                  const Color(0xFF2196F3),
-                                                  const Color(0xFF1976D2)
-                                                ],
-                                        ),
-                                        borderRadius: BorderRadius.circular(12),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: (_isSuperAdmin
-                                                    ? const Color(0xFFFFD700)
-                                                    : Colors.blue)
-                                                .withOpacity(0.3),
-                                            blurRadius: 8,
-                                            offset: const Offset(0, 2),
-                                          ),
-                                        ],
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                              _isSuperAdmin
-                                                  ? CupertinoIcons.sparkles
-                                                  : CupertinoIcons.shield_fill,
-                                              color: Colors.white,
-                                              size: 10),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                              _isSuperAdmin ? 'OWNER' : 'ADMIN',
-                                              style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 8,
-                                                  fontWeight: FontWeight.w900,
-                                                  letterSpacing: 0.5)),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ],
+              return StreamBuilder<List<DebtModel>>(
+                stream: _debtService.getUserDebts(_uid),
+                builder: (context, debtSnapshot) {
+                  double totalDebt = 0;
+                  double totalReceivable = 0;
+
+                  if (debtSnapshot.hasData) {
+                    for (var debt in debtSnapshot.data!) {
+                      if (debt.status == 'active') {
+                        final remaining = debt.totalAmount - debt.paidAmount;
+                        if (debt.type == 'utang') {
+                          totalDebt += remaining;
+                        } else {
+                          totalReceivable += remaining;
+                        }
+                      }
+                    }
+                  }
+
+                  final netWorth = totalBalance - totalDebt + totalReceivable;
+
+                  return RefreshIndicator(
+                    onRefresh: _handleRefresh,
+                    color: AppColors.primary,
+                    backgroundColor: Colors.white,
+                    child: CustomScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(
+                          parent: BouncingScrollPhysics()),
+                      slivers: [
+                        // 1. STICKY APP BAR
+                        HomeSliverAppBar(
+                          user: user,
+                          isAdmin: _isAdmin,
+                          isSuperAdmin: _isSuperAdmin,
+                          unreadBroadcasts: _unreadBroadcasts,
+                          uid: _uid,
+                          onProfileTap: _showProfileMenu,
+                          onNotificationsTap: _handleNotificationsTap,
+                        ),
+
+                        // 2. MAIN BALANCE CARD
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                          sliver: SliverToBoxAdapter(
+                            child: HomeBalanceCard(
+                              totalBalance: totalBalance,
+                              netWorth: netWorth,
+                              isBalanceVisible: _isBalanceVisible,
+                              onToggleVisibility: () {
+                                setState(() {
+                                  _isBalanceVisible = !_isBalanceVisible;
+                                });
+                                SharedPreferences.getInstance().then((prefs) {
+                                  prefs.setBool(
+                                      'show_balance', _isBalanceVisible);
+                                });
+                              },
+                            ),
                           ),
-                          const Spacer(),
-                          StreamBuilder<QuerySnapshot>(
-                            stream: FirebaseFirestore.instance
-                                .collection('users')
-                                .doc(_uid)
-                                .collection('notifications')
-                                .where('isRead', isEqualTo: false)
-                                .snapshots(),
-                            builder: (context, snapshot) {
-                              final unreadCount = (snapshot.hasData
-                                      ? snapshot.data!.docs.length
-                                      : 0) +
-                                  _unreadBroadcasts;
-                              return Stack(
-                                clipBehavior: Clip.none,
-                                children: [
-                                  IconButton(
-                                    onPressed: () async {
-                                      // Mark all current broadcasts as SEEN
-                                      final prefs =
-                                          await SharedPreferences.getInstance();
-                                      for (var b in _currentActiveBroadcasts) {
-                                        _seenBroadcasts.add(b['id'] as String);
-                                      }
-                                      await prefs.setStringList(
-                                          'seen_broadcasts',
-                                          _seenBroadcasts.toList());
-                                      setState(() => _unreadBroadcasts = 0);
+                        ),
 
-                                      if (!mounted) return;
-                                      await Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (_) =>
-                                                  const NotificationsScreen()));
-                                      // Reload dismissed list (user might have swiped some)
-                                      _loadSettings();
-                                    },
-                                    icon: Icon(CupertinoIcons.bell,
-                                        color: Theme.of(context)
-                                            .textTheme
-                                            .titleLarge
-                                            ?.color,
-                                        size: 26),
+                        // 3. BUDGET TRACKER (IF SET)
+                        if (_monthlyBudget > 0)
+                          StreamBuilder<double>(
+                            stream:
+                                _firestoreService.getMonthlyExpenseStream(_uid),
+                            builder: (context, expenseSnapshot) {
+                              return SliverPadding(
+                                padding:
+                                    const EdgeInsets.fromLTRB(16, 32, 16, 0),
+                                sliver: SliverToBoxAdapter(
+                                  child: HomeBudgetTracker(
+                                    monthlyBudget: _monthlyBudget,
+                                    totalExpense: expenseSnapshot.data ?? 0.0,
                                   ),
-                                  if (unreadCount > 0)
-                                    Positioned(
-                                      top: 12,
-                                      right: 12,
-                                      child: Container(
-                                        padding: const EdgeInsets.all(4),
-                                        decoration: BoxDecoration(
-                                            color: AppColors.expense,
-                                            shape: BoxShape.circle),
-                                        child: Text(
-                                          unreadCount > 9
-                                              ? '9+'
-                                              : '$unreadCount',
-                                          style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 8,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                      ),
-                                    ),
-                                ],
+                                ),
                               );
                             },
                           ),
-                          const SizedBox(width: 4),
-                          GestureDetector(
-                            onTap: _showProfileMenu,
-                            child: ConnectionBadge(
-                              child: Container(
-                                padding: const EdgeInsets.all(3),
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                      color:
-                                          AppColors.primary.withOpacity(0.15),
-                                      width: 1.5),
-                                ),
-                                child: Stack(
-                                  children: [
-                                    CircleAvatar(
-                                      radius: 19,
-                                      backgroundColor:
-                                          AppColors.primary.withOpacity(0.1),
-                                      backgroundImage: user?.photoURL != null
-                                          ? NetworkImage(user!.photoURL!)
-                                          : null,
-                                      child: user?.photoURL == null
-                                          ? Icon(CupertinoIcons.person_fill,
-                                              size: 22,
-                                              color: AppColors.primary)
-                                          : null,
-                                    ),
-                                    if (_isAdmin)
-                                      // Admin Badge (Top Left)
-                                      Positioned(
-                                        top: -3,
-                                        left: -3,
-                                        child: Container(
-                                          padding: const EdgeInsets.all(2),
-                                          decoration: BoxDecoration(
-                                              color: Theme.of(context)
-                                                          .brightness ==
-                                                      Brightness.dark
-                                                  ? AppColors.surfaceDark
-                                                  : Colors.white,
-                                              shape: BoxShape.circle,
-                                              border: Border.all(
-                                                  color: Theme.of(context)
-                                                              .brightness ==
-                                                          Brightness.dark
-                                                      ? Colors.white12
-                                                      : Colors.transparent,
-                                                  width: 0.5)),
-                                          child: Icon(
-                                            CupertinoIcons.checkmark_seal_fill,
-                                            color: AppColors.primary,
-                                            size: 14,
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // 1. BROADCAST & MAINTENANCE BANNERS
-                    SliverToBoxAdapter(
-                        child: _buildBroadcastAndMaintenanceBanners()),
 
-                    // 2. MAIN BALANCE CARD
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 8),
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                AppColors.primary,
-                                AppColors.primaryDark
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(32),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.primary.withOpacity(0.25),
-                                blurRadius: 16,
-                                offset: const Offset(0, 8),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(ToneManager.t('home_balance'),
-                                      style: TextStyle(
-                                          color: Colors.white70,
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w500)),
-                                  GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        _isBalanceVisible = !_isBalanceVisible;
-                                      });
-                                      // Simpan ke background biar gak ganggu UI thread
-                                      SharedPreferences.getInstance()
-                                          .then((prefs) {
-                                        prefs.setBool(
-                                            'show_balance', _isBalanceVisible);
-                                      });
-                                    },
-                                    child: Icon(
-                                      _isBalanceVisible
-                                          ? CupertinoIcons.eye
-                                          : CupertinoIcons.eye_slash,
-                                      color: Colors.white70,
-                                      size: 18,
-                                    ),
+                        // 4. WALLET SUMMARY
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.only(
+                                top: 32, bottom: 12, left: 24),
+                            child: Text(
+                              'Daftar Dompet',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 16,
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              FittedBox(
-                                child: Text(
-                                  _isBalanceVisible
-                                      ? CurrencyFormatter.formatCurrency(
-                                          totalBalance)
-                                      : 'Rp ••••••••',
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 34,
-                                      fontWeight: FontWeight.w900,
-                                      letterSpacing: -1),
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          child: _balanceAction(
-                                              Icons
-                                                  .account_balance_wallet_rounded,
-                                              ToneManager.t('nav_wallet'), () {
-                                            MainNav.of(context)?.setTab(1);
-                                          }),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: _balanceAction(
-                                              CupertinoIcons.graph_circle,
-                                              ToneManager.t('nav_report'), () {
-                                            MainNav.of(context)?.setTab(4);
-                                          }),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-
-                    // 3. BUDGET TRACKER (IF SET)
-                    if (_monthlyBudget > 0)
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 16),
-                          child: _buildBudgetTracker(totalBalance),
+                        SliverPadding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          sliver: SliverToBoxAdapter(
+                            child: HomeWalletList(wallets: wallets),
+                          ),
                         ),
-                      ),
 
-                    // 4. WALLET SUMMARY (SMALL CARDS)
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.only(
-                            top: 16, bottom: 12, left: 24),
-                        child: Text('Daftar Dompet',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleLarge
-                                ?.copyWith(
-                                    fontWeight: FontWeight.w800, fontSize: 18)),
-                      ),
-                    ),
-                    SliverToBoxAdapter(
-                      child: wallets.isEmpty
-                          ? Container(
-                              height: 120,
-                              margin:
-                                  const EdgeInsets.symmetric(horizontal: 24),
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).cardColor,
-                                borderRadius: BorderRadius.circular(24),
-                                border: Border.all(
-                                    color: Theme.of(context)
-                                        .dividerColor
-                                        .withOpacity(0.1)),
-                              ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(CupertinoIcons.creditcard,
-                                      color: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall
-                                          ?.color
-                                          ?.withOpacity(0.3),
-                                      size: 32),
-                                  const SizedBox(height: 8),
-                                  Text('Belum ada dompet nih!',
-                                      style: TextStyle(
-                                          color: Theme.of(context)
-                                              .textTheme
-                                              .titleLarge
-                                              ?.color,
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w700)),
-                                  Text('Buat dompet pertamamu yuk!',
-                                      style: TextStyle(
-                                          color: Theme.of(context)
-                                              .textTheme
-                                              .bodySmall
-                                              ?.color,
-                                          fontSize: 11)),
-                                ],
-                              ),
-                            )
-                          : SizedBox(
-                              height: 100,
-                              child: ListView.builder(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 24),
-                                scrollDirection: Axis.horizontal,
-                                physics: const BouncingScrollPhysics(),
-                                itemCount: wallets.length,
-                                itemBuilder: (context, index) {
-                                  final w = wallets[index];
-                                  return GestureDetector(
-                                    onTap: () => MainNav.of(context)?.setTab(1),
-                                    child: Container(
-                                      width: 170,
-                                      margin: const EdgeInsets.only(right: 16),
-                                      padding: const EdgeInsets.all(16),
-                                      decoration: BoxDecoration(
-                                        color: Theme.of(context).cardColor,
-                                        borderRadius: BorderRadius.circular(24),
-                                        border: Border.all(
-                                            color: Theme.of(context)
-                                                .dividerColor
-                                                .withOpacity(0.1)),
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Text(w.walletName,
-                                              style: TextStyle(
-                                                  color: Theme.of(context)
-                                                      .textTheme
-                                                      .bodySmall
-                                                      ?.color,
-                                                  fontSize: 10,
-                                                  fontWeight: FontWeight.bold,
-                                                  letterSpacing: 0.5)),
-                                          const SizedBox(height: 6),
-                                          FittedBox(
-                                            child: Text(
-                                                CurrencyFormatter
-                                                    .formatCurrency(w.balance),
-                                                style: TextStyle(
-                                                    color: Theme.of(context)
-                                                        .textTheme
-                                                        .titleLarge
-                                                        ?.color,
-                                                    fontSize: 15,
-                                                    fontWeight:
-                                                        FontWeight.w800)),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                    ),
-
-                    // 5. RECENT TRANSACTIONS
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.only(
-                            top: 32, bottom: 16, left: 24, right: 12),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(ToneManager.t('home_recent'),
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleLarge
-                                    ?.copyWith(
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 18)),
-                            TextButton(
-                              onPressed: () => MainNav.of(context)?.setTab(4),
-                              child: Text('Semua',
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.w700)),
-                            ),
-                          ],
+                        // 5. RECENT TRANSACTIONS
+                        const HomeRecentTransactionsHeader(),
+                        HomeRecentTransactions(
+                          walletIds: walletIds,
+                          firestoreService: _firestoreService,
                         ),
-                      ),
+                      ],
                     ),
-                    _buildRecentTransactions(walletIds),
-                  ],
-                ),
+                  );
+                },
               );
             },
           ),
@@ -1170,237 +786,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _balanceAction(IconData icon, String label, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-            color: Colors.white12, borderRadius: BorderRadius.circular(14)),
-        child: Row(
-          mainAxisSize: MainAxisSize.min, // CRITICAL: Wrap tightly
-          mainAxisAlignment: MainAxisAlignment.center, // Bikin tengah
-          children: [
-            Icon(icon, color: Colors.white, size: 16), // Slightly bigger
-            const SizedBox(width: 8), // More breathing room
-            Flexible(
-              child: Text(label,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  Widget _buildBudgetTracker(double expense) {
-    final percent = (expense / _monthlyBudget).clamp(0.0, 1.0);
-    final isWarning = percent > 0.8;
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(24),
-        border:
-            Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Target Budget Bulanan',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
-              Text('${(percent * 100).toStringAsFixed(0)}%',
-                  style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      color:
-                          isWarning ? AppColors.expense : AppColors.primary)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: LinearProgressIndicator(
-              value: percent,
-              minHeight: 8,
-              backgroundColor: AppColors.surfaceVariant,
-              color: isWarning ? AppColors.expense : AppColors.primary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                      'Sisa: ${CurrencyFormatter.formatCurrency(_monthlyBudget - expense)}',
-                      style: TextStyle(
-                          fontSize: 11,
-                          color: Theme.of(context).textTheme.bodySmall?.color,
-                          fontWeight: FontWeight.w600)),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerRight,
-                  child: Text(
-                      'Dari ${CurrencyFormatter.formatCurrency(_monthlyBudget)}',
-                      style: TextStyle(
-                          fontSize: 11,
-                          color: Theme.of(context).textTheme.bodySmall?.color)),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRecentTransactions(List<String> walletIds) {
-    return StreamBuilder<List<TransactionModel>>(
-      stream: _firestoreService.getAllTransactionsStream(walletIds),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData)
-          return const SliverToBoxAdapter(
-              child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24),
-                  child: ShimmerTransactionList()));
-        final txns = snapshot.data!;
-        if (txns.isEmpty) {
-          return SliverToBoxAdapter(
-            child: Container(
-              height: 120,
-              margin: const EdgeInsets.symmetric(horizontal: 24),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                    color: Theme.of(context).dividerColor.withOpacity(0.1)),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(CupertinoIcons.clock,
-                      color: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.color
-                          ?.withOpacity(0.5),
-                      size: 40),
-                  const SizedBox(height: 12),
-                  Text(ToneManager.t('home_empty_title'),
-                      style: TextStyle(
-                          color: Theme.of(context).textTheme.titleLarge?.color,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800)),
-                  const SizedBox(height: 4),
-                  Text(ToneManager.t('home_empty_msg'),
-                      style: TextStyle(
-                          color: Theme.of(context).textTheme.bodySmall?.color,
-                          fontSize: 12)),
-                ],
-              ),
-            ),
-          );
-        }
-
-        return SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (context, index) {
-              final t = txns[index];
-              final isIncome = t.isIncome;
-              return Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                          color: Colors.black.withOpacity(0.015),
-                          blurRadius: 10)
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                            color: (isIncome
-                                    ? AppColors.income
-                                    : AppColors.expense)
-                                .withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(14)),
-                        child: Icon(
-                            TransactionCategory.getIconForCategory(t.category),
-                            color:
-                                isIncome ? AppColors.income : AppColors.expense,
-                            size: 20),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(t.category,
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 15)),
-                            Text(
-                                t.note.isEmpty
-                                    ? DateFormat('dd MMM yyyy').format(t.date)
-                                    : t.note,
-                                style: TextStyle(
-                                    fontSize: 12,
-                                    color: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
-                                        ?.color)),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      ConstrainedBox(
-                        constraints: BoxConstraints(
-                            maxWidth: MediaQuery.of(context).size.width * 0.35),
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                              '${isIncome ? '+' : '-'}${CurrencyFormatter.formatCurrency(t.amount)}',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.w900,
-                                  color: isIncome
-                                      ? AppColors.income
-                                      : AppColors.expense,
-                                  fontSize: 15)),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-            childCount: txns.length > 5 ? 5 : txns.length,
-          ),
-        );
-      },
-    );
-  }
 
   void _showProfileMenu() {
     final user = FirebaseAuth.instance.currentUser;
@@ -1524,7 +910,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           trailing: Icon(CupertinoIcons.chevron_forward,
                               size: 16, color: AppColors.primary),
                         ),
-                        _buildProfileMenuItem(
+                      _buildProfileMenuItem(
                         icon: CupertinoIcons.shield,
                         label: 'Kunci Sidik Jari/Wajah',
                         onTap: () async {
@@ -2128,10 +1514,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           .withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
-                      child: Icon(
-                        isMaintenance
-                            ? CupertinoIcons.hammer_fill
-                            : CupertinoIcons.clock_fill,
+                    child: Icon(
+                      isMaintenance
+                          ? CupertinoIcons.hammer_fill
+                          : CupertinoIcons.clock_fill,
                       color: isMaintenance ? Colors.red : Colors.orange,
                       size: 20,
                     ),
@@ -2245,7 +1631,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 child: Row(
                   children: [
-                    Icon(CupertinoIcons.info_circle_fill, color: Colors.blue, size: 24),
+                    Icon(CupertinoIcons.info_circle_fill,
+                        color: Colors.blue, size: 24),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Column(

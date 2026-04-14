@@ -6,6 +6,8 @@ import '../services/firestore_service.dart';
 import '../services/connectivity_service.dart';
 import '../models/wallet_model.dart';
 import '../models/transaction_model.dart';
+import '../models/debt_model.dart';
+import '../services/debt_service.dart';
 import '../widgets/shimmer_loading.dart';
 import '../utils/app_theme.dart';
 import '../utils/currency_formatter.dart';
@@ -25,6 +27,7 @@ class WalletScreen extends StatefulWidget {
 
 class WalletScreenState extends State<WalletScreen> {
   final FirestoreService _firestoreService = FirestoreService();
+  final DebtService _debtService = DebtService();
   final String _uid = FirebaseAuth.instance.currentUser!.uid;
 
   // Search State
@@ -55,6 +58,7 @@ class WalletScreenState extends State<WalletScreen> {
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
+          centerTitle: true,
           title: const Text('Daftar Dompet',
               style: TextStyle(
                   fontWeight: FontWeight.w800,
@@ -181,49 +185,61 @@ class WalletScreenState extends State<WalletScreen> {
               ),
             ),
             Expanded(
-              child: StreamBuilder<List<WalletModel>>(
-                stream: _firestoreService.getWalletsStream(_uid),
-                builder: (context, snapshot) {
-                  // Only show shimmer if we are waiting for initial data and there is no data yet
-                  if (snapshot.connectionState == ConnectionState.waiting &&
-                      !snapshot.hasData) {
-                    return TabBarView(
-                      physics: const NeverScrollableScrollPhysics(),
-                      children: List.generate(
-                        3,
-                        (index) => ListView.builder(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 0),
+              child: TabBarView(
+                physics: const BouncingScrollPhysics(),
+                children: [
+                  // Tab Pribadi
+                  StreamBuilder<List<WalletModel>>(
+                    stream: _firestoreService.getWalletsStream(_uid),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+                        return ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
                           physics: const BouncingScrollPhysics(),
                           itemCount: 4,
-                          itemBuilder: (context, _) =>
-                              const ShimmerWalletCard(),
-                        ),
-                      ),
-                    );
-                  }
-
-                  final wallets = snapshot.data ?? [];
-                  final filteredWallets = wallets.where((w) {
-                    return w.walletName.toLowerCase().contains(_searchQuery);
-                  }).toList();
-
-                  final personalWallets =
-                      filteredWallets.where((w) => w.isPersonal).toList();
-                  final colabWallets =
-                      filteredWallets.where((w) => w.isColab).toList();
-                  final debtWallets =
-                      filteredWallets.where((w) => w.isDebt).toList();
-
-                  return TabBarView(
-                    physics: const BouncingScrollPhysics(),
-                    children: [
-                      _buildWalletList(personalWallets),
-                      _buildWalletList(colabWallets),
-                      _buildWalletList(debtWallets),
-                    ],
-                  );
-                },
+                          itemBuilder: (context, _) => const ShimmerWalletCard(),
+                        );
+                      }
+                      final wallets = snapshot.data ?? [];
+                      final personalWallets = wallets.where((w) => w.walletName.toLowerCase().contains(_searchQuery) && w.isPersonal).toList();
+                      return _buildWalletList(personalWallets);
+                    },
+                  ),
+                  // Tab Bersama
+                  StreamBuilder<List<WalletModel>>(
+                    stream: _firestoreService.getWalletsStream(_uid),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+                        return ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
+                          physics: const BouncingScrollPhysics(),
+                          itemCount: 4,
+                          itemBuilder: (context, _) => const ShimmerWalletCard(),
+                        );
+                      }
+                      final wallets = snapshot.data ?? [];
+                      final colabWallets = wallets.where((w) => w.walletName.toLowerCase().contains(_searchQuery) && w.isColab).toList();
+                      return _buildWalletList(colabWallets);
+                    },
+                  ),
+                  // Tab Hutang
+                  StreamBuilder<List<DebtModel>>(
+                    stream: _debtService.getUserDebts(_uid),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+                        return ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
+                          physics: const BouncingScrollPhysics(),
+                          itemCount: 4,
+                          itemBuilder: (context, _) => const ShimmerWalletCard(),
+                        );
+                      }
+                      final debts = snapshot.data ?? [];
+                      final filteredDebts = debts.where((d) => d.title.toLowerCase().contains(_searchQuery)).toList();
+                      return _buildDebtList(filteredDebts);
+                    },
+                  ),
+                ],
               ),
             ),
           ],
@@ -252,32 +268,41 @@ class WalletScreenState extends State<WalletScreen> {
     final nameController = TextEditingController();
     final debtorNameController = TextEditingController();
     final debtorPhoneController = TextEditingController();
+    final totalAmountController = TextEditingController();
+    String? selectedWalletId;
     String selectedType = 'personal';
     String debtType = 'payable'; // 'payable' = ngutang, 'receivable' = minjamin
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      enableDrag: true,
+      showDragHandle: true,
       backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 24,
-            bottom: MediaQuery.of(context).viewInsets.bottom +
-                MediaQuery.of(context).padding.bottom +
-                24,
+        builder: (context, setModalState) => ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.7,
           ),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+          child: Container(
+            clipBehavior: Clip.antiAlias,
+            padding: EdgeInsets.only(
+              left: 24,
+              right: 24,
+              top: 12,
+              bottom: MediaQuery.of(context).viewInsets.bottom +
+                  (MediaQuery.of(context).viewInsets.bottom > 0 ? 16 : MediaQuery.of(context).padding.bottom + 24),
+            ),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                 Center(
                   child: Container(
                     width: 40,
@@ -348,8 +373,15 @@ class WalletScreenState extends State<WalletScreen> {
                                           fontWeight: FontWeight.bold)),
                                   value: 'payable',
                                   groupValue: debtType,
-                                  onChanged: (val) =>
-                                      setModalState(() => debtType = val!),
+                                  onChanged: (val) {
+                                    setModalState(() {
+                                      debtType = val!;
+                                      if (debtorNameController.text.isNotEmpty) {
+                                        nameController.text =
+                                            'Hutang ke ${debtorNameController.text}';
+                                      }
+                                    });
+                                  },
                                   contentPadding: EdgeInsets.zero,
                                   dense: true,
                                   activeColor: Theme.of(context).brightness ==
@@ -365,8 +397,15 @@ class WalletScreenState extends State<WalletScreen> {
                                           fontWeight: FontWeight.bold)),
                                   value: 'receivable',
                                   groupValue: debtType,
-                                  onChanged: (val) =>
-                                      setModalState(() => debtType = val!),
+                                  onChanged: (val) {
+                                    setModalState(() {
+                                      debtType = val!;
+                                      if (debtorNameController.text.isNotEmpty) {
+                                        nameController.text =
+                                            'Piutang ${debtorNameController.text}';
+                                      }
+                                    });
+                                  },
                                   contentPadding: EdgeInsets.zero,
                                   dense: true,
                                   activeColor: Theme.of(context).brightness ==
@@ -380,6 +419,17 @@ class WalletScreenState extends State<WalletScreen> {
                             TextField(
                               controller: debtorNameController,
                               textCapitalization: TextCapitalization.words,
+                              onChanged: (val) {
+                                setModalState(() {
+                                  if (val.isNotEmpty) {
+                                    nameController.text = debtType == 'payable'
+                                        ? 'Hutang ke $val'
+                                        : 'Piutang $val';
+                                  } else {
+                                    nameController.text = '';
+                                  }
+                                });
+                              },
                               decoration: InputDecoration(
                                 hintText: 'Nama Teman / Pihak Lain',
                                 filled: true,
@@ -483,57 +533,46 @@ class WalletScreenState extends State<WalletScreen> {
                                                                             .bold)),
                                                             const SizedBox(
                                                                 height: 16),
-                                                            Container(
-                                                              height: 48,
-                                                              decoration:
-                                                                  BoxDecoration(
-                                                                color: Theme.of(context)
-                                                                            .brightness ==
-                                                                        Brightness
-                                                                            .dark
-                                                                    ? Colors
-                                                                        .white
-                                                                        .withOpacity(
-                                                                            0.15)
-                                                                    : Theme.of(
-                                                                            context)
-                                                                        .inputDecorationTheme
-                                                                        .fillColor,
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            12),
-                                                              ),
-                                                              child: TextField(
-                                                                onChanged:
-                                                                    (val) {
-                                                                  setContactState(
-                                                                      () {
-                                                                    contactSearchQuery =
-                                                                        val;
-                                                                  });
-                                                                },
-                                                                decoration:
-                                                                    InputDecoration(
-                                                                  hintText:
-                                                                      'Cari nama atau nomor...',
-                                                                  prefixIcon: Icon(CupertinoIcons.search,
-                                                                      color: Theme.of(context).brightness ==
-                                                                              Brightness.dark
-                                                                          ? const Color(0xFF0A84FF)
-                                                                          : Theme.of(context).primaryColor),
-                                                                  border:
-                                                                      InputBorder
-                                                                          .none,
-                                                                  contentPadding:
-                                                                      EdgeInsets.symmetric(
-                                                                          vertical:
-                                                                              12,
-                                                                          horizontal:
-                                                                              16),
-                                                                ),
-                                                              ),
-                                                            ),
+                                                               TextField(
+                                                                 onChanged: (val) {
+                                                                   setContactState(() {
+                                                                     contactSearchQuery = val;
+                                                                   });
+                                                                 },
+                                                                 decoration: InputDecoration(
+                                                                   hintText: 'Cari nama atau nomor...',
+                                                                   filled: true,
+                                                                   fillColor: Theme.of(context).brightness == Brightness.dark
+                                                                       ? const Color(0xFF1C1C1E)
+                                                                       : const Color(0xFF767680).withOpacity(0.12),
+                                                                   hintStyle: TextStyle(
+                                                                     fontSize: 14,
+                                                                     color: Theme.of(context).hintColor.withOpacity(0.5),
+                                                                   ),
+                                                                   prefixIcon: Icon(CupertinoIcons.search,
+                                                                       size: 20,
+                                                                       color: Theme.of(context).brightness == Brightness.dark
+                                                                           ? const Color(0xFF0A84FF)
+                                                                           : Theme.of(context).primaryColor),
+                                                                   border: OutlineInputBorder(
+                                                                     borderRadius: BorderRadius.circular(12),
+                                                                     borderSide: BorderSide.none,
+                                                                   ),
+                                                                   enabledBorder: OutlineInputBorder(
+                                                                     borderRadius: BorderRadius.circular(12),
+                                                                     borderSide: BorderSide.none,
+                                                                   ),
+                                                                   focusedBorder: OutlineInputBorder(
+                                                                     borderRadius: BorderRadius.circular(12),
+                                                                     borderSide: BorderSide(
+                                                                         color: Theme.of(context).primaryColor,
+                                                                         width: 1),
+                                                                   ),
+                                                                   contentPadding: const EdgeInsets.symmetric(
+                                                                       vertical: 12,
+                                                                       horizontal: 16),
+                                                                 ),
+                                                               ),
                                                           ],
                                                         ),
                                                       ),
@@ -698,6 +737,68 @@ class WalletScreenState extends State<WalletScreen> {
                             width: 2)),
                   ),
                 ),
+                if (selectedType == 'debt') ...[
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: totalAmountController,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    decoration: InputDecoration(
+                      hintText: '0',
+                      prefixIcon: UnconstrainedBox(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(CupertinoIcons.creditcard,
+                                  size: 20,
+                                  color: Theme.of(context).primaryColor),
+                              const SizedBox(width: 8),
+                              Text('Rp',
+                                  style: TextStyle(
+                                      color: Theme.of(context).primaryColor,
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 14)),
+                            ],
+                          ),
+                        ),
+                      ),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none),
+                      filled: true,
+                      fillColor: Theme.of(context).inputDecorationTheme.fillColor,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  StreamBuilder<List<WalletModel>>(
+                    stream: _firestoreService.getWalletsStream(_uid),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) return const SizedBox.shrink();
+                      final wallets = snapshot.data!.where((w) => !w.isDebt).toList();
+                      return DropdownButtonFormField<String>(
+                        value: selectedWalletId,
+                        hint: const Text('Pilih Dompet Sumber/Tujuan'),
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Theme.of(context).cardColor,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                        ),
+                        items: wallets.map((w) {
+                          return DropdownMenuItem(
+                            value: w.id,
+                            child: Text(w.walletName),
+                          );
+                        }).toList(),
+                        onChanged: (val) {
+                          setModalState(() => selectedWalletId = val);
+                        },
+                      );
+                    },
+                  ),
+                ],
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
@@ -706,6 +807,46 @@ class WalletScreenState extends State<WalletScreen> {
                     onPressed: () async {
                       if (nameController.text.isNotEmpty) {
                         final isOnline = await ConnectivityService.isOnline();
+                        
+                        if (selectedType == 'debt') {
+                          if (totalAmountController.text.isEmpty || selectedWalletId == null || debtorNameController.text.isEmpty) {
+                            if (!context.mounted) return;
+                            UIHelper.showErrorSnackBar(context, 'Lengkapi semua field hutang!');
+                            return;
+                          }
+                          final amount = double.tryParse(totalAmountController.text) ?? 0;
+                          
+                          if (!isOnline) {
+                            if (!context.mounted) return;
+                            UIHelper.showInfoSnackBar(context, 'Penambahan hutang butuh koneksi internet');
+                            return;
+                          }
+                          
+                          try {
+                            final debtTypePayload = debtType == 'payable' ? 'utang' : 'piutang';
+                            final currentUser = FirebaseAuth.instance.currentUser;
+                            final currentUserName = currentUser?.displayName ?? "User";
+                            
+                            final debtTitle = nameController.text;
+                            
+                            await _debtService.addDebt(
+                              currentUserId: _uid,
+                              currentUserName: currentUserName,
+                              type: debtTypePayload,
+                              title: debtTitle,
+                              totalAmount: amount,
+                              walletId: selectedWalletId!,
+                            );
+                            if (!context.mounted) return;
+                            Navigator.pop(context);
+                            UIHelper.showSuccessSnackBar(context, 'Berhasil mencatat $debtTitle!');
+                          } catch (e) {
+                            if (!context.mounted) return;
+                            UIHelper.showErrorSnackBar(context, 'Gagal: $e');
+                          }
+                          return;
+                        }
+
                         final newWallet = WalletModel(
                           id: '', // Will be set by service
                           walletName: nameController.text,
@@ -714,22 +855,14 @@ class WalletScreenState extends State<WalletScreen> {
                           members: [_uid],
                           owner: _uid,
                           createdAt: DateTime.now(),
-                          debtorName: selectedType == 'debt'
-                              ? debtorNameController.text
-                              : null,
-                          debtorPhone: selectedType == 'debt'
-                              ? debtorPhoneController.text
-                              : null,
-                          debtType: selectedType == 'debt' ? debtType : null,
                         );
 
                         if (!isOnline) {
                           _firestoreService.createWallet(newWallet);
-                          if (mounted) {
-                            Navigator.pop(context);
-                            UIHelper.showInfoSnackBar(
-                                context, 'Dompet dibuat offline');
-                          }
+                          if (!context.mounted) return;
+                          Navigator.pop(context);
+                          UIHelper.showInfoSnackBar(
+                              context, 'Dompet dibuat offline');
                           return;
                         }
 
@@ -746,14 +879,13 @@ class WalletScreenState extends State<WalletScreen> {
                           UIHelper.showSuccessSnackBar(context,
                               'Dompet "${nameController.text}" berhasil dibuat!');
                         } catch (e) {
-                          if (mounted) {
-                            if (e is TimeoutException) {
-                              Navigator.pop(context);
-                              UIHelper.showInfoSnackBar(context,
-                                  'Koneksi lambat, dompet akan muncul saat tersambung.');
-                            } else {
-                              UIHelper.showErrorSnackBar(context, 'Gagal: $e');
-                            }
+                          if (!context.mounted) return;
+                          if (e is TimeoutException) {
+                            Navigator.pop(context);
+                            UIHelper.showInfoSnackBar(context,
+                                'Koneksi lambat, dompet akan muncul saat tersambung.');
+                          } else {
+                            UIHelper.showErrorSnackBar(context, 'Gagal: $e');
                           }
                         }
                       }
@@ -767,7 +899,7 @@ class WalletScreenState extends State<WalletScreen> {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16)),
                     ),
-                    child: Text('Simpan Dompet',
+                    child: Text(selectedType == 'debt' ? 'Simpan Hutang/Piutang' : 'Simpan Dompet',
                         style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
@@ -795,8 +927,9 @@ class WalletScreenState extends State<WalletScreen> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildTypeOption(StateSetter setModalState, String type, String label,
       IconData icon, String current, Function(String) onSelect) {
@@ -859,6 +992,8 @@ class WalletScreenState extends State<WalletScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      enableDrag: true,
+      showDragHandle: true,
       backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) => Container(
@@ -1014,6 +1149,175 @@ class WalletScreenState extends State<WalletScreen> {
     );
   }
 
+  void _showEditDebtDialog(DebtModel debt) {
+    final titleController = TextEditingController(text: debt.title);
+    final amountController = TextEditingController(text: debt.totalAmount.toStringAsFixed(0));
+    DateTime? selectedDate = debt.dueDate;
+    bool isSaving = false;
+    final String typeLabel = debt.isUtang ? 'Hutang' : 'Piutang';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      enableDrag: true,
+      showDragHandle: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 12,
+            bottom: MediaQuery.of(context).viewInsets.bottom +
+                MediaQuery.of(context).padding.bottom +
+                24,
+          ),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Edit Catatan $typeLabel',
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: titleController,
+                  decoration: InputDecoration(
+                    labelText: 'Label $typeLabel',
+                    hintText: debt.isUtang ? 'Misal: Hutang Budi' : 'Misal: Piutang Andi',
+                    prefixIcon: const Icon(CupertinoIcons.doc_text),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: amountController,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  decoration: InputDecoration(
+                    labelText: 'Total $typeLabel',
+                    prefixIcon: const Icon(CupertinoIcons.money_dollar),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                InkWell(
+                  onTap: () async {
+                    final date = await showDatePicker(
+                      context: context,
+                      initialDate: selectedDate ?? DateTime.now(),
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime(2100),
+                    );
+                    if (date != null) {
+                       setModalState(() => selectedDate = date);
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Theme.of(context).dividerColor),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(CupertinoIcons.calendar),
+                        const SizedBox(width: 12),
+                        Text(
+                          selectedDate == null
+                              ? 'Pilih Jatuh Tempo (Opsional)'
+                              : 'Jatuh Tempo: ${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}',
+                        ),
+                        const Spacer(),
+                        if (selectedDate != null)
+                          IconButton(
+                            icon: const Icon(CupertinoIcons.clear_circled_solid, size: 20),
+                            onPressed: () => setModalState(() => selectedDate = null),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: isSaving
+                        ? null
+                        : () async {
+                            if (titleController.text.isEmpty) return;
+                            final newAmount = double.tryParse(amountController.text);
+                            if (newAmount == null || newAmount <= 0) {
+                              UIHelper.showErrorSnackBar(context, 'Masukkan nominal yang valid');
+                              return;
+                            }
+
+                            setModalState(() => isSaving = true);
+                            try {
+                              await _debtService.updateDebt(
+                                userId: _uid,
+                                debtId: debt.id,
+                                title: titleController.text,
+                                newTotalAmount: newAmount,
+                                dueDate: selectedDate,
+                              );
+                              if (!context.mounted) return;
+                              Navigator.pop(context);
+                              UIHelper.showSuccessSnackBar(context, 'Berhasil memperbarui catatan $typeLabel');
+                            } catch (e) {
+                              if (!context.mounted) return;
+                              setModalState(() => isSaving = false);
+                              UIHelper.showErrorSnackBar(context, 'Gagal: $e');
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                    child: isSaving
+                        ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        : Text('Simpan Perubahan $typeLabel'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _deleteDebt(DebtModel debt) async {
+    final String typeLabel = debt.isUtang ? 'Hutang' : 'Piutang';
+    
+    final confirmed = await UIHelper.showConfirmDialog(
+      context: context,
+      title: 'Hapus Catatan $typeLabel?',
+      message: 'Apakah Anda yakin ingin menghapus catatan $typeLabel "${debt.title}"? Saldo dompet akan dikembalikan dan riwayat transaksi terkait akan dihapus.',
+      confirmText: 'Hapus',
+      cancelText: 'Batal',
+      isDangerous: true,
+    );
+
+    if (confirmed == true) {
+      if (!mounted) return;
+      try {
+        await _debtService.deleteDebt(_uid, debt.id);
+        if (!mounted) return;
+        UIHelper.showSuccessSnackBar(context, 'Catatan $typeLabel berhasil dihapus');
+      } catch (e) {
+        if (!mounted) return;
+        UIHelper.showErrorSnackBar(context, 'Gagal menghapus: $e');
+      }
+    }
+  }
+
   void _showWalletDetails(WalletModel wallet) {
     showModalBottomSheet(
       context: context,
@@ -1092,11 +1396,10 @@ class WalletScreenState extends State<WalletScreen> {
                                 await ConnectivityService.isOnline();
                             if (!isOnline) {
                               _firestoreService.deleteWallet(wallet.id);
-                              if (mounted) {
-                                Navigator.of(context).pop(); // Close sheet
-                                UIHelper.showInfoSnackBar(context,
-                                    'Dompet akan dihapus setelah online');
-                              }
+                              if (!context.mounted) return;
+                              Navigator.of(context).pop(); // Close sheet
+                              UIHelper.showInfoSnackBar(context,
+                                  'Dompet akan dihapus setelah online');
                               return;
                             }
 
@@ -1108,16 +1411,15 @@ class WalletScreenState extends State<WalletScreen> {
                                     onTimeout: () =>
                                         throw TimeoutException('Timeout'),
                                   );
-                              if (!mounted) return;
+                              if (!context.mounted) return;
                               Navigator.of(context).pop(); // Close sheet
                               UIHelper.showSuccessSnackBar(
                                   context, 'Dompet berhasil dihapus');
                             } catch (e) {
-                              if (mounted) {
-                                Navigator.of(context).pop();
-                                UIHelper.showInfoSnackBar(
-                                    context, 'Proses hapus tertunda koneksi.');
-                              }
+                              if (!context.mounted) return;
+                              Navigator.of(context).pop();
+                              UIHelper.showInfoSnackBar(
+                                  context, 'Proses hapus tertunda koneksi.');
                             }
                           }
                         } else if (value == 'leave') {
@@ -1130,7 +1432,7 @@ class WalletScreenState extends State<WalletScreen> {
                           if (confirm == true) {
                             await _firestoreService.leaveWallet(
                                 wallet.id, _uid);
-                            if (!mounted) return;
+                            if (!context.mounted) return;
                             Navigator.of(context).pop(); // Close sheet
                             UIHelper.showSuccessSnackBar(
                                 context, 'Berhasil keluar dari dompet.');
@@ -1388,10 +1690,8 @@ class WalletScreenState extends State<WalletScreen> {
                                           ),
                                       ],
                                     ),
-                                  );
-                                },
-                              ))
-                          .toList(),
+                                );
+                              })),
                     ],
                   ),
                 ),
@@ -1495,14 +1795,16 @@ class WalletScreenState extends State<WalletScreen> {
                 child: StreamBuilder<List<TransactionModel>>(
                   stream: _firestoreService.getTransactionsStream(wallet.id),
                   builder: (context, snapshot) {
-                    if (!snapshot.hasData)
+                    if (!snapshot.hasData) {
                       return const Center(child: CircularProgressIndicator());
+                    }
                     final txns = snapshot.data!;
-                    if (txns.isEmpty)
+                    if (txns.isEmpty) {
                       return Center(
                           child: Text('Belum ada transaksi',
                               style: TextStyle(
                                   color: Theme.of(context).hintColor)));
+                    }
 
                     return ListView.builder(
                       controller: scrollController,
@@ -1673,12 +1975,11 @@ class WalletScreenState extends State<WalletScreen> {
                     if (!isOnline) {
                       _firestoreService.renameWallet(
                           wallet.id, nameController.text);
-                      if (mounted) {
-                        Navigator.of(context).pop(); // Pop dialog
-                        Navigator.of(context).pop(); // Pop details sheet
-                        UIHelper.showInfoSnackBar(
-                            context, 'Nama dompet akan berubah setelah online');
-                      }
+                      if (!context.mounted) return;
+                      Navigator.of(context).pop(); // Pop dialog
+                      Navigator.of(context).pop(); // Pop details sheet
+                      UIHelper.showInfoSnackBar(
+                          context, 'Nama dompet akan berubah setelah online');
                       return;
                     }
 
@@ -1689,21 +1990,20 @@ class WalletScreenState extends State<WalletScreen> {
                             const Duration(seconds: 10),
                             onTimeout: () => throw TimeoutException('Timeout'),
                           );
-                      if (!mounted) return;
+                      if (!context.mounted) return;
                       Navigator.of(context).pop(); // Pop dialog
                       Navigator.of(context).pop(); // Pop details sheet
                       UIHelper.showSuccessSnackBar(context,
                           'Nama dompet berhasil diubah ke "${nameController.text}"!');
                     } catch (e) {
-                      if (mounted) {
-                        if (e is TimeoutException) {
-                          Navigator.of(context).pop();
-                          Navigator.of(context).pop();
-                          UIHelper.showInfoSnackBar(
-                              context, 'Perubahan nama tertunda koneksi.');
-                        } else {
-                          UIHelper.showErrorSnackBar(context, 'Gagal: $e');
-                        }
+                      if (!context.mounted) return;
+                      if (e is TimeoutException) {
+                        Navigator.of(context).pop();
+                        Navigator.of(context).pop();
+                        UIHelper.showInfoSnackBar(
+                            context, 'Perubahan nama tertunda koneksi.');
+                      } else {
+                        UIHelper.showErrorSnackBar(context, 'Gagal: $e');
                       }
                     }
                   } else {
@@ -1775,6 +2075,42 @@ class WalletScreenState extends State<WalletScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDebtList(List<DebtModel> debts) {
+    if (debts.isEmpty) return _buildEmptyState();
+    return ListView.builder(
+      padding: const EdgeInsets.only(left: 24, right: 24, top: 8, bottom: 24),
+      physics: const BouncingScrollPhysics(),
+      itemCount: debts.length,
+      itemBuilder: (context, index) => Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: _DebtCard(
+          debt: debts[index],
+          onTap: () => _showDebtDetails(debts[index]),
+        ),
+      ),
+    );
+  }
+
+  void _showDebtDetails(DebtModel debt) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (_, scrollController) => _DebtDetailsSheet(
+          debt: debt,
+          scrollController: scrollController,
+          firestoreService: _firestoreService,
+          debtService: _debtService,
+          currentUserId: _uid,
         ),
       ),
     );
@@ -1955,5 +2291,628 @@ class _WalletCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _DebtCard extends StatelessWidget {
+  final DebtModel debt;
+  final VoidCallback onTap;
+
+  const _DebtCard({required this.debt, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final remaining = debt.totalAmount - debt.paidAmount;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accentColor = debt.type == 'utang' ? AppColors.expense : AppColors.income;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ).copyWith(
+        border: Border.all(
+          color: Theme.of(context).dividerColor.withOpacity(isDark ? 0.05 : 0.08),
+          width: 0.5,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(22),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Icon Container
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: accentColor.withOpacity(isDark ? 0.2 : 0.1),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(
+                    debt.type == 'utang'
+                        ? CupertinoIcons.arrow_down_right_square_fill
+                        : CupertinoIcons.arrow_up_right_square_fill,
+                    color: accentColor,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                // Info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        debt.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.3,
+                          color: Theme.of(context).textTheme.titleLarge?.color,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Sisa: ${CurrencyFormatter.formatCurrency(remaining)}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: accentColor.withOpacity(0.9),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Trailing part: Amount & Status
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          CurrencyFormatter.formatCurrency(debt.totalAmount),
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: Theme.of(context).textTheme.titleLarge?.color,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: (debt.status == 'completed' ? AppColors.income : Colors.orange).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            debt.status == 'completed' ? 'Lunas' : 'Belum Lunas',
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                              color: debt.status == 'completed' ? AppColors.income : Colors.orange,
+                              letterSpacing: 0.1,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 4),
+                    PopupMenuButton<String>(
+                      icon: Icon(CupertinoIcons.ellipsis_vertical,
+                          size: 18, color: Theme.of(context).hintColor.withOpacity(0.3)),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onSelected: (value) {
+                        if (value == 'edit') {
+                          WalletScreenState? state = context.findAncestorStateOfType<WalletScreenState>();
+                          state?._showEditDebtDialog(debt);
+                        } else if (value == 'delete') {
+                          WalletScreenState? state = context.findAncestorStateOfType<WalletScreenState>();
+                          state?._deleteDebt(debt);
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        PopupMenuItem(
+                          value: 'edit',
+                          child: Row(
+                            children: [
+                              const Icon(CupertinoIcons.pencil, size: 18),
+                              const SizedBox(width: 12),
+                              Text('Edit ${debt.isUtang ? 'Hutang' : 'Piutang'}'),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              const Icon(CupertinoIcons.trash, size: 18, color: AppColors.expense),
+                              const SizedBox(width: 12),
+                              Text('Hapus ${debt.isUtang ? 'Hutang' : 'Piutang'}',
+                                  style: const TextStyle(color: AppColors.expense)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DebtDetailsSheet extends StatelessWidget {
+  final DebtModel debt;
+  final ScrollController scrollController;
+  final FirestoreService firestoreService;
+  final DebtService debtService;
+  final String currentUserId;
+
+  const _DebtDetailsSheet({
+    required this.debt,
+    required this.scrollController,
+    required this.firestoreService,
+    required this.debtService,
+    required this.currentUserId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final remaining = debt.totalAmount - debt.paidAmount;
+    final accentColor = debt.isUtang ? AppColors.expense : AppColors.income;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: Column(
+        children: [
+          const SizedBox(height: 12),
+          Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                  color: Theme.of(context).dividerColor.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(2))),
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(debt.title,
+                          style: const TextStyle(
+                              fontSize: 22, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 4),
+                      Text(
+                        debt.isUtang ? 'Hutang (Tagihan)' : 'Piutang (Peminjaman)',
+                        style: TextStyle(
+                            color: accentColor,
+                            fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ),
+                PopupMenuButton<String>(
+                  icon: const Icon(CupertinoIcons.ellipsis),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  onSelected: (value) {
+                    final state = context.findAncestorStateOfType<WalletScreenState>();
+                    if (value == 'edit') {
+                      state?._showEditDebtDialog(debt);
+                    } else if (value == 'delete') {
+                      state?._deleteDebt(debt);
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(CupertinoIcons.pencil, size: 20),
+                          SizedBox(width: 12),
+                          Text('Ubah Detail'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(CupertinoIcons.trash, size: 20, color: AppColors.expense),
+                          SizedBox(width: 12),
+                          Text('Hapus Catatan', style: TextStyle(color: AppColors.expense)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // Summary Cards
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Row(
+              children: [
+                _buildSummaryItem(context, 'Total', debt.totalAmount, Theme.of(context).hintColor),
+                const SizedBox(width: 12),
+                _buildSummaryItem(context, 'Terbayar', debt.paidAmount, AppColors.income),
+                const SizedBox(width: 12),
+                _buildSummaryItem(context, 'Sisa', remaining, accentColor),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24),
+            child: Row(
+              children: [
+                Icon(CupertinoIcons.list_bullet, size: 18),
+                SizedBox(width: 8),
+                Text('Riwayat Transaksi', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: StreamBuilder<List<TransactionModel>>(
+              stream: firestoreService.getTransactionsByDebtId(debt.id),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const CupertinoActivityIndicator(),
+                        const SizedBox(height: 16),
+                        const Text('Memuat riwayat...', style: TextStyle(fontSize: 12)),
+                      ],
+                    ),
+                  );
+                }
+                
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text('Gagal memuat: ${snapshot.error}', style: const TextStyle(color: AppColors.expense, fontSize: 12)),
+                  );
+                }
+
+                final transactions = snapshot.data ?? [];
+                if (transactions.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(CupertinoIcons.doc_text, size: 40, color: Theme.of(context).hintColor.withOpacity(0.3)),
+                        const SizedBox(height: 16),
+                        Text('Belum ada transaksi', 
+                          style: TextStyle(color: Theme.of(context).hintColor)),
+                      ],
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  controller: scrollController,
+                  padding: const EdgeInsets.only(left: 16, right: 16, bottom: 100),
+                  itemCount: transactions.length,
+                  itemBuilder: (context, index) {
+                    final tx = transactions[index];
+                    return ListTile(
+                      leading: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: (tx.type == 'income' ? AppColors.income : AppColors.expense).withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          tx.type == 'income' ? CupertinoIcons.arrow_down_left : CupertinoIcons.arrow_up_right,
+                          size: 16,
+                          color: tx.type == 'income' ? AppColors.income : AppColors.expense,
+                        ),
+                      ),
+                      title: Text(tx.category, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                      subtitle: Text(DateFormat('dd MMM yyyy').format(tx.date), style: const TextStyle(fontSize: 12)),
+                      trailing: Text(
+                        CurrencyFormatter.formatCurrency(tx.amount),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: tx.type == 'income' ? AppColors.income : AppColors.expense,
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+          if (remaining > 0)
+            SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (context) => _DebtPaymentModal(
+                        debt: debt,
+                        firestoreService: firestoreService,
+                        debtService: debtService,
+                        currentUserId: currentUserId,
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: accentColor,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  child: const Text('Bayar Cicilan', 
+                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryItem(BuildContext context, String label, double amount, Color color) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withOpacity(0.1)),
+        ),
+        child: Column(
+          children: [
+            Text(label, style: TextStyle(fontSize: 10, color: Theme.of(context).hintColor, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 4),
+            FittedBox(
+              child: Text(
+                CurrencyFormatter.formatCurrency(amount),
+                style: TextStyle(fontWeight: FontWeight.bold, color: color, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DebtPaymentModal extends StatefulWidget {
+  final DebtModel debt;
+  final FirestoreService firestoreService;
+  final DebtService debtService;
+  final String currentUserId;
+
+  const _DebtPaymentModal({
+    required this.debt,
+    required this.firestoreService,
+    required this.debtService,
+    required this.currentUserId,
+  });
+
+  @override
+  State<_DebtPaymentModal> createState() => _DebtPaymentModalState();
+}
+
+class _DebtPaymentModalState extends State<_DebtPaymentModal> {
+  final _amountController = TextEditingController();
+  final _noteController = TextEditingController();
+  String? _selectedWalletId;
+  bool _isLoading = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final remaining = widget.debt.totalAmount - widget.debt.paidAmount;
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.85,
+      ),
+      child: Container(
+        padding: EdgeInsets.only(
+          left: 24,
+          right: 24,
+          top: 12,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 
+              (MediaQuery.of(context).viewInsets.bottom > 0 ? 16 : (MediaQuery.of(context).padding.bottom > 0 ? MediaQuery.of(context).padding.bottom + 16 : 24)),
+        ),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: SingleChildScrollView(
+          physics: const ClampingScrollPhysics(),
+          child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).hintColor.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text('Pembayaran: ${widget.debt.title}',
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text('Sisa hutang: ${CurrencyFormatter.formatCurrency(remaining)}',
+                style: TextStyle(fontSize: 14, color: Theme.of(context).hintColor)),
+            const SizedBox(height: 24),
+            TextField(
+              controller: _amountController,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              style: const TextStyle(fontWeight: FontWeight.bold),
+              decoration: InputDecoration(
+                hintText: '0',
+                prefixIcon: UnconstrainedBox(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(CupertinoIcons.creditcard,
+                            size: 20, color: Theme.of(context).primaryColor),
+                        const SizedBox(width: 8),
+                        Text('Rp',
+                            style: TextStyle(
+                                color: Theme.of(context).primaryColor,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 14)),
+                      ],
+                    ),
+                  ),
+                ),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none),
+                filled: true,
+                fillColor: Theme.of(context).inputDecorationTheme.fillColor,
+              ),
+            ),
+            const SizedBox(height: 16),
+            StreamBuilder<List<WalletModel>>(
+              stream: widget.firestoreService.getWalletsStream(widget.currentUserId),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) return const SizedBox.shrink();
+                final wallets = snapshot.data!.where((w) => !w.isDebt).toList();
+                return DropdownButtonFormField<String>(
+                  value: _selectedWalletId,
+                  hint: const Text('Pilih Dompet Sumber/Tujuan'),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Theme.of(context).brightness == Brightness.dark 
+                        ? Colors.white.withOpacity(0.05) 
+                        : AppColors.surfaceVariant,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                  ),
+                  items: wallets.map((w) {
+                    return DropdownMenuItem(
+                      value: w.id,
+                      child: Text(w.walletName),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    setState(() => _selectedWalletId = val);
+                  },
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _noteController,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: InputDecoration(
+                hintText: 'Catatan (Opsional)',
+                prefixIcon: Icon(CupertinoIcons.pencil, color: Theme.of(context).primaryColor),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                filled: true,
+                fillColor: Theme.of(context).brightness == Brightness.dark 
+                    ? Colors.white.withOpacity(0.05) 
+                    : AppColors.surfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : () async {
+                  if (_amountController.text.isEmpty || _selectedWalletId == null) {
+                    UIHelper.showErrorSnackBar(context, 'Pilih dompet dan masukkan nominal');
+                    return;
+                  }
+                  
+                  final payAmount = double.tryParse(_amountController.text) ?? 0;
+                  if (payAmount <= 0) return;
+                  if (payAmount > remaining) {
+                    UIHelper.showErrorSnackBar(context, 'Nominal melebih sisa hutang!');
+                    return;
+                  }
+                  
+                  setState(() => _isLoading = true);
+                  try {
+                    await widget.debtService.payInstallment(
+                      currentUserId: widget.currentUserId,
+                      currentUserName: FirebaseAuth.instance.currentUser?.displayName ?? 'User',
+                      targetDebt: widget.debt,
+                      installmentAmount: payAmount,
+                      paymentWalletId: _selectedWalletId!,
+                    );
+                    
+                    if (!context.mounted) return;
+                    Navigator.pop(context);
+                    UIHelper.showSuccessSnackBar(context, 'Pembayaran berhasil dicatat!');
+                  } catch (e) {
+                    if (!context.mounted) return;
+                    setState(() => _isLoading = false);
+                    UIHelper.showErrorSnackBar(context, 'Gagal mencatat pembayaran: $e');
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF0A84FF)
+                      : Theme.of(context).primaryColor,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                child: _isLoading 
+                    ? const CupertinoActivityIndicator(color: Colors.white)
+                    : const Text('Simpan Pembayaran', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
   }
 }
