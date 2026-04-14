@@ -22,12 +22,14 @@ class UIHelper {
         context, message, Colors.blueGrey, Icons.info_outline_rounded);
   }
 
-  static void showGlobalInfoToast(String message, {Color color = Colors.blueGrey, IconData icon = Icons.security_rounded}) {
+  static void showGlobalInfoToast(String message,
+      {Color color = Colors.blueGrey, IconData icon = Icons.security_rounded}) {
     final context = navigatorKey.currentContext;
     if (context != null) {
       _showTopToast(context, message, color, icon);
     } else {
-      debugPrint('--- UIHelper: GLOBAL TOAST FAILED - Context is NULL. Message: $message');
+      debugPrint(
+          '--- UIHelper: GLOBAL TOAST FAILED - Context is NULL. Message: $message');
     }
   }
 
@@ -36,10 +38,11 @@ class UIHelper {
     try {
       final overlay = Overlay.maybeOf(context);
       if (overlay == null) {
-        debugPrint('--- UIHelper: Overlay.of(context) is NULL. Cannot show toast: $message');
+        debugPrint(
+            '--- UIHelper: Overlay.of(context) is NULL. Cannot show toast: $message');
         return;
       }
-      
+
       final overlayEntry = OverlayEntry(
         builder: (context) => Positioned(
           top: MediaQuery.of(context).padding.top + 16,
@@ -70,9 +73,9 @@ class UIHelper {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 12),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).brightness == Brightness.dark 
-                          ? const Color(0xFF2C2C2E).withOpacity(0.9) 
-                          : const Color(0xFF1C1C1E).withOpacity(0.85),
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF2C2C2E).withOpacity(0.9)
+                            : const Color(0xFF1C1C1E).withOpacity(0.85),
                         borderRadius: BorderRadius.circular(100),
                         border: Border.all(
                             color: Colors.white.withOpacity(0.15), width: 0.5),
@@ -154,11 +157,13 @@ class UIHelper {
               child: BackdropFilter(
                 filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                   decoration: BoxDecoration(
                     color: Colors.red.withOpacity(0.85),
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
+                    border: Border.all(
+                        color: Colors.white.withOpacity(0.2), width: 1),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.3),
@@ -175,7 +180,8 @@ class UIHelper {
                           color: Colors.white24,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.wifi_off_rounded, color: Colors.white, size: 20),
+                        child: const Icon(Icons.wifi_off_rounded,
+                            color: Colors.white, size: 20),
                       ),
                       const SizedBox(width: 16),
                       const Expanded(
@@ -220,7 +226,7 @@ class UIHelper {
     if (_connectivityOverlayEntry != null) {
       _connectivityOverlayEntry?.remove();
       _connectivityOverlayEntry = null;
-      
+
       // Show success toast when back online
       final context = navigatorKey.currentContext;
       if (context != null) {
@@ -265,7 +271,8 @@ class UIHelper {
                   color: Theme.of(context).cardColor.withOpacity(0.9),
                   borderRadius: BorderRadius.circular(32),
                   border: Border.all(
-                      color: Theme.of(context).dividerColor.withOpacity(0.1), width: 1),
+                      color: Theme.of(context).dividerColor.withOpacity(0.1),
+                      width: 1),
                 ),
                 child: Material(
                   color: Colors.transparent,
@@ -323,7 +330,10 @@ class UIHelper {
                                   child: Text(cancelText ?? 'Batal',
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold,
-                                          color: Theme.of(context).textTheme.bodyMedium?.color,
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium
+                                              ?.color,
                                           fontSize: 13)),
                                 ),
                               ),
@@ -338,7 +348,10 @@ class UIHelper {
                                     const EdgeInsets.symmetric(vertical: 16),
                                 decoration: BoxDecoration(
                                   color: isDangerous
-                                      ? (Theme.of(context).brightness == Brightness.dark ? Colors.redAccent : Colors.black)
+                                      ? (Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? Colors.redAccent
+                                          : Colors.black)
                                       : AppColors.primary,
                                   borderRadius: BorderRadius.circular(16),
                                   boxShadow: [
@@ -411,7 +424,8 @@ class UIHelper {
                   color: Theme.of(context).cardColor.withOpacity(0.92),
                   borderRadius: BorderRadius.circular(32),
                   border: Border.all(
-                      color: Theme.of(context).dividerColor.withOpacity(0.1), width: 1),
+                      color: Theme.of(context).dividerColor.withOpacity(0.1),
+                      width: 1),
                 ),
                 child: Material(
                   color: Colors.transparent,
@@ -457,15 +471,20 @@ class UIHelper {
               Text(message,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                      color: Theme.of(context).hintColor, fontSize: 14, height: 1.5)),
+                      color: Theme.of(context).hintColor,
+                      fontSize: 14,
+                      height: 1.5)),
               const SizedBox(height: 32),
               InkWell(
-                onTap: () => Navigator.of(dialogContext, rootNavigator: true).pop(),
+                onTap: () =>
+                    Navigator.of(dialogContext, rootNavigator: true).pop(),
                 child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).brightness == Brightness.dark ? AppColors.surfaceVariantDark : Colors.black,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.surfaceVariantDark
+                        : Colors.black,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
@@ -488,7 +507,8 @@ class UIHelper {
         }));
   }
 
-  static void showLoadingDialog(BuildContext context, {String message = 'Mohon tunggu...'}) {
+  static void showLoadingDialog(BuildContext context,
+      {String message = 'Mohon tunggu...'}) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -531,7 +551,6 @@ class UIHelper {
     );
   }
 
-
   static Future<void> showAiMaintenanceDialog(BuildContext context) {
     return showPremiumDialog(
         context: context,
@@ -572,7 +591,8 @@ class UIHelper {
                       fontWeight: FontWeight.w500)),
               const SizedBox(height: 32),
               InkWell(
-                onTap: () => Navigator.of(dialogContext, rootNavigator: true).pop(),
+                onTap: () =>
+                    Navigator.of(dialogContext, rootNavigator: true).pop(),
                 child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 16),
@@ -616,8 +636,9 @@ class UIHelper {
             decoration: BoxDecoration(
               color: Theme.of(context).cardColor.withOpacity(0.8),
               borderRadius: BorderRadius.circular(32),
-              border:
-                  Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1), width: 1.5),
+              border: Border.all(
+                  color: Theme.of(context).dividerColor.withOpacity(0.1),
+                  width: 1.5),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.12),
@@ -655,7 +676,10 @@ class UIHelper {
                                 fontSize: 20,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: -0.8,
-                                color: Theme.of(context).textTheme.titleLarge?.color,
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.color,
                               ),
                             ),
                             Text(
@@ -669,7 +693,9 @@ class UIHelper {
                           ],
                         ),
                         Material(
-                          color: Theme.of(context).brightness == Brightness.dark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white.withOpacity(0.05)
+                              : Colors.black.withOpacity(0.05),
                           shape: const CircleBorder(),
                           child: InkWell(
                             onTap: () => Navigator.pop(ctx),
@@ -697,9 +723,9 @@ class UIHelper {
                               final activeColor = isMyBini
                                   ? const Color(0xFFFF2D55)
                                   : (Theme.of(context).brightness ==
-                                              Brightness.dark
-                                          ? Colors.indigoAccent
-                                          : AppColors.primary);
+                                          Brightness.dark
+                                      ? Colors.indigoAccent
+                                      : AppColors.primary);
 
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 10),
@@ -719,7 +745,10 @@ class UIHelper {
                                     decoration: BoxDecoration(
                                       color: isSelected
                                           ? activeColor.withOpacity(0.12)
-                                          : Theme.of(context).brightness == Brightness.dark ? AppColors.surfaceVariantDark : Colors.white.withOpacity(0.4),
+                                          : Theme.of(context).brightness ==
+                                                  Brightness.dark
+                                              ? AppColors.surfaceVariantDark
+                                              : Colors.white.withOpacity(0.4),
                                       borderRadius: BorderRadius.circular(22),
                                       border: Border.all(
                                         color: isSelected
@@ -771,7 +800,8 @@ class UIHelper {
                                                   letterSpacing: -0.2,
                                                   color: isSelected
                                                       ? activeColor
-                                                      : (Theme.of(context).brightness ==
+                                                      : (Theme.of(context)
+                                                                  .brightness ==
                                                               Brightness.dark
                                                           ? Colors.white
                                                           : Theme.of(context)
@@ -787,7 +817,8 @@ class UIHelper {
                                                   color: isSelected
                                                       ? activeColor
                                                           .withOpacity(0.7)
-                                                      : Theme.of(context).hintColor,
+                                                      : Theme.of(context)
+                                                          .hintColor,
                                                   fontWeight: FontWeight.w500,
                                                 ),
                                               ),
@@ -799,7 +830,10 @@ class UIHelper {
                                               color: activeColor, size: 28)
                                         else
                                           Icon(Icons.arrow_forward_ios_rounded,
-                                              color: Theme.of(context).hintColor.withOpacity(0.3), size: 16),
+                                              color: Theme.of(context)
+                                                  .hintColor
+                                                  .withOpacity(0.3),
+                                              size: 16),
                                       ],
                                     ),
                                   ),
