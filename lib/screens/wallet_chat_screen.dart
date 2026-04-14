@@ -139,7 +139,8 @@ class _WalletChatScreenState extends State<WalletChatScreen>
               decoration: BoxDecoration(
                 color: Theme.of(context).canvasColor,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.05)),
+                border: Border.all(
+                    color: Theme.of(context).dividerColor.withOpacity(0.05)),
               ),
               child: Text(
                 msg.message,
@@ -166,7 +167,10 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                     color: Colors.blue, size: 20),
               ),
               title: const Text('Edit Pesan',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, letterSpacing: -0.3)),
+                  style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                      letterSpacing: -0.3)),
               subtitle: const Text('Ubah isi pesan ini',
                   style: TextStyle(fontSize: 12, color: AppColors.textHint)),
             ),
@@ -231,7 +235,8 @@ class _WalletChatScreenState extends State<WalletChatScreen>
     final confirm = await UIHelper.showConfirmDialog(
       context: context,
       title: 'Hapus Pesan?',
-      message: 'Pesan ini akan dihapus untuk semua orang. Tindakan ini tidak dapat dibatalkan.',
+      message:
+          'Pesan ini akan dihapus untuk semua orang. Tindakan ini tidak dapat dibatalkan.',
       confirmText: 'Ya, Hapus',
       isDangerous: true,
     );
@@ -489,29 +494,35 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: msg.isDeleted
-                          ? (isMe
-                              ? (Theme.of(context).brightness == Brightness.dark ? Colors.grey[800] : Colors.grey[300])
-                              : (Theme.of(context).brightness == Brightness.dark ? Colors.grey[900] : Colors.grey[100]))
-                          : (isMe ? AppColors.primary : Theme.of(context).cardColor),
-                      borderRadius: BorderRadius.only(
-                        topLeft: const Radius.circular(20),
-                        topRight: const Radius.circular(20),
-                        bottomLeft:
-                            Radius.circular(isMe ? 20 : (showAvatar ? 4 : 20)),
-                        bottomRight:
-                            Radius.circular(isMe ? (showAvatar ? 4 : 20) : 20),
-                      ),
-                      boxShadow: [
-                        if (!isMe)
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.03),
-                            blurRadius: 4,
-                            offset: const Offset(0, 1),
-                          ),
-                      ],
+                  decoration: BoxDecoration(
+                    color: msg.isDeleted
+                        ? (isMe
+                            ? (Theme.of(context).brightness == Brightness.dark
+                                ? Colors.grey[800]
+                                : Colors.grey[300])
+                            : (Theme.of(context).brightness == Brightness.dark
+                                ? Colors.grey[900]
+                                : Colors.grey[100]))
+                        : (isMe
+                            ? AppColors.primary
+                            : Theme.of(context).cardColor),
+                    borderRadius: BorderRadius.only(
+                      topLeft: const Radius.circular(20),
+                      topRight: const Radius.circular(20),
+                      bottomLeft:
+                          Radius.circular(isMe ? 20 : (showAvatar ? 4 : 20)),
+                      bottomRight:
+                          Radius.circular(isMe ? (showAvatar ? 4 : 20) : 20),
                     ),
+                    boxShadow: [
+                      if (!isMe)
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.03),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
+                    ],
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
@@ -543,7 +554,9 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                           msg.message,
                           style: TextStyle(
                             fontSize: 14,
-                            color: isMe ? Colors.white : Theme.of(context).textTheme.bodyLarge?.color,
+                            color: isMe
+                                ? Colors.white
+                                : Theme.of(context).textTheme.bodyLarge?.color,
                             height: 1.4,
                           ),
                         ),
@@ -596,7 +609,9 @@ class _WalletChatScreenState extends State<WalletChatScreen>
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         border: Border(
-          top: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1), width: 0.5),
+          top: BorderSide(
+              color: Theme.of(context).dividerColor.withOpacity(0.1),
+              width: 0.5),
         ),
       ),
       child: Row(
@@ -613,11 +628,12 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                 textCapitalization: TextCapitalization.sentences,
                 maxLines: 4,
                 minLines: 1,
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                style:
+                    const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                 decoration: InputDecoration(
                   hintText: _isEditing ? 'Ubah pesan...' : 'Masukkan pesan...',
-                  hintStyle:
-                      TextStyle(color: Theme.of(context).hintColor, fontSize: 15),
+                  hintStyle: TextStyle(
+                      color: Theme.of(context).hintColor, fontSize: 15),
                   border: InputBorder.none,
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -635,17 +651,15 @@ class _WalletChatScreenState extends State<WalletChatScreen>
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: _isEditing ? Colors.orange : AppColors.primary,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: (_isEditing ? Colors.orange : AppColors.primary)
-                        .withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3)
-                  )
-                ]
-              ),
+                  color: _isEditing ? Colors.orange : AppColors.primary,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                        color: (_isEditing ? Colors.orange : AppColors.primary)
+                            .withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3))
+                  ]),
               child: Icon(
                 _isEditing ? Icons.check_rounded : Icons.arrow_upward_rounded,
                 color: Colors.white,

@@ -60,7 +60,9 @@ class ColabScreenState extends State<ColabScreen> {
             child: Container(
               height: 48,
               decoration: BoxDecoration(
-                color: Theme.of(context).brightness == Brightness.dark ? Colors.white.withOpacity(0.12) : const Color(0xFF767680).withOpacity(0.12),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF1C1C1E)
+                    : const Color(0xFF767680).withOpacity(0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: TextField(
@@ -69,7 +71,7 @@ class ColabScreenState extends State<ColabScreen> {
                     setState(() => _searchQuery = val.toLowerCase()),
                 style: const TextStyle(fontSize: 16),
                 decoration: InputDecoration(
-                  hintText: 'Cari dompet...',
+                  hintText: 'Cari dompet ...',
                   hintStyle: TextStyle(color: Theme.of(context).hintColor),
                   prefixIcon: Icon(Icons.search_rounded,
                       color: Theme.of(context).hintColor, size: 20),
@@ -84,8 +86,9 @@ class ColabScreenState extends State<ColabScreen> {
                               color: Theme.of(context).hintColor, size: 18),
                         ),
                   border: InputBorder.none,
+                  filled: false,
                   contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 ),
               ),
             ),
@@ -226,7 +229,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
@@ -245,8 +248,9 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
             onTap: () => setState(() => _expanded = !_expanded),
             behavior: HitTestBehavior.opaque,
             child: Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   StreamBuilder<int>(
                     stream: _unreadStream,
@@ -259,36 +263,45 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A84FF) : AppColors.deepBlue).withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(16),
+                              color: (Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? const Color(0xFF0A84FF)
+                                      : AppColors.deepBlue)
+                                  .withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(14),
                             ),
                             child: Icon(
                               Icons.group_rounded,
-                              color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A84FF) : AppColors.deepBlue,
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? const Color(0xFF0A84FF)
+                                  : AppColors.deepBlue,
+                              size: 24,
                             ),
                           ),
                           if (unreadCount > 0)
                             Positioned(
-                              top: -4,
-                              right: -4,
+                              top: -2,
+                              right: -2,
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
                                   color: AppColors.expense,
                                   borderRadius: BorderRadius.circular(10),
-                                  border:
-                                      Border.all(color: Theme.of(context).cardColor, width: 2),
+                                  border: Border.all(
+                                      color: Theme.of(context).cardColor,
+                                      width: 2),
                                 ),
                                 constraints: const BoxConstraints(
-                                    minWidth: 20, minHeight: 20),
+                                    minWidth: 18, minHeight: 18),
                                 child: Center(
                                   child: Text(
                                     unreadCount > 99 ? '99+' : '$unreadCount',
                                     style: const TextStyle(
                                         color: Colors.white,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w800),
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w900),
                                   ),
                                 ),
                               ),
@@ -297,58 +310,59 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                       );
                     },
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 14),
                   Expanded(
-                    flex: 3,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           widget.wallet.walletName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.3,
+                            color:
+                                Theme.of(context).textTheme.titleLarge?.color,
                           ),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           '${widget.wallet.members.length} anggota',
                           style: TextStyle(
-                            fontSize: 12,
-                            color: Theme.of(context).textTheme.bodySmall?.color,
+                            fontSize: 13,
+                            color: Theme.of(context).hintColor.withOpacity(0.8),
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  Flexible(
-                    flex: 2,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          CurrencyFormatter.formatCurrency(
-                              widget.wallet.balance),
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                  const SizedBox(width: 8),
+                  // Trailing part: Balance & Chevron
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        CurrencyFormatter.formatCurrency(widget.wallet.balance),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.5,
+                          color: Theme.of(context).textTheme.titleLarge?.color,
                         ),
-                        const SizedBox(height: 2),
-                        Icon(
-                          _expanded
-                              ? Icons.keyboard_arrow_up_rounded
-                              : Icons.keyboard_arrow_down_rounded,
-                          color: Theme.of(context).hintColor,
-                          size: 20,
-                        ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 6),
+                      Icon(
+                        _expanded
+                            ? Icons.keyboard_arrow_up_rounded
+                            : Icons.keyboard_arrow_down_rounded,
+                        color: Theme.of(context).hintColor.withOpacity(0.3),
+                        size: 20,
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -403,7 +417,9 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A84FF) : AppColors.primary,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFF0A84FF)
+                              : AppColors.primary,
                         ),
                       ),
                     ],
@@ -435,23 +451,37 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
-                      color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A84FF) : AppColors.primary).withOpacity(0.15),
+                      color: (Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFF0A84FF)
+                              : AppColors.primary)
+                          .withOpacity(0.15),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                          color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A84FF) : AppColors.primary).withOpacity(0.25)),
+                          color:
+                              (Theme.of(context).brightness == Brightness.dark
+                                      ? const Color(0xFF0A84FF)
+                                      : AppColors.primary)
+                                  .withOpacity(0.25)),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.chat_rounded,
-                            size: 18, color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A84FF) : AppColors.primary),
+                            size: 18,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? const Color(0xFF0A84FF)
+                                    : AppColors.primary),
                         const SizedBox(width: 8),
                         Text(
                           'Buka Chat',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
-                            color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A84FF) : AppColors.primary,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? const Color(0xFF0A84FF)
+                                    : AppColors.primary,
                           ),
                         ),
                       ],
@@ -526,11 +556,18 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
               left: 12, right: canKick ? 6 : 12, top: 6, bottom: 6),
           decoration: BoxDecoration(
             color: isOwner
-                ? (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A84FF) : AppColors.primary).withOpacity(0.2)
+                ? (Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF0A84FF)
+                        : AppColors.primary)
+                    .withOpacity(0.2)
                 : Theme.of(context).canvasColor,
             borderRadius: BorderRadius.circular(20),
             border: isOwner
-                ? Border.all(color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A84FF) : AppColors.primary).withOpacity(0.35))
+                ? Border.all(
+                    color: (Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF0A84FF)
+                            : AppColors.primary)
+                        .withOpacity(0.35))
                 : null,
           ),
           child: Row(
@@ -538,7 +575,10 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
             children: [
               if (isOwner) ...[
                 Icon(Icons.star_rounded,
-                    size: 14, color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A84FF) : AppColors.primary),
+                    size: 14,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF0A84FF)
+                        : AppColors.primary),
                 const SizedBox(width: 4),
               ],
               Flexible(
@@ -549,8 +589,11 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color:
-                        isOwner ? (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A84FF) : AppColors.primary) : AppColors.textSecondary,
+                    color: isOwner
+                        ? (Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF0A84FF)
+                            : AppColors.primary)
+                        : AppColors.textSecondary,
                   ),
                 ),
               ),
@@ -672,7 +715,8 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                             CurrencyFormatter.formatRelativeDate(txn.date),
                             style: TextStyle(
                               fontSize: 11,
-                              color: Theme.of(context).textTheme.bodySmall?.color,
+                              color:
+                                  Theme.of(context).textTheme.bodySmall?.color,
                             ),
                           ),
                         ],
@@ -731,7 +775,9 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Theme.of(context).brightness == Brightness.dark ? Colors.white24 : Colors.grey[300],
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white24
+                          : Colors.grey[300],
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -757,7 +803,9 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                   'Masukkan email akun teman yang sudah\nterdaftar di MyDuitGweh.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                      color: Theme.of(context).hintColor, fontSize: 13, height: 1.5),
+                      color: Theme.of(context).hintColor,
+                      fontSize: 13,
+                      height: 1.5),
                 ),
                 const SizedBox(height: 24),
                 TextField(

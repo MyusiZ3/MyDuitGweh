@@ -64,14 +64,28 @@ class WalletScreenState extends State<WalletScreen> {
           titleSpacing: 24,
           toolbarHeight: 70,
           actions: [
-            IconButton(
-              onPressed: _showCreateWalletDialog,
-              icon: Icon(Icons.add_circle_rounded,
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFF0A84FF)
-                      : Theme.of(context).primaryColor),
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: InkWell(
+                onTap: _showCreateWalletDialog,
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color:
+                        (isDark ? const Color(0xFF0A84FF) : AppColors.primary)
+                            .withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.add_rounded,
+                    size: 26,
+                    color: isDark ? const Color(0xFF0A84FF) : AppColors.primary,
+                  ),
+                ),
+              ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 16),
           ],
         ),
         body: Column(
@@ -83,19 +97,25 @@ class WalletScreenState extends State<WalletScreen> {
               child: Container(
                 height: 48,
                 decoration: BoxDecoration(
-                  color: Theme.of(context).inputDecorationTheme.fillColor,
+                  color: isDark
+                      ? const Color(0xFF1C1C1E)
+                      : const Color(0xFF767680).withOpacity(0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: TextField(
                   controller: _searchController,
-                  style: TextStyle(fontSize: 16),
+                  style: const TextStyle(fontSize: 16),
                   onChanged: (val) =>
                       setState(() => _searchQuery = val.toLowerCase()),
                   decoration: InputDecoration(
                     hintText: 'Cari dompet ...',
-                    hintStyle: TextStyle(color: Theme.of(context).hintColor),
+                    hintStyle: TextStyle(
+                      color: Theme.of(context).hintColor.withOpacity(0.5),
+                      fontSize: 15,
+                    ),
                     prefixIcon: Icon(Icons.search_rounded,
-                        color: Theme.of(context).hintColor, size: 20),
+                        color: Theme.of(context).hintColor.withOpacity(0.5),
+                        size: 20),
                     suffixIcon: _searchQuery.isEmpty
                         ? null
                         : GestureDetector(
@@ -107,47 +127,51 @@ class WalletScreenState extends State<WalletScreen> {
                                 color: Theme.of(context).hintColor, size: 18),
                           ),
                     border: InputBorder.none,
+                    filled: false,
                     contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
+                        horizontal: 16, vertical: 14),
                   ),
                 ),
               ),
             ),
             const SizedBox(height: 16),
-            // iOS Style Segmented Control
+            // iOS Style Segmented Control (Pribadi, Bersama, Hutang)
             Container(
               margin: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-              padding: const EdgeInsets.all(4),
+              padding: const EdgeInsets.all(3),
               decoration: BoxDecoration(
-                color:
-                    isDark ? const Color(0xFF1C1C1E) : const Color(0xFFE3E3E8),
-                borderRadius: BorderRadius.circular(12),
+                color: isDark
+                    ? const Color(0xFF1C1C1E)
+                    : const Color(0xFF767680).withOpacity(0.12),
+                borderRadius: BorderRadius.circular(10),
               ),
               child: TabBar(
                 indicatorSize: TabBarIndicatorSize.tab,
                 dividerColor: Colors.transparent,
                 indicator: BoxDecoration(
-                  color: isDark ? const Color(0xFF2C2C2E) : Colors.white,
-                  borderRadius: BorderRadius.circular(8),
+                  color: isDark ? const Color(0xFF636366) : Colors.white,
+                  borderRadius: BorderRadius.circular(7),
                   boxShadow: [
                     BoxShadow(
-                      color: isDark
-                          ? Colors.black.withOpacity(0.3)
-                          : Colors.black.withOpacity(0.08),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
+                      color: Colors.black.withOpacity(isDark ? 0.3 : 0.12),
+                      blurRadius: 1,
+                      offset: const Offset(0, 1),
                     ),
                   ],
                 ),
-                labelColor: Theme.of(context).textTheme.titleLarge?.color,
+                labelColor: isDark ? Colors.white : Colors.black,
                 unselectedLabelColor:
-                    Theme.of(context).brightness == Brightness.dark
-                        ? const Color(0xFF8E8E93) // Apple System Gray for Dark
-                        : Theme.of(context).hintColor,
-                labelStyle:
-                    TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-                unselectedLabelStyle:
-                    TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                    isDark ? const Color(0xFF8E8E93) : const Color(0xFF8E8E93),
+                labelStyle: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                  letterSpacing: -0.2,
+                ),
+                unselectedLabelStyle: const TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 13,
+                  letterSpacing: -0.2,
+                ),
                 tabs: const [
                   Tab(text: 'Pribadi'),
                   Tab(text: 'Bersama'),
@@ -214,7 +238,7 @@ class WalletScreenState extends State<WalletScreen> {
       physics: const BouncingScrollPhysics(),
       itemCount: wallets.length,
       itemBuilder: (context, index) => Padding(
-        padding: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.only(bottom: 10),
         child: _WalletCard(
           wallet: wallets[index],
           onTap: () => _showWalletDetails(wallets[index]),
@@ -1809,26 +1833,32 @@ class _WalletCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
+      ).copyWith(
+        border: Border.all(
+          color: Theme.of(context).dividerColor.withOpacity(
+              Theme.of(context).brightness == Brightness.dark ? 0.05 : 0.08),
+          width: 0.5,
+        ),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(22),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 // Icon Container
                 Container(
@@ -1837,19 +1867,19 @@ class _WalletCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: _getCardAccent(context).withOpacity(
                         Theme.of(context).brightness == Brightness.dark
-                            ? 0.25
-                            : 0.12),
+                            ? 0.2
+                            : 0.1),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child:
                       Icon(_cardIcon, color: _getCardAccent(context), size: 24),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 14),
                 // Info
                 Expanded(
-                  flex: 3,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         wallet.walletName,
@@ -1858,7 +1888,7 @@ class _WalletCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          letterSpacing: -0.4,
+                          letterSpacing: -0.3,
                           color: Theme.of(context).textTheme.titleLarge?.color,
                         ),
                       ),
@@ -1869,59 +1899,60 @@ class _WalletCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 13,
-                          color: Theme.of(context).hintColor,
+                          color: Theme.of(context).hintColor.withOpacity(0.8),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
                   ),
                 ),
-                // Balance & Badge
-                Flexible(
-                  flex: 2,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        CurrencyFormatter.formatCurrency(wallet.balance),
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.5,
-                          color: wallet.isDebt && wallet.debtType == 'payable'
-                              ? AppColors.expense
-                              : Theme.of(context).textTheme.titleLarge?.color,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (wallet.isColab)
-                        Container(
-                          margin: const EdgeInsets.only(top: 4),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: AppColors.deepBlue.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(100),
+                const SizedBox(width: 8),
+                // Trailing part: Balance & Chevron
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          CurrencyFormatter.formatCurrency(wallet.balance),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.5,
+                            color: wallet.isDebt && wallet.debtType == 'payable'
+                                ? AppColors.expense
+                                : Theme.of(context).textTheme.titleLarge?.color,
                           ),
-                          child: Text(
-                            'BERSAMA',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.deepBlue,
-                              letterSpacing: 0.2,
+                        ),
+                        if (wallet.isColab)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Text(
+                              'BERSAMA',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w900,
+                                color: (Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? Colors.blueAccent
+                                        : AppColors.deepBlue)
+                                    .withOpacity(0.7),
+                                letterSpacing: 0.5,
+                              ),
                             ),
                           ),
-                        ),
-                    ],
-                  ),
+                      ],
+                    ),
+                    const SizedBox(width: 6),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: Theme.of(context).hintColor.withOpacity(0.3),
+                      size: 20,
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 4),
-                Icon(Icons.chevron_right_rounded,
-                    color: Theme.of(context).hintColor.withOpacity(0.5),
-                    size: 20),
               ],
             ),
           ),
