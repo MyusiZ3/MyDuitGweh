@@ -54,7 +54,7 @@ class WalletScreenState extends State<WalletScreen> {
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-          title: Text('Dompet Saya',
+          title: const Text('Dompet SAYA',
               style: TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 22,

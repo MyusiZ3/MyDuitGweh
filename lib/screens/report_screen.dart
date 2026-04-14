@@ -186,9 +186,15 @@ class _ReportScreenState extends State<ReportScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text('Laporan Keuangan'),
+        title: const Text('Laporan Keuangan',
+            style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 22,
+                letterSpacing: -0.5)),
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
+        titleSpacing: 24,
+        toolbarHeight: 70,
         actions: [
           IconButton(
             onPressed: _showExportDialog,
