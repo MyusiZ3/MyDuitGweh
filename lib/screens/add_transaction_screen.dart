@@ -9,6 +9,7 @@ import '../models/transaction_model.dart';
 import '../utils/app_theme.dart';
 import '../utils/ui_helper.dart';
 import '../utils/tone_dictionary.dart';
+import '../utils/currency_formatter.dart';
 
 class AddTransactionScreen extends StatefulWidget {
   final double? initialAmount;
@@ -152,18 +153,25 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
     return Container(
-      padding: EdgeInsets.only(
-        left: 24,
-        right: 24,
-        top: 24,
-        bottom: MediaQuery.of(context).viewInsets.bottom +
-            MediaQuery.of(context).padding.bottom +
-            24,
-      ),
+      padding: EdgeInsets.fromLTRB(
+          24,
+          24,
+          24,
+          MediaQuery.of(context).viewInsets.bottom +
+              (bottomPadding > 0 ? bottomPadding : 32)),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
+        ],
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -173,18 +181,21 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
             // Handle bar
             Center(
               child: Container(
-                width: 40,
-                height: 4,
+                width: 36,
+                height: 5,
                 decoration: BoxDecoration(
-                  color: Theme.of(context).dividerColor,
-                  borderRadius: BorderRadius.circular(2),
+                  color: Theme.of(context).dividerColor.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
             ),
             const SizedBox(height: 24),
 
             Text('Tambah Transaksi',
-                style: Theme.of(context).textTheme.headlineMedium),
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.5,
+                    )),
             const SizedBox(height: 24),
 
             // Type toggle
@@ -192,18 +203,54 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
             const SizedBox(height: 20),
 
             // Amount
-            TextField(
-              controller: _amountController,
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
-              decoration: InputDecoration(
-                hintText: '0',
-                prefixText: 'Rp ',
-                prefixStyle: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
-                    color: Theme.of(context).textTheme.bodyLarge?.color),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color:
+                    isDark ? const Color(0xFF1C1C1E) : AppColors.surfaceVariant,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: Theme.of(context).dividerColor.withOpacity(0.05),
+                ),
+              ),
+              child: TextField(
+                controller: _amountController,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -1,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                ),
+                decoration: InputDecoration(
+                  hintText: '0',
+                  hintStyle: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -1,
+                    color: Theme.of(context).hintColor.withOpacity(0.2),
+                  ),
+                  prefixIcon: Container(
+                    width: 42,
+                    alignment: Alignment.centerLeft,
+                    child: Text('Rp',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -1,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
+                        )),
+                  ),
+                  prefixIconConstraints:
+                      const BoxConstraints(minWidth: 0, minHeight: 0),
+                  filled: false,
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
+                  isDense: true,
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -211,82 +258,200 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
             // Category selector (Searchable)
             InkWell(
               onTap: _showCategoryPicker,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(18),
               child: Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).brightness == Brightness.dark 
-                      ? const Color(0xFF1C1C1E) 
+                  color: isDark
+                      ? const Color(0xFF1C1C1E)
                       : AppColors.surfaceVariant,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: Theme.of(context).dividerColor.withOpacity(0.05),
+                  ),
                 ),
                 child: Row(
                   children: [
-                    Icon(
-                      _selectedCategory == null
-                          ? Icons.category_outlined
-                          : TransactionCategory.getIconForCategory(
-                              _selectedCategory!),
-                      color: _selectedCategory == null
-                          ? AppColors.textHint
-                          : (Theme.of(context).brightness == Brightness.dark 
-                              ? const Color(0xFF0A84FF) 
-                              : AppColors.primary),
-                      size: 20,
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: (_selectedCategory == null
+                                ? Theme.of(context).hintColor
+                                : (isDark
+                                    ? const Color(0xFF0A84FF)
+                                    : AppColors.primary))
+                            .withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        _selectedCategory == null
+                            ? Icons.category_outlined
+                            : TransactionCategory.getIconForCategory(
+                                _selectedCategory!),
+                        color: _selectedCategory == null
+                            ? AppColors.textHint
+                            : (isDark
+                                ? const Color(0xFF0A84FF)
+                                : AppColors.primary),
+                        size: 20,
+                      ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 14),
                     Expanded(
                       child: Text(
                         _selectedCategory ?? 'Pilih Kategori',
                         style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: _selectedCategory == null
+                              ? FontWeight.w500
+                              : FontWeight.w700,
                           color: _selectedCategory == null
                               ? Theme.of(context).hintColor
                               : Theme.of(context).textTheme.bodyLarge?.color,
                         ),
                       ),
                     ),
-                    const Icon(Icons.search_rounded,
-                        size: 20, color: AppColors.textHint),
-                    const SizedBox(width: 4),
-                    const Icon(Icons.keyboard_arrow_down_rounded,
-                        color: AppColors.textHint),
+                    Icon(Icons.chevron_right_rounded,
+                        size: 20,
+                        color: Theme.of(context).hintColor.withOpacity(0.5)),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 12),
 
-            // Wallet dropdown
-            _buildDropdown<String>(
-              value: _selectedWalletId,
-              hint: 'Pilih Dompet',
-              icon: Icons.account_balance_wallet_outlined,
-              items: _wallets
-                  .map((w) =>
-                      DropdownMenuItem(value: w.id, child: Text(w.walletName)))
-                  .toList(),
-              onChanged: (val) => setState(() => _selectedWalletId = val),
+            // Wallet selector (Searchable)
+            InkWell(
+              onTap: _showWalletPicker,
+              borderRadius: BorderRadius.circular(18),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF1C1C1E)
+                      : AppColors.surfaceVariant,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: Theme.of(context).dividerColor.withOpacity(0.05),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: (_selectedWalletId == null
+                                ? Theme.of(context).hintColor
+                                : (isDark
+                                    ? const Color(0xFF32D74B)
+                                    : const Color(0xFF34C759)))
+                            .withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        Icons.account_balance_wallet_outlined,
+                        color: _selectedWalletId == null
+                            ? AppColors.textHint
+                            : (isDark
+                                ? const Color(0xFF32D74B)
+                                : const Color(0xFF34C759)),
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Text(
+                        _wallets
+                            .firstWhere((w) => w.id == _selectedWalletId,
+                                orElse: () => WalletModel(
+                                    id: '',
+                                    walletName: 'Pilih Dompet',
+                                    type: '',
+                                    balance: 0,
+                                    owner: '',
+                                    createdAt: DateTime.now(),
+                                    members: []))
+                            .walletName,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: _selectedWalletId == null
+                              ? FontWeight.w500
+                              : FontWeight.w700,
+                          color: _selectedWalletId == null
+                              ? Theme.of(context).hintColor
+                              : Theme.of(context).textTheme.bodyLarge?.color,
+                        ),
+                      ),
+                    ),
+                    Icon(Icons.chevron_right_rounded,
+                        size: 20,
+                        color: Theme.of(context).hintColor.withOpacity(0.5)),
+                  ],
+                ),
+              ),
             ),
             const SizedBox(height: 12),
 
             // Note
-            TextField(
-              controller: _noteController,
-              decoration: const InputDecoration(
-                hintText: 'Catatan (opsional)',
-                prefixIcon:
-                    Icon(Icons.note_outlined, color: AppColors.textHint),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              decoration: BoxDecoration(
+                color:
+                    isDark ? const Color(0xFF1C1C1E) : AppColors.surfaceVariant,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: Theme.of(context).dividerColor.withOpacity(0.05),
+                ),
+              ),
+              child: TextField(
+                controller: _noteController,
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                  fontSize: 16,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Catatan (opsional)',
+                  hintStyle: TextStyle(
+                      color: Theme.of(context).hintColor.withOpacity(0.4)),
+                  prefixIcon: Container(
+                    margin: const EdgeInsets.only(right: 14),
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).dividerColor.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.note_outlined,
+                      color: Theme.of(context).hintColor.withOpacity(0.7),
+                      size: 20,
+                    ),
+                  ),
+                  prefixIconConstraints:
+                      const BoxConstraints(minWidth: 0, minHeight: 0),
+                  filled: false,
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                ),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 28),
 
             // Save button
             SizedBox(
               width: double.infinity,
-              height: 56,
+              height: 58,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _saveTransaction,
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  elevation: 0,
+                ),
                 child: _isLoading
                     ? const SizedBox(
                         width: 24,
@@ -295,10 +460,12 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                             strokeWidth: 2.5, color: Colors.white))
                     : const Text('Simpan Transaksi',
                         style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600)),
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.2)),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
           ],
         ),
       ),
@@ -331,9 +498,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color: isSelected 
-              ? color.withOpacity(0.1) 
-              : (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1C1C1E) : AppColors.surfaceVariant),
+          color: isSelected
+              ? color.withOpacity(0.1)
+              : (Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF1C1C1E)
+                  : AppColors.surfaceVariant),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
               color: isSelected ? color : Colors.transparent, width: 1.5),
@@ -367,6 +536,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) => Container(
           height: MediaQuery.of(context).size.height * 0.7,
+          padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).padding.bottom + 16),
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -399,10 +570,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                             },
                           )
                         : null,
-                    filled: true,
-                    fillColor: Theme.of(context).brightness == Brightness.dark 
-                        ? const Color(0xFF1C1C1E) 
-                        : AppColors.surfaceVariant,
+                    filled: false,
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide.none),
@@ -418,56 +586,92 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 ),
               ),
               const SizedBox(height: 12),
+              const Divider(height: 1),
               Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  itemCount: filteredCategories.length,
-                  itemBuilder: (context, index) {
-                    final category = filteredCategories[index];
-                    final isSelected = _selectedCategory == category;
-                    return ListTile(
-                      leading: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? (Theme.of(context).brightness == Brightness.dark 
-                                  ? const Color(0xFF0A84FF).withOpacity(0.15) 
-                                  : AppColors.primary.withOpacity(0.1))
-                              : (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF2C2C2E) : Colors.grey[100]),
-                          shape: BoxShape.circle,
+                child: ClipRRect(
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(0)),
+                  child: filteredCategories.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.search_off_rounded,
+                                  size: 48, color: AppColors.textHint),
+                              const SizedBox(height: 16),
+                              Text(
+                                ToneManager.t('category_not_found'),
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                    color: AppColors.textHint,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          itemCount: filteredCategories.length,
+                          itemBuilder: (context, index) {
+                            final category = filteredCategories[index];
+                            final isSelected = _selectedCategory == category;
+                            return ListTile(
+                              leading: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? (Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? const Color(0xFF0A84FF)
+                                              .withOpacity(0.15)
+                                          : AppColors.primary.withOpacity(0.1))
+                                      : (Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? const Color(0xFF2C2C2E)
+                                          : Colors.grey[100]),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  TransactionCategory.getIconForCategory(
+                                      category),
+                                  color: isSelected
+                                      ? (Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? const Color(0xFF0A84FF)
+                                          : AppColors.primary)
+                                      : AppColors.textSecondary,
+                                  size: 20,
+                                ),
+                              ),
+                              title: Text(
+                                category,
+                                style: TextStyle(
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                  color: isSelected
+                                      ? (Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? const Color(0xFF0A84FF)
+                                          : AppColors.primary)
+                                      : Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.color,
+                                ),
+                              ),
+                              trailing: isSelected
+                                  ? const Icon(Icons.check_circle,
+                                      color: AppColors.primary)
+                                  : null,
+                              onTap: () {
+                                setState(() => _selectedCategory = category);
+                                Navigator.pop(context);
+                              },
+                            );
+                          },
                         ),
-                        child: Icon(
-                          TransactionCategory.getIconForCategory(category),
-                          color: isSelected
-                              ? (Theme.of(context).brightness == Brightness.dark 
-                                  ? const Color(0xFF0A84FF) 
-                                  : AppColors.primary)
-                              : AppColors.textSecondary,
-                          size: 20,
-                        ),
-                      ),
-                      title: Text(
-                        category,
-                        style: TextStyle(
-                          fontWeight:
-                              isSelected ? FontWeight.bold : FontWeight.normal,
-                          color: isSelected
-                              ? (Theme.of(context).brightness == Brightness.dark 
-                                  ? const Color(0xFF0A84FF) 
-                                  : AppColors.primary)
-                              : Theme.of(context).textTheme.bodyLarge?.color,
-                        ),
-                      ),
-                      trailing: isSelected
-                          ? const Icon(Icons.check_circle,
-                              color: AppColors.primary)
-                          : null,
-                      onTap: () {
-                        setState(() => _selectedCategory = category);
-                        Navigator.pop(context);
-                      },
-                    );
-                  },
                 ),
               ),
             ],
@@ -477,34 +681,172 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     );
   }
 
-  Widget _buildDropdown<T>(
-      {T? value,
-      required String hint,
-      required IconData icon,
-      required List<DropdownMenuItem<T>> items,
-      required ValueChanged<T?> onChanged}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-          color: Theme.of(context).brightness == Brightness.dark 
-              ? const Color(0xFF1C1C1E) 
-              : AppColors.surfaceVariant,
-          borderRadius: BorderRadius.circular(16)),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<T>(
-          value: value,
-          isExpanded: true,
-          hint: Row(children: [
-            Icon(icon, color: AppColors.textHint, size: 20),
-            const SizedBox(width: 12),
-            Text(hint, style: const TextStyle(color: AppColors.textHint))
-          ]),
-          icon: const Icon(Icons.keyboard_arrow_down_rounded,
-              color: AppColors.textHint),
-          items: items,
-          onChanged: onChanged,
-          borderRadius: BorderRadius.circular(16),
-          dropdownColor: Theme.of(context).cardColor,
+  void _showWalletPicker() {
+    final searchController = TextEditingController();
+    List<WalletModel> filteredWallets = List.from(_wallets);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          height: MediaQuery.of(context).size.height * 0.7,
+          padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).padding.bottom + 16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                      color: Theme.of(context).dividerColor,
+                      borderRadius: BorderRadius.circular(2))),
+              const SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: TextField(
+                  controller: searchController,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    hintText: 'Cari dompet...',
+                    prefixIcon: const Icon(Icons.search_rounded),
+                    suffixIcon: searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              searchController.clear();
+                              setModalState(
+                                  () => filteredWallets = List.from(_wallets));
+                            },
+                          )
+                        : null,
+                    filled: false,
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none),
+                  ),
+                  onChanged: (val) {
+                    setModalState(() {
+                      filteredWallets = _wallets
+                          .where((w) => w.walletName
+                              .toLowerCase()
+                              .contains(val.toLowerCase()))
+                          .toList();
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Divider(height: 1),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(0)),
+                  child: filteredWallets.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.account_balance_wallet_outlined,
+                                  size: 48, color: AppColors.textHint),
+                              const SizedBox(height: 16),
+                              Text(
+                                ToneManager.t('wallet_not_found'),
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                    color: AppColors.textHint,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          itemCount: filteredWallets.length,
+                          itemBuilder: (context, index) {
+                            final wallet = filteredWallets[index];
+                            final isSelected = _selectedWalletId == wallet.id;
+                            return ListTile(
+                              leading: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? (Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? const Color(0xFF32D74B)
+                                              .withOpacity(0.15)
+                                          : const Color(0xFF34C759)
+                                              .withOpacity(0.1))
+                                      : (Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? const Color(0xFF2C2C2E)
+                                          : Colors.grey[100]),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.account_balance_wallet_outlined,
+                                  color: isSelected
+                                      ? (Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? const Color(0xFF32D74B)
+                                          : const Color(0xFF34C759))
+                                      : AppColors.textSecondary,
+                                  size: 20,
+                                ),
+                              ),
+                              title: Text(
+                                wallet.walletName,
+                                style: TextStyle(
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                  color: isSelected
+                                      ? (Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? const Color(0xFF0A84FF)
+                                          : AppColors.primary)
+                                      : Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.color,
+                                ),
+                              ),
+                              subtitle: Text(
+                                CurrencyFormatter.formatCurrency(
+                                    wallet.balance),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: isSelected
+                                      ? (Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? const Color(0xFF32D74B)
+                                          : const Color(0xFF34C759)
+                                              .withOpacity(0.7))
+                                      : AppColors.textSecondary,
+                                ),
+                              ),
+                              trailing: isSelected
+                                  ? const Icon(Icons.check_circle,
+                                      color: AppColors.primary)
+                                  : null,
+                              onTap: () {
+                                setState(() => _selectedWalletId = wallet.id);
+                                Navigator.pop(context);
+                              },
+                            );
+                          },
+                        ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
