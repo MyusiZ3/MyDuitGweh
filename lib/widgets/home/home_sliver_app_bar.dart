@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../utils/app_theme.dart';
 import '../connection_badge.dart';
+import '../../utils/tone_dictionary.dart';
 
 class HomeSliverAppBar extends StatelessWidget {
   final User? user;
@@ -26,13 +27,15 @@ class HomeSliverAppBar extends StatelessWidget {
     required this.uid,
   });
 
+  // lib/widgets/home/home_sliver_app_bar.dart
+
   String _getGreetingText() {
     if (greeting != null) return greeting!;
     final hour = DateTime.now().hour;
-    if (hour < 11) return 'Selamat Pagi 🌤️';
-    if (hour < 15) return 'Selamat Siang ☀️';
-    if (hour < 18) return 'Selamat Sore ⛅';
-    return 'Selamat Malam 🌙';
+    if (hour < 11) return '${ToneManager.t('greeting_pagi')} ';
+    if (hour < 15) return '${ToneManager.t('greeting_siang')} ';
+    if (hour < 18) return '${ToneManager.t('greeting_sore')} ';
+    return '${ToneManager.t('greeting_malam')} ';
   }
 
   @override
@@ -117,7 +120,7 @@ class HomeSliverAppBar extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           Text(
-            isSuperAdmin ? 'OWNER' : 'ADMIN',
+            isSuperAdmin ? ToneManager.t('badge_owner') : ToneManager.t('badge_admin'),
             style: const TextStyle(
               color: Colors.white,
               fontSize: 8,
@@ -189,8 +192,9 @@ class HomeSliverAppBar extends StatelessWidget {
               CircleAvatar(
                 radius: 19,
                 backgroundColor: AppColors.primary.withOpacity(0.1),
-                backgroundImage:
-                    user?.photoURL != null ? NetworkImage(user!.photoURL!) : null,
+                backgroundImage: user?.photoURL != null
+                    ? NetworkImage(user!.photoURL!)
+                    : null,
                 child: user?.photoURL == null
                     ? const Icon(CupertinoIcons.person_fill,
                         size: 22, color: AppColors.primary)

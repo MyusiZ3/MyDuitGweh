@@ -1304,13 +1304,13 @@ class _HomeScreenState extends State<HomeScreen> {
                               color: AppColors.primary, size: 32),
                         ),
                         const SizedBox(height: 20),
-                        Text('Target Budget',
+                        Text(ToneManager.t('budget_title'),
                             style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: -0.5)),
                         const SizedBox(height: 8),
-                        Text('Atur batas pengeluaran bulananmu.',
+                        Text(ToneManager.t('budget_subtitle'),
                             textAlign: TextAlign.center,
                             style: TextStyle(
                                 fontSize: 13,
@@ -1793,7 +1793,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                           ),
                           child: Center(
-                            child: Text('UNDERSTOOD',
+                            child: Text(ToneManager.t('understood_button'),
                                 style: TextStyle(
                                     color: Theme.of(context).brightness ==
                                             Brightness.dark

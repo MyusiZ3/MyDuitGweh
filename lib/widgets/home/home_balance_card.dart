@@ -56,7 +56,9 @@ class HomeBalanceCard extends StatelessWidget {
               GestureDetector(
                 onTap: onToggleVisibility,
                 child: Icon(
-                  isBalanceVisible ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
+                  isBalanceVisible
+                      ? CupertinoIcons.eye
+                      : CupertinoIcons.eye_slash,
                   color: Colors.white70,
                   size: 18,
                 ),
@@ -89,7 +91,7 @@ class HomeBalanceCard extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Kekayaan Bersih ',
+                    '${ToneManager.t('home_net_worth')} ',
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.8),
                       fontSize: 11,

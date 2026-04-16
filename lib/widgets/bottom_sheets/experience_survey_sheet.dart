@@ -7,6 +7,7 @@ import '../../services/firestore_service.dart';
 import '../../models/feedback_model.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/ui_helper.dart';
+import '../../utils/tone_dictionary.dart';
 
 class ExperienceSurveySheet extends StatefulWidget {
   const ExperienceSurveySheet({super.key});
@@ -121,9 +122,9 @@ class _ExperienceSurveySheetState extends State<ExperienceSurveySheet> {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    const Text(
-                      'Bagaimana Pengalamanmu?',
-                      style: TextStyle(
+                    Text(
+                      ToneManager.t('survey_title'),
+                      style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
                         color: AppColors.textPrimary,
@@ -131,9 +132,9 @@ class _ExperienceSurveySheetState extends State<ExperienceSurveySheet> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Bantu Archen bikin MyDuitGweh makin sakti buat kamu!',
-                      style: TextStyle(
+                    Text(
+                      ToneManager.t('survey_subtitle'),
+                      style: const TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 14,
                       ),
@@ -177,9 +178,9 @@ class _ExperienceSurveySheetState extends State<ExperienceSurveySheet> {
                     ),
 
                     const SizedBox(height: 32),
-                    const Text(
-                      'Bagian apa yang paling berkesan?',
-                      style: TextStyle(
+                    Text(
+                      ToneManager.t('survey_impress_title'),
+                      style: const TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 15,
                       ),
@@ -240,9 +241,9 @@ class _ExperienceSurveySheetState extends State<ExperienceSurveySheet> {
                     ),
 
                     const SizedBox(height: 24),
-                    const Text(
-                      'Ceritakan lebih detail (Opsional)',
-                      style: TextStyle(
+                    Text(
+                      ToneManager.t('survey_detail_title'),
+                      style: const TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 15,
                       ),
@@ -252,7 +253,7 @@ class _ExperienceSurveySheetState extends State<ExperienceSurveySheet> {
                       controller: _commentController,
                       maxLines: 3,
                       decoration: InputDecoration(
-                        hintText: 'Saran, keluhan, atau pujian buat Archen...',
+                        hintText: ToneManager.t('survey_hint'),
                         hintStyle: const TextStyle(fontSize: 14),
                         filled: true,
                         fillColor: Colors.white,
@@ -285,9 +286,9 @@ class _ExperienceSurveySheetState extends State<ExperienceSurveySheet> {
                         child: _isSubmitting
                             ? const CircularProgressIndicator(
                                 color: Colors.white)
-                            : const Text(
-                                'KIRIM FEEDBACK SEKARANG',
-                                style: TextStyle(
+                            : Text(
+                                ToneManager.t('survey_button'),
+                                style: const TextStyle(
                                   fontWeight: FontWeight.w900,
                                   fontSize: 14,
                                   letterSpacing: 0.5,
@@ -309,17 +310,17 @@ class _ExperienceSurveySheetState extends State<ExperienceSurveySheet> {
   String _getRatingText() {
     switch (_rating.toInt()) {
       case 1:
-        return 'Kurang memuaskan';
+        return ToneManager.t('survey_rating_1');
       case 2:
-        return 'Butuh perbaikan';
+        return ToneManager.t('survey_rating_2');
       case 3:
-        return 'Cukup baik';
+        return ToneManager.t('survey_rating_3');
       case 4:
-        return 'Memuaskan';
+        return ToneManager.t('survey_rating_4');
       case 5:
-        return 'Luar biasa';
+        return ToneManager.t('survey_rating_5');
       default:
-        return 'Pilih Bintang-mu!';
+        return ToneManager.t('survey_rating_none');
     }
   }
 
