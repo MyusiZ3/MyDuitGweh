@@ -221,46 +221,211 @@ class DebtService {
       'title': title,
       'dueDate': dueDate != null ? Timestamp.fromDate(dueDate) : null,
     };
-
     if (newTotalAmount != null) {
-      // 1. Get current debt to find the difference and reconcile balance
-      final debtDoc = await debtDocRef.get();
-      if (debtDoc.exists) {
-        final debtData = debtDoc.data() as Map<String, dynamic>;
-        final double oldTotalAmount = (debtData['totalAmount'] as num).toDouble();
-        final double paidAmount = (debtData['paidAmount'] as num).toDouble();
-        final String walletId = debtData['walletId'];
-        final bool isUtang = debtData['type'] == 'utang';
+      try {
+        // 1. Get current debt to find the difference and reconcile balance
+        // Handle offline: get from server/cache with timeout
+        final debtDoc = await debtDocRef.get().timeout(const Duration(seconds: 5));
         
-        if (oldTotalAmount != newTotalAmount) {
-          final double diff = newTotalAmount - oldTotalAmount;
+        if (debtDoc.exists) {
+          final debtData = debtDoc.data() as Map<String, dynamic>;
+          final double oldTotalAmount = (debtData['totalAmount'] as num?)?.toDouble() ?? 0.0;
+          final double paidAmount = (debtData['paidAmount'] as num?)?.toDouble() ?? 0.0;
+          final String? walletId = debtData['walletId'] as String?;
+          final bool isUtang = debtData['type'] == 'utang';
           
-          // 2. Update Debt fields
-          updates['totalAmount'] = newTotalAmount;
-          updates['status'] = (paidAmount >= newTotalAmount) ? 'completed' : (paidAmount > 0 ? 'mencicil' : 'active');
+          if (oldTotalAmount != newTotalAmount) {
+            final double diff = newTotalAmount - oldTotalAmount;
+            
+            // 2. Update Debt fields
+            updates['totalAmount'] = newTotalAmount;
+            updates['status'] = (paidAmount >= newTotalAmount) ? 'completed' : (paidAmount > 0 ? 'mencicil' : 'active');
 
-          // 3. Update Wallet Balance
-          // If Utang: increase total means we borrowed MORE (more money in wallet)
-          // If Piutang: increase total means we lent MORE (less money in wallet)
-          final walletDocRef = _getWalletsCollection().doc(walletId);
-          final balanceDelta = isUtang ? diff : -diff;
-          batch.update(walletDocRef, {'balance': FieldValue.increment(balanceDelta)});
+            // 3. Update Wallet Balance if walletId exists
+            if (walletId != null) {
+              final walletDocRef = _getWalletsCollection().doc(walletId);
+              final balanceDelta = isUtang ? diff : -diff;
+              batch.update(walletDocRef, {'balance': FieldValue.increment(balanceDelta)});
+            }
 
-          // 4. Update Initial Transaction
-          // Find the transaction that has debtId and the original initial category
-          final txQuery = await _getTransactionsCollection()
-              .where('debtId', isEqualTo: debtId)
-              .where('category', whereIn: ['Pinjaman', 'Hutang'])
-              .get();
-          
-          if (txQuery.docs.isNotEmpty) {
-            batch.update(txQuery.docs.first.reference, {'amount': newTotalAmount});
+            // 4. Update Initial Transaction if possible
+            try {
+              final txQuery = await _getTransactionsCollection()
+                  .where('debtId', isEqualTo: debtId)
+                  .get()
+                  .timeout(const Duration(seconds: 5));
+              
+              if (txQuery.docs.isNotEmpty) {
+                final targetDoc = txQuery.docs.firstWhere((doc) {
+                  final cat = (doc.data() as Map<String, dynamic>)['category'] as String?;
+                  return cat == 'Pinjaman' || cat == 'Hutang';
+                });
+                batch.update(targetDoc.reference, {'amount': newTotalAmount});
+              }
+            } catch (e) {
+              // Silently fail transaction update - main debt doc will sync
+            }
           }
         }
+      } catch (e) {
+        // If we are offline/error, just update totalAmount on the main doc
+        updates['totalAmount'] = newTotalAmount;
       }
     }
 
     batch.update(debtDocRef, updates);
+    try {
+      await batch.commit().timeout(const Duration(seconds: 10));
+    } catch (e) {
+      // commit might be queued in Firestore for offline, which is fine
+      // we don't want to throw and crash the UI
+    }
+  }
+
+  // Delete an individual debt transaction and reconcile amounts
+  Future<void> deleteDebtTransaction({
+    required String userId,
+    required TransactionModel transaction,
+    required DebtModel debt,
+  }) async {
+    final batch = _firestore.batch();
+    final bool isCicilan = transaction.category == 'Cicilan';
+    
+    // 1. Update the Debt Model
+    final debtDocRef = _getUserDebtsCollection(userId).doc(debt.id);
+    
+    if (isCicilan) {
+      final newPaidAmount = debt.paidAmount - transaction.amount;
+      final newStatus = newPaidAmount >= debt.totalAmount ? 'completed' : (newPaidAmount > 0 ? 'mencicil' : 'active');
+      batch.update(debtDocRef, {
+        'paidAmount': newPaidAmount,
+        'status': newStatus,
+      });
+    } else {
+      final newTotalAmount = debt.totalAmount - transaction.amount;
+      batch.update(debtDocRef, {
+        'totalAmount': newTotalAmount,
+        'status': (debt.paidAmount >= newTotalAmount) ? 'completed' : (debt.paidAmount > 0 ? 'mencicil' : 'active'),
+      });
+    }
+
+    // 2. Reconcile the Wallet Balance
+    // Reversing an income (Utang borrow / Piutang repay): subtract from wallet
+    // Reversing an expense (Utang repay / Piutang lend): add back to wallet
+    final walletDocRef = _getWalletsCollection().doc(transaction.walletId);
+    final isIncome = transaction.type == 'income';
+    final reverseAmount = isIncome ? -transaction.amount : transaction.amount;
+    batch.update(walletDocRef, {'balance': FieldValue.increment(reverseAmount)});
+
+    // 3. Delete the transaction
+    final txDocRef = _getTransactionsCollection().doc(transaction.id);
+    batch.delete(txDocRef);
+
+    await batch.commit();
+  }
+
+  // Update an individual debt transaction nominal and reconcile amounts
+  Future<void> updateDebtTransaction({
+    required String userId,
+    required TransactionModel oldTransaction,
+    required DebtModel debt,
+    required double newAmount,
+  }) async {
+    if (newAmount == oldTransaction.amount) return;
+    
+    final batch = _firestore.batch();
+    final double diff = newAmount - oldTransaction.amount;
+    final bool isCicilan = oldTransaction.category == 'Cicilan';
+    
+    // 1. Update the Debt Model
+    final debtDocRef = _getUserDebtsCollection(userId).doc(debt.id);
+    
+    if (isCicilan) {
+      // Adjust paidAmount for installments
+      final newPaidAmount = debt.paidAmount + diff;
+      final newStatus = newPaidAmount >= debt.totalAmount ? 'completed' : (newPaidAmount > 0 ? 'mencicil' : 'active');
+      batch.update(debtDocRef, {
+        'paidAmount': newPaidAmount,
+        'status': newStatus,
+      });
+    } else {
+      // Adjust totalAmount for initial/additional borrowings
+      final newTotalAmount = debt.totalAmount + diff;
+      // Also update status if now paidAmount >= newTotalAmount
+      batch.update(debtDocRef, {
+        'totalAmount': newTotalAmount,
+        'status': (debt.paidAmount >= newTotalAmount) ? 'completed' : (debt.paidAmount > 0 ? 'mencicil' : 'active'),
+      });
+    }
+
+    // 2. Reconcile the Wallet Balance
+    // For Income transactions (Utang borrow / Piutang repay): + diff means more cash in (increment)
+    // For Expense transactions (Utang repay / Piutang lend): + diff means more cash out (decrement)
+    final walletDocRef = _getWalletsCollection().doc(oldTransaction.walletId);
+    final isIncome = oldTransaction.type == 'income';
+    final balanceDelta = isIncome ? diff : -diff;
+    batch.update(walletDocRef, {'balance': FieldValue.increment(balanceDelta)});
+
+    // 3. Update the transaction
+    final txDocRef = _getTransactionsCollection().doc(oldTransaction.id);
+    batch.update(txDocRef, {'amount': newAmount});
+
+    await batch.commit();
+  }
+
+  // Increase the total debt/credit amount (borrow/lend more)
+  Future<void> increaseDebt({
+    required String userId,
+    required String userName,
+    required DebtModel debt,
+    required double additionalAmount,
+    required String walletId,
+  }) async {
+    final batch = _firestore.batch();
+    final now = DateTime.now();
+
+    // 1. Update the Debt Model (increase totalAmount)
+    final debtDocRef = _getUserDebtsCollection(userId).doc(debt.id);
+    final newTotalAmount = debt.totalAmount + additionalAmount;
+    
+    batch.update(debtDocRef, {
+      'totalAmount': newTotalAmount,
+      'status': (debt.paidAmount >= newTotalAmount) ? 'completed' : 'mencicil',
+    });
+
+    // 2. Create the Addition Transaction
+    final transactionId = TransactionModel.generateId();
+    final transactionDoc = _getTransactionsCollection().doc(transactionId);
+    
+    // If Utang: borrowing more is INCOME to wallet
+    // If Piutang: lending more is EXPENSE from wallet
+    final isUtang = debt.isUtang;
+    final txType = isUtang ? 'income' : 'expense';
+    final category = isUtang ? 'Hutang' : 'Pinjaman';
+    
+    final transaction = TransactionModel(
+      id: transactionId,
+      walletId: walletId,
+      amount: additionalAmount,
+      type: txType,
+      category: category,
+      note: 'Penambahan ${isUtang ? 'Hutang' : 'Piutang'} untuk ${debt.title}',
+      createdBy: userId,
+      createdByName: userName,
+      date: now,
+      debtId: debt.id,
+    );
+    batch.set(transactionDoc, transaction.toJson());
+
+    // 3. Update the Wallet Balance
+    final walletDocRef = _getWalletsCollection().doc(walletId);
+    final balanceDelta = isUtang ? additionalAmount : -additionalAmount;
+    batch.update(walletDocRef, {'balance': FieldValue.increment(balanceDelta)});
+
+    // 4. Update lastTransactionAt
+    final userRef = _firestore.collection('users').doc(userId);
+    batch.update(userRef, {'lastTransactionAt': FieldValue.serverTimestamp()});
+
     await batch.commit();
   }
 }
