@@ -27,17 +27,19 @@ class DebtModel {
 
   factory DebtModel.fromJson(Map<String, dynamic> json, {String? docId}) {
     return DebtModel(
-      id: docId ?? json['id'] as String,
-      type: json['type'] as String,
-      title: json['title'] as String,
-      totalAmount: (json['totalAmount'] as num).toDouble(),
-      paidAmount: (json['paidAmount'] as num).toDouble(),
+      id: docId ?? json['id'] as String? ?? '',
+      type: json['type'] as String? ?? 'utang',
+      title: json['title'] as String? ?? 'Tanpa Judul',
+      totalAmount: (json['totalAmount'] as num?)?.toDouble() ?? 0.0,
+      paidAmount: (json['paidAmount'] as num?)?.toDouble() ?? 0.0,
       status: json['status'] as String? ?? 'active',
-      createdAt: (json['createdAt'] as Timestamp).toDate(),
+      createdAt: json['createdAt'] != null 
+          ? (json['createdAt'] as Timestamp).toDate() 
+          : DateTime.now(),
       dueDate: json['dueDate'] != null
           ? (json['dueDate'] as Timestamp).toDate()
           : null,
-      createdBy: json['createdBy'] as String,
+      createdBy: json['createdBy'] as String? ?? '',
       walletId: json['walletId'] as String?,
     );
   }

@@ -191,7 +191,7 @@ class _ReportScreenState extends State<ReportScreen> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         centerTitle: true,
-        title: const Text('Laporan Keuangan',
+        title: Text(ToneManager.t('report_title'),
             style: TextStyle(
                 fontWeight: FontWeight.w800,
                 fontSize: 22,
@@ -239,7 +239,7 @@ class _ReportScreenState extends State<ReportScreen> {
 
           final wallets = walletSnapshot.data ?? [];
           if (wallets.isEmpty) {
-            return _buildNoData('Belum ada dompet', 'Buat dompet dulu yuk!');
+            return _buildNoData(ToneManager.t('wallet_empty_title'), ToneManager.t('wallet_empty_msg'));
           }
 
           final walletIds = wallets.map((w) => w.id).toList();
@@ -268,8 +268,8 @@ class _ReportScreenState extends State<ReportScreen> {
                 return ListView(
                   children: [
                     _buildDateFilter(),
-                    _buildNoData('Belum ada transaksi',
-                        'Tidak ada catatan di periode ini.'),
+                    _buildNoData(ToneManager.t('home_empty_title'),
+                        ToneManager.t('home_empty_msg')),
                   ],
                 );
               }
@@ -369,8 +369,8 @@ class _ReportScreenState extends State<ReportScreen> {
                   strokeWidth: 2,
                 ),
               )
-            : Text('Arch AI',
-                style: TextStyle(
+            : Text(ToneManager.t('arch_ai_button'),
+                style: const TextStyle(
                     fontWeight: FontWeight.bold, color: Colors.white)),
         icon: _isCheckingAi
             ? const SizedBox.shrink()

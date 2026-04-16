@@ -13,6 +13,7 @@ import 'receipt_scanner_screen.dart';
 import '../utils/ui_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/notification_permission_floating_card.dart';
+import '../utils/tone_dictionary.dart';
 
 class MainNav extends StatefulWidget {
   const MainNav({super.key});
@@ -178,20 +179,28 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
 
     switch (index) {
       case 0:
-        icon = _currentIndex == 0 ? CupertinoIcons.house_fill : CupertinoIcons.house;
-        label = 'Home';
+        icon = _currentIndex == 0
+            ? CupertinoIcons.house_fill
+            : CupertinoIcons.house;
+        label = ToneManager.t('nav_home');
         break;
       case 1:
-        icon = _currentIndex == 1 ? CupertinoIcons.creditcard_fill : CupertinoIcons.creditcard;
-        label = 'Wallet';
+        icon = _currentIndex == 1
+            ? CupertinoIcons.creditcard_fill
+            : CupertinoIcons.creditcard;
+        label = ToneManager.t('nav_wallet');
         break;
       case 3:
-        icon = _currentIndex == 3 ? CupertinoIcons.person_2_fill : CupertinoIcons.person_2;
-        label = 'Colab';
+        icon = _currentIndex == 3
+            ? CupertinoIcons.person_2_fill
+            : CupertinoIcons.person_2;
+        label = ToneManager.t('nav_colab');
         break;
       case 4:
-        icon = _currentIndex == 4 ? CupertinoIcons.chart_pie_fill : CupertinoIcons.chart_pie;
-        label = 'Report';
+        icon = _currentIndex == 4
+            ? CupertinoIcons.chart_pie_fill
+            : CupertinoIcons.chart_pie;
+        label = ToneManager.t('nav_report');
         break;
       default:
         icon = CupertinoIcons.question;
@@ -265,7 +274,7 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
         children: [
           _buildSpeedDialItem(
             icon: CupertinoIcons.viewfinder,
-            label: 'Scan Struk (AI)',
+            label: ToneManager.t('nav_scan'),
             color: const Color(0xFF5856D6), // iOS Purple
             onTap: () {
               _toggleFAB();
@@ -276,7 +285,7 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
           const SizedBox(height: 16),
           _buildSpeedDialItem(
             icon: CupertinoIcons.pencil_ellipsis_rectangle,
-            label: 'Input Manual',
+            label: ToneManager.t('nav_manual'),
             color: const Color(0xFF007AFF), // iOS Blue
             onTap: () {
               _toggleFAB();
@@ -494,7 +503,7 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
                 ),
                 const SizedBox(height: 28),
                 Text(
-                  'Menganalisa Struk...',
+                  ToneManager.t('scan_loading_title'),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 18,
@@ -505,7 +514,7 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'Sistem sedang merapikan data nota kamu secara otomatis',
+                  ToneManager.t('scan_loading_msg'),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 13,

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../utils/app_theme.dart';
 import '../utils/ui_helper.dart';
 import '../services/firestore_service.dart';
+import '../utils/tone_dictionary.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -82,9 +83,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           data: ThemeData(
             brightness: Theme.of(context).brightness,
             colorScheme: Theme.of(context).colorScheme.copyWith(
-              primary: AppColors.primary,
-              onPrimary: Colors.white,
-            ),
+                  primary: AppColors.primary,
+                  onPrimary: Colors.white,
+                ),
           ),
           child: child!,
         );
@@ -102,7 +103,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final newName = _nameController.text.trim();
     final newOccupation = _occupationController.text.trim();
     if (newName.isEmpty) {
-      UIHelper.showErrorSnackBar(context, 'Nama tidak boleh kosong');
+      UIHelper.showErrorSnackBar(context, ToneManager.t('error_empty_field'));
       return;
     }
 
@@ -128,7 +129,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           setState(() {
             _isEditing = false;
           });
-          UIHelper.showSuccessSnackBar(context, 'Profil berhasil diperbarui!');
+          UIHelper.showSuccessSnackBar(
+              context, ToneManager.t('success_update_profile'));
         }
       }
     } catch (e) {
@@ -200,9 +202,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       textAlign: TextAlign.right,
       style: TextStyle(
         fontSize: 15,
-        color: _isEditing 
-          ? Theme.of(context).textTheme.bodyLarge?.color 
-          : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
+        color: _isEditing
+            ? Theme.of(context).textTheme.bodyLarge?.color
+            : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
       ),
       decoration: InputDecoration(
         hintText: hint,
@@ -217,10 +219,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF000000) : const Color(0xFFF2F2F7),
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF000000)
+          : const Color(0xFFF2F2F7),
       appBar: AppBar(
         title: Text(
-          'Profil Saya',
+          ToneManager.t('profile_title'),
           style: TextStyle(
             fontWeight: FontWeight.w700,
             letterSpacing: -0.5,
@@ -239,8 +243,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             CupertinoButton(
               padding: const EdgeInsets.only(right: 16),
               onPressed: () => setState(() => _isEditing = true),
-              child: const Text('Edit',
-                  style: TextStyle(fontWeight: FontWeight.w600)),
+              child: Text(ToneManager.t('profile_edit_btn'),
+                  style: const TextStyle(fontWeight: FontWeight.w600)),
             ),
           if (_isEditing)
             CupertinoButton(
@@ -249,8 +253,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 setState(() => _isEditing = false);
                 _loadUserProfile(); // Revert
               },
-              child: const Text('Batal',
-                  style: TextStyle(
+              child: Text(ToneManager.t('profile_cancel_btn'),
+                  style: const TextStyle(
                       color: Colors.red, fontWeight: FontWeight.w500)),
             ),
         ],
@@ -303,7 +307,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           Text(
                             _nameController.text.isNotEmpty
                                 ? _nameController.text
-                                : 'Pengguna',
+                                : ToneManager.t('nav_profile'),
                             style: const TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.w700,
@@ -342,13 +346,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         children: [
                           _buildCupertinoTile(
                             icon: CupertinoIcons.person_fill,
-                            title: 'Nama Lengkap',
-                            child: _buildFormField(
-                                _nameController, 'Masukkan Nama'),
+                            title: ToneManager.t('profile_label_name'),
+                            child: _buildFormField(_nameController,
+                                ToneManager.t('profile_hint_name')),
                           ),
                           _buildCupertinoTile(
                             icon: CupertinoIcons.person_3_fill,
-                            title: 'Gender',
+                            title: ToneManager.t('profile_label_gender'),
                             iconColor: Colors.purple,
                             child: _isEditing
                                 ? DropdownButtonHideUnderline(
@@ -360,8 +364,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                           CupertinoIcons.chevron_down,
                                           size: 16),
                                       style: TextStyle(
-                                          fontSize: 15, color: Theme.of(context).textTheme.bodyLarge?.color),
-                                      items: const [
+                                          fontSize: 15,
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .bodyLarge
+                                              ?.color),
+                                      items: [
                                         DropdownMenuItem(
                                             value: 'Prefer not to say',
                                             child: Text('Prefer not to say')),
@@ -392,7 +400,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           ),
                           _buildCupertinoTile(
                             icon: CupertinoIcons.calendar,
-                            title: 'Tanggal Lahir',
+                            title: ToneManager.t('profile_label_dob'),
                             iconColor: Colors.orange,
                             child: InkWell(
                               onTap: _pickDateOfBirth,
@@ -403,7 +411,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                   _dateOfBirth != null
                                       ? DateFormat('dd MMM yyyy')
                                           .format(_dateOfBirth!)
-                                      : 'Pilih Tanggal',
+                                      : ToneManager.t('profile_hint_dob'),
                                   textAlign: TextAlign.right,
                                   style: TextStyle(
                                     fontSize: 15,
@@ -419,11 +427,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           ),
                           _buildCupertinoTile(
                             icon: CupertinoIcons.briefcase_fill,
-                            title: 'Pekerjaan',
+                            title: ToneManager.t('profile_label_job'),
                             iconColor: Colors.teal,
                             showBorder: false,
-                            child: _buildFormField(
-                                _occupationController, 'Mis: Mahasiswa'),
+                            child: _buildFormField(_occupationController,
+                                ToneManager.t('profile_hint_job')),
                           ),
                         ],
                       ),
@@ -447,9 +455,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           child: _isLoading
                               ? const CircularProgressIndicator(
                                   color: Colors.white)
-                              : const Text(
-                                  'Simpan Perubahan',
-                                  style: TextStyle(
+                              : Text(
+                                  ToneManager.t('profile_save_btn'),
+                                  style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
                                       letterSpacing: -0.3),

@@ -234,11 +234,15 @@ class FirestoreService {
     return _firestore
         .collection('transactions')
         .where('debtId', isEqualTo: debtId)
-        .orderBy('date', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => TransactionModel.fromJson(doc.data(), docId: doc.id))
-            .toList());
+        .map((snapshot) {
+      final txns = snapshot.docs
+          .map((doc) => TransactionModel.fromJson(doc.data(), docId: doc.id))
+          .toList();
+      // Sort manually on client to avoid index requirement
+      txns.sort((a, b) => b.date.compareTo(a.date));
+      return txns;
+    });
   }
 
   Stream<List<TransactionModel>> getFilteredTransactionsStream({

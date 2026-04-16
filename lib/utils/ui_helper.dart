@@ -9,22 +9,21 @@ class UIHelper {
   static OverlayEntry? _connectivityOverlayEntry;
 
   static void showSuccessSnackBar(BuildContext context, String message) {
-    _showTopToast(
-        context, message, AppColors.income, CupertinoIcons.check_mark_circled_solid);
+    _showTopToast(context, message, AppColors.income,
+        CupertinoIcons.check_mark_circled_solid);
   }
 
   static void showErrorSnackBar(BuildContext context, String message) {
-    _showTopToast(
-        context, message, AppColors.expense, CupertinoIcons.info);
+    _showTopToast(context, message, AppColors.expense, CupertinoIcons.info);
   }
 
   static void showInfoSnackBar(BuildContext context, String message) {
-    _showTopToast(
-        context, message, Colors.blueGrey, CupertinoIcons.info);
+    _showTopToast(context, message, Colors.blueGrey, CupertinoIcons.info);
   }
 
   static void showGlobalInfoToast(String message,
-      {Color color = Colors.blueGrey, IconData icon = CupertinoIcons.shield_fill}) {
+      {Color color = Colors.blueGrey,
+      IconData icon = CupertinoIcons.shield_fill}) {
     final context = navigatorKey.currentContext;
     if (context != null) {
       _showTopToast(context, message, color, icon);
@@ -185,13 +184,13 @@ class UIHelper {
                             color: Colors.white, size: 20),
                       ),
                       const SizedBox(width: 16),
-                      const Expanded(
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              'Offline Mode',
+                              ToneManager.t('offline_mode_title'),
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 16,
@@ -200,7 +199,7 @@ class UIHelper {
                               ),
                             ),
                             Text(
-                              'Koneksi terputus. Data akan disimpan secara lokal.',
+                              ToneManager.t('offline_mode_msg'),
                               style: TextStyle(
                                 color: Colors.white70,
                                 fontSize: 12,
@@ -231,7 +230,7 @@ class UIHelper {
       // Show success toast when back online
       final context = navigatorKey.currentContext;
       if (context != null) {
-        showSuccessSnackBar(context, 'Koneksi kembali terhubung!');
+        showSuccessSnackBar(context, ToneManager.t('online_mode_msg'));
       }
     }
   }
@@ -328,7 +327,8 @@ class UIHelper {
                                       color: Colors.grey.withOpacity(0.2)),
                                 ),
                                 child: Center(
-                                  child: Text(cancelText ?? 'Batal',
+                                  child: Text(
+                                      cancelText ?? ToneManager.t('dialog_no'),
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           color: Theme.of(context)
@@ -366,7 +366,9 @@ class UIHelper {
                                   ],
                                 ),
                                 child: Center(
-                                  child: Text(confirmText ?? 'Ya',
+                                  child: Text(
+                                      confirmText ??
+                                          ToneManager.t('dialog_yes'),
                                       style: const TextStyle(
                                           color: Colors.white,
                                           fontWeight: FontWeight.w900,
@@ -494,8 +496,8 @@ class UIHelper {
                           offset: const Offset(0, 5)),
                     ],
                   ),
-                  child: const Center(
-                    child: Text('Oke, Mengerti',
+                  child: Center(
+                    child: Text(ToneManager.t('info_button'),
                         style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w900,
@@ -508,8 +510,8 @@ class UIHelper {
         }));
   }
 
-  static void showLoadingDialog(BuildContext context,
-      {String message = 'Mohon tunggu...'}) {
+  static void showLoadingDialog(BuildContext context, {String? message}) {
+    final effectiveMessage = message ?? ToneManager.t('loading_msg');
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -536,7 +538,7 @@ class UIHelper {
               ),
               const SizedBox(height: 20),
               Text(
-                message,
+                effectiveMessage,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Theme.of(context).textTheme.bodyLarge?.color,
@@ -575,15 +577,14 @@ class UIHelper {
                 ],
               ),
               const SizedBox(height: 24),
-              const Text('AI Advisor Beristirahat',
+              Text(ToneManager.t('ai_maint_title'),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w900,
                       letterSpacing: -1)),
               const SizedBox(height: 12),
-              Text(
-                  'Layanan AI Advisor sedang dinonaktifkan sementara oleh admin untuk pemeliharaan rutin. Silakan coba beberapa saat lagi ya!',
+              Text(ToneManager.t('ai_maint_msg'),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                       color: Theme.of(context).hintColor,
@@ -607,8 +608,8 @@ class UIHelper {
                           offset: const Offset(0, 5)),
                     ],
                   ),
-                  child: const Center(
-                    child: Text('Siap, Tunggu Kabar!',
+                  child: Center(
+                    child: Text(ToneManager.t('ai_maint_button'),
                         style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w900,
@@ -622,11 +623,213 @@ class UIHelper {
   }
 
   static void showToneSelector(BuildContext context) {
-    showModalBottomSheet(
+    showPremiumBottomSheet(
+      context: context,
+      child: ValueListenableBuilder<AppTone>(
+        valueListenable: ToneManager.notifier,
+        builder: (context, currentTone, child) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 36,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).dividerColor.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(2.5),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          ToneManager.t('tone_selector_title'),
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.8,
+                            color: Theme.of(context).textTheme.titleLarge?.color,
+                          ),
+                        ),
+                        Text(
+                          ToneManager.t('tone_selector_subtitle'),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Theme.of(context).hintColor,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Material(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white.withOpacity(0.05)
+                          : Colors.black.withOpacity(0.05),
+                      shape: const CircleBorder(),
+                      child: InkWell(
+                        onTap: () => Navigator.pop(context),
+                        customBorder: const CircleBorder(),
+                        child: const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Icon(CupertinoIcons.xmark, size: 20),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    children: AppTone.values.map((t) {
+                      final isSelected = currentTone == t;
+                      final isMyBini = t == AppTone.pasangan;
+                      final activeColor = isMyBini
+                          ? const Color(0xFFFF2D55)
+                          : (Theme.of(context).brightness == Brightness.dark
+                              ? Colors.indigoAccent
+                              : AppColors.primary);
+
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: InkWell(
+                          onTap: () async {
+                            await ToneManager.setTone(t);
+                            if (context.mounted) {
+                              Future.delayed(const Duration(milliseconds: 150),
+                                  () => Navigator.pop(context));
+                            }
+                          },
+                          borderRadius: BorderRadius.circular(22),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 250),
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? activeColor.withOpacity(0.12)
+                                  : Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? AppColors.surfaceVariantDark
+                                      : Colors.white.withOpacity(0.4),
+                              borderRadius: BorderRadius.circular(22),
+                              border: Border.all(
+                                color: isSelected
+                                    ? activeColor.withOpacity(0.3)
+                                    : Colors.transparent,
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? activeColor.withOpacity(0.2)
+                                        : Colors.grey.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    t == AppTone.genZ
+                                        ? '🤘'
+                                        : t == AppTone.milenial
+                                            ? '☕'
+                                            : t == AppTone.boomer
+                                                ? '👴'
+                                                : t == AppTone.pasangan
+                                                    ? '❤️'
+                                                    : '🤵',
+                                    style: const TextStyle(fontSize: 24),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        isMyBini
+                                            ? 'PASANGAN'
+                                            : t.name.toUpperCase(),
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 16,
+                                          letterSpacing: -0.2,
+                                          color: isSelected
+                                              ? activeColor
+                                              : (Theme.of(context).brightness ==
+                                                      Brightness.dark
+                                                  ? Colors.white
+                                                  : Theme.of(context)
+                                                      .textTheme
+                                                      .bodyLarge
+                                                      ?.color),
+                                        ),
+                                      ),
+                                      Text(
+                                        _getToneDescription(t),
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: isSelected
+                                              ? activeColor.withOpacity(0.7)
+                                              : Theme.of(context).hintColor,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (isSelected)
+                                  Icon(
+                                      CupertinoIcons.check_mark_circled_solid,
+                                      color: activeColor,
+                                      size: 28)
+                                else
+                                  Icon(CupertinoIcons.chevron_right,
+                                      color: Theme.of(context)
+                                          .hintColor
+                                          .withOpacity(0.3),
+                                      size: 16),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  static Future<T?> showPremiumBottomSheet<T>({
+    required BuildContext context,
+    required Widget child,
+    bool isScrollControlled = true,
+  }) {
+    return showModalBottomSheet<T>(
       context: context,
       backgroundColor: Colors.transparent,
-      isScrollControlled: true,
+      isScrollControlled: isScrollControlled,
       elevation: 0,
+      showDragHandle: false,
       builder: (ctx) => BackdropFilter(
         filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
         child: SafeArea(
@@ -635,10 +838,10 @@ class UIHelper {
             margin: EdgeInsets.fromLTRB(
                 16, 0, 16, MediaQuery.of(ctx).padding.bottom + 16),
             decoration: BoxDecoration(
-              color: Theme.of(context).cardColor.withOpacity(0.8),
+              color: Theme.of(ctx).cardColor.withOpacity(0.8),
               borderRadius: BorderRadius.circular(32),
               border: Border.all(
-                  color: Theme.of(context).dividerColor.withOpacity(0.1),
+                  color: Theme.of(ctx).dividerColor.withOpacity(0.1),
                   width: 1.5),
               boxShadow: [
                 BoxShadow(
@@ -650,205 +853,7 @@ class UIHelper {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(height: 12),
-                  Container(
-                    width: 36,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).dividerColor.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(2.5),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Vibe Bahasa AI',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: -0.8,
-                                color: Theme.of(context)
-                                    .textTheme
-                                    .titleLarge
-                                    ?.color,
-                              ),
-                            ),
-                            Text(
-                              'Pilih kepribadian asistenmu',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Theme.of(context).hintColor,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Material(
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? Colors.white.withOpacity(0.05)
-                              : Colors.black.withOpacity(0.05),
-                          shape: const CircleBorder(),
-                          child: InkWell(
-                            onTap: () => Navigator.pop(ctx),
-                            customBorder: const CircleBorder(),
-                            child: const Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: Icon(CupertinoIcons.xmark, size: 20),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Flexible(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: ValueListenableBuilder<AppTone>(
-                        valueListenable: ToneManager.notifier,
-                        builder: (context, currentTone, child) {
-                          return Column(
-                            children: AppTone.values.map((t) {
-                              final isSelected = currentTone == t;
-                              final isMyBini = t == AppTone.pasangan;
-                              final activeColor = isMyBini
-                                  ? const Color(0xFFFF2D55)
-                                  : (Theme.of(context).brightness ==
-                                          Brightness.dark
-                                      ? Colors.indigoAccent
-                                      : AppColors.primary);
-
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 10),
-                                child: InkWell(
-                                  onTap: () async {
-                                    await ToneManager.setTone(t);
-                                    if (ctx.mounted) {
-                                      Future.delayed(
-                                          const Duration(milliseconds: 150),
-                                          () => Navigator.pop(ctx));
-                                    }
-                                  },
-                                  borderRadius: BorderRadius.circular(22),
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 250),
-                                    padding: const EdgeInsets.all(16),
-                                    decoration: BoxDecoration(
-                                      color: isSelected
-                                          ? activeColor.withOpacity(0.12)
-                                          : Theme.of(context).brightness ==
-                                                  Brightness.dark
-                                              ? AppColors.surfaceVariantDark
-                                              : Colors.white.withOpacity(0.4),
-                                      borderRadius: BorderRadius.circular(22),
-                                      border: Border.all(
-                                        color: isSelected
-                                            ? activeColor.withOpacity(0.3)
-                                            : Colors.transparent,
-                                        width: 1.5,
-                                      ),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          width: 48,
-                                          height: 48,
-                                          decoration: BoxDecoration(
-                                            color: isSelected
-                                                ? activeColor.withOpacity(0.2)
-                                                : Colors.grey.withOpacity(0.1),
-                                            borderRadius:
-                                                BorderRadius.circular(14),
-                                          ),
-                                          alignment: Alignment.center,
-                                          child: Text(
-                                            t == AppTone.genZ
-                                                ? '🤘'
-                                                : t == AppTone.milenial
-                                                    ? '☕'
-                                                    : t == AppTone.boomer
-                                                        ? '👴'
-                                                        : t == AppTone.pasangan
-                                                            ? '❤️'
-                                                            : '🤵',
-                                            style:
-                                                const TextStyle(fontSize: 24),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 16),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                isMyBini
-                                                    ? 'PASANGAN'
-                                                    : t.name.toUpperCase(),
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.w800,
-                                                  fontSize: 16,
-                                                  letterSpacing: -0.2,
-                                                  color: isSelected
-                                                      ? activeColor
-                                                      : (Theme.of(context)
-                                                                  .brightness ==
-                                                              Brightness.dark
-                                                          ? Colors.white
-                                                          : Theme.of(context)
-                                                              .textTheme
-                                                              .bodyLarge
-                                                              ?.color),
-                                                ),
-                                              ),
-                                              Text(
-                                                _getToneDescription(t),
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: isSelected
-                                                      ? activeColor
-                                                          .withOpacity(0.7)
-                                                      : Theme.of(context)
-                                                          .hintColor,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        if (isSelected)
-                                          Icon(CupertinoIcons.check_mark_circled_solid,
-                                              color: activeColor, size: 28)
-                                        else
-                                          Icon(CupertinoIcons.chevron_right,
-                                              color: Theme.of(context)
-                                                  .hintColor
-                                                  .withOpacity(0.3),
-                                              size: 16),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                ],
-              ),
+              child: child,
             ),
           ),
         ),
@@ -859,15 +864,15 @@ class UIHelper {
   static String _getToneDescription(AppTone tone) {
     switch (tone) {
       case AppTone.genZ:
-        return 'Gatau ini suka-suka DEV aja.';
+        return ToneManager.t('tone_desc_genz');
       case AppTone.milenial:
-        return 'Santuyy, ala-ala anak Jaksel.';
+        return ToneManager.t('tone_desc_milenial');
       case AppTone.boomer:
-        return 'Tone ramah dan agamis.';
+        return ToneManager.t('tone_desc_boomer');
       case AppTone.pasangan:
-        return 'When yahhh, when yahhh.. :)';
+        return ToneManager.t('tone_desc_pasangan');
       case AppTone.normal:
-        return 'Profesional, singkat, dan padat.';
+        return ToneManager.t('tone_desc_normal');
     }
   }
 }
