@@ -15,7 +15,7 @@ class AppColors {
   static const Color deepBlueDark = Color(0xFF000000);
 
   // Background
-  static const Color background = Color(0xFFF8F9FA);
+  static const Color background = Color(0xFFF2F2F7); // iOS SystemGray6 Light
   static const Color surface = Colors.white;
   static const Color surfaceVariant = Color(0xFFF1F3F5);
 
@@ -63,59 +63,61 @@ class AppTheme {
       brightness: brightness,
       scaffoldBackgroundColor: background,
       colorScheme: colors,
-      textTheme: GoogleFonts.plusJakartaSansTextTheme(
+      textTheme: GoogleFonts.interTextTheme(
         TextTheme(
           displayLarge: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.w800,
+            fontSize: 34,
+            fontWeight: FontWeight.w700, // Bold iOS Title
             color: textPrimary,
-            letterSpacing: -0.5,
+            letterSpacing: -1.0,
           ),
           displayMedium: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w700,
             color: textPrimary,
-            letterSpacing: -0.5,
-          ),
-          headlineLarge: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w700,
-            color: textPrimary,
+            letterSpacing: -0.8,
           ),
           headlineMedium: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
+            fontSize: 17,
+            fontWeight: FontWeight.w600, // Semibold iOS Body Header
             color: textPrimary,
+            letterSpacing: -0.4,
           ),
           titleLarge: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
             color: textPrimary,
+            letterSpacing: -0.5,
           ),
           titleMedium: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: textPrimary,
+            letterSpacing: -0.2,
           ),
           bodyLarge: TextStyle(
-            fontSize: 16,
+            fontSize: 17,
             fontWeight: FontWeight.w400,
             color: textPrimary,
+            letterSpacing: -0.4,
           ),
           bodyMedium: TextStyle(
-            fontSize: 14,
+            fontSize: 15,
             fontWeight: FontWeight.w400,
             color: textSecondary,
+            letterSpacing: -0.2,
           ),
           bodySmall: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w400,
+            fontSize: 13,
+            fontWeight: FontWeight.w500, // Slightly more visible footnote
             color: textHint,
+            letterSpacing: -0.1,
           ),
           labelLarge: TextStyle(
-            fontSize: 14,
+            fontSize: 16,
             fontWeight: FontWeight.w600,
             color: AppColors.primary,
+            letterSpacing: -0.3,
           ),
         ),
       ),
@@ -139,9 +141,10 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          textStyle: GoogleFonts.plusJakartaSans(
-            fontSize: 16,
+          textStyle: GoogleFonts.inter(
+            fontSize: 17,
             fontWeight: FontWeight.w600,
+            letterSpacing: -0.4,
           ),
         ),
       ),
@@ -153,9 +156,10 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          textStyle: GoogleFonts.plusJakartaSans(
-            fontSize: 16,
+          textStyle: GoogleFonts.inter(
+            fontSize: 17,
             fontWeight: FontWeight.w600,
+            letterSpacing: -0.4,
           ),
         ),
       ),
@@ -184,8 +188,8 @@ class AppTheme {
         ),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-        hintStyle: GoogleFonts.plusJakartaSans(
-          fontSize: 14,
+        hintStyle: GoogleFonts.inter(
+          fontSize: 15,
           color: textHint,
         ),
       ),

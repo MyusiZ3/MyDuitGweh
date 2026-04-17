@@ -312,7 +312,7 @@ class _ReportScreenState extends State<ReportScreen> {
                     _buildCategoryList(categoryTotals, totalExpense),
                   const SizedBox(height: 32),
                   _buildNotifSettingsCard(),
-                  const SizedBox(height: 100),
+                  const SizedBox(height: 120),
                 ],
               );
             },

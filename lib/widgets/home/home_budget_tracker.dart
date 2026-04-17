@@ -23,9 +23,9 @@ class HomeBudgetTracker extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: Theme.of(context).dividerColor.withOpacity(0.1),
+          color: Theme.of(context).dividerColor.withOpacity(0.08),
         ),
       ),
       child: Column(
@@ -49,15 +49,15 @@ class HomeBudgetTracker extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           ClipRRect(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(100),
             child: LinearProgressIndicator(
               value: percent,
-              minHeight: 8,
+              minHeight: 10,
               backgroundColor: AppColors.surfaceVariant,
               color: isWarning ? AppColors.expense : AppColors.primary,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [

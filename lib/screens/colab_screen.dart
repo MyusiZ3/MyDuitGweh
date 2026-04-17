@@ -123,7 +123,7 @@ class ColabScreenState extends State<ColabScreen> {
                 return ListView.builder(
                   physics: const BouncingScrollPhysics(),
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                      const EdgeInsets.fromLTRB(24, 8, 24, 120),
                   itemCount: filteredWallets.length,
                   itemBuilder: (context, index) {
                     final wallet = filteredWallets[index];

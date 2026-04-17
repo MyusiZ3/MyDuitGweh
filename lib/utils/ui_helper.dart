@@ -628,6 +628,8 @@ class UIHelper {
       child: ValueListenableBuilder<AppTone>(
         valueListenable: ToneManager.notifier,
         builder: (context, currentTone, child) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+
           return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -640,178 +642,200 @@ class UIHelper {
                   borderRadius: BorderRadius.circular(2.5),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           ToneManager.t('tone_selector_title'),
                           style: TextStyle(
-                            fontSize: 20,
+                            fontSize: 24,
                             fontWeight: FontWeight.w900,
-                            letterSpacing: -0.8,
-                            color: Theme.of(context).textTheme.titleLarge?.color,
+                            letterSpacing: -1.0,
+                            color:
+                                Theme.of(context).textTheme.titleLarge?.color,
                           ),
                         ),
-                        Text(
-                          ToneManager.t('tone_selector_subtitle'),
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Theme.of(context).hintColor,
-                            fontWeight: FontWeight.w500,
+                        Material(
+                          color: isDark
+                              ? Colors.white.withOpacity(0.08)
+                              : Colors.black.withOpacity(0.05),
+                          shape: const CircleBorder(),
+                          child: InkWell(
+                            onTap: () => Navigator.pop(context),
+                            customBorder: const CircleBorder(),
+                            child: const Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: Icon(CupertinoIcons.xmark, size: 20),
+                            ),
                           ),
                         ),
                       ],
                     ),
-                    Material(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.white.withOpacity(0.05)
-                          : Colors.black.withOpacity(0.05),
-                      shape: const CircleBorder(),
-                      child: InkWell(
-                        onTap: () => Navigator.pop(context),
-                        customBorder: const CircleBorder(),
-                        child: const Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Icon(CupertinoIcons.xmark, size: 20),
-                        ),
+                    const SizedBox(height: 4),
+                    Text(
+                      ToneManager.t('tone_selector_subtitle'),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Theme.of(context).hintColor,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: -0.2,
                       ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 24),
-              Flexible(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Column(
-                    children: AppTone.values.map((t) {
-                      final isSelected = currentTone == t;
-                      final isMyBini = t == AppTone.pasangan;
-                      final activeColor = isMyBini
-                          ? const Color(0xFFFF2D55)
-                          : (Theme.of(context).brightness == Brightness.dark
-                              ? Colors.indigoAccent
-                              : AppColors.primary);
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: GridView.count(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 0.9,
+                  children: AppTone.values.map((t) {
+                    final isSelected = currentTone == t;
+                    final isMyBini = t == AppTone.pasangan;
+                    final activeColor = isMyBini
+                        ? const Color(0xFFFF2D55)
+                        : (isDark ? Colors.indigoAccent : AppColors.primary);
 
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: InkWell(
-                          onTap: () async {
-                            await ToneManager.setTone(t);
-                            if (context.mounted) {
-                              Future.delayed(const Duration(milliseconds: 150),
-                                  () => Navigator.pop(context));
-                            }
-                          },
-                          borderRadius: BorderRadius.circular(22),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 250),
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
+                    return Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () async {
+                          await ToneManager.setTone(t);
+                          if (context.mounted) {
+                            Future.delayed(const Duration(milliseconds: 150),
+                                () => Navigator.pop(context));
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(24),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          curve: Curves.easeInOut,
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? activeColor.withOpacity(isDark ? 0.2 : 0.1)
+                                : isDark
+                                    ? Colors.white.withOpacity(0.04)
+                                    : Colors.white.withOpacity(0.6),
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(
                               color: isSelected
-                                  ? activeColor.withOpacity(0.12)
-                                  : Theme.of(context).brightness ==
-                                          Brightness.dark
-                                      ? AppColors.surfaceVariantDark
-                                      : Colors.white.withOpacity(0.4),
-                              borderRadius: BorderRadius.circular(22),
-                              border: Border.all(
-                                color: isSelected
-                                    ? activeColor.withOpacity(0.3)
-                                    : Colors.transparent,
-                                width: 1.5,
-                              ),
+                                  ? activeColor.withOpacity(0.5)
+                                  : isDark
+                                      ? Colors.white.withOpacity(0.05)
+                                      : Colors.black.withOpacity(0.05),
+                              width: isSelected ? 2.0 : 1.0,
                             ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 48,
-                                  height: 48,
-                                  decoration: BoxDecoration(
-                                    color: isSelected
-                                        ? activeColor.withOpacity(0.2)
-                                        : Colors.grey.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                  alignment: Alignment.center,
-                                  child: Text(
-                                    t == AppTone.genZ
-                                        ? '🤘'
-                                        : t == AppTone.milenial
-                                            ? '☕'
-                                            : t == AppTone.boomer
-                                                ? '👴'
-                                                : t == AppTone.pasangan
-                                                    ? '❤️'
-                                                    : '🤵',
-                                    style: const TextStyle(fontSize: 24),
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
+                            boxShadow: isSelected
+                                ? [
+                                    BoxShadow(
+                                      color: activeColor.withOpacity(0.15),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 4),
+                                    )
+                                  ]
+                                : [],
+                          ),
+                          child: Stack(
+                            children: [
+                              Positioned.fill(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
                                   child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
+                                      Container(
+                                        width: 56,
+                                        height: 56,
+                                        decoration: BoxDecoration(
+                                          color: isSelected
+                                              ? activeColor.withOpacity(0.2)
+                                              : isDark
+                                                  ? Colors.white.withOpacity(
+                                                      0.05)
+                                                  : Colors.grey.withOpacity(
+                                                      0.08),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        alignment: Alignment.center,
+                                        child: Text(
+                                          t == AppTone.genZ
+                                              ? '🤘'
+                                              : t == AppTone.milenial
+                                                  ? '☕'
+                                                  : t == AppTone.boomer
+                                                      ? '👴'
+                                                      : t == AppTone.pasangan
+                                                          ? '❤️'
+                                                          : '👔',
+                                          style: const TextStyle(fontSize: 28),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
                                       Text(
                                         isMyBini
                                             ? 'PASANGAN'
                                             : t.name.toUpperCase(),
+                                        textAlign: TextAlign.center,
                                         style: TextStyle(
-                                          fontWeight: FontWeight.w800,
-                                          fontSize: 16,
-                                          letterSpacing: -0.2,
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: 14,
+                                          letterSpacing: 0.5,
                                           color: isSelected
                                               ? activeColor
-                                              : (Theme.of(context).brightness ==
-                                                      Brightness.dark
-                                                  ? Colors.white
-                                                  : Theme.of(context)
-                                                      .textTheme
-                                                      .bodyLarge
-                                                      ?.color),
+                                              : Theme.of(context)
+                                                  .textTheme
+                                                  .bodyLarge
+                                                  ?.color,
                                         ),
                                       ),
+                                      const SizedBox(height: 4),
                                       Text(
                                         _getToneDescription(t),
+                                        textAlign: TextAlign.center,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
                                         style: TextStyle(
-                                          fontSize: 12,
+                                          fontSize: 11,
                                           color: isSelected
-                                              ? activeColor.withOpacity(0.7)
+                                              ? activeColor.withOpacity(0.8)
                                               : Theme.of(context).hintColor,
-                                          fontWeight: FontWeight.w500,
+                                          fontWeight: FontWeight.w600,
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                                if (isSelected)
-                                  Icon(
-                                      CupertinoIcons.check_mark_circled_solid,
-                                      color: activeColor,
-                                      size: 28)
-                                else
-                                  Icon(CupertinoIcons.chevron_right,
-                                      color: Theme.of(context)
-                                          .hintColor
-                                          .withOpacity(0.3),
-                                      size: 16),
-                              ],
-                            ),
+                              ),
+                              if (isSelected)
+                                Positioned(
+                                  top: 10,
+                                  right: 10,
+                                  child: Icon(
+                                    CupertinoIcons.checkmark_circle_fill,
+                                    color: activeColor,
+                                    size: 20,
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
-                      );
-                    }).toList(),
-                  ),
+                      ),
+                    );
+                  }).toList(),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 32),
             ],
           );
         },

@@ -39,6 +39,7 @@ import '../widgets/home/home_budget_tracker.dart';
 import '../widgets/home/home_wallet_list.dart';
 import '../widgets/home/home_recent_transactions.dart';
 import '../widgets/home/home_recent_transactions_header.dart';
+import '../widgets/home/home_bento_grid.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -69,6 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
   late Stream<List<WalletModel>> _walletsStream;
   StreamSubscription? _broadcastSub;
   int _unreadBroadcasts = 0;
+  int _unreadPersonal = 0;
   List<Map<String, dynamic>> _currentActiveBroadcasts = [];
 
   bool _isCheckingSurvey = false;
@@ -122,6 +124,10 @@ class _HomeScreenState extends State<HomeScreen> {
         .snapshots()
         .listen((snapshot) {
       if (!mounted) return;
+
+      // Update unread count for personal notifications
+      setState(() => _unreadPersonal = snapshot.docs.length);
+
       for (var change in snapshot.docChanges) {
         if (change.type == DocumentChangeType.added) {
           final data = change.doc.data() as Map<String, dynamic>;
@@ -632,11 +638,23 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _handleNotificationsTap() {
-    Navigator.push(
+  void _handleNotificationsTap() async {
+    // Mark all current broadcasts as seen
+    final prefs = await SharedPreferences.getInstance();
+    for (var b in _currentActiveBroadcasts) {
+      final id = b['id'] as String?;
+      if (id != null) _seenBroadcasts.add(id);
+    }
+    await prefs.setStringList('seen_broadcasts', _seenBroadcasts.toList());
+    setState(() => _unreadBroadcasts = 0);
+
+    await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const NotificationsScreen()),
     );
+
+    // Refresh after returning (in case they deleted some personal notifs or seen broadcasts)
+    _loadSettings();
   }
 
 
@@ -698,7 +716,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           user: user,
                           isAdmin: _isAdmin,
                           isSuperAdmin: _isSuperAdmin,
-                          unreadBroadcasts: _unreadBroadcasts,
+                          unreadBroadcasts: _unreadBroadcasts + _unreadPersonal,
                           uid: _uid,
                           onProfileTap: _showProfileMenu,
                           onNotificationsTap: _handleNotificationsTap,
@@ -725,39 +743,34 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
 
-                        // 3. BUDGET TRACKER (IF SET)
-                        if (_monthlyBudget > 0)
-                          StreamBuilder<double>(
-                            stream:
-                                _firestoreService.getMonthlyExpenseStream(_uid),
-                            builder: (context, expenseSnapshot) {
-                              return SliverPadding(
-                                padding:
-                                    const EdgeInsets.fromLTRB(16, 32, 16, 0),
-                                sliver: SliverToBoxAdapter(
-                                  child: HomeBudgetTracker(
-                                    monthlyBudget: _monthlyBudget,
-                                    totalExpense: expenseSnapshot.data ?? 0.0,
-                                  ),
-                                ),
-                              );
-                            },
+
+                        // 3. BENTO GRID (Budget Tracker, Daily Spend, Insights)
+                        SliverPadding(
+                          padding: const EdgeInsets.only(top: 16),
+                          sliver: SliverToBoxAdapter(
+                            child: HomeBentoGrid(
+                              uid: _uid,
+                              monthlyBudget: _monthlyBudget,
+                              firestoreService: _firestoreService,
+                            ),
                           ),
+                        ),
 
                         // 4. WALLET SUMMARY
                         SliverToBoxAdapter(
                           child: Padding(
-                            padding: const EdgeInsets.only(
-                                top: 32, bottom: 12, left: 24),
+                            padding: const EdgeInsets.fromLTRB(24, 32, 24, 12),
                             child: Text(
                               'Daftar Dompet',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 16,
-                                  ),
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -0.5,
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.color,
+                              ),
                             ),
                           ),
                         ),
@@ -773,6 +786,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         HomeRecentTransactions(
                           walletIds: walletIds,
                           firestoreService: _firestoreService,
+                        ),
+                        // Bottom spacer for floating navbar
+                        const SliverToBoxAdapter(
+                          child: SizedBox(height: 110),
                         ),
                       ],
                     ),

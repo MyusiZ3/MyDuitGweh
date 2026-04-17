@@ -7,29 +7,33 @@ import '../utils/currency_formatter.dart';
 class TransactionCard extends StatelessWidget {
   final TransactionModel transaction;
   final String walletId;
+  final bool isFlat;
 
   const TransactionCard({
     super.key,
     required this.transaction,
     required this.walletId,
+    this.isFlat = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final isIncome = transaction.isIncome;
     return Container(
-      height: 80,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.015),
-            blurRadius: 10,
-          )
-        ],
-      ),
+      constraints: const BoxConstraints(minHeight: 74),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: isFlat
+          ? null
+          : BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.015),
+                  blurRadius: 10,
+                )
+              ],
+            ),
       child: Row(
         children: [
           Container(

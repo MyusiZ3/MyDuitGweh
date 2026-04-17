@@ -275,7 +275,7 @@ class WalletScreenState extends State<WalletScreen> {
   Widget _buildWalletList(List<WalletModel> wallets) {
     if (wallets.isEmpty) return _buildEmptyState();
     return ListView.builder(
-      padding: const EdgeInsets.only(left: 24, right: 24, top: 8, bottom: 24),
+      padding: const EdgeInsets.only(left: 24, right: 24, top: 8, bottom: 120),
       physics: const BouncingScrollPhysics(),
       itemCount: wallets.length,
       itemBuilder: (context, index) => Padding(
@@ -2420,7 +2420,7 @@ class WalletScreenState extends State<WalletScreen> {
   Widget _buildDebtList(List<DebtModel> debts) {
     if (debts.isEmpty) return _buildEmptyState();
     return ListView.builder(
-      padding: const EdgeInsets.only(left: 24, right: 24, top: 8, bottom: 24),
+      padding: const EdgeInsets.only(left: 24, right: 24, top: 8, bottom: 120),
       physics: const BouncingScrollPhysics(),
       itemCount: debts.length,
       itemBuilder: (context, index) => Padding(

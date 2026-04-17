@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -42,54 +43,134 @@ class HomeSliverAppBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return SliverAppBar(
       pinned: true,
-      floating: true,
+      stretch: true,
       elevation: 0,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      expandedHeight: 90,
-      toolbarHeight: 80,
-      centerTitle: false,
+      backgroundColor:
+          Colors.transparent, // Background handled by flexibleSpace
+      expandedHeight: 140,
+      collapsedHeight: 70,
       automaticallyImplyLeading: false,
-      titleSpacing: 24,
-      title: Row(
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                _getGreetingText(),
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Theme.of(context).textTheme.bodySmall?.color,
-                  fontWeight: FontWeight.w500,
+      flexibleSpace: LayoutBuilder(
+        builder: (context, constraints) {
+          final top = constraints.biggest.height;
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final headerColor = isDark ? Theme.of(context).scaffoldBackgroundColor : Colors.white;
+          final textColor = isDark ? Colors.white : const Color(0xFF1D1D1F);
+          final subTextColor = isDark ? Colors.white70 : Colors.black54;
+
+          final collapsePercent = ((140 - top) / (140 - 70)).clamp(0.0, 1.0);
+          final isCollapsed = collapsePercent > 0.6;
+
+          return FlexibleSpaceBar(
+            stretchModes: const [
+              StretchMode.blurBackground,
+              StretchMode.zoomBackground,
+            ],
+            centerTitle: false,
+            titlePadding: EdgeInsets.zero,
+            background: Container(color: headerColor),
+            title: ClipRect(
+              child: BackdropFilter(
+                filter: ui.ImageFilter.blur(
+                  sigmaX: 10 * collapsePercent,
+                  sigmaY: 10 * collapsePercent,
                 ),
-              ),
-              Row(
-                children: [
-                  Text(
-                    user?.displayName ?? 'Pengguna',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      color: Theme.of(context).textTheme.titleLarge?.color,
-                      letterSpacing: -0.5,
+                child: Container(
+                  width: double.infinity,
+                  height: top,
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  decoration: BoxDecoration(
+                    color: headerColor.withOpacity(collapsePercent * 0.8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(collapsePercent * 0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: SafeArea(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Greeting Row (Smaller when collapsed)
+                        AnimatedOpacity(
+                          duration: const Duration(milliseconds: 200),
+                          opacity: 1.0,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _getGreetingText(),
+                                style: TextStyle(
+                                  fontSize: 10 + (2 * (1 - collapsePercent)),
+                                  color: subTextColor,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      _getDisplayName(user),
+                                      style: TextStyle(
+                                        fontSize:
+                                            18 + (10 * (1 - collapsePercent)),
+                                        fontWeight: FontWeight.w900,
+                                        color: textColor,
+                                        letterSpacing: -0.5 -
+                                            (0.7 * (1 - collapsePercent)),
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  if (isAdmin && !isCollapsed) ...[
+                                    const SizedBox(width: 8),
+                                    _buildAdminBadge(),
+                                  ],
+                                ],
+                              ),
+                              // Spacing to keep title aligned at bottom
+                              SizedBox(
+                                  height: 12 + (8 * (1 - collapsePercent))),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  if (isAdmin) ...[
-                    const SizedBox(width: 8),
-                    _buildAdminBadge(),
-                  ],
-                ],
+                ),
               ),
+            ),
+          );
+        },
+      ),
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: 12),
+          child: Row(
+            children: [
+              _buildActionButtons(context),
+              const SizedBox(width: 8),
+              _buildProfileAvatar(context),
             ],
           ),
-          const Spacer(),
-          _buildActionButtons(context),
-          const SizedBox(width: 4),
-          _buildProfileAvatar(context),
-        ],
-      ),
+        ),
+      ],
     );
+  }
+
+  String _getDisplayName(User? user) {
+    String rawName = user?.displayName?.split(' ').first ?? 'Pengguna';
+    if (rawName.length > 6) {
+      return '${rawName.substring(0, 6)}...';
+    }
+    return rawName;
   }
 
   Widget _buildAdminBadge() {
@@ -120,7 +201,9 @@ class HomeSliverAppBar extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           Text(
-            isSuperAdmin ? ToneManager.t('badge_owner') : ToneManager.t('badge_admin'),
+            isSuperAdmin
+                ? ToneManager.t('badge_owner')
+                : ToneManager.t('badge_admin'),
             style: const TextStyle(
               color: Colors.white,
               fontSize: 8,
@@ -144,7 +227,9 @@ class HomeSliverAppBar extends StatelessWidget {
               onPressed: onNotificationsTap,
               icon: Icon(
                 CupertinoIcons.bell,
-                color: Theme.of(context).textTheme.titleLarge?.color,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white
+                    : const Color(0xFF1D1D1F),
                 size: 26,
               ),
             ),

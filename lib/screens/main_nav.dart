@@ -122,6 +122,7 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
     return Stack(
       children: [
         Scaffold(
+          extendBody: true, // Content flows behind the floating navbar
           body: Stack(
             children: [
               IndexedStack(
@@ -134,34 +135,84 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
                 _buildSpeedDialBackdrop(),
                 _buildSpeedDialMenu(),
               ],
+
+              // Bottom Gradient Fade (Modern Polish)
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: 150,
+                child: IgnorePointer(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Theme.of(context)
+                              .scaffoldBackgroundColor
+                              .withOpacity(0.0),
+                          Theme.of(context)
+                              .scaffoldBackgroundColor
+                              .withOpacity(0.8),
+                          Theme.of(context).scaffoldBackgroundColor,
+                        ],
+                        stops: const [0.0, 0.6, 1.0],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
-          bottomNavigationBar: Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(
-                      Theme.of(context).brightness == Brightness.dark
-                          ? 0.3
-                          : 0.04),
-                  blurRadius: 20,
-                  offset: const Offset(0, -4),
-                ),
-              ],
-            ),
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildNavItem(0),
-                    _buildNavItem(1),
-                    _buildAddButton(),
-                    _buildNavItem(3),
-                    _buildNavItem(4),
-                  ],
+          bottomNavigationBar: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(28),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Container(
+                    height: 70,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor.withOpacity(
+                            Theme.of(context).brightness == Brightness.dark
+                                ? 0.82
+                                : 0.9,
+                          ),
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(
+                        color: Theme.of(context).dividerColor.withOpacity(
+                            Theme.of(context).brightness == Brightness.dark
+                                ? 0.1
+                                : 0.05),
+                        width: 0.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(
+                              Theme.of(context).brightness == Brightness.dark
+                                  ? 0.3
+                                  : 0.06),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildNavItem(0),
+                          _buildNavItem(1),
+                          _buildAddButton(),
+                          _buildNavItem(3),
+                          _buildNavItem(4),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -216,7 +267,7 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         decoration: BoxDecoration(
           color: isActive ? activeColor.withOpacity(0.12) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
@@ -226,14 +277,14 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
           children: [
             Icon(
               icon,
-              size: 24,
+              size: 22,
               color: isActive ? activeColor : Theme.of(context).hintColor,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               label,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 10,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
                 color: isActive ? activeColor : Theme.of(context).hintColor,
               ),
@@ -265,7 +316,7 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
 
   Widget _buildSpeedDialMenu() {
     return Positioned(
-      bottom: 20, // Lower as requested
+      bottom: 140, // Lifted up to clear the new floating nav bar
       left: 0,
       right: 0,
       child: Column(
@@ -385,10 +436,10 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
         animation: _fabController,
         builder: (context, child) {
           return Container(
-            width: 58,
-            height: 58,
+            width: 52,
+            height: 52,
             transform: Matrix4.translationValues(
-                0, -8, 0), // Lift slightly above nav bar edge
+                0, -6, 0), // Lift slightly above nav bar edge
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
@@ -424,7 +475,7 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
                 child: const Icon(
                   CupertinoIcons.plus,
                   color: Colors.white,
-                  size: 32,
+                  size: 28,
                 ),
               ),
             ),

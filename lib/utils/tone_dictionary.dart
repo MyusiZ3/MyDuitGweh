@@ -1039,6 +1039,20 @@ class ToneManager {
       AppTone.boomer: 'Nominal Koreksi',
       AppTone.pasangan: 'Nominal Barunya Sayang',
     },
+    'date_today': {
+      AppTone.normal: 'Hari Ini',
+      AppTone.genZ: 'Hari Ini',
+      AppTone.milenial: 'Today',
+      AppTone.boomer: 'Dinten Iki',
+      AppTone.pasangan: 'Hari Ini Sayang',
+    },
+    'date_yesterday': {
+      AppTone.normal: 'Kemarin',
+      AppTone.genZ: 'Kemarin',
+      AppTone.milenial: 'Yesterday',
+      AppTone.boomer: 'Wingi',
+      AppTone.pasangan: 'Kemarin Sayang',
+    },
   };
 
   // Helper function untuk menarik terjemahan seketika!
