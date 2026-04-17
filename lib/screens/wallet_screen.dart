@@ -289,734 +289,455 @@ class WalletScreenState extends State<WalletScreen> {
   }
 
   void _showCreateWalletDialog() {
+    String selectedType = 'personal';
+    String debtType = 'payable'; // 'payable' or 'receivable'
+    String? selectedWalletId;
     final nameController = TextEditingController();
     final debtorNameController = TextEditingController();
     final debtorPhoneController = TextEditingController();
     final totalAmountController = TextEditingController();
-    String? selectedWalletId;
-    String selectedType = 'personal';
-    String debtType = 'payable'; // 'payable' = ngutang, 'receivable' = minjamin
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       enableDrag: true,
-      showDragHandle: true,
       backgroundColor: Colors.transparent,
       builder: (modalCtx) => StatefulBuilder(
-        builder: (sbCtx, setModalState) => ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(sbCtx).size.height * 0.7,
-          ),
-          child: Container(
-            clipBehavior: Clip.antiAlias,
-            padding: EdgeInsets.only(
-              left: 24,
-              right: 24,
-              top: 12,
-              bottom: MediaQuery.of(sbCtx).viewInsets.bottom +
-                  (MediaQuery.of(sbCtx).viewInsets.bottom > 0
-                      ? 16
-                      : MediaQuery.of(sbCtx).padding.bottom + 24),
-            ),
+        builder: (sbCtx, setModalState) {
+          final isDark = Theme.of(sbCtx).brightness == Brightness.dark;
+          final backgroundColor = isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7);
+          final sectionColor = isDark ? const Color(0xFF2C2C2E) : Colors.white;
+          final primaryBlue = isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF);
+
+          return Container(
+            height: MediaQuery.of(sbCtx).size.height * 0.85,
             decoration: BoxDecoration(
-              color: Theme.of(sbCtx).cardColor,
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(24)),
+              color: backgroundColor,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             ),
-            child: SingleChildScrollView(
-              physics: const ClampingScrollPhysics(),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Theme.of(sbCtx).hintColor.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(2),
+            child: Column(
+              children: [
+                // iOS Action Bar
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: isDark ? Colors.white10 : Colors.black10,
+                        width: 0.5,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  Text('Buat Dompet Baru',
-                      style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 12),
-                  Row(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildTypeOption(
-                          setModalState,
-                          'personal',
-                          'Pribadi',
-                          CupertinoIcons.person,
-                          selectedType,
-                          (val) => selectedType = val),
-                      const SizedBox(width: 8),
-                      _buildTypeOption(
-                          setModalState,
-                          'colab',
-                          'Bersama',
-                          CupertinoIcons.person_2,
-                          selectedType,
-                          (val) => selectedType = val),
-                      const SizedBox(width: 8),
-                      _buildTypeOption(
-                          setModalState,
-                          'debt',
-                          'Hutang',
-                          CupertinoIcons.doc_plaintext,
-                          selectedType,
-                          (val) => selectedType = val),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  if (selectedType == 'debt') ...[
-                    Container(
-                        padding: const EdgeInsets.all(12),
-                        margin: const EdgeInsets.only(bottom: 16),
-                        decoration: BoxDecoration(
-                            color: Theme.of(sbCtx).brightness == Brightness.dark
-                                ? Colors.white.withOpacity(0.05)
-                                : AppColors.surfaceVariant,
-                            borderRadius: BorderRadius.circular(16)),
-                        child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Posisi Anda',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 12,
-                                      color: Theme.of(sbCtx).hintColor)),
-                              Row(
-                                children: [
-                                  Expanded(
-                                      child: RadioListTile<String>(
-                                    title: Text('Saya Ngutang',
-                                        style: TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.bold)),
-                                    value: 'payable',
-                                    groupValue: debtType,
-                                    onChanged: (val) {
-                                      setModalState(() {
-                                        debtType = val!;
-                                        if (debtorNameController
-                                            .text.isNotEmpty) {
-                                          nameController.text =
-                                              'Hutang ke ${debtorNameController.text}';
-                                        }
-                                      });
-                                    },
-                                    contentPadding: EdgeInsets.zero,
-                                    dense: true,
-                                    activeColor: Theme.of(sbCtx).brightness ==
-                                            Brightness.dark
-                                        ? const Color(0xFF0A84FF)
-                                        : Theme.of(sbCtx).primaryColor,
-                                  )),
-                                  Expanded(
-                                      child: RadioListTile<String>(
-                                    title: Text('Saya Minjamin',
-                                        style: TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.bold)),
-                                    value: 'receivable',
-                                    groupValue: debtType,
-                                    onChanged: (val) {
-                                      setModalState(() {
-                                        debtType = val!;
-                                        if (debtorNameController
-                                            .text.isNotEmpty) {
-                                          nameController.text =
-                                              'Piutang ${debtorNameController.text}';
-                                        }
-                                      });
-                                    },
-                                    contentPadding: EdgeInsets.zero,
-                                    dense: true,
-                                    activeColor: Theme.of(sbCtx).brightness ==
-                                            Brightness.dark
-                                        ? const Color(0xFF0A84FF)
-                                        : Theme.of(sbCtx).primaryColor,
-                                  )),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              TextField(
-                                controller: debtorNameController,
-                                textCapitalization: TextCapitalization.words,
-                                onChanged: (val) {
-                                  setModalState(() {
-                                    if (val.isNotEmpty) {
-                                      nameController.text =
-                                          debtType == 'payable'
-                                              ? 'Hutang ke $val'
-                                              : 'Piutang $val';
-                                    } else {
-                                      nameController.text = '';
-                                    }
-                                  });
-                                },
-                                decoration: InputDecoration(
-                                  hintText: 'Nama Teman / Pihak Lain',
-                                  filled: true,
-                                  fillColor: Theme.of(sbCtx).cardColor,
-                                  border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide.none),
-                                  suffixIcon: IconButton(
-                                      icon: Icon(
-                                          CupertinoIcons
-                                              .person_crop_circle_fill_badge_plus,
-                                          color: Theme.of(sbCtx).brightness ==
-                                                  Brightness.dark
-                                              ? const Color(0xFF0A84FF)
-                                              : Theme.of(sbCtx).primaryColor),
-                                      onPressed: () async {
-                                        var status =
-                                            await Permission.contacts.status;
-                                        if (!status.isGranted) {
-                                          status = await Permission.contacts
-                                              .request();
-                                        }
-                                        if (status.isGranted) {
-                                          final allContacts =
-                                              await FlutterContacts.getContacts(
-                                                  withProperties: true);
-                                          if (!sbCtx.mounted) return;
-
-                                          showModalBottomSheet(
-                                            context: sbCtx,
-                                            isScrollControlled: true,
-                                            backgroundColor: Colors.transparent,
-                                            builder: (contactModalCtx) {
-                                              String contactSearchQuery = "";
-                                              return StatefulBuilder(
-                                                builder: (contactSbCtx,
-                                                    setContactState) {
-                                                  final filteredContacts =
-                                                      allContacts.where((c) {
-                                                    final name = c.displayName
-                                                        .toLowerCase();
-                                                    final phone = c
-                                                            .phones.isNotEmpty
-                                                        ? c.phones.first.number
-                                                            .replaceAll(' ', '')
-                                                        : "";
-                                                    return name.contains(
-                                                            contactSearchQuery
-                                                                .toLowerCase()) ||
-                                                        phone.contains(
-                                                            contactSearchQuery);
-                                                  }).toList();
-
-                                                  return Container(
-                                                    height: MediaQuery.of(
-                                                                contactSbCtx)
-                                                            .size
-                                                            .height *
-                                                        0.8,
-                                                    decoration: BoxDecoration(
-                                                      color:
-                                                          Theme.of(contactSbCtx)
-                                                              .cardColor,
-                                                      borderRadius:
-                                                          const BorderRadius
-                                                              .vertical(
-                                                              top: Radius
-                                                                  .circular(
-                                                                      24)),
-                                                    ),
-                                                    child: Column(
-                                                      children: [
-                                                        const SizedBox(
-                                                            height: 12),
-                                                        Center(
-                                                          child: Container(
-                                                            width: 40,
-                                                            height: 4,
-                                                            decoration: BoxDecoration(
-                                                                color: Theme.of(
-                                                                        contactSbCtx)
-                                                                    .hintColor
-                                                                    .withOpacity(
-                                                                        0.3),
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            2)),
-                                                          ),
-                                                        ),
-                                                        Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .all(24),
-                                                          child: Column(
-                                                            crossAxisAlignment:
-                                                                CrossAxisAlignment
-                                                                    .start,
-                                                            children: [
-                                                              Text(
-                                                                  'Pilih Kontak',
-                                                                  style: TextStyle(
-                                                                      fontSize:
-                                                                          20,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold)),
-                                                              const SizedBox(
-                                                                  height: 16),
-                                                              TextField(
-                                                                onChanged:
-                                                                    (val) {
-                                                                  setContactState(
-                                                                      () {
-                                                                    contactSearchQuery =
-                                                                        val;
-                                                                  });
-                                                                },
-                                                                decoration:
-                                                                    InputDecoration(
-                                                                  hintText:
-                                                                      'Cari nama atau nomor...',
-                                                                  filled: true,
-                                                                  fillColor: Theme.of(contactSbCtx)
-                                                                              .brightness ==
-                                                                          Brightness
-                                                                              .dark
-                                                                      ? const Color(
-                                                                          0xFF1C1C1E)
-                                                                      : const Color(
-                                                                              0xFF767680)
-                                                                          .withOpacity(
-                                                                              0.12),
-                                                                  hintStyle:
-                                                                      TextStyle(
-                                                                    fontSize:
-                                                                        14,
-                                                                    color: Theme.of(
-                                                                            contactSbCtx)
-                                                                        .hintColor
-                                                                        .withOpacity(
-                                                                            0.5),
-                                                                  ),
-                                                                  prefixIcon: Icon(
-                                                                      CupertinoIcons
-                                                                          .search,
-                                                                      size: 20,
-                                                                      color: Theme.of(contactSbCtx).brightness ==
-                                                                              Brightness
-                                                                                  .dark
-                                                                          ? const Color(
-                                                                              0xFF0A84FF)
-                                                                          : Theme.of(contactSbCtx)
-                                                                              .primaryColor),
-                                                                  border:
-                                                                      OutlineInputBorder(
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(
-                                                                            12),
-                                                                    borderSide:
-                                                                        BorderSide
-                                                                            .none,
-                                                                  ),
-                                                                  enabledBorder:
-                                                                      OutlineInputBorder(
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(
-                                                                            12),
-                                                                    borderSide:
-                                                                        BorderSide
-                                                                            .none,
-                                                                  ),
-                                                                  focusedBorder:
-                                                                      OutlineInputBorder(
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(
-                                                                            12),
-                                                                    borderSide: BorderSide(
-                                                                        color: Theme.of(contactSbCtx)
-                                                                            .primaryColor,
-                                                                        width:
-                                                                            1),
-                                                                  ),
-                                                                  contentPadding: const EdgeInsets
-                                                                      .symmetric(
-                                                                      vertical:
-                                                                          12,
-                                                                      horizontal:
-                                                                          16),
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                        Expanded(
-                                                          child:
-                                                              ListView.builder(
-                                                            itemCount:
-                                                                filteredContacts
-                                                                    .length,
-                                                            itemBuilder:
-                                                                (ctx, i) =>
-                                                                    ListTile(
-                                                              leading:
-                                                                  CircleAvatar(
-                                                                backgroundColor: Theme.of(contactSbCtx)
-                                                                            .brightness ==
-                                                                        Brightness
-                                                                            .dark
-                                                                    ? const Color(
-                                                                            0xFF0A84FF)
-                                                                        .withOpacity(
-                                                                            0.25)
-                                                                    : Theme.of(
-                                                                            contactSbCtx)
-                                                                        .primaryColor
-                                                                        .withOpacity(
-                                                                            0.1),
-                                                                child: Text(
-                                                                    filteredContacts[i]
-                                                                            .displayName
-                                                                            .isNotEmpty
-                                                                        ? filteredContacts[i].displayName[
-                                                                            0]
-                                                                        : '?',
-                                                                    style: TextStyle(
-                                                                        color: Theme.of(contactSbCtx).brightness == Brightness.dark
-                                                                            ? const Color(
-                                                                                0xFF0A84FF)
-                                                                            : Theme.of(contactSbCtx)
-                                                                                .primaryColor,
-                                                                        fontWeight:
-                                                                            FontWeight.bold)),
-                                                              ),
-                                                              title: Text(
-                                                                  filteredContacts[
-                                                                          i]
-                                                                      .displayName),
-                                                              subtitle: Text(filteredContacts[
-                                                                          i]
-                                                                      .phones
-                                                                      .isNotEmpty
-                                                                  ? filteredContacts[
-                                                                          i]
-                                                                      .phones
-                                                                      .first
-                                                                      .number
-                                                                  : 'Tanpa nomor HP'),
-                                                              onTap: () {
-                                                                setModalState(
-                                                                    () {
-                                                                  debtorNameController
-                                                                          .text =
-                                                                      filteredContacts[
-                                                                              i]
-                                                                          .displayName;
-                                                                  if (filteredContacts[
-                                                                          i]
-                                                                      .phones
-                                                                      .isNotEmpty) {
-                                                                    debtorPhoneController
-                                                                        .text = filteredContacts[
-                                                                            i]
-                                                                        .phones
-                                                                        .first
-                                                                        .number;
-                                                                  }
-                                                                  nameController
-                                                                      .text = debtType ==
-                                                                          'payable'
-                                                                      ? 'Hutang ke ${filteredContacts[i].displayName}'
-                                                                      : 'Piutang ${filteredContacts[i].displayName}';
-                                                                });
-                                                                Navigator.pop(
-                                                                    contactModalCtx);
-                                                              },
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  );
-                                                },
-                                              );
-                                            },
-                                          );
-                                        } else if (status.isPermanentlyDenied) {
-                                          if (!sbCtx.mounted) return;
-                                          UIHelper.showErrorSnackBar(sbCtx,
-                                              'Izin kontak ditolak permanen. Buka Settings untuk mengizinkan.');
-                                          openAppSettings();
-                                        } else {
-                                          if (!sbCtx.mounted) return;
-                                          UIHelper.showErrorSnackBar(sbCtx,
-                                              'Izin akses kontak ditolak!');
-                                        }
-                                      }),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              TextField(
-                                controller: debtorPhoneController,
-                                keyboardType: TextInputType.phone,
-                                decoration: InputDecoration(
-                                  hintText: 'Nomor HP (bisa via kontak)',
-                                  filled: true,
-                                  fillColor: Theme.of(sbCtx)
-                                      .inputDecorationTheme
-                                      .fillColor,
-                                  border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide.none),
-                                ),
-                              ),
-                            ]))
-                  ],
-                  TextField(
-                    controller: nameController,
-                    textCapitalization: TextCapitalization.words,
-                    decoration: InputDecoration(
-                      hintText: selectedType == 'colab'
-                          ? 'Nama kelompok/tujuan'
-                          : selectedType == 'debt'
-                              ? 'Label Catatan (Misal: Hutang Budi)'
-                              : 'Nama dompet (misal: Jajan)',
-                      prefixIcon: Icon(
-                          selectedType == 'colab'
-                              ? CupertinoIcons.person_2
-                              : selectedType == 'debt'
-                                  ? CupertinoIcons.doc_text
-                                  : CupertinoIcons.creditcard,
-                          color: Theme.of(sbCtx).brightness == Brightness.dark
-                              ? const Color(0xFF0A84FF)
-                              : Theme.of(sbCtx).primaryColor),
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(
-                              color:
-                                  Theme.of(sbCtx).brightness == Brightness.dark
-                                      ? const Color(0xFF0A84FF).withOpacity(0.5)
-                                      : Theme.of(sbCtx).primaryColor)),
-                      focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(
-                              color:
-                                  Theme.of(sbCtx).brightness == Brightness.dark
-                                      ? const Color(0xFF0A84FF)
-                                      : Theme.of(sbCtx).primaryColor,
-                              width: 2)),
-                    ),
-                  ),
-                  if (selectedType == 'debt') ...[
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: totalAmountController,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                      decoration: InputDecoration(
-                        hintText: '0',
-                        prefixIcon: UnconstrainedBox(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(CupertinoIcons.creditcard,
-                                    size: 20,
-                                    color: Theme.of(sbCtx).primaryColor),
-                                const SizedBox(width: 8),
-                                Text('Rp',
-                                    style: TextStyle(
-                                        color: Theme.of(sbCtx).primaryColor,
-                                        fontWeight: FontWeight.w900,
-                                        fontSize: 14)),
-                              ],
-                            ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(sbCtx),
+                        child: Text(
+                          'Batal',
+                          style: TextStyle(
+                            color: primaryBlue,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w400,
                           ),
                         ),
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide.none),
-                        filled: true,
-                        fillColor:
-                            Theme.of(sbCtx).inputDecorationTheme.fillColor,
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    StreamBuilder<List<WalletModel>>(
-                      stream: _firestoreService.getWalletsStream(_uid),
-                      builder: (sbCtx, snapshot) {
-                        if (!snapshot.hasData) return const SizedBox.shrink();
-                        final wallets =
-                            snapshot.data!.where((w) => !w.isDebt).toList();
-                        return DropdownButtonFormField<String>(
-                          value: selectedWalletId,
-                          hint: Text(ToneManager.t('debt_payment_wallet_hint')),
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: Theme.of(sbCtx).cardColor,
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide.none),
-                          ),
-                          items: wallets.map((w) {
-                            return DropdownMenuItem(
-                              value: w.id,
-                              child: Text(w.walletName),
-                            );
-                          }).toList(),
-                          onChanged: (val) {
-                            setModalState(() => selectedWalletId = val);
-                          },
-                        );
-                      },
-                    ),
-                  ],
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        if (nameController.text.isNotEmpty) {
-                          final isOnline = await ConnectivityService.isOnline();
+                      const Text(
+                        'Dompet Baru',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          if (nameController.text.isNotEmpty) {
+                            final isOnline = await ConnectivityService.isOnline();
 
-                          if (selectedType == 'debt') {
-                            if (totalAmountController.text.isEmpty ||
-                                selectedWalletId == null ||
-                                debtorNameController.text.isEmpty) {
-                              if (!sbCtx.mounted) return;
-                              UIHelper.showErrorSnackBar(
-                                  sbCtx, 'Lengkapi semua field hutang!');
+                            if (selectedType == 'debt') {
+                              if (totalAmountController.text.isEmpty ||
+                                  selectedWalletId == null ||
+                                  debtorNameController.text.isEmpty) {
+                                if (!sbCtx.mounted) return;
+                                UIHelper.showErrorSnackBar(sbCtx, 'Lengkapi semua field hutang!');
+                                return;
+                              }
+                              final amount = double.tryParse(totalAmountController.text) ?? 0;
+
+                              if (!isOnline) {
+                                if (!sbCtx.mounted) return;
+                                UIHelper.showInfoSnackBar(sbCtx, 'Penambahan hutang butuh koneksi internet');
+                                return;
+                              }
+
+                              try {
+                                final debtTypePayload = debtType == 'payable' ? 'utang' : 'piutang';
+                                final currentUser = FirebaseAuth.instance.currentUser;
+                                final currentUserName = currentUser?.displayName ?? "User";
+                                final debtTitle = nameController.text;
+
+                                await _debtService.addDebt(
+                                  currentUserId: _uid,
+                                  currentUserName: currentUserName,
+                                  type: debtTypePayload,
+                                  title: debtTitle,
+                                  totalAmount: amount,
+                                  walletId: selectedWalletId!,
+                                );
+                                if (!sbCtx.mounted) return;
+                                Navigator.pop(sbCtx);
+                                UIHelper.showSuccessSnackBar(sbCtx, 'Berhasil mencatat $debtTitle!');
+                              } catch (e) {
+                                if (sbCtx.mounted) {
+                                  UIHelper.showErrorSnackBar(sbCtx, 'Gagal: $e');
+                                }
+                              }
                               return;
                             }
-                            final amount =
-                                double.tryParse(totalAmountController.text) ??
-                                    0;
+
+                            final newWallet = WalletModel(
+                              id: '', // Will be set by service
+                              walletName: nameController.text,
+                              balance: 0,
+                              type: selectedType,
+                              members: [_uid],
+                              owner: _uid,
+                              createdAt: DateTime.now(),
+                            );
 
                             if (!isOnline) {
+                              _firestoreService.createWallet(newWallet);
                               if (!sbCtx.mounted) return;
-                              UIHelper.showInfoSnackBar(sbCtx,
-                                  'Penambahan hutang butuh koneksi internet');
+                              Navigator.pop(sbCtx);
+                              UIHelper.showInfoSnackBar(sbCtx, 'Dompet dibuat offline');
                               return;
                             }
 
                             try {
-                              final debtTypePayload =
-                                  debtType == 'payable' ? 'utang' : 'piutang';
-                              final currentUser =
-                                  FirebaseAuth.instance.currentUser;
-                              final currentUserName =
-                                  currentUser?.displayName ?? "User";
-
-                              final debtTitle = nameController.text;
-
-                              await _debtService.addDebt(
-                                currentUserId: _uid,
-                                currentUserName: currentUserName,
-                                type: debtTypePayload,
-                                title: debtTitle,
-                                totalAmount: amount,
-                                walletId: selectedWalletId!,
-                              );
+                              await _firestoreService.createWallet(newWallet).timeout(
+                                    const Duration(seconds: 10),
+                                    onTimeout: () => throw TimeoutException('Timeout'),
+                                  );
                               if (!sbCtx.mounted) return;
                               Navigator.pop(sbCtx);
-                              UIHelper.showSuccessSnackBar(
-                                  sbCtx, 'Berhasil mencatat $debtTitle!');
+                              UIHelper.showSuccessSnackBar(sbCtx, 'Dompet "${nameController.text}" berhasil dibuat!');
                             } catch (e) {
                               if (sbCtx.mounted) {
-                                UIHelper.showErrorSnackBar(sbCtx, 'Gagal: $e');
-                              }
-                            }
-                            return;
-                          }
-
-                          final newWallet = WalletModel(
-                            id: '', // Will be set by service
-                            walletName: nameController.text,
-                            balance: 0,
-                            type: selectedType,
-                            members: [_uid],
-                            owner: _uid,
-                            createdAt: DateTime.now(),
-                          );
-
-                          if (!isOnline) {
-                            _firestoreService.createWallet(newWallet);
-                            if (!sbCtx.mounted) return;
-                            Navigator.pop(sbCtx);
-                            UIHelper.showInfoSnackBar(
-                                sbCtx, 'Dompet dibuat offline');
-                            return;
-                          }
-
-                          try {
-                            await _firestoreService
-                                .createWallet(newWallet)
-                                .timeout(
-                                  const Duration(seconds: 10),
-                                  onTimeout: () =>
-                                      throw TimeoutException('Timeout'),
-                                );
-                            if (!sbCtx.mounted) return;
-                            Navigator.pop(sbCtx);
-                            UIHelper.showSuccessSnackBar(sbCtx,
-                                'Dompet "${nameController.text}" berhasil dibuat!');
-                          } catch (e) {
-                            if (sbCtx.mounted) {
-                              if (e is TimeoutException) {
-                                Navigator.pop(sbCtx);
-                                UIHelper.showInfoSnackBar(sbCtx,
-                                    'Koneksi lambat, dompet akan muncul saat tersambung.');
-                              } else {
-                                UIHelper.showErrorSnackBar(sbCtx, 'Gagal: $e');
+                                if (e is TimeoutException) {
+                                  Navigator.pop(sbCtx);
+                                  UIHelper.showInfoSnackBar(sbCtx, 'Koneksi lambat, dompet akan muncul saat tersambung.');
+                                } else {
+                                  UIHelper.showErrorSnackBar(sbCtx, 'Gagal: $e');
+                                }
                               }
                             }
                           }
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            Theme.of(context).brightness == Brightness.dark
-                                ? const Color(0xFF0A84FF)
-                                : Theme.of(context).primaryColor,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16)),
+                        },
+                        child: Text(
+                          'Simpan',
+                          style: TextStyle(
+                            color: primaryBlue,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
-                      child: Text(
-                          selectedType == 'debt'
-                              ? 'Simpan Hutang/Piutang'
-                              : 'Simpan Dompet',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: Colors.white)),
+                    ],
+                  ),
+                ),
+
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Section 1: Type Selection
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                          child: Text(
+                            'TIPE DOMPET',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: isDark ? Colors.white54 : Colors.black54,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.symmetric(horizontal: 16),
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            children: [
+                              _buildIOSTypeOption(sbCtx, setModalState, 'personal', 'Pribadi', selectedType, (v) => selectedType = v),
+                              _buildIOSTypeOption(sbCtx, setModalState, 'colab', 'Bersama', selectedType, (v) => selectedType = v),
+                              _buildIOSTypeOption(sbCtx, setModalState, 'debt', 'Hutang', selectedType, (v) => selectedType = v),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        // Section 2: Info Utama
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                          child: Text(
+                            'INFORMASI UTAMA',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: isDark ? Colors.white54 : Colors.black54,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: sectionColor,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            children: [
+                              if (selectedType == 'debt') ...[
+                                // Sub-Section: Debtor Name with Pick Contact
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                  child: TextField(
+                                    controller: debtorNameController,
+                                    textCapitalization: TextCapitalization.words,
+                                    decoration: InputDecoration(
+                                      hintText: 'Nama Teman / Pihak Lain',
+                                      border: InputBorder.none,
+                                      suffixIcon: IconButton(
+                                        icon: Icon(CupertinoIcons.person_crop_circle_fill_badge_plus, color: primaryBlue),
+                                        onPressed: () async {
+                                          var status = await Permission.contacts.status;
+                                          if (!status.isGranted) {
+                                            status = await Permission.contacts.request();
+                                          }
+                                          if (status.isGranted) {
+                                            final allContacts = await FlutterContacts.getContacts(withProperties: true);
+                                            if (!sbCtx.mounted) return;
+                                            _showContactPicker(sbCtx, allContacts, (contact) {
+                                              setModalState(() {
+                                                debtorNameController.text = contact.displayName;
+                                                if (contact.phones.isNotEmpty) {
+                                                  debtorPhoneController.text = contact.phones.first.number;
+                                                }
+                                                nameController.text = debtType == 'payable'
+                                                    ? 'Hutang ke ${contact.displayName}'
+                                                    : 'Piutang ${contact.displayName}';
+                                              });
+                                            });
+                                          }
+                                        },
+                                      ),
+                                    ),
+                                    onChanged: (val) {
+                                      setModalState(() {
+                                        if (val.isNotEmpty) {
+                                          nameController.text = debtType == 'payable' ? 'Hutang ke $val' : 'Piutang $val';
+                                        } else {
+                                          nameController.text = '';
+                                        }
+                                      });
+                                    },
+                                  ),
+                                ),
+                                Divider(height: 1, indent: 16, color: isDark ? Colors.white12 : Colors.black12),
+                                // Sub-Section: Phone Number
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                  child: TextField(
+                                    controller: debtorPhoneController,
+                                    keyboardType: TextInputType.phone,
+                                    decoration: const InputDecoration(
+                                      hintText: 'Nomor HP (Opsional)',
+                                      border: InputBorder.none,
+                                    ),
+                                  ),
+                                ),
+                                Divider(height: 1, indent: 16, color: isDark ? Colors.white12 : Colors.black12),
+                                // Sub-Section: Position (Radio in iOS style)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                  child: Column(
+                                    children: [
+                                      _buildIOSRadioTile(sbCtx, setModalState, 'Saya Ngutang', 'payable', debtType, (v) {
+                                        debtType = v;
+                                        if (debtorNameController.text.isNotEmpty) {
+                                          nameController.text = 'Hutang ke ${debtorNameController.text}';
+                                        }
+                                      }),
+                                      Divider(height: 1, indent: 56, color: isDark ? Colors.white12 : Colors.black12),
+                                      _buildIOSRadioTile(sbCtx, setModalState, 'Saya Minjamin', 'receivable', debtType, (v) {
+                                        debtType = v;
+                                        if (debtorNameController.text.isNotEmpty) {
+                                          nameController.text = 'Piutang ${debtorNameController.text}';
+                                        }
+                                      }),
+                                    ],
+                                  ),
+                                ),
+                                Divider(height: 1, indent: 16, color: isDark ? Colors.white12 : Colors.black12),
+                              ],
+
+                              // Domain Specific Name
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                child: TextField(
+                                  controller: nameController,
+                                  textCapitalization: TextCapitalization.words,
+                                  decoration: InputDecoration(
+                                    hintText: selectedType == 'colab'
+                                        ? 'Nama kelompok/tujuan'
+                                        : selectedType == 'debt'
+                                            ? 'Label Catatan (Misal: Hutang Budi)'
+                                            : 'Nama dompet (misal: Jajan)',
+                                    border: InputBorder.none,
+                                    icon: Icon(
+                                      selectedType == 'colab'
+                                          ? CupertinoIcons.person_2
+                                          : selectedType == 'debt'
+                                              ? CupertinoIcons.doc_text
+                                              : CupertinoIcons.creditcard,
+                                      color: primaryBlue,
+                                      size: 22,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        if (selectedType == 'debt') ...[
+                          const SizedBox(height: 24),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                            child: Text(
+                              'NOMINAL & SUMBER DANA',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: isDark ? Colors.white54 : Colors.black54,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 16),
+                            decoration: BoxDecoration(
+                              color: sectionColor,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Column(
+                              children: [
+                                // Amount Input
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                  child: TextField(
+                                    controller: totalAmountController,
+                                    keyboardType: TextInputType.number,
+                                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                    style: const TextStyle(fontWeight: FontWeight.w600),
+                                    decoration: InputDecoration(
+                                      hintText: '0',
+                                      prefixText: 'Rp ',
+                                      prefixStyle: TextStyle(color: primaryBlue, fontWeight: FontWeight.w700),
+                                      border: InputBorder.none,
+                                    ),
+                                  ),
+                                ),
+                                Divider(height: 1, indent: 16, color: isDark ? Colors.white12 : Colors.black12),
+                                // Wallet Dropdown
+                                StreamBuilder<List<WalletModel>>(
+                                  stream: _firestoreService.getWalletsStream(_uid),
+                                  builder: (ctx, snapshot) {
+                                    if (!snapshot.hasData) return const SizedBox.shrink();
+                                    final wallets = snapshot.data!.where((w) => !w.isDebt).toList();
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                                      child: DropdownButtonHideUnderline(
+                                        child: DropdownButtonFormField<String>(
+                                          value: selectedWalletId,
+                                          hint: Text(ToneManager.t('debt_payment_wallet_hint'), style: const TextStyle(fontSize: 15)),
+                                          decoration: const InputDecoration(border: InputBorder.none),
+                                          items: wallets.map((w) {
+                                            return DropdownMenuItem(value: w.id, child: Text(w.walletName));
+                                          }).toList(),
+                                          onChanged: (val) => setModalState(() => selectedWalletId = val),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+
+                        const SizedBox(height: 32),
+                        Center(
+                          child: TextButton(
+                            onPressed: () {
+                              Navigator.pop(sbCtx);
+                              _showJoinWalletDialog();
+                            },
+                            child: Text(
+                              'Sudah punya kode undangan? Gabung di sini',
+                              style: TextStyle(
+                                color: primaryBlue,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  Center(
-                    child: TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _showJoinWalletDialog();
-                      },
-                      child: Text('Sudah punya kode undangan? Gabung di sini',
-                          style: TextStyle(
-                              color: Theme.of(context).brightness ==
-                                      Brightness.dark
-                                  ? const Color(0xFF0A84FF)
-                                  : Theme.of(context).primaryColor,
-                              fontWeight: FontWeight.w600)),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildIOSTypeOption(BuildContext context, StateSetter setState, String type, String label, String current, Function(String) onSelect) {
+    final isSelected = current == type;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => onSelect(type)),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? (isDark ? const Color(0xFF636366) : Colors.white) : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: isSelected 
+              ? [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, 2))]
+              : [],
+          ),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+              color: isSelected 
+                ? (isDark ? Colors.white : Colors.black)
+                : (isDark ? Colors.white38 : Colors.black38),
             ),
           ),
         ),
@@ -1024,57 +745,87 @@ class WalletScreenState extends State<WalletScreen> {
     );
   }
 
-  Widget _buildTypeOption(StateSetter setModalState, String type, String label,
-      IconData icon, String current, Function(String) onSelect) {
-    final isSelected = current == type;
+  Widget _buildIOSRadioTile(BuildContext context, StateSetter setState, String title, String value, String groupValue, Function(String) onChanged) {
+    final isSelected = value == groupValue;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Expanded(
-      child: InkWell(
-        onTap: () => setModalState(() => onSelect(type)),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? (isDark
-                    ? const Color(0xFF0A84FF).withOpacity(0.25)
-                    : Theme.of(context).primaryColor.withOpacity(0.1))
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-                color: isSelected
-                    ? (isDark
-                        ? const Color(0xFF0A84FF)
-                        : Theme.of(context).primaryColor)
-                    : Theme.of(context).dividerColor.withOpacity(0.1),
-                width: 1.5),
-          ),
-          child: Column(
-            children: [
-              Icon(icon,
-                  color: isSelected
-                      ? (isDark
-                          ? const Color(0xFF0A84FF)
-                          : Theme.of(context).primaryColor)
-                      : (isDark
-                          ? Colors.white.withOpacity(0.5)
-                          : Theme.of(context).hintColor),
-                  size: 24),
-              const SizedBox(height: 4),
-              Text(label,
-                  style: TextStyle(
-                      color: isSelected
-                          ? (Theme.of(context).brightness == Brightness.dark
-                              ? const Color(0xFF0A84FF)
-                              : Theme.of(context).primaryColor)
-                          : (Theme.of(context).brightness == Brightness.dark
-                              ? Colors.white.withOpacity(0.7)
-                              : Theme.of(context).hintColor),
-                      fontWeight:
-                          isSelected ? FontWeight.bold : FontWeight.normal)),
-            ],
-          ),
+    final primaryBlue = isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF);
+
+    return InkWell(
+      onTap: () => setState(() => onChanged(value)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Row(
+          children: [
+            Icon(
+              isSelected ? CupertinoIcons.check_mark_circle_fill : CupertinoIcons.circle,
+              color: isSelected ? primaryBlue : (isDark ? Colors.white24 : Colors.black12),
+              size: 24,
+            ),
+            const SizedBox(width: 16),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+            ),
+          ],
         ),
       ),
+    );
+  }
+
+  void _showContactPicker(BuildContext context, List<Contact> allContacts, Function(Contact) onPicked) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        String query = "";
+        return StatefulBuilder(
+          builder: (sbCtx, setLocalState) {
+            final isDark = Theme.of(sbCtx).brightness == Brightness.dark;
+            final filtered = allContacts.where((c) {
+              final n = c.displayName.toLowerCase();
+              final p = c.phones.isNotEmpty ? c.phones.first.number.replaceAll(' ', '') : "";
+              return n.contains(query.toLowerCase()) || p.contains(query);
+            }).toList();
+
+            return Container(
+              height: MediaQuery.of(sbCtx).size.height * 0.8,
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: Column(
+                children: [
+                  const SizedBox(height: 12),
+                  Container(width: 36, height: 5, decoration: BoxDecoration(color: Colors.grey.withOpacity(0.5), borderRadius: BorderRadius.circular(2.5))),
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: CupertinoSearchTextField(
+                      onChanged: (v) => setLocalState(() => query = v),
+                      style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                    ),
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: filtered.length,
+                      itemBuilder: (lCtx, i) {
+                        return ListTile(
+                          title: Text(filtered[i].displayName),
+                          subtitle: Text(filtered[i].phones.isNotEmpty ? filtered[i].phones.first.number : ""),
+                          onTap: () {
+                            onPicked(filtered[i]);
+                            Navigator.pop(ctx);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
