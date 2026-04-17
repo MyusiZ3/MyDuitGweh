@@ -230,6 +230,25 @@ class FirestoreService {
     });
   }
 
+  Stream<double> getTodayExpenseStream(String uid) {
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day);
+
+    return _firestore
+        .collection('transactions')
+        .where('createdBy', isEqualTo: uid)
+        .where('type', isEqualTo: 'expense')
+        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+        .snapshots()
+        .map((snapshot) {
+      double total = 0;
+      for (var doc in snapshot.docs) {
+        total += (doc.data()['amount'] ?? 0).toDouble();
+      }
+      return total;
+    });
+  }
+
   Stream<List<TransactionModel>> getTransactionsByDebtId(String debtId) {
     return _firestore
         .collection('transactions')

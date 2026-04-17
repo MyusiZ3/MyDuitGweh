@@ -20,6 +20,8 @@ class ToneManager {
     notifier.value = tone;
   }
 
+  static AppTone get currentTone => notifier.value;
+
   static const Map<String, Map<AppTone, String>> _dict = {
     // ---------------------------------------------------------
     // HOME SCREEN
@@ -500,7 +502,7 @@ class ToneManager {
       AppTone.genZ: 'Tersimpan mantap kak!',
       AppTone.milenial: 'Done! Transaksi on-track',
       AppTone.boomer: 'Alhamdulillah sudah tercatat ya',
-      AppTone.pasangan: 'Udah tercatat ya sayangku! Pinter deh :3',
+      AppTone.pasangan: 'Udah tercatat yaahh! Pinter deh :3',
     },
     'snack_login_err': {
       AppTone.normal: 'Harap isi semua kolom!',
@@ -797,6 +799,13 @@ class ToneManager {
       AppTone.boomer: 'Sempurna Nak',
       AppTone.pasangan: 'SAYANG BANGET!',
     },
+    'success_update_profile': {
+      AppTone.normal: 'Profil berhasil diperbarui!',
+      AppTone.genZ: 'Mantap, profil lu udah diupdate!',
+      AppTone.milenial: 'Profile updated successfully!',
+      AppTone.boomer: 'Data profil sudah bapak simpan ya nak.',
+      AppTone.pasangan: 'Profil kamu dah diupdate yahh~ ^_^',
+    },
     'category_not_found': {
       AppTone.normal: 'Kategori tidak ditemukan',
       AppTone.genZ: 'Kaga nemu jirr, typo kali?',
@@ -914,11 +923,16 @@ class ToneManager {
       AppTone.pasangan: 'Hapus Catatan {type} Kita?',
     },
     'debt_delete_confirm_msg': {
-      AppTone.normal: 'Apakah Anda yakin ingin menghapus catatan {type} "{title}"? Saldo dompet akan dikembalikan dan riwayat transaksi terkait akan dihapus.',
-      AppTone.genZ: 'Serius mau apus "{title}"? Ntar saldo balik lagi dan riwayat luh ilang semua lho.',
-      AppTone.milenial: 'Are you sure you want to delete "{title}"? Wallet balances will be reverted and transaction history will be cleared.',
-      AppTone.boomer: 'Apakah anda yakin menghapus catatan "{title}"? Semua hitungan akan dikembalikan seperti semula.',
-      AppTone.pasangan: 'Beneran mau hapus "{title}" sayang? Nanti saldonya balik lagi lho.. yakin?',
+      AppTone.normal:
+          'Apakah Anda yakin ingin menghapus catatan {type} "{title}"? Saldo dompet akan dikembalikan dan riwayat transaksi terkait akan dihapus.',
+      AppTone.genZ:
+          'Serius mau apus "{title}"? Ntar saldo balik lagi dan riwayat luh ilang semua lho.',
+      AppTone.milenial:
+          'Are you sure you want to delete "{title}"? Wallet balances will be reverted and transaction history will be cleared.',
+      AppTone.boomer:
+          'Apakah anda yakin menghapus catatan "{title}"? Semua hitungan akan dikembalikan seperti semula.',
+      AppTone.pasangan:
+          'Beneran mau hapus "{title}" sayang? Nanti saldonya balik lagi lho.. yakin?',
     },
     'debt_success_delete': {
       AppTone.normal: 'Catatan {type} berhasil dihapus',
@@ -1012,11 +1026,15 @@ class ToneManager {
       AppTone.pasangan: 'Hapus Riwayat Ini?',
     },
     'debt_tx_delete_msg': {
-      AppTone.normal: 'Apakah Anda yakin ingin menghapus riwayat transaksi ini? Saldo dompet dan sisa {type} akan disesuaikan.',
+      AppTone.normal:
+          'Apakah Anda yakin ingin menghapus riwayat transaksi ini? Saldo dompet dan sisa {type} akan disesuaikan.',
       AppTone.genZ: 'Mau apus riwayat ini? Ntar saldo balik lagi lho.',
-      AppTone.milenial: 'Delete this transaction history? Wallet balance and remaining {type} will be adjusted.',
-      AppTone.boomer: 'Apakah anda yakin menghapus riwayat ini? Saldo akan dikembalikan.',
-      AppTone.pasangan: 'Yakin mau hapus riwayat ini sayang? Saldo kita bakal balik lho..',
+      AppTone.milenial:
+          'Delete this transaction history? Wallet balance and remaining {type} will be adjusted.',
+      AppTone.boomer:
+          'Apakah anda yakin menghapus riwayat ini? Saldo akan dikembalikan.',
+      AppTone.pasangan:
+          'Yakin mau hapus riwayat ini sayang? Saldo kita bakal balik lho..',
     },
     'debt_tx_success_delete': {
       AppTone.normal: 'Riwayat transaksi berhasil dihapus',
@@ -1044,7 +1062,14 @@ class ToneManager {
       AppTone.genZ: 'Hari Ini',
       AppTone.milenial: 'Today',
       AppTone.boomer: 'Dinten Iki',
-      AppTone.pasangan: 'Hari Ini Sayang',
+      AppTone.pasangan: 'Hari Ini',
+    },
+    'btn_confirm': {
+      AppTone.normal: 'Siap, Laksanakan!',
+      AppTone.genZ: 'Oke Gass!',
+      AppTone.milenial: 'Got it!',
+      AppTone.boomer: 'Nggih, Matur Nuwun.',
+      AppTone.pasangan: 'Baik, Sayang',
     },
     'date_yesterday': {
       AppTone.normal: 'Kemarin',
@@ -1052,6 +1077,27 @@ class ToneManager {
       AppTone.milenial: 'Yesterday',
       AppTone.boomer: 'Wingi',
       AppTone.pasangan: 'Kemarin Sayang',
+    },
+    'tips_1': {
+      AppTone.normal: 'Sisihkan 20% penghasilan untuk tabungan.',
+      AppTone.genZ: 'Sering self-reward boleh, tapi tabungan jangan lupa ges!',
+      AppTone.milenial: 'Investasikan sisa saldo ke dana darurat.',
+      AppTone.boomer: 'Hemat pangkal kaya, jangan boros ya.',
+      AppTone.pasangan: 'Tabung dikit-dikit buat masa depan kita ya sayang.',
+    },
+    'tips_2': {
+      AppTone.normal: 'Catat setiap pengeluaran kecil agar terpantau.',
+      AppTone.genZ: 'Jangan sampai bon jebol gara-gara kopi susu 40rb!',
+      AppTone.milenial: 'Daily monitoring is the key to financial freedom.',
+      AppTone.boomer: 'Catat semua biar nggak bingung uangnya ke mana.',
+      AppTone.pasangan: 'Jangan lupa catat belanjaannya ya sayang.',
+    },
+    'tips_3': {
+      AppTone.normal: 'Bandingkan harga sebelum membeli barang besar.',
+      AppTone.genZ: 'Cek diskon dulu sebelum check out keranjang!',
+      AppTone.milenial: 'Always look for better value before spending.',
+      AppTone.boomer: 'Teliti sebelum membeli, jangan asal bayar.',
+      AppTone.pasangan: 'Tanya aku dulu kalau mau beli yang mahal ya sayang.',
     },
   };
 
@@ -1061,5 +1107,151 @@ class ToneManager {
       return _dict[key]?[notifier.value] ?? _dict[key]![AppTone.normal]!;
     }
     return key;
+  }
+
+  // SMART TIPS CATEGORIES
+  static const Map<String, Map<AppTone, List<String>>> _smartTips = {
+    'saving': {
+      AppTone.normal: [
+        'Pertahankan pola hematmu!',
+        'Tabunganmu akan berterima kasih.',
+        'Hari yang sangat produktif secara finansial.'
+      ],
+      AppTone.genZ: [
+        'Gokil, hemat parah hari ini!',
+        'Duit aman, mental tenang.',
+        'Slay! Jago banget manage duit.'
+      ],
+      AppTone.milenial: [
+        'Good job! Neraca hari ini surplus.',
+        'Disiplin adalah kunci freedom.',
+        'Lanjutin gaya hidup minimalisnya.'
+      ],
+      AppTone.boomer: [
+        'Bagus, rajin menabung pangkal kaya.',
+        'Sangat bijak dalam belanja.',
+        'Contoh yang baik untuk keluarga.'
+      ],
+      AppTone.pasangan: [
+        'Asik, bisa buat tabungan liburan bareng!',
+        'Kita hebat bisa hemat hari ini.',
+        'Sayang pinter banget atur uang.'
+      ],
+    },
+    'overspending': {
+      AppTone.normal: [
+        'Pengeluaran hari ini cukup tinggi.',
+        'Coba review lagi belanjamu.',
+        'Mulai batasi pengeluaran non-primer.'
+      ],
+      AppTone.genZ: [
+        'Waduh, hari ini boncos ya?',
+        'Self-reward tapi jangan bikin bangkrut.',
+        'Rem dikit jajan starling-nya.'
+      ],
+      AppTone.milenial: [
+        'Cek lagi urgensi belanja tadi.',
+        'Hati-hati, lifestyle creep mulai terasa.',
+        'Investasi lebih penting dari jajan.'
+      ],
+      AppTone.boomer: [
+        'Boros itu kawan setan.',
+        'Jangan besar pasak daripada tiang.',
+        'Ingat kebutuhan masa depan.'
+      ],
+      AppTone.pasangan: [
+        'Duh, jajan apa aja tadi sayang?',
+        'Pelan-pelan ya belanjanya biar aman.',
+        'Ingat cicilan rumah/tabungan nikah!'
+      ],
+    },
+    'urgent': {
+      AppTone.normal: [
+        'Budget menipis! Segera stop jajan.',
+        'Kondisi keuangan kritis.',
+        'Fokus hanya pada kebutuhan pokok.'
+      ],
+      AppTone.genZ: [
+        'SIAGA 1! Saldo udah sekarat.',
+        'Makan indomie dulu yuk sampe gajian.',
+        'Gak usah nongkrong dulu, skip!'
+      ],
+      AppTone.milenial: [
+        'Emergency protocol active!',
+        'Budget bulanan hampir jebol.',
+        'Evaluasi total pengeluaranmu.'
+      ],
+      AppTone.boomer: [
+        'Waspada, kondisi keuangan mengkhawatirkan.',
+        'Hemat pangkal kaya, boros pangkal melarat.',
+        'Segera ikat ikat pinggang.'
+      ],
+      AppTone.pasangan: [
+        'Sayang, kita harus super hemat minggu ini.',
+        'Budget kita hampir habis, sabar dulu ya.',
+        'Tahan dulu keinginan belanjanya.'
+      ],
+    },
+    'general': {
+      AppTone.normal: [
+        'Catat setiap rupiah yang keluar.',
+        'Jangan lupa bayar tagihan tepat waktu.',
+        'Dana darurat itu wajib punya.'
+      ],
+      AppTone.genZ: [
+        'Investasi dari sekarang biar cepet pensiun.',
+        'Pilih butuh apa cuma pengen?',
+        'No money, no party? Gak juga.'
+      ],
+      AppTone.milenial: [
+        'Passive income lebih penting dari gaya.',
+        'Jangan lupa cek portofolio investasimu.',
+        'Belajar bilang tidak pada diskon.'
+      ],
+      AppTone.boomer: [
+        'Sedekah tidak mengurangi harta.',
+        'Selalu bersyukur atas rezeki hari ini.',
+        'Hidup sederhana itu mulia.'
+      ],
+      AppTone.pasangan: [
+        'Ayo diskusiin budget bareng pasangan.',
+        'Transparan soal uang bikin hubungan awet.',
+        'Mimpi kita butuh tabungan yang kuat.'
+      ],
+    },
+  };
+
+  static String getSmartTip({
+    required double todaySpent,
+    required double monthlyBudget,
+    required double totalMonthlySpent,
+  }) {
+    final tone = currentTone;
+    final List<String> pool;
+
+    if (monthlyBudget > 0 && totalMonthlySpent / monthlyBudget > 0.9) {
+      pool =
+          _smartTips['urgent']![tone] ?? _smartTips['urgent']![AppTone.normal]!;
+    } else if (monthlyBudget > 0 && todaySpent > (monthlyBudget / 15)) {
+      pool = _smartTips['overspending']![tone] ??
+          _smartTips['overspending']![AppTone.normal]!;
+    } else if (todaySpent == 0 && DateTime.now().hour > 12) {
+      pool =
+          _smartTips['saving']![tone] ?? _smartTips['saving']![AppTone.normal]!;
+    } else {
+      pool = _smartTips['general']![tone] ??
+          _smartTips['general']![AppTone.normal]!;
+    }
+
+    final randomIdx =
+        (DateTime.now().hour * 60 + DateTime.now().minute) % pool.length;
+    return pool[randomIdx];
+  }
+
+  static String getRandomTip() {
+    final tone = currentTone;
+    final pool =
+        _smartTips['general']![tone] ?? _smartTips['general']![AppTone.normal]!;
+    return pool[DateTime.now().second % pool.length];
   }
 }
