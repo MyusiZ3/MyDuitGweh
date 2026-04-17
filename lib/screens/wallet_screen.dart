@@ -61,9 +61,9 @@ class WalletScreenState extends State<WalletScreen> {
           centerTitle: true,
           title: Text(ToneManager.t('wallet_list_title'),
               style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 22,
-                  letterSpacing: -0.5)),
+                  fontWeight: FontWeight.w700,
+                  fontSize: 18,
+                  letterSpacing: -0.4)),
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
           titleSpacing: 24,
@@ -1286,7 +1286,7 @@ class WalletScreenState extends State<WalletScreen> {
                 controller: titleController,
                 textCapitalization: TextCapitalization.words,
                 decoration: InputDecoration(
-                  labelText: ToneManager.t('debt_history_table_title'),
+                  labelText: ToneManager.t('debt_label_title'),
                   prefixIcon: const Icon(CupertinoIcons.pencil),
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16)),

@@ -284,9 +284,10 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
             Text(
               label,
               style: TextStyle(
-                fontSize: 10,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                fontSize: 11,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
                 color: isActive ? activeColor : Theme.of(context).hintColor,
+                letterSpacing: 0.05,
               ),
             ),
           ],
@@ -415,9 +416,9 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
                     label,
                     style: TextStyle(
                       color: Theme.of(context).textTheme.titleMedium?.color,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 16,
-                      letterSpacing: -0.3,
+                      fontWeight: FontWeight.w600, // Semibold iOS Style
+                      fontSize: 17, // iOS Body Standard
+                      letterSpacing: -0.4,
                     ),
                   ),
                 ],
