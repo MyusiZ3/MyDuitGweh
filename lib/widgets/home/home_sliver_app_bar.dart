@@ -54,7 +54,8 @@ class HomeSliverAppBar extends StatelessWidget {
         builder: (context, constraints) {
           final top = constraints.biggest.height;
           final isDark = Theme.of(context).brightness == Brightness.dark;
-          final headerColor = isDark ? Theme.of(context).scaffoldBackgroundColor : Colors.white;
+          final headerColor =
+              isDark ? Theme.of(context).scaffoldBackgroundColor : Colors.white;
           final textColor = isDark ? Colors.white : const Color(0xFF1D1D1F);
           final subTextColor = isDark ? Colors.white70 : Colors.black54;
 
@@ -107,8 +108,8 @@ class HomeSliverAppBar extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 10 + (2 * (1 - collapsePercent)),
                                   color: subTextColor,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.5,
+                                  fontWeight: FontWeight.w500,
+                                  letterSpacing: 0.0,
                                 ),
                               ),
                               const SizedBox(height: 2),
@@ -117,14 +118,14 @@ class HomeSliverAppBar extends StatelessWidget {
                                 children: [
                                   Flexible(
                                     child: Text(
-                                      _getDisplayName(user),
+                                      _getDisplayName(user, limit: isCollapsed ? 8 : 15),
                                       style: TextStyle(
                                         fontSize:
                                             18 + (10 * (1 - collapsePercent)),
-                                        fontWeight: FontWeight.w900,
+                                        fontWeight: FontWeight.w800,
                                         color: textColor,
                                         letterSpacing: -0.5 -
-                                            (0.7 * (1 - collapsePercent)),
+                                            (0.8 * (1 - collapsePercent)),
                                       ),
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -165,10 +166,10 @@ class HomeSliverAppBar extends StatelessWidget {
     );
   }
 
-  String _getDisplayName(User? user) {
+  String _getDisplayName(User? user, {int limit = 20}) {
     String rawName = user?.displayName?.split(' ').first ?? 'Pengguna';
-    if (rawName.length > 6) {
-      return '${rawName.substring(0, 6)}...';
+    if (rawName.length > limit) {
+      return '${rawName.substring(0, limit)}...';
     }
     return rawName;
   }
@@ -273,6 +274,7 @@ class HomeSliverAppBar extends StatelessWidget {
             ),
           ),
           child: Stack(
+            clipBehavior: Clip.none, // Agar icon tidak terpotong saat ditaruh di luar
             children: [
               CircleAvatar(
                 radius: 19,
@@ -287,27 +289,33 @@ class HomeSliverAppBar extends StatelessWidget {
               ),
               if (isAdmin)
                 Positioned(
-                  top: -3,
-                  left: -3,
-                  child: Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? AppColors.surfaceDark
-                          : Colors.white,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.white12
-                            : Colors.transparent,
-                        width: 0.5,
+                  top: -4, // Geser sedikit ke atas luar lingkaran
+                  left: -4, // Geser sedikit ke kiri luar lingkaran
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // White background only for the center checkmark
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
                       ),
-                    ),
-                    child: const Icon(
-                      CupertinoIcons.checkmark_seal_fill,
-                      color: AppColors.primary,
-                      size: 14,
-                    ),
+                      const Icon(
+                        CupertinoIcons.checkmark_seal_fill,
+                        color: AppColors.primary,
+                        size: 15,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black12,
+                            blurRadius: 4,
+                            offset: Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
             ],
