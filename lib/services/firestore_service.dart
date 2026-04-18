@@ -548,7 +548,7 @@ class FirestoreService {
       });
     }
 
-    controller = StreamController<int>(
+    controller = StreamController<int>.broadcast(
       onListen: () {
         receiptSub = _firestore
             .collection('wallets')
