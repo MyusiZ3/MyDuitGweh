@@ -59,7 +59,7 @@ class WalletScreenState extends State<WalletScreen> {
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: NestedScrollView(
-          physics: const ClampingScrollPhysics(),
+          physics: const BouncingScrollPhysics(),
           headerSliverBuilder: (context, innerBoxIsScrolled) {
             final isDark = Theme.of(context).brightness == Brightness.dark;
             return [
@@ -338,7 +338,7 @@ class WalletScreenState extends State<WalletScreen> {
           (context, index) {
             final wallet = wallets[index];
             return Padding(
-              padding: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.only(bottom: 8),
               child: _WalletCard(
                 wallet: wallet,
                 onTap: () => _showWalletDetails(wallet),
@@ -438,6 +438,7 @@ class WalletScreenState extends State<WalletScreen> {
                             final isOnline =
                                 await ConnectivityService.isOnline();
 
+
                             if (selectedType == 'debt') {
                               if (totalAmountController.text.isEmpty ||
                                   selectedWalletId == null ||
@@ -504,6 +505,7 @@ class WalletScreenState extends State<WalletScreen> {
                               Navigator.pop(sbCtx);
                               UIHelper.showInfoSnackBar(
                                   sbCtx, 'Dompet dibuat offline');
+
                               return;
                             }
 
@@ -557,6 +559,7 @@ class WalletScreenState extends State<WalletScreen> {
                         Padding(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 20, vertical: 8),
+
                           child: Text(
                             'TIPE DOMPET',
                             style: TextStyle(
@@ -574,6 +577,7 @@ class WalletScreenState extends State<WalletScreen> {
                             color: isDark
                                 ? Colors.white.withOpacity(0.05)
                                 : Colors.black.withOpacity(0.05),
+
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Row(
@@ -599,6 +603,7 @@ class WalletScreenState extends State<WalletScreen> {
                                   'Hutang',
                                   selectedType,
                                   (v) => selectedType = v),
+
                             ],
                           ),
                         ),
@@ -2184,7 +2189,7 @@ class WalletScreenState extends State<WalletScreen> {
                               Icon(CupertinoIcons.doc_on_doc,
                                   size: 18, color: Colors.white),
                               SizedBox(width: 8),
-                              Text('Salin',
+                              Text('Undang',
                                   style: TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold)),
@@ -2195,7 +2200,7 @@ class WalletScreenState extends State<WalletScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 32),
                 // Member List (only for colab)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -2209,7 +2214,7 @@ class WalletScreenState extends State<WalletScreen> {
                               color: Theme.of(context).hintColor,
                               letterSpacing: 1)),
                       const SizedBox(height: 12),
-                      ...wallet.members.map((memberUid) => FutureBuilder<
+                      ...wallet.members.take(2).map((memberUid) => FutureBuilder<
                               Map<String, dynamic>?>(
                           future: _firestoreService.getUserInfo(memberUid),
                           builder: (context, snapshot) {
@@ -2294,15 +2299,13 @@ class WalletScreenState extends State<WalletScreen> {
                                         final confirm =
                                             await UIHelper.showConfirmDialog(
                                           context: context,
-                                          title: ToneManager.t(
-                                              'dialog_kick_member_title'),
-                                          message: ToneManager.t(
-                                              'dialog_kick_member_msg'),
+                                          title: 'Keluarkan Member?',
+                                          message:
+                                              'Apakah Anda yakin ingin mengeluarkan $name dari dompet ini?',
                                         );
                                         if (confirm == true) {
                                           await _firestoreService.kickMember(
                                               wallet.id, memberUid);
-                                          // No need to pop, StreamBuilder will update
                                         }
                                       },
                                     ),
@@ -2310,6 +2313,26 @@ class WalletScreenState extends State<WalletScreen> {
                               ),
                             );
                           })),
+                      if (wallet.members.length > 2)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: TextButton(
+                            onPressed: () => _showAllMembersDialog(wallet),
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              minimumSize: const Size(0, 30),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: Text(
+                              'Lihat semua (${wallet.members.length})',
+                              style: TextStyle(
+                                color: Theme.of(context).primaryColor,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -2765,7 +2788,7 @@ class WalletScreenState extends State<WalletScreen> {
           (context, index) {
             final debt = debts[index];
             return Padding(
-              padding: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.only(bottom: 8),
               child: _DebtCard(
                 debt: debt,
                 onTap: () => _showDebtDetails(debt),
@@ -4223,6 +4246,127 @@ class _DebtPaymentModalState extends State<_DebtPaymentModal> {
         const Spacer(),
         Text(value, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: color)),
       ],
+    );
+  }
+
+  void _showAllMembersDialog(WalletModel wallet) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (_, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
+          ),
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).dividerColor,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  'Semua Anggota',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).textTheme.titleLarge?.color,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: ListView.separated(
+                  controller: scrollController,
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  itemCount: wallet.members.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 16),
+                  itemBuilder: (context, index) {
+                    final memberUid = wallet.members[index];
+                    return FutureBuilder<Map<String, dynamic>?>(
+                      future: _firestoreService.getUserInfo(memberUid),
+                      builder: (context, snapshot) {
+                        final name =
+                            snapshot.data?['displayName'] ?? 'Memuat...';
+                        final isOwner = memberUid == wallet.owner;
+                        final isMe = memberUid == _uid;
+
+                        return Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 18,
+                              backgroundColor: (Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? const Color(0xFF0A84FF)
+                                      : Theme.of(context).primaryColor)
+                                  .withOpacity(0.1),
+                              child: Text(
+                                name.isNotEmpty ? name[0].toUpperCase() : '?',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? const Color(0xFF0A84FF)
+                                      : Theme.of(context).primaryColor,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Text(
+                                isMe ? '$name (Anda)' : name,
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            if (isOwner)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: (Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? const Color(0xFF0A84FF)
+                                          : Theme.of(context).primaryColor)
+                                      .withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  'OWNER',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    color: Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? const Color(0xFF0A84FF)
+                                        : Theme.of(context).primaryColor,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
