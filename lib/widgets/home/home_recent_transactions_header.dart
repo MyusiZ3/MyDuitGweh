@@ -9,7 +9,7 @@ class HomeRecentTransactionsHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverPadding(
-      padding: const EdgeInsets.only(top: 32, bottom: 16),
+      padding: const EdgeInsets.only(top: 32, bottom: 4),
       sliver: SliverToBoxAdapter(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -57,966 +58,945 @@ class WalletScreenState extends State<WalletScreen> {
       length: 3,
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        appBar: AppBar(
-          centerTitle: true,
-          title: Text(ToneManager.t('wallet_list_title'),
-              style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 22,
-                  letterSpacing: -0.5)),
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          elevation: 0,
-          titleSpacing: 24,
-          toolbarHeight: 70,
-          actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: InkWell(
-                onTap: _showCreateWalletDialog,
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color:
-                        (isDark ? const Color(0xFF0A84FF) : AppColors.primary)
-                            .withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    CupertinoIcons.plus,
-                    size: 26,
-                    color: isDark ? const Color(0xFF0A84FF) : AppColors.primary,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 16),
-          ],
-        ),
-        body: Column(
-          children: [
-            const SizedBox(height: 12),
-            // Search Bar
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Container(
-                height: 48,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? const Color(0xFF1C1C1E)
-                      : const Color(0xFF767680).withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: TextField(
-                  controller: _searchController,
-                  style: const TextStyle(fontSize: 16),
-                  onChanged: (val) =>
-                      setState(() => _searchQuery = val.toLowerCase()),
-                  decoration: InputDecoration(
-                    hintText: ToneManager.t('wallet_search_hint'),
-                    hintStyle: TextStyle(
-                      color: Theme.of(context).hintColor.withOpacity(0.5),
-                      fontSize: 15,
-                    ),
-                    prefixIcon: Icon(CupertinoIcons.search,
-                        color: Theme.of(context).hintColor.withOpacity(0.5),
-                        size: 18),
-                    suffixIcon: _searchQuery.isEmpty
-                        ? null
-                        : GestureDetector(
-                            onTap: () {
-                              _searchController.clear();
-                              setState(() => _searchQuery = "");
-                            },
-                            child: Icon(CupertinoIcons.xmark_circle_fill,
-                                color: Theme.of(context).hintColor, size: 18),
+        body: NestedScrollView(
+          physics: const ClampingScrollPhysics(),
+          headerSliverBuilder: (context, innerBoxIsScrolled) {
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+            return [
+              SliverOverlapAbsorber(
+                handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+                sliver: SliverAppBar(
+                  pinned: true,
+                  floating: false,
+                  centerTitle: true,
+                  expandedHeight: 180,
+                  collapsedHeight: 70,
+                  elevation: 0,
+                  scrolledUnderElevation: 0,
+                  backgroundColor: isDark
+                      ? Colors.black.withOpacity(0.7)
+                      : Colors.white.withOpacity(0.7),
+                  surfaceTintColor: Colors.transparent,
+                  flexibleSpace: ClipRect(
+                    child: BackdropFilter(
+                      filter: ui.ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                      child: FlexibleSpaceBar(
+                        titlePadding: const EdgeInsets.only(
+                            left: 24, bottom: 155, right: 60),
+                        centerTitle: false,
+                        title: Text(
+                          ToneManager.t('wallet_list_title'),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 28,
+                            letterSpacing: -1.0,
+                            color: isDark ? Colors.white : Colors.black,
                           ),
-                    border: InputBorder.none,
-                    filled: false,
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 14),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            // iOS Style Segmented Control (Pribadi, Bersama, Hutang)
-            Container(
-              margin: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-              padding: const EdgeInsets.all(3),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? const Color(0xFF1C1C1E)
-                    : const Color(0xFF767680).withOpacity(0.12),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: TabBar(
-                indicatorSize: TabBarIndicatorSize.tab,
-                dividerColor: Colors.transparent,
-                indicator: BoxDecoration(
-                  color: isDark ? const Color(0xFF636366) : Colors.white,
-                  borderRadius: BorderRadius.circular(7),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(isDark ? 0.3 : 0.12),
-                      blurRadius: 1,
-                      offset: const Offset(0, 1),
+                        ),
+                        background: Container(color: Colors.transparent),
+                      ),
                     ),
+                  ),
+                  actions: [
+                    _buildHeaderActions(context, isDark),
                   ],
+                  bottom: PreferredSize(
+                    preferredSize: const Size.fromHeight(130),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 10),
+                        _buildSearchBar(context, isDark),
+                        const SizedBox(height: 16),
+                        _buildSegmentedControl(context, isDark),
+                        const SizedBox(height: 16),
+                      ],
+                    ),
+                  ),
                 ),
-                labelColor: isDark ? Colors.white : Colors.black,
-                unselectedLabelColor:
-                    isDark ? const Color(0xFF8E8E93) : const Color(0xFF8E8E93),
-                labelStyle: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                  letterSpacing: -0.2,
-                ),
-                unselectedLabelStyle: const TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 13,
-                  letterSpacing: -0.2,
-                ),
-                tabs: [
-                  Tab(text: ToneManager.t('tab_pribadi')),
-                  Tab(text: ToneManager.t('tab_bersama')),
-                  Tab(text: ToneManager.t('tab_hutang')),
-                ],
               ),
-            ),
-            Expanded(
-              child: TabBarView(
-                physics: const BouncingScrollPhysics(),
-                children: [
-                  // Tab Pribadi
-                  StreamBuilder<List<WalletModel>>(
-                    stream: _firestoreService.getWalletsStream(_uid),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting &&
-                          !snapshot.hasData) {
-                        return ListView.builder(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 0),
-                          physics: const BouncingScrollPhysics(),
-                          itemCount: 4,
-                          itemBuilder: (context, _) =>
-                              const ShimmerWalletCard(),
-                        );
-                      }
-                      final wallets = snapshot.data ?? [];
-                      final personalWallets = wallets
-                          .where((w) =>
-                              w.walletName
-                                  .toLowerCase()
-                                  .contains(_searchQuery) &&
-                              w.isPersonal)
-                          .toList();
-                      return _buildWalletList(personalWallets);
-                    },
-                  ),
-                  // Tab Bersama
-                  StreamBuilder<List<WalletModel>>(
-                    stream: _firestoreService.getWalletsStream(_uid),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting &&
-                          !snapshot.hasData) {
-                        return ListView.builder(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 0),
-                          physics: const BouncingScrollPhysics(),
-                          itemCount: 4,
-                          itemBuilder: (context, _) =>
-                              const ShimmerWalletCard(),
-                        );
-                      }
-                      final wallets = snapshot.data ?? [];
-                      final colabWallets = wallets
-                          .where((w) =>
-                              w.walletName
-                                  .toLowerCase()
-                                  .contains(_searchQuery) &&
-                              w.isColab)
-                          .toList();
-                      return _buildWalletList(colabWallets);
-                    },
-                  ),
-                  // Tab Hutang
-                  StreamBuilder<List<DebtModel>>(
-                    stream: _debtService.getUserDebts(_uid),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting &&
-                          !snapshot.hasData) {
-                        return ListView.builder(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 0),
-                          physics: const BouncingScrollPhysics(),
-                          itemCount: 4,
-                          itemBuilder: (context, _) =>
-                              const ShimmerWalletCard(),
-                        );
-                      }
-                      final debts = snapshot.data ?? [];
-                      final filteredDebts = debts
-                          .where((d) =>
-                              d.title.toLowerCase().contains(_searchQuery))
-                          .toList();
-                      return _buildDebtList(filteredDebts);
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ];
+          },
+          body: TabBarView(
+            physics: const BouncingScrollPhysics(),
+            children: [
+              _buildPersonalTab(context),
+              _buildSharedTab(context),
+              _buildDebtTab(context),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildWalletList(List<WalletModel> wallets) {
-    if (wallets.isEmpty) return _buildEmptyState();
-    return ListView.builder(
+  Widget _buildHeaderActions(BuildContext context, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 16),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _IconButton(
+            icon: CupertinoIcons.plus,
+            onPressed: _showCreateWalletDialog,
+            isDark: isDark,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar(BuildContext context, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Container(
+        height: 44,
+        decoration: BoxDecoration(
+          color: isDark
+              ? const Color(0xFF2C2C2E)
+              : Color(0xFF767680).withOpacity(0.12),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: TextField(
+          controller: _searchController,
+          style: const TextStyle(fontSize: 16),
+          onChanged: (val) => setState(() => _searchQuery = val.toLowerCase()),
+          decoration: InputDecoration(
+            hintText: ToneManager.t('wallet_search_hint'),
+            hintStyle: TextStyle(
+              color: Theme.of(context).hintColor.withOpacity(0.5),
+              fontSize: 15,
+            ),
+            prefixIcon: Icon(CupertinoIcons.search,
+                color: Theme.of(context).hintColor.withOpacity(0.5), size: 18),
+            suffixIcon: _searchQuery.isEmpty
+                ? null
+                : GestureDetector(
+                    onTap: () {
+                      _searchController.clear();
+                      setState(() => _searchQuery = "");
+                    },
+                    child: Icon(CupertinoIcons.xmark_circle_fill,
+                        color: Theme.of(context).hintColor, size: 18),
+                  ),
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(vertical: 11),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSegmentedControl(BuildContext context, bool isDark) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: isDark
+            ? const Color(0xFF2C2C2E)
+            : Color(0xFF767680).withOpacity(0.12),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: TabBar(
+        onTap: (_) => HapticFeedback.selectionClick(),
+        indicatorSize: TabBarIndicatorSize.tab,
+        dividerColor: Colors.transparent,
+        indicator: BoxDecoration(
+          color: isDark ? const Color(0xFF636366) : Colors.white,
+          borderRadius: BorderRadius.circular(7),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.3 : 0.12),
+              blurRadius: 1,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        labelColor: isDark ? Colors.white : Colors.black,
+        unselectedLabelColor: const Color(0xFF8E8E93),
+        labelStyle: const TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 13,
+          letterSpacing: -0.2,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.w500,
+          fontSize: 13,
+          letterSpacing: -0.2,
+        ),
+        tabs: [
+          Tab(text: ToneManager.t('tab_pribadi')),
+          Tab(text: ToneManager.t('tab_bersama')),
+          Tab(text: ToneManager.t('tab_hutang')),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPersonalTab(BuildContext context) {
+    return Builder(
+      builder: (context) => CustomScrollView(
+        key: const PageStorageKey('personal_wallets'),
+        slivers: [
+          SliverOverlapInjector(
+            handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+          ),
+          StreamBuilder<List<WalletModel>>(
+            stream: _firestoreService.getWalletsStream(_uid),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting &&
+                  !snapshot.hasData) {
+                return _buildShimmerSliverList();
+              }
+              final wallets = snapshot.data ?? [];
+              final filtered = wallets
+                  .where((w) =>
+                      w.walletName.toLowerCase().contains(_searchQuery) &&
+                      w.isPersonal)
+                  .toList();
+              return _buildWalletSliverList(filtered);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSharedTab(BuildContext context) {
+    return Builder(
+      builder: (context) => CustomScrollView(
+        key: const PageStorageKey('shared_wallets'),
+        slivers: [
+          SliverOverlapInjector(
+            handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+          ),
+          StreamBuilder<List<WalletModel>>(
+            stream: _firestoreService.getWalletsStream(_uid),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting &&
+                  !snapshot.hasData) {
+                return _buildShimmerSliverList();
+              }
+              final wallets = snapshot.data ?? [];
+              final filtered = wallets
+                  .where((w) =>
+                      w.walletName.toLowerCase().contains(_searchQuery) &&
+                      w.isColab)
+                  .toList();
+              return _buildWalletSliverList(filtered);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDebtTab(BuildContext context) {
+    return Builder(
+      builder: (context) => CustomScrollView(
+        key: const PageStorageKey('debt_list'),
+        slivers: [
+          SliverOverlapInjector(
+            handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+          ),
+          StreamBuilder<List<DebtModel>>(
+            stream: _debtService.getUserDebts(_uid),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting &&
+                  !snapshot.hasData) {
+                return _buildShimmerSliverList();
+              }
+              final debts = snapshot.data ?? [];
+              final filtered = debts
+                  .where((d) => d.title.toLowerCase().contains(_searchQuery))
+                  .toList();
+              return _buildDebtSliverList(filtered);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShimmerSliverList() {
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, _) => const ShimmerWalletCard(),
+          childCount: 4,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWalletSliverList(List<WalletModel> wallets) {
+    if (wallets.isEmpty) return SliverToBoxAdapter(child: _buildEmptyState());
+    return SliverPadding(
       padding: const EdgeInsets.only(left: 24, right: 24, top: 8, bottom: 120),
-      physics: const BouncingScrollPhysics(),
-      itemCount: wallets.length,
-      itemBuilder: (context, index) => Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: _WalletCard(
-          wallet: wallets[index],
-          onTap: () => _showWalletDetails(wallets[index]),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final wallet = wallets[index];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _WalletCard(
+                wallet: wallet,
+                onTap: () => _showWalletDetails(wallet),
+              ),
+            );
+          },
+          childCount: wallets.length,
         ),
       ),
     );
   }
 
   void _showCreateWalletDialog() {
+    String selectedType = 'personal';
+    String debtType = 'payable'; // 'payable' or 'receivable'
+    String? selectedWalletId;
     final nameController = TextEditingController();
     final debtorNameController = TextEditingController();
     final debtorPhoneController = TextEditingController();
     final totalAmountController = TextEditingController();
-    String? selectedWalletId;
-    String selectedType = 'personal';
-    String debtType = 'payable'; // 'payable' = ngutang, 'receivable' = minjamin
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       enableDrag: true,
-      showDragHandle: true,
       backgroundColor: Colors.transparent,
       builder: (modalCtx) => StatefulBuilder(
-        builder: (sbCtx, setModalState) => ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(sbCtx).size.height * 0.7,
-          ),
-          child: Container(
-            clipBehavior: Clip.antiAlias,
+        builder: (sbCtx, setModalState) {
+          final isDark = Theme.of(sbCtx).brightness == Brightness.dark;
+          final backgroundColor =
+              isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7);
+          final sectionColor = isDark ? const Color(0xFF2C2C2E) : Colors.white;
+          final primaryBlue =
+              isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF);
+
+          return Container(
+            height: MediaQuery.of(sbCtx).size.height * 0.85,
             padding: EdgeInsets.only(
-              left: 24,
-              right: 24,
-              top: 12,
-              bottom: MediaQuery.of(sbCtx).viewInsets.bottom +
-                  (MediaQuery.of(sbCtx).viewInsets.bottom > 0
-                      ? 16
-                      : MediaQuery.of(sbCtx).padding.bottom + 24),
+              bottom: MediaQuery.of(sbCtx).viewInsets.bottom + 20,
             ),
             decoration: BoxDecoration(
-              color: Theme.of(sbCtx).cardColor,
+              color: backgroundColor,
               borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(24)),
+                  const BorderRadius.vertical(top: Radius.circular(20)),
             ),
-            child: SingleChildScrollView(
-              physics: const ClampingScrollPhysics(),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Theme.of(sbCtx).hintColor.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(2),
+            child: Column(
+              children: [
+                // iOS Drag Handle
+                const SizedBox(height: 10),
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white24 : Colors.black12,
+                      borderRadius: BorderRadius.circular(2.5),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // iOS Action Bar
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: isDark ? Colors.white10 : Colors.black12,
+                        width: 0.5,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  Text('Buat Dompet Baru',
-                      style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 12),
-                  Row(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildTypeOption(
-                          setModalState,
-                          'personal',
-                          'Pribadi',
-                          CupertinoIcons.person,
-                          selectedType,
-                          (val) => selectedType = val),
-                      const SizedBox(width: 8),
-                      _buildTypeOption(
-                          setModalState,
-                          'colab',
-                          'Bersama',
-                          CupertinoIcons.person_2,
-                          selectedType,
-                          (val) => selectedType = val),
-                      const SizedBox(width: 8),
-                      _buildTypeOption(
-                          setModalState,
-                          'debt',
-                          'Hutang',
-                          CupertinoIcons.doc_plaintext,
-                          selectedType,
-                          (val) => selectedType = val),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  if (selectedType == 'debt') ...[
-                    Container(
-                        padding: const EdgeInsets.all(12),
-                        margin: const EdgeInsets.only(bottom: 16),
-                        decoration: BoxDecoration(
-                            color: Theme.of(sbCtx).brightness == Brightness.dark
-                                ? Colors.white.withOpacity(0.05)
-                                : AppColors.surfaceVariant,
-                            borderRadius: BorderRadius.circular(16)),
-                        child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Posisi Anda',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 12,
-                                      color: Theme.of(sbCtx).hintColor)),
-                              Row(
-                                children: [
-                                  Expanded(
-                                      child: RadioListTile<String>(
-                                    title: Text('Saya Ngutang',
-                                        style: TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.bold)),
-                                    value: 'payable',
-                                    groupValue: debtType,
-                                    onChanged: (val) {
-                                      setModalState(() {
-                                        debtType = val!;
-                                        if (debtorNameController
-                                            .text.isNotEmpty) {
-                                          nameController.text =
-                                              'Hutang ke ${debtorNameController.text}';
-                                        }
-                                      });
-                                    },
-                                    contentPadding: EdgeInsets.zero,
-                                    dense: true,
-                                    activeColor: Theme.of(sbCtx).brightness ==
-                                            Brightness.dark
-                                        ? const Color(0xFF0A84FF)
-                                        : Theme.of(sbCtx).primaryColor,
-                                  )),
-                                  Expanded(
-                                      child: RadioListTile<String>(
-                                    title: Text('Saya Minjamin',
-                                        style: TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.bold)),
-                                    value: 'receivable',
-                                    groupValue: debtType,
-                                    onChanged: (val) {
-                                      setModalState(() {
-                                        debtType = val!;
-                                        if (debtorNameController
-                                            .text.isNotEmpty) {
-                                          nameController.text =
-                                              'Piutang ${debtorNameController.text}';
-                                        }
-                                      });
-                                    },
-                                    contentPadding: EdgeInsets.zero,
-                                    dense: true,
-                                    activeColor: Theme.of(sbCtx).brightness ==
-                                            Brightness.dark
-                                        ? const Color(0xFF0A84FF)
-                                        : Theme.of(sbCtx).primaryColor,
-                                  )),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              TextField(
-                                controller: debtorNameController,
-                                textCapitalization: TextCapitalization.words,
-                                onChanged: (val) {
-                                  setModalState(() {
-                                    if (val.isNotEmpty) {
-                                      nameController.text =
-                                          debtType == 'payable'
-                                              ? 'Hutang ke $val'
-                                              : 'Piutang $val';
-                                    } else {
-                                      nameController.text = '';
-                                    }
-                                  });
-                                },
-                                decoration: InputDecoration(
-                                  hintText: 'Nama Teman / Pihak Lain',
-                                  filled: true,
-                                  fillColor: Theme.of(sbCtx).cardColor,
-                                  border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide.none),
-                                  suffixIcon: IconButton(
-                                      icon: Icon(
-                                          CupertinoIcons
-                                              .person_crop_circle_fill_badge_plus,
-                                          color: Theme.of(sbCtx).brightness ==
-                                                  Brightness.dark
-                                              ? const Color(0xFF0A84FF)
-                                              : Theme.of(sbCtx).primaryColor),
-                                      onPressed: () async {
-                                        var status =
-                                            await Permission.contacts.status;
-                                        if (!status.isGranted) {
-                                          status = await Permission.contacts
-                                              .request();
-                                        }
-                                        if (status.isGranted) {
-                                          final allContacts =
-                                              await FlutterContacts.getContacts(
-                                                  withProperties: true);
-                                          if (!sbCtx.mounted) return;
-
-                                          showModalBottomSheet(
-                                            context: sbCtx,
-                                            isScrollControlled: true,
-                                            backgroundColor: Colors.transparent,
-                                            builder: (contactModalCtx) {
-                                              String contactSearchQuery = "";
-                                              return StatefulBuilder(
-                                                builder: (contactSbCtx,
-                                                    setContactState) {
-                                                  final filteredContacts =
-                                                      allContacts.where((c) {
-                                                    final name = c.displayName
-                                                        .toLowerCase();
-                                                    final phone = c
-                                                            .phones.isNotEmpty
-                                                        ? c.phones.first.number
-                                                            .replaceAll(' ', '')
-                                                        : "";
-                                                    return name.contains(
-                                                            contactSearchQuery
-                                                                .toLowerCase()) ||
-                                                        phone.contains(
-                                                            contactSearchQuery);
-                                                  }).toList();
-
-                                                  return Container(
-                                                    height: MediaQuery.of(
-                                                                contactSbCtx)
-                                                            .size
-                                                            .height *
-                                                        0.8,
-                                                    decoration: BoxDecoration(
-                                                      color:
-                                                          Theme.of(contactSbCtx)
-                                                              .cardColor,
-                                                      borderRadius:
-                                                          const BorderRadius
-                                                              .vertical(
-                                                              top: Radius
-                                                                  .circular(
-                                                                      24)),
-                                                    ),
-                                                    child: Column(
-                                                      children: [
-                                                        const SizedBox(
-                                                            height: 12),
-                                                        Center(
-                                                          child: Container(
-                                                            width: 40,
-                                                            height: 4,
-                                                            decoration: BoxDecoration(
-                                                                color: Theme.of(
-                                                                        contactSbCtx)
-                                                                    .hintColor
-                                                                    .withOpacity(
-                                                                        0.3),
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            2)),
-                                                          ),
-                                                        ),
-                                                        Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .all(24),
-                                                          child: Column(
-                                                            crossAxisAlignment:
-                                                                CrossAxisAlignment
-                                                                    .start,
-                                                            children: [
-                                                              Text(
-                                                                  'Pilih Kontak',
-                                                                  style: TextStyle(
-                                                                      fontSize:
-                                                                          20,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold)),
-                                                              const SizedBox(
-                                                                  height: 16),
-                                                              TextField(
-                                                                onChanged:
-                                                                    (val) {
-                                                                  setContactState(
-                                                                      () {
-                                                                    contactSearchQuery =
-                                                                        val;
-                                                                  });
-                                                                },
-                                                                decoration:
-                                                                    InputDecoration(
-                                                                  hintText:
-                                                                      'Cari nama atau nomor...',
-                                                                  filled: true,
-                                                                  fillColor: Theme.of(contactSbCtx)
-                                                                              .brightness ==
-                                                                          Brightness
-                                                                              .dark
-                                                                      ? const Color(
-                                                                          0xFF1C1C1E)
-                                                                      : const Color(
-                                                                              0xFF767680)
-                                                                          .withOpacity(
-                                                                              0.12),
-                                                                  hintStyle:
-                                                                      TextStyle(
-                                                                    fontSize:
-                                                                        14,
-                                                                    color: Theme.of(
-                                                                            contactSbCtx)
-                                                                        .hintColor
-                                                                        .withOpacity(
-                                                                            0.5),
-                                                                  ),
-                                                                  prefixIcon: Icon(
-                                                                      CupertinoIcons
-                                                                          .search,
-                                                                      size: 20,
-                                                                      color: Theme.of(contactSbCtx).brightness ==
-                                                                              Brightness
-                                                                                  .dark
-                                                                          ? const Color(
-                                                                              0xFF0A84FF)
-                                                                          : Theme.of(contactSbCtx)
-                                                                              .primaryColor),
-                                                                  border:
-                                                                      OutlineInputBorder(
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(
-                                                                            12),
-                                                                    borderSide:
-                                                                        BorderSide
-                                                                            .none,
-                                                                  ),
-                                                                  enabledBorder:
-                                                                      OutlineInputBorder(
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(
-                                                                            12),
-                                                                    borderSide:
-                                                                        BorderSide
-                                                                            .none,
-                                                                  ),
-                                                                  focusedBorder:
-                                                                      OutlineInputBorder(
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(
-                                                                            12),
-                                                                    borderSide: BorderSide(
-                                                                        color: Theme.of(contactSbCtx)
-                                                                            .primaryColor,
-                                                                        width:
-                                                                            1),
-                                                                  ),
-                                                                  contentPadding: const EdgeInsets
-                                                                      .symmetric(
-                                                                      vertical:
-                                                                          12,
-                                                                      horizontal:
-                                                                          16),
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                        Expanded(
-                                                          child:
-                                                              ListView.builder(
-                                                            itemCount:
-                                                                filteredContacts
-                                                                    .length,
-                                                            itemBuilder:
-                                                                (ctx, i) =>
-                                                                    ListTile(
-                                                              leading:
-                                                                  CircleAvatar(
-                                                                backgroundColor: Theme.of(contactSbCtx)
-                                                                            .brightness ==
-                                                                        Brightness
-                                                                            .dark
-                                                                    ? const Color(
-                                                                            0xFF0A84FF)
-                                                                        .withOpacity(
-                                                                            0.25)
-                                                                    : Theme.of(
-                                                                            contactSbCtx)
-                                                                        .primaryColor
-                                                                        .withOpacity(
-                                                                            0.1),
-                                                                child: Text(
-                                                                    filteredContacts[i]
-                                                                            .displayName
-                                                                            .isNotEmpty
-                                                                        ? filteredContacts[i].displayName[
-                                                                            0]
-                                                                        : '?',
-                                                                    style: TextStyle(
-                                                                        color: Theme.of(contactSbCtx).brightness == Brightness.dark
-                                                                            ? const Color(
-                                                                                0xFF0A84FF)
-                                                                            : Theme.of(contactSbCtx)
-                                                                                .primaryColor,
-                                                                        fontWeight:
-                                                                            FontWeight.bold)),
-                                                              ),
-                                                              title: Text(
-                                                                  filteredContacts[
-                                                                          i]
-                                                                      .displayName),
-                                                              subtitle: Text(filteredContacts[
-                                                                          i]
-                                                                      .phones
-                                                                      .isNotEmpty
-                                                                  ? filteredContacts[
-                                                                          i]
-                                                                      .phones
-                                                                      .first
-                                                                      .number
-                                                                  : 'Tanpa nomor HP'),
-                                                              onTap: () {
-                                                                setModalState(
-                                                                    () {
-                                                                  debtorNameController
-                                                                          .text =
-                                                                      filteredContacts[
-                                                                              i]
-                                                                          .displayName;
-                                                                  if (filteredContacts[
-                                                                          i]
-                                                                      .phones
-                                                                      .isNotEmpty) {
-                                                                    debtorPhoneController
-                                                                        .text = filteredContacts[
-                                                                            i]
-                                                                        .phones
-                                                                        .first
-                                                                        .number;
-                                                                  }
-                                                                  nameController
-                                                                      .text = debtType ==
-                                                                          'payable'
-                                                                      ? 'Hutang ke ${filteredContacts[i].displayName}'
-                                                                      : 'Piutang ${filteredContacts[i].displayName}';
-                                                                });
-                                                                Navigator.pop(
-                                                                    contactModalCtx);
-                                                              },
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  );
-                                                },
-                                              );
-                                            },
-                                          );
-                                        } else if (status.isPermanentlyDenied) {
-                                          if (!sbCtx.mounted) return;
-                                          UIHelper.showErrorSnackBar(sbCtx,
-                                              'Izin kontak ditolak permanen. Buka Settings untuk mengizinkan.');
-                                          openAppSettings();
-                                        } else {
-                                          if (!sbCtx.mounted) return;
-                                          UIHelper.showErrorSnackBar(sbCtx,
-                                              'Izin akses kontak ditolak!');
-                                        }
-                                      }),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              TextField(
-                                controller: debtorPhoneController,
-                                keyboardType: TextInputType.phone,
-                                decoration: InputDecoration(
-                                  hintText: 'Nomor HP (bisa via kontak)',
-                                  filled: true,
-                                  fillColor: Theme.of(sbCtx)
-                                      .inputDecorationTheme
-                                      .fillColor,
-                                  border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide.none),
-                                ),
-                              ),
-                            ]))
-                  ],
-                  TextField(
-                    controller: nameController,
-                    textCapitalization: TextCapitalization.words,
-                    decoration: InputDecoration(
-                      hintText: selectedType == 'colab'
-                          ? 'Nama kelompok/tujuan'
-                          : selectedType == 'debt'
-                              ? 'Label Catatan (Misal: Hutang Budi)'
-                              : 'Nama dompet (misal: Jajan)',
-                      prefixIcon: Icon(
-                          selectedType == 'colab'
-                              ? CupertinoIcons.person_2
-                              : selectedType == 'debt'
-                                  ? CupertinoIcons.doc_text
-                                  : CupertinoIcons.creditcard,
-                          color: Theme.of(sbCtx).brightness == Brightness.dark
-                              ? const Color(0xFF0A84FF)
-                              : Theme.of(sbCtx).primaryColor),
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(
-                              color:
-                                  Theme.of(sbCtx).brightness == Brightness.dark
-                                      ? const Color(0xFF0A84FF).withOpacity(0.5)
-                                      : Theme.of(sbCtx).primaryColor)),
-                      focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(
-                              color:
-                                  Theme.of(sbCtx).brightness == Brightness.dark
-                                      ? const Color(0xFF0A84FF)
-                                      : Theme.of(sbCtx).primaryColor,
-                              width: 2)),
-                    ),
-                  ),
-                  if (selectedType == 'debt') ...[
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: totalAmountController,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                      decoration: InputDecoration(
-                        hintText: '0',
-                        prefixIcon: UnconstrainedBox(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(CupertinoIcons.creditcard,
-                                    size: 20,
-                                    color: Theme.of(sbCtx).primaryColor),
-                                const SizedBox(width: 8),
-                                Text('Rp',
-                                    style: TextStyle(
-                                        color: Theme.of(sbCtx).primaryColor,
-                                        fontWeight: FontWeight.w900,
-                                        fontSize: 14)),
-                              ],
-                            ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(sbCtx),
+                        child: Text(
+                          'Batal',
+                          style: TextStyle(
+                            color: primaryBlue,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w400,
                           ),
                         ),
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide.none),
-                        filled: true,
-                        fillColor:
-                            Theme.of(sbCtx).inputDecorationTheme.fillColor,
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    StreamBuilder<List<WalletModel>>(
-                      stream: _firestoreService.getWalletsStream(_uid),
-                      builder: (sbCtx, snapshot) {
-                        if (!snapshot.hasData) return const SizedBox.shrink();
-                        final wallets =
-                            snapshot.data!.where((w) => !w.isDebt).toList();
-                        return DropdownButtonFormField<String>(
-                          value: selectedWalletId,
-                          hint: Text(ToneManager.t('debt_payment_wallet_hint')),
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: Theme.of(sbCtx).cardColor,
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide.none),
-                          ),
-                          items: wallets.map((w) {
-                            return DropdownMenuItem(
-                              value: w.id,
-                              child: Text(w.walletName),
-                            );
-                          }).toList(),
-                          onChanged: (val) {
-                            setModalState(() => selectedWalletId = val);
-                          },
-                        );
-                      },
-                    ),
-                  ],
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        if (nameController.text.isNotEmpty) {
-                          final isOnline = await ConnectivityService.isOnline();
+                      const Text(
+                        'Dompet Baru',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          if (nameController.text.isNotEmpty) {
+                            final isOnline =
+                                await ConnectivityService.isOnline();
 
-                          if (selectedType == 'debt') {
-                            if (totalAmountController.text.isEmpty ||
-                                selectedWalletId == null ||
-                                debtorNameController.text.isEmpty) {
-                              if (!sbCtx.mounted) return;
-                              UIHelper.showErrorSnackBar(
-                                  sbCtx, 'Lengkapi semua field hutang!');
+                            if (selectedType == 'debt') {
+                              if (totalAmountController.text.isEmpty ||
+                                  selectedWalletId == null ||
+                                  debtorNameController.text.isEmpty) {
+                                if (!sbCtx.mounted) return;
+                                UIHelper.showErrorSnackBar(
+                                    sbCtx, 'Lengkapi semua field hutang!');
+                                return;
+                              }
+                              final amount =
+                                  double.tryParse(totalAmountController.text) ??
+                                      0;
+
+                              if (!isOnline) {
+                                if (!sbCtx.mounted) return;
+                                UIHelper.showInfoSnackBar(sbCtx,
+                                    'Penambahan hutang butuh koneksi internet');
+                                return;
+                              }
+
+                              try {
+                                final debtTypePayload =
+                                    debtType == 'payable' ? 'utang' : 'piutang';
+                                final currentUser =
+                                    FirebaseAuth.instance.currentUser;
+                                final currentUserName =
+                                    currentUser?.displayName ?? "User";
+                                final debtTitle = nameController.text;
+
+                                await _debtService.addDebt(
+                                  currentUserId: _uid,
+                                  currentUserName: currentUserName,
+                                  type: debtTypePayload,
+                                  title: debtTitle,
+                                  totalAmount: amount,
+                                  walletId: selectedWalletId!,
+                                );
+                                if (!sbCtx.mounted) return;
+                                Navigator.pop(sbCtx);
+                                UIHelper.showSuccessSnackBar(
+                                    sbCtx, 'Berhasil mencatat $debtTitle!');
+                              } catch (e) {
+                                if (sbCtx.mounted) {
+                                  UIHelper.showErrorSnackBar(
+                                      sbCtx, 'Gagal: $e');
+                                }
+                              }
                               return;
                             }
-                            final amount =
-                                double.tryParse(totalAmountController.text) ??
-                                    0;
+
+                            final newWallet = WalletModel(
+                              id: '', // Will be set by service
+                              walletName: nameController.text,
+                              balance: 0,
+                              type: selectedType,
+                              members: [_uid],
+                              owner: _uid,
+                              createdAt: DateTime.now(),
+                            );
 
                             if (!isOnline) {
+                              _firestoreService.createWallet(newWallet);
                               if (!sbCtx.mounted) return;
-                              UIHelper.showInfoSnackBar(sbCtx,
-                                  'Penambahan hutang butuh koneksi internet');
+                              Navigator.pop(sbCtx);
+                              UIHelper.showInfoSnackBar(
+                                  sbCtx, 'Dompet dibuat offline');
                               return;
                             }
 
                             try {
-                              final debtTypePayload =
-                                  debtType == 'payable' ? 'utang' : 'piutang';
-                              final currentUser =
-                                  FirebaseAuth.instance.currentUser;
-                              final currentUserName =
-                                  currentUser?.displayName ?? "User";
-
-                              final debtTitle = nameController.text;
-
-                              await _debtService.addDebt(
-                                currentUserId: _uid,
-                                currentUserName: currentUserName,
-                                type: debtTypePayload,
-                                title: debtTitle,
-                                totalAmount: amount,
-                                walletId: selectedWalletId!,
-                              );
+                              await _firestoreService
+                                  .createWallet(newWallet)
+                                  .timeout(
+                                    const Duration(seconds: 10),
+                                    onTimeout: () =>
+                                        throw TimeoutException('Timeout'),
+                                  );
                               if (!sbCtx.mounted) return;
                               Navigator.pop(sbCtx);
-                              UIHelper.showSuccessSnackBar(
-                                  sbCtx, 'Berhasil mencatat $debtTitle!');
+                              UIHelper.showSuccessSnackBar(sbCtx,
+                                  'Dompet "${nameController.text}" berhasil dibuat!');
                             } catch (e) {
                               if (sbCtx.mounted) {
-                                UIHelper.showErrorSnackBar(sbCtx, 'Gagal: $e');
-                              }
-                            }
-                            return;
-                          }
-
-                          final newWallet = WalletModel(
-                            id: '', // Will be set by service
-                            walletName: nameController.text,
-                            balance: 0,
-                            type: selectedType,
-                            members: [_uid],
-                            owner: _uid,
-                            createdAt: DateTime.now(),
-                          );
-
-                          if (!isOnline) {
-                            _firestoreService.createWallet(newWallet);
-                            if (!sbCtx.mounted) return;
-                            Navigator.pop(sbCtx);
-                            UIHelper.showInfoSnackBar(
-                                sbCtx, 'Dompet dibuat offline');
-                            return;
-                          }
-
-                          try {
-                            await _firestoreService
-                                .createWallet(newWallet)
-                                .timeout(
-                                  const Duration(seconds: 10),
-                                  onTimeout: () =>
-                                      throw TimeoutException('Timeout'),
-                                );
-                            if (!sbCtx.mounted) return;
-                            Navigator.pop(sbCtx);
-                            UIHelper.showSuccessSnackBar(sbCtx,
-                                'Dompet "${nameController.text}" berhasil dibuat!');
-                          } catch (e) {
-                            if (sbCtx.mounted) {
-                              if (e is TimeoutException) {
-                                Navigator.pop(sbCtx);
-                                UIHelper.showInfoSnackBar(sbCtx,
-                                    'Koneksi lambat, dompet akan muncul saat tersambung.');
-                              } else {
-                                UIHelper.showErrorSnackBar(sbCtx, 'Gagal: $e');
+                                if (e is TimeoutException) {
+                                  Navigator.pop(sbCtx);
+                                  UIHelper.showInfoSnackBar(sbCtx,
+                                      'Koneksi lambat, dompet akan muncul saat tersambung.');
+                                } else {
+                                  UIHelper.showErrorSnackBar(
+                                      sbCtx, 'Gagal: $e');
+                                }
                               }
                             }
                           }
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            Theme.of(context).brightness == Brightness.dark
-                                ? const Color(0xFF0A84FF)
-                                : Theme.of(context).primaryColor,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16)),
+                        },
+                        child: Text(
+                          'Simpan',
+                          style: TextStyle(
+                            color: primaryBlue,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
-                      child: Text(
-                          selectedType == 'debt'
-                              ? 'Simpan Hutang/Piutang'
-                              : 'Simpan Dompet',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: Colors.white)),
+                    ],
+                  ),
+                ),
+
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Section 1: Type Selection
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 8),
+                          child: Text(
+                            'TIPE DOMPET',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: isDark ? Colors.white54 : Colors.black54,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.symmetric(horizontal: 16),
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? Colors.white.withOpacity(0.05)
+                                : Colors.black.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            children: [
+                              _buildIOSTypeOption(
+                                  sbCtx,
+                                  setModalState,
+                                  'personal',
+                                  'Pribadi',
+                                  selectedType,
+                                  (v) => selectedType = v),
+                              _buildIOSTypeOption(
+                                  sbCtx,
+                                  setModalState,
+                                  'colab',
+                                  'Bersama',
+                                  selectedType,
+                                  (v) => selectedType = v),
+                              _buildIOSTypeOption(
+                                  sbCtx,
+                                  setModalState,
+                                  'debt',
+                                  'Hutang',
+                                  selectedType,
+                                  (v) => selectedType = v),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        // Section 2: Info Utama
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 8),
+                          child: Text(
+                            'INFORMASI UTAMA',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: isDark ? Colors.white54 : Colors.black54,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: sectionColor,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            children: [
+                              // Conditional Debt Sub-Sections
+                              if (selectedType == 'debt') ...[
+                                // Debtor Name
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 4),
+                                  child: TextField(
+                                    controller: debtorNameController,
+                                    textCapitalization:
+                                        TextCapitalization.words,
+                                    decoration: InputDecoration(
+                                      hintText: 'Nama Teman / Pihak Lain',
+                                      hintStyle: TextStyle(
+                                          color: isDark
+                                              ? Colors.white38
+                                              : Colors.black38),
+                                      border: InputBorder.none,
+                                      prefixIcon: Icon(CupertinoIcons.person,
+                                          size: 20,
+                                          color: primaryBlue.withOpacity(0.7)),
+                                      suffixIcon: IconButton(
+                                        icon: Icon(
+                                            CupertinoIcons
+                                                .person_crop_circle_fill_badge_plus,
+                                            size: 24,
+                                            color: primaryBlue),
+                                        onPressed: () async {
+                                          var status =
+                                              await Permission.contacts.status;
+                                          if (!status.isGranted) {
+                                            status = await Permission.contacts
+                                                .request();
+                                          }
+                                          if (status.isGranted) {
+                                            final allContacts =
+                                                await FlutterContacts
+                                                    .getContacts(
+                                                        withProperties: true);
+                                            if (!sbCtx.mounted) return;
+                                            _showContactPicker(
+                                                sbCtx, allContacts, (contact) {
+                                              setModalState(() {
+                                                debtorNameController.text =
+                                                    contact.displayName;
+                                                if (contact.phones.isNotEmpty) {
+                                                  debtorPhoneController.text =
+                                                      contact
+                                                          .phones.first.number;
+                                                }
+                                                nameController.text =
+                                                    debtType == 'payable'
+                                                        ? 'Hutang ke ${contact.displayName}'
+                                                        : 'Piutang ${contact.displayName}';
+                                              });
+                                            });
+                                          }
+                                        },
+                                      ),
+                                    ),
+                                    onChanged: (val) {
+                                      setModalState(() {
+                                        if (val.isNotEmpty) {
+                                          nameController.text = debtType ==
+                                                  'payable'
+                                              ? 'Hutang ke $val'
+                                              : 'Piutang $val';
+                                        } else {
+                                          nameController.text = '';
+                                        }
+                                      });
+                                    },
+                                  ),
+                                ),
+                                Divider(
+                                    height: 1,
+                                    indent: 52,
+                                    color: isDark
+                                        ? Colors.white10
+                                        : Colors.black12),
+                                // Phone Number
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 4),
+                                  child: TextField(
+                                    controller: debtorPhoneController,
+                                    keyboardType: TextInputType.phone,
+                                    decoration: InputDecoration(
+                                      hintText: 'Nomor HP (Opsional)',
+                                      hintStyle: TextStyle(
+                                          color: isDark
+                                              ? Colors.white38
+                                              : Colors.black38),
+                                      prefixIcon: Icon(CupertinoIcons.phone,
+                                          size: 20,
+                                          color: primaryBlue.withOpacity(0.7)),
+                                      border: InputBorder.none,
+                                    ),
+                                  ),
+                                ),
+                                Divider(
+                                    height: 1,
+                                    indent: 52,
+                                    color: isDark
+                                        ? Colors.white10
+                                        : Colors.black12),
+                                // Transaction Type (Radio)
+                                _buildIOSRadioTile(
+                                    sbCtx,
+                                    setModalState,
+                                    'Saya Berhutang',
+                                    'payable',
+                                    debtType, (v) {
+                                  debtType = v;
+                                  if (debtorNameController.text.isNotEmpty) {
+                                    nameController.text =
+                                        'Hutang ke ${debtorNameController.text}';
+                                  }
+                                }),
+                                Divider(
+                                    height: 1,
+                                    indent: 56,
+                                    color: isDark
+                                        ? Colors.white10
+                                        : Colors.black12),
+                                _buildIOSRadioTile(
+                                    sbCtx,
+                                    setModalState,
+                                    'Saya Meminjamkan',
+                                    'receivable',
+                                    debtType, (v) {
+                                  debtType = v;
+                                  if (debtorNameController.text.isNotEmpty) {
+                                    nameController.text =
+                                        'Piutang ${debtorNameController.text}';
+                                  }
+                                }),
+                                Divider(
+                                    height: 1,
+                                    indent: 16,
+                                    color: isDark
+                                        ? Colors.white10
+                                        : Colors.black12),
+                              ],
+
+                              // Main Name / Label Input
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 4),
+                                child: TextField(
+                                  controller: nameController,
+                                  textCapitalization: TextCapitalization.words,
+                                  decoration: InputDecoration(
+                                    hintText: selectedType == 'colab'
+                                        ? 'Nama kelompok/tujuan'
+                                        : selectedType == 'debt'
+                                            ? 'Label Catatan (Misal: Hutang Budi)'
+                                            : 'Nama dompet (misal: Jajan)',
+                                    hintStyle: TextStyle(
+                                        color: isDark
+                                            ? Colors.white38
+                                            : Colors.black38),
+                                    border: InputBorder.none,
+                                    prefixIcon: Icon(
+                                      selectedType == 'colab'
+                                          ? CupertinoIcons.person_2
+                                          : selectedType == 'debt'
+                                              ? CupertinoIcons.doc_text
+                                              : CupertinoIcons.creditcard,
+                                      color: primaryBlue.withOpacity(0.7),
+                                      size: 20,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        if (selectedType == 'debt') ...[
+                          const SizedBox(height: 24),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 8),
+                            child: Text(
+                              'NOMINAL & SUMBER DANA',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: isDark ? Colors.white54 : Colors.black54,
+                                fontWeight: FontWeight.w400,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 16),
+                            decoration: BoxDecoration(
+                              color: sectionColor,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Column(
+                              children: [
+                                // Amount Input
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 4),
+                                  child: TextField(
+                                    controller: totalAmountController,
+                                    keyboardType: TextInputType.number,
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.digitsOnly
+                                    ],
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color:
+                                          isDark ? Colors.white : Colors.black,
+                                    ),
+                                    decoration: InputDecoration(
+                                      hintText: '0',
+                                      prefixIcon: Padding(
+                                        padding: const EdgeInsets.only(
+                                            left: 12, right: 8),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(CupertinoIcons.money_dollar,
+                                                size: 20,
+                                                color: primaryBlue
+                                                    .withOpacity(0.7)),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              'Rp ',
+                                              style: TextStyle(
+                                                color: primaryBlue,
+                                                fontWeight: FontWeight.w700,
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      prefixIconConstraints:
+                                          const BoxConstraints(
+                                              minWidth: 0, minHeight: 0),
+                                      border: InputBorder.none,
+                                    ),
+                                  ),
+                                ),
+                                Divider(
+                                    height: 1,
+                                    indent: 52,
+                                    color: isDark
+                                        ? Colors.white10
+                                        : Colors.black12),
+                                // Wallet Selection
+                                StreamBuilder<List<WalletModel>>(
+                                  stream:
+                                      _firestoreService.getWalletsStream(_uid),
+                                  builder: (ctx, snapshot) {
+                                    if (!snapshot.hasData)
+                                      return const SizedBox.shrink();
+                                    final wallets = snapshot.data!
+                                        .where((w) => !w.isDebt)
+                                        .toList();
+                                    final selectedWallet =
+                                        selectedWalletId != null
+                                            ? wallets.firstWhere(
+                                                (w) => w.id == selectedWalletId,
+                                                orElse: () => wallets.first)
+                                            : null;
+
+                                    return ListTile(
+                                      onTap: () => _showWalletPicker(
+                                          sbCtx, wallets, (wallet) {
+                                        setModalState(() =>
+                                            selectedWalletId = wallet.id);
+                                      }),
+                                      leading: Icon(CupertinoIcons.creditcard,
+                                          size: 20,
+                                          color: primaryBlue.withOpacity(0.7)),
+                                      title: Text(
+                                        selectedWallet != null
+                                            ? selectedWallet.walletName
+                                            : 'Pilih Dompet Sumber/Tujuan',
+                                        style: TextStyle(
+                                            fontSize: 15,
+                                            color: selectedWallet != null
+                                                ? (isDark
+                                                    ? Colors.white
+                                                    : Colors.black)
+                                                : (isDark
+                                                    ? Colors.white38
+                                                    : Colors.black38)),
+                                      ),
+                                      trailing: Icon(
+                                          CupertinoIcons.chevron_right,
+                                          size: 14,
+                                          color: isDark
+                                              ? Colors.white24
+                                              : Colors.black26),
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+
+                        const SizedBox(height: 32),
+                        Center(
+                          child: TextButton(
+                            onPressed: () {
+                              Navigator.pop(sbCtx);
+                              _showJoinWalletDialog();
+                            },
+                            child: Text(
+                              'Sudah punya kode undangan? Gabung di sini',
+                              style: TextStyle(
+                                color: primaryBlue,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 48),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  Center(
-                    child: TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _showJoinWalletDialog();
-                      },
-                      child: Text('Sudah punya kode undangan? Gabung di sini',
-                          style: TextStyle(
-                              color: Theme.of(context).brightness ==
-                                      Brightness.dark
-                                  ? const Color(0xFF0A84FF)
-                                  : Theme.of(context).primaryColor,
-                              fontWeight: FontWeight.w600)),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildIOSTypeOption(BuildContext context, StateSetter setState,
+      String type, String label, String current, Function(String) onSelect) {
+    final isSelected = current == type;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => onSelect(type)),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? (isDark ? const Color(0xFF636366) : Colors.white)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2))
+                  ]
+                : [],
+          ),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+              color: isSelected
+                  ? (isDark ? Colors.white : Colors.black)
+                  : (isDark ? Colors.white38 : Colors.black38),
             ),
           ),
         ),
@@ -1024,56 +1004,227 @@ class WalletScreenState extends State<WalletScreen> {
     );
   }
 
-  Widget _buildTypeOption(StateSetter setModalState, String type, String label,
-      IconData icon, String current, Function(String) onSelect) {
-    final isSelected = current == type;
+  Widget _buildIOSRadioTile(
+      BuildContext context,
+      StateSetter setState,
+      String title,
+      String value,
+      String groupValue,
+      Function(String) onChanged) {
+    final isSelected = value == groupValue;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Expanded(
-      child: InkWell(
-        onTap: () => setModalState(() => onSelect(type)),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? (isDark
-                    ? const Color(0xFF0A84FF).withOpacity(0.25)
-                    : Theme.of(context).primaryColor.withOpacity(0.1))
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-                color: isSelected
-                    ? (isDark
-                        ? const Color(0xFF0A84FF)
-                        : Theme.of(context).primaryColor)
-                    : Theme.of(context).dividerColor.withOpacity(0.1),
-                width: 1.5),
-          ),
-          child: Column(
-            children: [
-              Icon(icon,
-                  color: isSelected
-                      ? (isDark
-                          ? const Color(0xFF0A84FF)
-                          : Theme.of(context).primaryColor)
-                      : (isDark
-                          ? Colors.white.withOpacity(0.5)
-                          : Theme.of(context).hintColor),
-                  size: 24),
-              const SizedBox(height: 4),
-              Text(label,
-                  style: TextStyle(
-                      color: isSelected
-                          ? (Theme.of(context).brightness == Brightness.dark
-                              ? const Color(0xFF0A84FF)
-                              : Theme.of(context).primaryColor)
-                          : (Theme.of(context).brightness == Brightness.dark
-                              ? Colors.white.withOpacity(0.7)
-                              : Theme.of(context).hintColor),
-                      fontWeight:
-                          isSelected ? FontWeight.bold : FontWeight.normal)),
-            ],
-          ),
+    final primaryBlue =
+        isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF);
+
+    return InkWell(
+      onTap: () => setState(() => onChanged(value)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Row(
+          children: [
+            Icon(
+              isSelected
+                  ? CupertinoIcons.checkmark_circle_fill
+                  : CupertinoIcons.circle,
+              color: isSelected
+                  ? primaryBlue
+                  : (isDark ? Colors.white24 : Colors.black12),
+              size: 24,
+            ),
+            const SizedBox(width: 16),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+            ),
+          ],
         ),
+      ),
+    );
+  }
+
+  void _showContactPicker(BuildContext context, List<Contact> allContacts,
+      Function(Contact) onPicked) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        String query = "";
+        return StatefulBuilder(
+          builder: (sbCtx, setLocalState) {
+            final isDark = Theme.of(sbCtx).brightness == Brightness.dark;
+            final filtered = allContacts.where((c) {
+              final n = c.displayName.toLowerCase();
+              final p = c.phones.isNotEmpty
+                  ? c.phones.first.number.replaceAll(' ', '')
+                  : "";
+              return n.contains(query.toLowerCase()) || p.contains(query);
+            }).toList();
+
+            return Container(
+              height: MediaQuery.of(sbCtx).size.height * 0.8,
+              decoration: BoxDecoration(
+                color:
+                    isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: Column(
+                children: [
+                  const SizedBox(height: 12),
+                  Container(
+                      width: 36,
+                      height: 5,
+                      decoration: BoxDecoration(
+                          color: Colors.grey.withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(2.5))),
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: CupertinoSearchTextField(
+                      onChanged: (v) => setLocalState(() => query = v),
+                      style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black),
+                    ),
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: filtered.length,
+                      itemBuilder: (lCtx, i) {
+                        return ListTile(
+                          title: Text(filtered[i].displayName),
+                          subtitle: Text(filtered[i].phones.isNotEmpty
+                              ? filtered[i].phones.first.number
+                              : ""),
+                          onTap: () {
+                            onPicked(filtered[i]);
+                            Navigator.pop(ctx);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showWalletPicker(BuildContext context, List<WalletModel> wallets, Function(WalletModel) onPicked) {
+    String query = "";
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (sbCtx, setPickerState) {
+          final isDark = Theme.of(sbCtx).brightness == Brightness.dark;
+          final filtered = wallets.where((w) {
+            return w.walletName.toLowerCase().contains(query.toLowerCase());
+          }).toList();
+
+          return Container(
+            height: MediaQuery.of(sbCtx).size.height * 0.7,
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: SafeArea(
+              child: Column(
+                children: [
+                  const SizedBox(height: 10),
+                  // iOS Drag Handle
+                  Container(
+                    width: 36,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white24 : Colors.black12,
+                      borderRadius: BorderRadius.circular(2.5),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('PILIH SUMBER DANA', 
+                          style: TextStyle(
+                            fontSize: 13, 
+                            fontWeight: FontWeight.w600, 
+                            color: isDark ? Colors.white60 : Colors.black54,
+                            letterSpacing: 0.5,
+                          )
+                        ),
+                        GestureDetector(
+                          onTap: () => Navigator.pop(ctx),
+                          child: Text('Tutup', 
+                            style: TextStyle(
+                              color: isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF), 
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                            )
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: CupertinoSearchTextField(
+                      placeholder: 'Cari dompet...',
+                      onChanged: (v) => setPickerState(() => query = v),
+                      style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: filtered.isEmpty
+                      ? Center(child: Text('Dompet tidak ditemukan', style: TextStyle(color: isDark ? Colors.white38 : Colors.black38)))
+                      : ListView.separated(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          itemCount: filtered.length,
+                          itemBuilder: (lCtx, i) {
+                            final w = filtered[i];
+                            return ListTile(
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              tileColor: isDark ? const Color(0xFF2C2C2E) : Colors.white,
+                              leading: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  w.type == 'personal' ? CupertinoIcons.person_fill : (w.type == 'colab' ? CupertinoIcons.person_3_fill : CupertinoIcons.creditcard_fill),
+                                  color: isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF),
+                                  size: 20,
+                                ),
+                              ),
+                              title: Text(w.walletName, 
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 15,
+                                )
+                              ),
+                              trailing: Icon(CupertinoIcons.chevron_right, size: 14, color: isDark ? Colors.white24 : Colors.black26),
+                              onTap: () {
+                                onPicked(w);
+                                Navigator.pop(ctx);
+                              },
+                            );
+                          },
+                          separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -1085,159 +1236,202 @@ class WalletScreenState extends State<WalletScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      enableDrag: true,
-      showDragHandle: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 24,
-            bottom: MediaQuery.of(context).viewInsets.bottom +
-                MediaQuery.of(context).padding.bottom +
-                24,
-          ),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: SingleChildScrollView(
+      builder: (modalCtx) => StatefulBuilder(
+        builder: (sbCtx, setModalState) {
+          final isDark = Theme.of(sbCtx).brightness == Brightness.dark;
+          final backgroundColor =
+              isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7);
+          final sectionColor = isDark ? const Color(0xFF2C2C2E) : Colors.white;
+          final primaryBlue =
+              isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF);
+
+          return Container(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(sbCtx).viewInsets.bottom + 20,
+            ),
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // iOS Drag Handle
+                const SizedBox(height: 10),
                 Center(
                   child: Container(
-                    width: 40,
-                    height: 4,
+                    width: 36,
+                    height: 5,
                     decoration: BoxDecoration(
-                      color: Theme.of(context).hintColor.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(2),
+                      color: isDark ? Colors.white24 : Colors.black12,
+                      borderRadius: BorderRadius.circular(2.5),
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: (Theme.of(context).brightness == Brightness.dark
-                            ? const Color(0xFF0A84FF)
-                            : Theme.of(context).primaryColor)
-                        .withOpacity(0.08),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(CupertinoIcons.person_badge_plus,
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? const Color(0xFF0A84FF)
-                          : Theme.of(context).primaryColor,
-                      size: 36),
-                ),
-                const SizedBox(height: 20),
-                Text('Gabung Dompet Bersama',
-                    style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.3)),
                 const SizedBox(height: 8),
-                Text(
-                  'Masukkan 6 digit kode undangan dari temanmu\nuntuk mulai mencatat bersama.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      color: Theme.of(context).hintColor,
-                      fontSize: 13,
-                      height: 1.5),
-                ),
-                const SizedBox(height: 24),
-                TextField(
-                  controller: codeController,
-                  maxLength: 6,
-                  textCapitalization: TextCapitalization.characters,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 8,
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? const Color(0xFF0A84FF)
-                          : Theme.of(context).primaryColor),
-                  decoration: InputDecoration(
-                    hintText: '• • • • • •',
-                    hintStyle: TextStyle(
-                        fontSize: 28,
-                        letterSpacing: 8,
-                        color: Theme.of(context).hintColor.withOpacity(0.3)),
-                    counterText: '',
-                    filled: true,
-                    fillColor: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.white.withOpacity(0.05)
-                        : AppColors.surfaceVariant,
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide.none),
-                    focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(
-                            color:
-                                Theme.of(context).brightness == Brightness.dark
-                                    ? const Color(0xFF0A84FF)
-                                    : Theme.of(context).primaryColor,
-                            width: 2)),
-                    contentPadding: const EdgeInsets.symmetric(
-                        vertical: 18, horizontal: 16),
+
+                // iOS Action Bar
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: isDark ? Colors.white10 : Colors.black12,
+                        width: 0.5,
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(sbCtx),
+                        child: Text(
+                          'Batal',
+                          style: TextStyle(
+                            color: primaryBlue,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ),
+                      const Text(
+                        'Gabung Dompet',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: isChecking
+                            ? null
+                            : () async {
+                                if (codeController.text.length < 6) {
+                                  UIHelper.showErrorSnackBar(
+                                      sbCtx, 'Kode harus 6 digit ya! (〜￣▽￣)〜');
+                                  return;
+                                }
+                                setModalState(() => isChecking = true);
+                                try {
+                                  final success =
+                                      await _firestoreService.joinWalletByCode(
+                                          codeController.text.toUpperCase(),
+                                          _uid);
+                                  if (!sbCtx.mounted) return;
+                                  if (success) {
+                                    Navigator.pop(sbCtx);
+                                    UIHelper.showSuccessSnackBar(sbCtx,
+                                        'Berhasil bergabung! Selamat berkolaborasi');
+                                  } else {
+                                    UIHelper.showErrorSnackBar(sbCtx,
+                                        'Kode tidak valid atau kamu sudah bergabung');
+                                    setModalState(() => isChecking = false);
+                                  }
+                                } catch (e) {
+                                  if (sbCtx.mounted) {
+                                    UIHelper.showErrorSnackBar(
+                                        sbCtx, 'Gagal bergabung: $e');
+                                    setModalState(() => isChecking = false);
+                                  }
+                                }
+                              },
+                        child: isChecking
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2))
+                            : Text(
+                                'Gabung',
+                                style: TextStyle(
+                                  color: primaryBlue,
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: isChecking
-                        ? null
-                        : () async {
-                            if (codeController.text.length < 6) {
-                              UIHelper.showErrorSnackBar(
-                                  context, 'Kode harus 6 digit ya! (〜￣▽￣)〜');
-                              return;
-                            }
-                            setModalState(() => isChecking = true);
-                            final success = await _firestoreService
-                                .joinWalletByCode(codeController.text, _uid);
-                            if (!context.mounted) return;
-                            Navigator.pop(context);
-                            if (success) {
-                              UIHelper.showSuccessSnackBar(context,
-                                  'Berhasil bergabung! Selamat berkolaborasi');
-                            } else {
-                              UIHelper.showErrorSnackBar(context,
-                                  'Kode tidak valid atau kamu sudah bergabung');
-                            }
-                          },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          Theme.of(context).brightness == Brightness.dark
-                              ? const Color(0xFF0A84FF)
-                              : Theme.of(context).primaryColor,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16)),
-                    ),
-                    child: isChecking
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2.5, color: Colors.white))
-                        : Text('Gabung Sekarang',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: Colors.white)),
+
+                // Content
+                Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: primaryBlue.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          CupertinoIcons.person_badge_plus,
+                          color: primaryBlue,
+                          size: 40,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Masukkan Kode Undangan',
+                        style: TextStyle(
+                          fontSize: 19,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white : Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Minta temanmu untuk membagikan kode undangan dari pengaturan dompet mereka.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: isDark ? Colors.white54 : Colors.black54,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: sectionColor,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: TextField(
+                          controller: codeController,
+                          maxLength: 6,
+                          textCapitalization: TextCapitalization.characters,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 8,
+                            color: isDark ? Colors.white : Colors.black,
+                          ),
+                          cursorColor: primaryBlue,
+                          decoration: InputDecoration(
+                            hintText: '• • • • • •',
+                            counterText: '',
+                            hintStyle: TextStyle(
+                              color: isDark ? Colors.white24 : Colors.black26,
+                              fontSize: 28,
+                              letterSpacing: 8,
+                            ),
+                            border: InputBorder.none,
+                            contentPadding:
+                                const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 48),
+                    ],
                   ),
                 ),
               ],
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
@@ -1250,194 +1444,253 @@ class WalletScreenState extends State<WalletScreen> {
     bool isSaving = false;
     final String typeLabel = debt.isUtang ? 'Hutang' : 'Piutang';
 
-    UIHelper.showPremiumBottomSheet(
+    showModalBottomSheet(
       context: context,
-      child: StatefulBuilder(
-        builder: (sbCtx, setModalState) => SingleChildScrollView(
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 12,
-            bottom: MediaQuery.of(sbCtx).viewInsets.bottom + 16,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Theme.of(sbCtx).hintColor.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                ToneManager.t('debt_edit_title')
-                    .replaceAll('{type}', typeLabel),
-                style:
-                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: titleController,
-                textCapitalization: TextCapitalization.words,
-                decoration: InputDecoration(
-                  labelText: ToneManager.t('debt_history_table_title'),
-                  prefixIcon: const Icon(CupertinoIcons.pencil),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16)),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: amountController,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: InputDecoration(
-                  labelText: ToneManager.t('debt_history_table_amount'),
-                  prefixText: 'Rp ',
-                  prefixIcon: const Icon(CupertinoIcons.creditcard),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16)),
-                ),
-              ),
-              const SizedBox(height: 16),
-              InkWell(
-                onTap: () async {
-                  final DateTime? picked = await showDatePicker(
-                    context: sbCtx,
-                    initialDate: selectedDate ?? DateTime.now(),
-                    firstDate: DateTime(2000),
-                    lastDate: DateTime(2101),
-                  );
-                  if (picked != null) {
-                    setModalState(() => selectedDate = picked);
-                  }
-                },
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Theme.of(sbCtx).dividerColor),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(CupertinoIcons.calendar),
-                      const SizedBox(width: 12),
-                      Text(selectedDate != null
-                          ? DateFormat('dd MMM yyyy').format(selectedDate!)
-                          : 'Pilih Tanggal'),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 32),
-              Column(
-                children: [
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: isSaving
-                          ? null
-                          : () async {
-                              final newAmount =
-                                  double.tryParse(amountController.text);
-                              if (newAmount == null ||
-                                  titleController.text.isEmpty) {
-                                UIHelper.showErrorSnackBar(sbCtx,
-                                    ToneManager.t('debt_error_incomplete'));
-                                return;
-                              }
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalCtx) => StatefulBuilder(
+        builder: (sbCtx, setModalState) {
+          final isDark = Theme.of(sbCtx).brightness == Brightness.dark;
+          final backgroundColor =
+              isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7);
+          final sectionColor = isDark ? const Color(0xFF2C2C2E) : Colors.white;
+          final primaryBlue =
+              isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF);
 
-                              setModalState(() => isSaving = true);
-                              try {
-                                await _debtService.updateDebt(
-                                  userId: _uid,
-                                  debtId: debt.id,
-                                  title: titleController.text,
-                                  newTotalAmount: newAmount,
-                                  dueDate: selectedDate,
-                                );
-                                if (sbCtx.mounted) {
-                                  UIHelper.showSuccessSnackBar(
-                                      sbCtx,
-                                      ToneManager.t('debt_success_update')
-                                          .replaceAll('{type}', typeLabel));
-                                  Navigator.pop(sbCtx);
-                                }
-                              } catch (e) {
-                                if (sbCtx.mounted) {
-                                  setModalState(() => isSaving = false);
-                                  UIHelper.showErrorSnackBar(
-                                      sbCtx, 'Gagal: $e');
-                                }
-                              } finally {
-                                if (sbCtx.mounted && isSaving) {
-                                  // Fallback safety for offline hanging
-                                  Future.delayed(const Duration(seconds: 8),
-                                      () {
-                                    if (sbCtx.mounted && isSaving) {
-                                      setModalState(() => isSaving = false);
-                                    }
-                                  });
-                                }
-                              }
-                            },
-                      style: ElevatedButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16)),
-                        elevation: 0,
-                      ),
-                      child: isSaving
-                          ? const CupertinoActivityIndicator(
-                              color: Colors.white)
-                          : Text(ToneManager.t('profile_save_btn'),
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold)),
+          return Container(
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(sbCtx).viewInsets.bottom + 20,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 10),
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white24 : Colors.black12,
+                      borderRadius: BorderRadius.circular(2.5),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  InkWell(
-                    onTap: () => Navigator.pop(sbCtx),
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      width: double.infinity,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: Theme.of(sbCtx).brightness == Brightness.dark
-                            ? Colors.white.withOpacity(0.05)
-                            : Colors.grey.withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                            color:
-                                Theme.of(sbCtx).dividerColor.withOpacity(0.12)),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: isDark ? Colors.white10 : Colors.black12,
+                        width: 0.5,
                       ),
-                      child: Center(
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(sbCtx),
                         child: Text(
-                          ToneManager.t('dialog_no'),
+                          'Batal',
                           style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.5,
-                            color: Theme.of(sbCtx).hintColor,
+                            color: primaryBlue,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w400,
                           ),
                         ),
                       ),
-                    ),
+                      Text(
+                        'Ubah $typeLabel',
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: isSaving
+                            ? null
+                            : () async {
+                                final newAmount = double.tryParse(amountController.text);
+                                if (newAmount == null || titleController.text.isEmpty) {
+                                  UIHelper.showErrorSnackBar(sbCtx, 'Lengkapi data terlebih dahulu.');
+                                  return;
+                                }
+
+                                setModalState(() => isSaving = true);
+                                try {
+                                  await _debtService.updateDebt(
+                                    userId: _uid,
+                                    debtId: debt.id,
+                                    title: titleController.text,
+                                    newTotalAmount: newAmount,
+                                    dueDate: selectedDate,
+                                  );
+                                  if (sbCtx.mounted) {
+                                    UIHelper.showSuccessSnackBar(sbCtx, 'Berhasil memperbarui $typeLabel');
+                                    Navigator.pop(sbCtx);
+                                  }
+                                } catch (e) {
+                                  if (sbCtx.mounted) {
+                                    setModalState(() => isSaving = false);
+                                    UIHelper.showErrorSnackBar(sbCtx, 'Gagal: $e');
+                                  }
+                                }
+                              },
+                        child: isSaving
+                            ? const CupertinoActivityIndicator()
+                            : Text(
+                                'Simpan',
+                                style: TextStyle(
+                                  color: primaryBlue,
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ],
-          ),
-        ),
+                ),
+                SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'RINCIAN $typeLabel',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: isDark ? Colors.white54 : Colors.black54,
+                          fontWeight: FontWeight.w400,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: sectionColor,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          children: [
+                            // Title
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                              child: TextField(
+                                controller: titleController,
+                                textCapitalization: TextCapitalization.words,
+                                decoration: InputDecoration(
+                                  hintText: 'Keterangan / Label',
+                                  prefixIcon: Icon(CupertinoIcons.pencil, size: 20, color: primaryBlue.withOpacity(0.7)),
+                                  border: InputBorder.none,
+                                ),
+                              ),
+                            ),
+                            Divider(height: 1, indent: 52, color: isDark ? Colors.white10 : Colors.black12),
+                            // Amount
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                              child: TextField(
+                                controller: amountController,
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                style: const TextStyle(fontWeight: FontWeight.w600),
+                                decoration: InputDecoration(
+                                  hintText: '0',
+                                  prefixIcon: Padding(
+                                    padding: const EdgeInsets.only(left: 12, right: 8),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(CupertinoIcons.creditcard, size: 20, color: primaryBlue.withOpacity(0.7)),
+                                        const SizedBox(width: 8),
+                                        Text('Rp ', style: TextStyle(color: primaryBlue, fontWeight: FontWeight.w700, fontSize: 16)),
+                                      ],
+                                    ),
+                                  ),
+                                  prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                                  border: InputBorder.none,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'TENGGAT WAKTU (OPSIONAL)',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: isDark ? Colors.white54 : Colors.black54,
+                          fontWeight: FontWeight.w400,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: sectionColor,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: ListTile(
+                          onTap: () async {
+                            final DateTime? picked = await showDatePicker(
+                              context: sbCtx,
+                              initialDate: selectedDate ?? DateTime.now(),
+                              firstDate: DateTime(2000),
+                              lastDate: DateTime(2101),
+                              builder: (context, child) {
+                                return Theme(
+                                  data: isDark
+                                      ? ThemeData.dark().copyWith(
+                                          colorScheme: ColorScheme.dark(
+                                            primary: primaryBlue,
+                                            onPrimary: Colors.white,
+                                            surface: backgroundColor,
+                                            onSurface: Colors.white,
+                                          ),
+                                          dialogBackgroundColor: backgroundColor,
+                                        )
+                                      : ThemeData.light().copyWith(
+                                          colorScheme: ColorScheme.light(
+                                            primary: primaryBlue,
+                                            onPrimary: Colors.white,
+                                            surface: Colors.white,
+                                            onSurface: Colors.black,
+                                          ),
+                                        ),
+                                  child: child!,
+                                );
+                              },
+                            );
+                            if (picked != null) {
+                              setModalState(() => selectedDate = picked);
+                            }
+                          },
+                          leading: Icon(CupertinoIcons.calendar, size: 20, color: primaryBlue.withOpacity(0.7)),
+                          title: Text(
+                            selectedDate != null ? DateFormat('dd MMMM yyyy').format(selectedDate!) : 'Pilih Tanggal',
+                            style: const TextStyle(fontSize: 15),
+                          ),
+                          trailing: Icon(CupertinoIcons.chevron_right, size: 14, color: isDark ? Colors.white24 : Colors.black26),
+                        ),
+                      ),
+                      const SizedBox(height: 48),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
+
 
   void _showIncreaseDebtDialog(DebtModel debt) {
     final amountController = TextEditingController();
@@ -1445,184 +1698,213 @@ class WalletScreenState extends State<WalletScreen> {
     bool isSaving = false;
     final String typeLabel = debt.isUtang ? 'Hutang' : 'Piutang';
 
-    UIHelper.showPremiumBottomSheet(
+    showModalBottomSheet(
       context: context,
-      child: StatefulBuilder(
-        builder: (sbCtx, setModalState) => SingleChildScrollView(
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 12,
-            bottom: MediaQuery.of(sbCtx).viewInsets.bottom + 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Theme.of(sbCtx).hintColor.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                ToneManager.t('debt_increase_title')
-                    .replaceAll('{type}', typeLabel),
-                style:
-                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                debt.isUtang
-                    ? ToneManager.t('debt_increase_msg_utang')
-                    : ToneManager.t('debt_increase_msg_piutang'),
-                style: TextStyle(color: Theme.of(sbCtx).hintColor),
-              ),
-              const SizedBox(height: 24),
-              TextField(
-                controller: amountController,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: InputDecoration(
-                  labelText: ToneManager.t('debt_increase_label'),
-                  prefixText: 'Rp ',
-                  prefixIcon: const Icon(CupertinoIcons.creditcard),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16)),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Wallet Selection
-              StreamBuilder<List<WalletModel>>(
-                stream: _firestoreService.getWalletsStream(_uid),
-                builder: (streamCtx, snapshot) {
-                  final wallets =
-                      (snapshot.data ?? []).where((w) => w.isPersonal).toList();
-                  return DropdownButtonFormField<String>(
-                    value: selectedWalletId,
-                    decoration: InputDecoration(
-                      labelText: ToneManager.t('debt_select_wallet'),
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16)),
-                    ),
-                    items: wallets
-                        .map((w) => DropdownMenuItem(
-                              value: w.id,
-                              child: Text(w.walletName),
-                            ))
-                        .toList(),
-                    onChanged: (val) =>
-                        setModalState(() => selectedWalletId = val),
-                  );
-                },
-              ),
-              const SizedBox(height: 32),
-              Column(
-                children: [
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: isSaving
-                          ? null
-                          : () async {
-                              final amount =
-                                  double.tryParse(amountController.text);
-                              if (amount == null ||
-                                  amount <= 0 ||
-                                  selectedWalletId == null) {
-                                UIHelper.showErrorSnackBar(sbCtx,
-                                    ToneManager.t('debt_error_incomplete'));
-                                return;
-                              }
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalCtx) => StatefulBuilder(
+        builder: (sbCtx, setModalState) {
+          final isDark = Theme.of(sbCtx).brightness == Brightness.dark;
+          final backgroundColor =
+              isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7);
+          final sectionColor = isDark ? const Color(0xFF2C2C2E) : Colors.white;
+          final primaryBlue =
+              isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF);
 
-                              setModalState(() => isSaving = true);
-                              try {
-                                await _debtService.increaseDebt(
-                                  userId: _uid,
-                                  userName: FirebaseAuth
-                                          .instance.currentUser?.displayName ??
-                                      'User',
-                                  debt: debt,
-                                  additionalAmount: amount,
-                                  walletId: selectedWalletId!,
-                                );
-                                if (sbCtx.mounted) {
-                                  UIHelper.showSuccessSnackBar(
-                                      sbCtx,
-                                      ToneManager.t('debt_success_increase')
-                                          .replaceAll('{type}', typeLabel));
-                                  Navigator.pop(sbCtx);
-                                }
-                              } catch (e) {
-                                if (sbCtx.mounted) {
-                                  setModalState(() => isSaving = false);
-                                  UIHelper.showErrorSnackBar(
-                                      sbCtx, 'Gagal: $e');
-                                }
-                              } finally {
-                                if (sbCtx.mounted && isSaving) {
-                                  // Fallback safety for offline hanging
-                                  Future.delayed(const Duration(seconds: 8),
-                                      () {
-                                    if (sbCtx.mounted && isSaving) {
-                                      setModalState(() => isSaving = false);
-                                    }
-                                  });
-                                }
-                              }
-                            },
-                      style: ElevatedButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16)),
-                        elevation: 0,
-                      ),
-                      child: isSaving
-                          ? const CupertinoActivityIndicator(
-                              color: Colors.white)
-                          : Text(ToneManager.t('btn_add_nominal'),
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold)),
+          return Container(
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(sbCtx).viewInsets.bottom + 20,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 10),
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white24 : Colors.black12,
+                      borderRadius: BorderRadius.circular(2.5),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  InkWell(
-                    onTap: () => Navigator.pop(sbCtx),
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      width: double.infinity,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: Theme.of(sbCtx).brightness == Brightness.dark
-                            ? Colors.white.withOpacity(0.05)
-                            : Colors.grey.withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                            color:
-                                Theme.of(sbCtx).dividerColor.withOpacity(0.12)),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: isDark ? Colors.white10 : Colors.black12,
+                        width: 0.5,
                       ),
-                      child: Center(
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(sbCtx),
                         child: Text(
-                          ToneManager.t('dialog_no'),
+                          'Batal',
                           style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.5,
-                            color: Theme.of(sbCtx).hintColor,
+                            color: primaryBlue,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w400,
                           ),
                         ),
                       ),
-                    ),
+                      Text(
+                        'Tambah $typeLabel',
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: isSaving
+                            ? null
+                            : () async {
+                                final amount = double.tryParse(amountController.text);
+                                if (amount == null || amount <= 0 || selectedWalletId == null) {
+                                  UIHelper.showErrorSnackBar(sbCtx, 'Lengkapi data terlebih dahulu.');
+                                  return;
+                                }
+
+                                setModalState(() => isSaving = true);
+                                try {
+                                  await _debtService.increaseDebt(
+                                    userId: _uid,
+                                    userName: FirebaseAuth.instance.currentUser?.displayName ?? 'User',
+                                    debt: debt,
+                                    additionalAmount: amount,
+                                    walletId: selectedWalletId!,
+                                  );
+                                  if (sbCtx.mounted) {
+                                    UIHelper.showSuccessSnackBar(sbCtx, 'Berhasil menambahkan nominal $typeLabel');
+                                    Navigator.pop(sbCtx);
+                                  }
+                                } catch (e) {
+                                  if (sbCtx.mounted) {
+                                    setModalState(() => isSaving = false);
+                                    UIHelper.showErrorSnackBar(sbCtx, 'Gagal: $e');
+                                  }
+                                }
+                              },
+                        child: isSaving
+                            ? const CupertinoActivityIndicator()
+                            : Text(
+                                'Tambah',
+                                style: TextStyle(
+                                  color: primaryBlue,
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ],
-          ),
-        ),
+                ),
+                SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'NOMINAL TAMBAHAN',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: isDark ? Colors.white54 : Colors.black54,
+                          fontWeight: FontWeight.w400,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: sectionColor,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                              child: TextField(
+                                controller: amountController,
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                style: const TextStyle(fontWeight: FontWeight.w600),
+                                decoration: InputDecoration(
+                                  hintText: 'Nominal',
+                                  prefixIcon: Padding(
+                                    padding: const EdgeInsets.only(left: 12, right: 8),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(CupertinoIcons.plus_circle, size: 20, color: primaryBlue.withOpacity(0.7)),
+                                        const SizedBox(width: 8),
+                                        Text('Rp ', style: TextStyle(color: primaryBlue, fontWeight: FontWeight.w700, fontSize: 16)),
+                                      ],
+                                    ),
+                                  ),
+                                  prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                                  border: InputBorder.none,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'SUMBER DANA',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: isDark ? Colors.white54 : Colors.black54,
+                          fontWeight: FontWeight.w400,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      StreamBuilder<List<WalletModel>>(
+                        stream: _firestoreService.getWalletsStream(_uid),
+                        builder: (ctx, snapshot) {
+                          final wallets = (snapshot.data ?? []).where((w) => w.isPersonal).toList();
+                          final selectedWallet = selectedWalletId != null
+                              ? wallets.firstWhere((w) => w.id == selectedWalletId, orElse: () => wallets.first)
+                              : null;
+
+                          return Container(
+                            decoration: BoxDecoration(
+                              color: sectionColor,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: ListTile(
+                              onTap: () => _showWalletPicker(sbCtx, wallets, (wallet) {
+                                setModalState(() => selectedWalletId = wallet.id);
+                              }),
+                              leading: Icon(CupertinoIcons.creditcard, size: 20, color: primaryBlue.withOpacity(0.7)),
+                              title: Text(
+                                selectedWallet != null ? selectedWallet.walletName : 'Pilih Dompet',
+                                style: const TextStyle(fontSize: 15),
+                              ),
+                              trailing: Icon(CupertinoIcons.chevron_right, size: 14, color: isDark ? Colors.white24 : Colors.black26),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 48),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -1645,16 +1927,16 @@ class WalletScreenState extends State<WalletScreen> {
     );
 
     if (confirmed == true) {
-      if (!mounted) return;
+      if (!context.mounted) return;
       try {
         await _debtService.deleteDebt(_uid, debt.id);
-        if (!mounted) return;
+        if (!context.mounted) return;
         UIHelper.showSuccessSnackBar(
             context,
             ToneManager.t('debt_success_delete')
                 .replaceAll('{type}', typeLabel));
       } catch (e) {
-        if (!mounted) return;
+        if (!context.mounted) return;
         UIHelper.showErrorSnackBar(context, 'Gagal menghapus: $e');
       }
     }
@@ -1753,12 +2035,12 @@ class WalletScreenState extends State<WalletScreen> {
                                     onTimeout: () =>
                                         throw TimeoutException('Timeout'),
                                   );
-                              if (!mounted) return;
+                              if (!context.mounted) return;
                               Navigator.of(context).pop(); // Close sheet
                               UIHelper.showSuccessSnackBar(
                                   context, 'Dompet berhasil dihapus');
                             } catch (e) {
-                              if (mounted) {
+                              if (context.mounted) {
                                 Navigator.of(context).pop();
                                 UIHelper.showInfoSnackBar(
                                     context, 'Proses hapus tertunda koneksi.');
@@ -1775,7 +2057,7 @@ class WalletScreenState extends State<WalletScreen> {
                           if (confirm == true) {
                             await _firestoreService.leaveWallet(
                                 wallet.id, _uid);
-                            if (!mounted) return;
+                            if (!context.mounted) return;
                             Navigator.of(context).pop(); // Close sheet
                             UIHelper.showSuccessSnackBar(
                                 context, 'Berhasil keluar dari dompet.');
@@ -1853,7 +2135,7 @@ class WalletScreenState extends State<WalletScreen> {
                                   fontWeight: FontWeight.bold,
                                   color: Theme.of(context).brightness ==
                                           Brightness.dark
-                                      ? const Color(0xFF0A84FF).withOpacity(0.9)
+                                      ? Color(0xFF0A84FF).withOpacity(0.9)
                                       : Theme.of(context).hintColor,
                                   letterSpacing: 1)),
                           const SizedBox(height: 6),
@@ -2167,7 +2449,7 @@ class WalletScreenState extends State<WalletScreen> {
                           onDismissed: (direction) async {
                             if (t.createdBy == _uid) {
                               await _firestoreService.deleteTransaction(t);
-                              if (!mounted) return;
+                              if (!context.mounted) return;
                               UIHelper.showSuccessSnackBar(
                                   context, 'Transaksi berhasil dihapus');
                             }
@@ -2254,110 +2536,218 @@ class WalletScreenState extends State<WalletScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: EdgeInsets.only(
-          left: 24,
-          right: 24,
-          top: 24,
-          bottom: MediaQuery.of(context).viewInsets.bottom +
-              MediaQuery.of(context).padding.bottom +
-              24,
-        ),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).hintColor.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text('Ubah Nama Dompet',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 20),
-            TextField(
-              controller: nameController,
-              textCapitalization: TextCapitalization.words,
-              autofocus: true,
-              decoration: InputDecoration(
-                hintText: 'Masukkan nama baru',
-                prefixIcon: Icon(CupertinoIcons.pencil,
-                    color: Theme.of(context).primaryColor),
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide:
-                        BorderSide(color: Theme.of(context).primaryColor)),
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: () async {
-                  if (nameController.text.isNotEmpty &&
-                      nameController.text != wallet.walletName) {
-                    final isOnline = await ConnectivityService.isOnline();
-                    if (!isOnline) {
-                      _firestoreService.renameWallet(
-                          wallet.id, nameController.text);
-                      if (!context.mounted) return;
-                      Navigator.of(context).pop(); // Pop dialog
-                      Navigator.of(context).pop(); // Pop details sheet
-                      UIHelper.showInfoSnackBar(
-                          context, 'Nama dompet akan berubah setelah online');
-                      return;
-                    }
+      builder: (modalCtx) => StatefulBuilder(
+        builder: (sbCtx, setModalState) {
+          final isDark = Theme.of(sbCtx).brightness == Brightness.dark;
+          final backgroundColor =
+              isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7);
+          final sectionColor = isDark ? const Color(0xFF2C2C2E) : Colors.white;
+          final primaryBlue =
+              isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF);
 
-                    try {
-                      await _firestoreService
-                          .renameWallet(wallet.id, nameController.text)
-                          .timeout(
-                            const Duration(seconds: 10),
-                            onTimeout: () => throw TimeoutException('Timeout'),
-                          );
-                      if (!mounted) return;
-                      Navigator.of(context).pop(); // Pop dialog
-                      Navigator.of(context).pop(); // Pop details sheet
-                      UIHelper.showSuccessSnackBar(context,
-                          'Nama dompet berhasil diubah ke "${nameController.text}"!');
-                    } catch (e) {
-                      if (mounted) {
-                        if (e is TimeoutException) {
-                          Navigator.of(context).pop();
-                          Navigator.of(context).pop();
-                          UIHelper.showInfoSnackBar(
-                              context, 'Perubahan nama tertunda koneksi.');
-                        } else {
-                          UIHelper.showErrorSnackBar(context, 'Gagal: $e');
-                        }
-                      }
-                    }
-                  } else {
-                    Navigator.pop(context);
-                  }
-                },
+          return Container(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(sbCtx).viewInsets.bottom,
+            ),
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // iOS Drag Handle
+                const SizedBox(height: 10),
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white24 : Colors.black12,
+                      borderRadius: BorderRadius.circular(2.5),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                // iOS Action Bar
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: isDark ? Colors.white10 : Colors.black12,
+                        width: 0.5,
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(sbCtx),
+                        child: Text(
+                          'Batal',
+                          style: TextStyle(
+                            color: primaryBlue,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ),
+                      const Text(
+                        'Ubah Nama',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          if (nameController.text.isNotEmpty &&
+                              nameController.text != wallet.walletName) {
+                            final isOnline =
+                                await ConnectivityService.isOnline();
+                            if (!isOnline) {
+                              _firestoreService.renameWallet(
+                                  wallet.id, nameController.text);
+                              if (!context.mounted) return;
+                              Navigator.of(context).pop(); // Pop dialog
+                              Navigator.of(context).pop(); // Pop details sheet
+                              UIHelper.showInfoSnackBar(context,
+                                  'Nama dompet akan berubah setelah online');
+                              return;
+                            }
+
+                            try {
+                              await _firestoreService
+                                  .renameWallet(wallet.id, nameController.text)
+                                  .timeout(
+                                    const Duration(seconds: 10),
+                                    onTimeout: () =>
+                                        throw TimeoutException('Timeout'),
+                                  );
+                              if (!context.mounted) return;
+                              Navigator.of(context).pop(); // Pop dialog
+                              Navigator.of(context).pop(); // Pop details sheet
+                              UIHelper.showSuccessSnackBar(context,
+                                  'Nama dompet berhasil diubah ke "${nameController.text}"!');
+                            } catch (e) {
+                              if (context.mounted) {
+                                if (e is TimeoutException) {
+                                  Navigator.of(context).pop();
+                                  Navigator.of(context).pop();
+                                  UIHelper.showInfoSnackBar(context,
+                                      'Perubahan nama tertunda koneksi.');
+                                } else {
+                                  UIHelper.showErrorSnackBar(
+                                      context, 'Gagal mengubah nama: $e');
+                                }
+                              }
+                            }
+                          } else {
+                            Navigator.pop(sbCtx);
+                          }
+                        },
+                        child: Text(
+                          'Simpan',
+                          style: TextStyle(
+                            color: primaryBlue,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Content
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          color: sectionColor,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: TextField(
+                          controller: nameController,
+                          textCapitalization: TextCapitalization.words,
+                          autofocus: true,
+                          style: TextStyle(
+                            fontSize: 17,
+                            color: isDark ? Colors.white : Colors.black,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'Nama Dompet',
+                            prefixIcon: Icon(
+                              CupertinoIcons.pencil,
+                              color: isDark ? Colors.white54 : Colors.black45,
+                              size: 20,
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(CupertinoIcons.creditcard,
+                size: 80,
+                color: Theme.of(context).hintColor.withOpacity(0.3)),
+            const SizedBox(height: 20),
+            Text(
+              ToneManager.t('wallet_empty_title'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              ToneManager.t('wallet_empty_msg'),
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Theme.of(context).hintColor),
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: 220,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: _showCreateWalletDialog,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).primaryColor,
+                  backgroundColor:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF0A84FF)
+                          : Theme.of(context).primaryColor,
+                  foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16)),
+                      borderRadius: BorderRadius.circular(20)),
                 ),
-                child: Text('Simpan Perubahan',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: Colors.white)),
+                child: Text('Buat Dompet',
+                    style:
+                        TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
               ),
             ),
           ],
@@ -2366,71 +2756,26 @@ class WalletScreenState extends State<WalletScreen> {
     );
   }
 
-  Widget _buildEmptyState() {
-    return SingleChildScrollView(
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(CupertinoIcons.creditcard,
-                  size: 80,
-                  color: Theme.of(context).hintColor.withOpacity(0.3)),
-              const SizedBox(height: 20),
-              Text(
-                ToneManager.t('wallet_empty_title'),
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                ToneManager.t('wallet_empty_msg'),
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Theme.of(context).hintColor),
-              ),
-              const SizedBox(height: 32),
-              SizedBox(
-                width: 220,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: _showCreateWalletDialog,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        Theme.of(context).brightness == Brightness.dark
-                            ? const Color(0xFF0A84FF)
-                            : Theme.of(context).primaryColor,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20)),
-                  ),
-                  child: Text('Buat Dompet',
-                      style:
-                          TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDebtList(List<DebtModel> debts) {
-    if (debts.isEmpty) return _buildEmptyState();
-    return ListView.builder(
+  Widget _buildDebtSliverList(List<DebtModel> debts) {
+    if (debts.isEmpty) return SliverToBoxAdapter(child: _buildEmptyState());
+    return SliverPadding(
       padding: const EdgeInsets.only(left: 24, right: 24, top: 8, bottom: 120),
-      physics: const BouncingScrollPhysics(),
-      itemCount: debts.length,
-      itemBuilder: (context, index) => Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: _DebtCard(
-          debt: debts[index],
-          onTap: () => _showDebtDetails(debts[index]),
-          onEdit: () => _showEditDebtDialog(debts[index]),
-          onDelete: () => _deleteDebt(debts[index]),
-          onIncrease: () => _showIncreaseDebtDialog(debts[index]),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final debt = debts[index];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _DebtCard(
+                debt: debt,
+                onTap: () => _showDebtDetails(debt),
+                onEdit: () => _showEditDebtDialog(debt),
+                onDelete: () => _deleteDebt(debt),
+                onIncrease: () => _showIncreaseDebtDialog(debt),
+              ),
+            );
+          },
+          childCount: debts.length,
         ),
       ),
     );
@@ -2507,28 +2852,30 @@ class _WalletCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(isDark ? 0.1 : 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
-      ).copyWith(
         border: Border.all(
-          color: Theme.of(context).dividerColor.withOpacity(
-              Theme.of(context).brightness == Brightness.dark ? 0.05 : 0.08),
+          color: Theme.of(context).dividerColor.withOpacity(isDark ? 0.05 : 0.08),
           width: 0.5,
         ),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: onTap,
+          onTap: () {
+            HapticFeedback.lightImpact();
+            onTap();
+          },
           borderRadius: BorderRadius.circular(22),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -2665,83 +3012,77 @@ class _DebtCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(isDark ? 0.1 : 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
-      ).copyWith(
         border: Border.all(
-          color:
-              Theme.of(context).dividerColor.withOpacity(isDark ? 0.05 : 0.08),
+          color: Theme.of(context).dividerColor.withOpacity(isDark ? 0.05 : 0.08),
           width: 0.5,
         ),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: onTap,
+          onTap: () {
+            HapticFeedback.lightImpact();
+            onTap();
+          },
           borderRadius: BorderRadius.circular(22),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+            padding: const EdgeInsets.all(16),
+            child: Column(
               children: [
-                // Icon Container
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: accentColor.withOpacity(isDark ? 0.2 : 0.1),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(
-                    debt.type == 'utang'
-                        ? CupertinoIcons.arrow_down_right_square_fill
-                        : CupertinoIcons.arrow_up_right_square_fill,
-                    color: accentColor,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                // Info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        debt.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.3,
-                          color: Theme.of(context).textTheme.titleLarge?.color,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Sisa: ${CurrencyFormatter.formatCurrency(remaining)}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: accentColor.withOpacity(0.9),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // Trailing part: Amount & Status
                 Row(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: accentColor.withOpacity(isDark ? 0.2 : 0.1),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(
+                        debt.type == 'utang'
+                            ? CupertinoIcons.arrow_down_right_square_fill
+                            : CupertinoIcons.arrow_up_right_square_fill,
+                        color: accentColor,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            debt.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.3,
+                              color: Theme.of(context).textTheme.titleLarge?.color,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Sisa: ${CurrencyFormatter.formatCurrency(remaining)}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: accentColor.withOpacity(0.9),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
                     Column(
-                      mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
@@ -2749,86 +3090,187 @@ class _DebtCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
-                            color:
-                                Theme.of(context).textTheme.titleLarge?.color,
+                            color: Theme.of(context).textTheme.titleLarge?.color,
                           ),
                         ),
-                        const SizedBox(height: 3),
+                        const SizedBox(height: 4),
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: (debt.status == 'completed'
-                                    ? AppColors.income
-                                    : Colors.orange)
-                                .withOpacity(0.1),
+                            color: remaining <= 0 
+                                ? AppColors.income.withOpacity(0.12)
+                                : Colors.orange.withOpacity(0.12),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
-                            debt.status == 'completed'
-                                ? 'Lunas'
-                                : 'Belum Lunas',
+                            remaining <= 0 ? 'LUNAS' : 'BELUM LUNAS',
                             style: TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w800,
-                              color: debt.status == 'completed'
-                                  ? AppColors.income
-                                  : Colors.orange,
-                              letterSpacing: 0.1,
+                              fontSize: 8,
+                              fontWeight: FontWeight.w900,
+                              color: remaining <= 0 ? AppColors.income : Colors.orange,
+                              letterSpacing: 0.5,
                             ),
                           ),
                         ),
+                        if (debt.dueDate != null)
+                          Text(
+                            DateFormat('dd MMM').format(debt.dueDate!),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Theme.of(context).hintColor,
+                            ),
+                          ),
                       ],
                     ),
-                    const SizedBox(width: 4),
-                    PopupMenuButton<String>(
-                      icon: Icon(CupertinoIcons.ellipsis_vertical,
-                          size: 18,
-                          color: Theme.of(context).hintColor.withOpacity(0.3)),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onSelected: (value) {
-                        if (value == 'increase') {
-                          onIncrease();
-                        } else if (value == 'edit') {
-                          onEdit();
-                        } else if (value == 'delete') {
-                          onDelete();
-                        }
-                      },
-                      itemBuilder: (context) => [
-                        PopupMenuItem(
-                          value: 'edit',
-                          child: Row(
-                            children: [
-                              const Icon(CupertinoIcons.pencil, size: 18),
-                              const SizedBox(width: 12),
-                              Text(
-                                  'Edit ${debt.isUtang ? 'Hutang' : 'Piutang'}'),
-                            ],
-                          ),
-                        ),
-                        PopupMenuItem(
-                          value: 'delete',
-                          child: Row(
-                            children: [
-                              const Icon(CupertinoIcons.trash,
-                                  size: 18, color: AppColors.expense),
-                              const SizedBox(width: 12),
-                              Text(
-                                  'Hapus ${debt.isUtang ? 'Hutang' : 'Piutang'}',
-                                  style: const TextStyle(
-                                      color: AppColors.expense)),
-                            ],
-                          ),
-                        ),
-                      ],
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _DebtActionButton(
+                        icon: CupertinoIcons.info,
+                        label: 'Detail',
+                        onTap: onTap,
+                        color: isDark ? Colors.white70 : Colors.black54,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _DebtActionButton(
+                        icon: CupertinoIcons.add,
+                        label: 'Bayar',
+                        onTap: onIncrease,
+                        color: accentColor,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _DebtActionButton(
+                        icon: CupertinoIcons.ellipsis,
+                        label: 'Opsi',
+                        onTap: () => _showDebtOptions(context),
+                        color: isDark ? Colors.white30 : Colors.black26,
+                      ),
                     ),
                   ],
                 ),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  void _showDebtOptions(BuildContext context) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              onEdit();
+            },
+            child: Text('Edit ${debt.isUtang ? 'Hutang' : 'Piutang'}'),
+          ),
+          CupertinoActionSheetAction(
+            isDestructiveAction: true,
+            onPressed: () {
+              Navigator.pop(context);
+              onDelete();
+            },
+            child: const Text('Hapus Catatan'),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Batal'),
+        ),
+      ),
+    );
+  }
+}
+
+class _DebtActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final Color color;
+
+  const _DebtActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return InkWell(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: color.withOpacity(isDark ? 0.1 : 0.05),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _IconButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onPressed;
+  final bool isDark;
+
+  const _IconButton({
+    required this.icon,
+    required this.onPressed,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        onPressed();
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: (isDark ? const Color(0xFF0A84FF) : AppColors.primary)
+              .withOpacity(0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(
+          icon,
+          size: 24,
+          color: isDark ? const Color(0xFF0A84FF) : AppColors.primary,
         ),
       ),
     );
@@ -3080,45 +3522,45 @@ class _DebtDetailsSheet extends StatelessWidget {
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
                             onSelected: (val) {
-                                if (val == 'edit') {
-                                  _showEditDebtTransactionDialog(
-                                      context, tx, debt);
-                                } else if (val == 'delete') {
-                                  _deleteDebtTransaction(context, tx, debt);
-                                }
-                              },
-                              itemBuilder: (context) => [
-                                PopupMenuItem(
-                                  value: 'edit',
-                                  child: Row(
-                                    children: [
-                                      Icon(CupertinoIcons.pencil, size: 16),
-                                      SizedBox(width: 8),
-                                      Text(ToneManager.t('debt_tx_edit_title'),
-                                          style: TextStyle(fontSize: 13)),
-                                    ],
-                                  ),
+                              if (val == 'edit') {
+                                _showEditDebtTransactionDialog(
+                                    context, tx, debt);
+                              } else if (val == 'delete') {
+                                _deleteDebtTransaction(context, tx, debt);
+                              }
+                            },
+                            itemBuilder: (context) => [
+                              PopupMenuItem(
+                                value: 'edit',
+                                child: Row(
+                                  children: [
+                                    Icon(CupertinoIcons.pencil, size: 16),
+                                    SizedBox(width: 8),
+                                    Text(ToneManager.t('debt_tx_edit_title'),
+                                        style: TextStyle(fontSize: 13)),
+                                  ],
                                 ),
-                                PopupMenuItem(
-                                  value: 'delete',
-                                  child: Row(
-                                    children: [
-                                      Icon(CupertinoIcons.trash,
-                                          size: 16, color: AppColors.expense),
-                                      SizedBox(width: 8),
-                                      Text(
-                                          ToneManager.t('dialog_logout_msg')
-                                                  .contains('keluar')
-                                              ? 'Hapus'
-                                              : 'Delete',
-                                          style: TextStyle(
-                                              fontSize: 13,
-                                              color: AppColors.expense)),
-                                    ],
-                                  ),
+                              ),
+                              PopupMenuItem(
+                                value: 'delete',
+                                child: Row(
+                                  children: [
+                                    Icon(CupertinoIcons.trash,
+                                        size: 16, color: AppColors.expense),
+                                    SizedBox(width: 8),
+                                    Text(
+                                        ToneManager.t('dialog_logout_msg')
+                                                .contains('keluar')
+                                            ? 'Hapus'
+                                            : 'Delete',
+                                        style: TextStyle(
+                                            fontSize: 13,
+                                            color: AppColors.expense)),
+                                  ],
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     );
@@ -3131,7 +3573,7 @@ class _DebtDetailsSheet extends StatelessWidget {
             SafeArea(
               top: false,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
                 child: SizedBox(
                   width: double.infinity,
                   height: 56,
@@ -3205,140 +3647,181 @@ class _DebtDetailsSheet extends StatelessWidget {
         TextEditingController(text: transaction.amount.toStringAsFixed(0));
     bool isSaving = false;
 
-    UIHelper.showPremiumBottomSheet(
+    showModalBottomSheet(
       context: context,
-      child: StatefulBuilder(
-        builder: (sbCtx, setModalState) => SingleChildScrollView(
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 12,
-            bottom: MediaQuery.of(sbCtx).viewInsets.bottom + 16,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Theme.of(sbCtx).hintColor.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                ToneManager.t('debt_history_edit_title'),
-                style:
-                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 24),
-              TextField(
-                controller: amountController,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: InputDecoration(
-                  labelText: ToneManager.t('debt_history_table_amount'),
-                  prefixText: 'Rp ',
-                  prefixIcon: const Icon(CupertinoIcons.creditcard),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16)),
-                ),
-              ),
-              const SizedBox(height: 32),
-              Column(
-                children: [
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: isSaving
-                          ? null
-                          : () async {
-                              final newAmount =
-                                  double.tryParse(amountController.text);
-                              if (newAmount == null) return;
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalCtx) => StatefulBuilder(
+        builder: (sbCtx, setModalState) {
+          final isDark = Theme.of(sbCtx).brightness == Brightness.dark;
+          final backgroundColor =
+              isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7);
+          final sectionColor = isDark ? const Color(0xFF2C2C2E) : Colors.white;
+          final primaryBlue =
+              isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF);
 
-                              setModalState(() => isSaving = true);
-                              try {
-                                await debtService.updateDebtTransaction(
-                                  userId: currentUserId,
-                                  oldTransaction: transaction,
-                                  debt: debt,
-                                  newAmount: newAmount,
-                                );
-                                if (sbCtx.mounted) {
-                                  UIHelper.showSuccessSnackBar(sbCtx,
-                                      ToneManager.t('debt_tx_success_update'));
-                                  Navigator.pop(sbCtx);
-                                }
-                              } catch (e) {
-                                if (sbCtx.mounted) {
-                                  setModalState(() => isSaving = false);
-                                  UIHelper.showErrorSnackBar(
-                                      sbCtx, 'Gagal: $e');
-                                }
-                              } finally {
-                                if (sbCtx.mounted && isSaving) {
-                                  Future.delayed(const Duration(seconds: 8),
-                                      () {
-                                    if (sbCtx.mounted && isSaving) {
-                                      setModalState(() => isSaving = false);
-                                    }
-                                  });
-                                }
-                              }
-                            },
-                      style: ElevatedButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16)),
-                        elevation: 0,
-                      ),
-                      child: isSaving
-                          ? const CupertinoActivityIndicator(
-                              color: Colors.white)
-                          : Text(ToneManager.t('profile_save_btn'),
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold)),
+          return Container(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(sbCtx).viewInsets.bottom + 20,
+            ),
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 10),
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white24 : Colors.black12,
+                      borderRadius: BorderRadius.circular(2.5),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  InkWell(
-                    onTap: () => Navigator.pop(context),
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      width: double.infinity,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.white.withOpacity(0.05)
-                            : Colors.grey.withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                            color: Theme.of(context)
-                                .dividerColor
-                                .withOpacity(0.12)),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: isDark ? Colors.white10 : Colors.black12,
+                        width: 0.5,
                       ),
-                      child: Center(
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(sbCtx),
                         child: Text(
-                          ToneManager.t('dialog_no'),
+                          'Batal',
                           style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.5,
-                            color: Theme.of(context).hintColor,
+                            color: primaryBlue,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w400,
                           ),
                         ),
                       ),
-                    ),
+                      const Text(
+                        'Edit Nominal',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: isSaving
+                            ? null
+                            : () async {
+                                final newAmount = double.tryParse(amountController.text);
+                                if (newAmount == null || newAmount <= 0) return;
+
+                                setModalState(() => isSaving = true);
+                                try {
+                                  await debtService.updateDebtTransaction(
+                                    userId: currentUserId,
+                                    oldTransaction: transaction,
+                                    debt: debt,
+                                    newAmount: newAmount,
+                                  );
+                                  if (sbCtx.mounted) {
+                                    UIHelper.showSuccessSnackBar(sbCtx,
+                                        ToneManager.t('debt_tx_success_update'));
+                                    Navigator.pop(sbCtx);
+                                  }
+                                } catch (e) {
+                                  if (sbCtx.mounted) {
+                                    setModalState(() => isSaving = false);
+                                    UIHelper.showErrorSnackBar(sbCtx, 'Gagal: $e');
+                                  }
+                                }
+                              },
+                        child: isSaving
+                            ? const CupertinoActivityIndicator()
+                            : Text(
+                                'Simpan',
+                                style: TextStyle(
+                                  color: primaryBlue,
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ],
-          ),
-        ),
+                ),
+                SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                        child: Text(
+                          'NOMINAL BARU',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: isDark ? Colors.white54 : Colors.black54,
+                            fontWeight: FontWeight.w400,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        decoration: BoxDecoration(
+                          color: sectionColor,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: TextField(
+                          controller: amountController,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                          decoration: InputDecoration(
+                            hintText: '0',
+                            prefixIcon: Padding(
+                              padding: const EdgeInsets.only(left: 12, right: 8),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(CupertinoIcons.creditcard, size: 20, color: primaryBlue.withOpacity(0.7)),
+                                  const SizedBox(width: 8),
+                                  Text('Rp ', style: TextStyle(color: primaryBlue, fontWeight: FontWeight.w700, fontSize: 16)),
+                                ],
+                              ),
+                            ),
+                            prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                            border: InputBorder.none,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Text(
+                          'Perubahan nominal akan menyesuaikan saldo dompet terkait dan sisa ${debt.isUtang ? 'hutang' : 'piutang'}.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: isDark ? Colors.white38 : Colors.black38,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 48),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -3392,250 +3875,354 @@ class _DebtPaymentModal extends StatefulWidget {
 class _DebtPaymentModalState extends State<_DebtPaymentModal> {
   final _amountController = TextEditingController();
   final _noteController = TextEditingController();
-  String? _selectedWalletId;
+  WalletModel? _selectedWallet;
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final remaining = widget.debt.totalAmount - widget.debt.paidAmount;
+    _amountController.text = remaining.toStringAsFixed(0);
+  }
+
+  void _showLocalWalletPicker(BuildContext context, List<WalletModel> wallets) {
+    String query = "";
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalCtx) => StatefulBuilder(
+        builder: (sbCtx, setPickerState) {
+          final isDark = Theme.of(sbCtx).brightness == Brightness.dark;
+          final backgroundColor = isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7);
+          final sectionColor = isDark ? const Color(0xFF2C2C2E) : Colors.white;
+          final primaryBlue = isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF);
+
+          final filtered = wallets.where((w) {
+            return w.walletName.toLowerCase().contains(query.toLowerCase());
+          }).toList();
+
+          return Container(
+            height: MediaQuery.of(sbCtx).size.height * 0.7,
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Column(
+              children: [
+                const SizedBox(height: 10),
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white24 : Colors.black12,
+                      borderRadius: BorderRadius.circular(2.5),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(sbCtx),
+                        child: Text('Tutup', style: TextStyle(color: primaryBlue, fontSize: 17)),
+                      ),
+                      const Text('Pilih Dompet', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                      const SizedBox(width: 60),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: CupertinoSearchTextField(
+                    onChanged: (v) => setPickerState(() => query = v),
+                    placeholder: 'Cari dompet...',
+                    style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: filtered.isEmpty
+                      ? Center(child: Text('Dompet tidak ditemukan', style: TextStyle(color: isDark ? Colors.white38 : Colors.black38)))
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: filtered.length,
+                          itemBuilder: (ctx, index) {
+                            final w = filtered[index];
+                            final isSelected = _selectedWallet?.id == w.id;
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              decoration: BoxDecoration(
+                                color: sectionColor,
+                                borderRadius: BorderRadius.circular(12),
+                                border: isSelected ? Border.all(color: primaryBlue, width: 2) : null,
+                              ),
+                              child: ListTile(
+                                leading: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: primaryBlue.withOpacity(0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(CupertinoIcons.creditcard, color: primaryBlue, size: 20),
+                                ),
+                                title: Text(w.walletName, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                subtitle: Text(CurrencyFormatter.formatCurrency(w.balance), style: TextStyle(fontSize: 12, color: isDark ? Colors.white54 : Colors.black54)),
+                                trailing: isSelected ? Icon(CupertinoIcons.checkmark_circle_fill, color: primaryBlue) : null,
+                                onTap: () {
+                                  setState(() => _selectedWallet = w);
+                                  Navigator.pop(sbCtx);
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final remaining = widget.debt.totalAmount - widget.debt.paidAmount;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7);
+    final sectionColor = isDark ? const Color(0xFF2C2C2E) : Colors.white;
+    final primaryBlue = isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF);
+    final accentColor = widget.debt.isUtang ? AppColors.expense : AppColors.income;
 
     return Container(
       padding: EdgeInsets.only(
-        left: 24,
-        right: 24,
-        top: 12,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
       ),
-      child: SingleChildScrollView(
-        physics: const ClampingScrollPhysics(),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).hintColor.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 10),
+          Center(
+            child: Container(
+              width: 36,
+              height: 5,
+              decoration: BoxDecoration(
+                color: isDark ? Colors.white24 : Colors.black12,
+                borderRadius: BorderRadius.circular(2.5),
               ),
             ),
-            const SizedBox(height: 24),
-            Text(
-                ToneManager.t('debt_payment_title')
-                    .replaceAll('{title}', widget.debt.title),
-                style:
-                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Text(
-                ToneManager.t('debt_remaining_label')
-                    .replaceAll(
-                        '{type}', widget.debt.isUtang ? 'Hutang' : 'Piutang')
-                    .replaceAll('{amount}',
-                        CurrencyFormatter.formatCurrency(remaining)),
-                style: TextStyle(
-                    fontSize: 14, color: Theme.of(context).hintColor)),
-            const SizedBox(height: 24),
-            TextField(
-              controller: _amountController,
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              style: const TextStyle(fontWeight: FontWeight.bold),
-              decoration: InputDecoration(
-                hintText: '0',
-                prefixIcon: UnconstrainedBox(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(CupertinoIcons.creditcard,
-                            size: 20, color: Theme.of(context).primaryColor),
-                        const SizedBox(width: 8),
-                        Text('Rp',
-                            style: TextStyle(
-                                color: Theme.of(context).primaryColor,
-                                fontWeight: FontWeight.w900,
-                                fontSize: 14)),
-                      ],
-                    ),
-                  ),
-                ),
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none),
-                filled: true,
-                fillColor: Theme.of(context).inputDecorationTheme.fillColor,
-              ),
+          ),
+          const SizedBox(height: 8),
+
+          // Action Bar
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: isDark ? Colors.white10 : Colors.black12, width: 0.5)),
             ),
-            const SizedBox(height: 16),
-            StreamBuilder<List<WalletModel>>(
-              stream: widget.firestoreService
-                  .getWalletsStream(widget.currentUserId),
-              builder: (streamCtx, snapshot) {
-                if (!snapshot.hasData) return const SizedBox.shrink();
-                final wallets = snapshot.data!.where((w) => !w.isDebt).toList();
-                return DropdownButtonFormField<String>(
-                  value: _selectedWalletId,
-                  hint: Text(ToneManager.t('debt_payment_wallet_hint')),
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Theme.of(streamCtx).brightness == Brightness.dark
-                        ? Colors.white.withOpacity(0.05)
-                        : AppColors.surfaceVariant,
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide.none),
-                  ),
-                  items: wallets.map((w) {
-                    return DropdownMenuItem(
-                      value: w.id,
-                      child: Text(w.walletName),
-                    );
-                  }).toList(),
-                  onChanged: (val) {
-                    setState(() => _selectedWalletId = val);
-                  },
-                );
-              },
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _noteController,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: InputDecoration(
-                hintText: ToneManager.t('debt_payment_note_hint'),
-                prefixIcon: Icon(CupertinoIcons.pencil,
-                    color: Theme.of(context).primaryColor),
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none),
-                filled: true,
-                fillColor: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.white.withOpacity(0.05)
-                    : AppColors.surfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 32),
-            Column(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: _isLoading
-                        ? null
-                        : () async {
-                            if (_amountController.text.isEmpty ||
-                                _selectedWalletId == null) {
-                              UIHelper.showErrorSnackBar(
-                                  context,
-                                  ToneManager.t(
-                                      'debt_payment_error_incomplete'));
-                              return;
-                            }
-
-                            final payAmount =
-                                double.tryParse(_amountController.text) ?? 0;
-                            if (payAmount <= 0) return;
-                            final remaining = widget.debt.totalAmount -
-                                widget.debt.paidAmount;
-                            if (payAmount > remaining) {
-                              UIHelper.showErrorSnackBar(
-                                  context,
-                                  ToneManager.t('debt_payment_error_exceed')
-                                      .replaceAll(
-                                          '{type}',
-                                          widget.debt.isUtang
-                                              ? 'Hutang'
-                                              : 'Piutang'));
-                              return;
-                            }
-
-                            setState(() => _isLoading = true);
-                            try {
-                              await widget.debtService.payInstallment(
-                                currentUserId: widget.currentUserId,
-                                currentUserName: FirebaseAuth
-                                        .instance.currentUser?.displayName ??
-                                    'User',
-                                targetDebt: widget.debt,
-                                installmentAmount: payAmount,
-                                paymentWalletId: _selectedWalletId!,
-                              );
-
-                              if (!mounted) return;
-                              UIHelper.showSuccessSnackBar(context,
-                                  ToneManager.t('debt_payment_success'));
-                              Navigator.pop(context);
-                            } catch (e) {
-                              if (!mounted) return;
-                              setState(() => _isLoading = false);
-                              UIHelper.showErrorSnackBar(
-                                  context, 'Gagal mencatat pembayaran: $e');
-                            } finally {
-                              if (mounted && _isLoading) {
-                                Future.delayed(const Duration(seconds: 8), () {
-                                  if (mounted && _isLoading) {
-                                    setState(() => _isLoading = false);
-                                  }
-                                });
-                              }
-                            }
-                          },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          Theme.of(context).brightness == Brightness.dark
-                              ? const Color(0xFF0A84FF)
-                              : Theme.of(context).primaryColor,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16)),
-                      elevation: 0,
-                    ),
-                    child: _isLoading
-                        ? const CupertinoActivityIndicator(color: Colors.white)
-                        : const Text('Simpan Pembayaran',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: Colors.white)),
-                  ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('Batal', style: TextStyle(color: primaryBlue, fontSize: 17)),
                 ),
-                const SizedBox(height: 12),
-                InkWell(
-                  onTap: () => Navigator.pop(context),
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    width: double.infinity,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.white.withOpacity(0.05)
-                          : Colors.grey.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                          color:
-                              Theme.of(context).dividerColor.withOpacity(0.12)),
-                    ),
-                    child: Center(
-                      child: Text(
-                        ToneManager.t('dialog_no'),
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.5,
-                          color: Theme.of(context).hintColor,
+                Text(
+                  widget.debt.isUtang ? 'Bayar Hutang' : 'Terima Piutang',
+                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+                ),
+                TextButton(
+                  onPressed: _isLoading || _selectedWallet == null
+                      ? null
+                      : () async {
+                          final amount = double.tryParse(_amountController.text);
+                          if (amount == null || amount <= 0) return;
+                          if (amount > remaining) {
+                            UIHelper.showErrorSnackBar(context, 'Melebihi sisa ${widget.debt.isUtang ? 'hutang' : 'piutang'}');
+                            return;
+                          }
+
+                          setState(() => _isLoading = true);
+                          try {
+                            await widget.debtService.payInstallment(
+                              currentUserId: widget.currentUserId,
+                              currentUserName: FirebaseAuth.instance.currentUser?.displayName ?? 'User',
+                              targetDebt: widget.debt,
+                              installmentAmount: amount,
+                              paymentWalletId: _selectedWallet!.id,
+                            );
+                            if (mounted) {
+                              UIHelper.showSuccessSnackBar(context, ToneManager.t('debt_tx_success_add'));
+                              Navigator.pop(context);
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              setState(() => _isLoading = false);
+                              UIHelper.showErrorSnackBar(context, 'Gagal: $e');
+                            }
+                          }
+                        },
+                  child: _isLoading
+                      ? const CupertinoActivityIndicator()
+                      : Text(
+                          'Simpan',
+                          style: TextStyle(
+                            color: _selectedWallet == null ? Colors.grey : primaryBlue,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                    ),
-                  ),
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Debt Info
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    child: Text(
+                      'INFO ${widget.debt.isUtang ? 'HUTANG' : 'PIUTANG'}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isDark ? Colors.white54 : Colors.black54,
+                        fontWeight: FontWeight.w400,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: sectionColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        _buildInfoRow('Pihak', widget.debt.title, CupertinoIcons.person_2, isDark),
+                        const Divider(height: 24),
+                        _buildInfoRow('Sisa', CurrencyFormatter.formatCurrency(remaining), CupertinoIcons.hourglass, isDark, color: Colors.orange),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Payment Form
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    child: Text(
+                      'PEMBAYARAN',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isDark ? Colors.white54 : Colors.black54,
+                        fontWeight: FontWeight.w400,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: sectionColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        // Amount
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                          child: TextField(
+                            controller: _amountController,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                            decoration: InputDecoration(
+                              hintText: '0',
+                              border: InputBorder.none,
+                              prefixIcon: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(CupertinoIcons.money_rubl, size: 20, color: accentColor),
+                                  const SizedBox(width: 8),
+                                  Text('Rp ', style: TextStyle(color: accentColor, fontWeight: FontWeight.bold, fontSize: 16)),
+                                ],
+                              ),
+                              prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                            ),
+                          ),
+                        ),
+                        Divider(height: 1, indent: 52, color: isDark ? Colors.white10 : Colors.black12),
+                        // Wallet Selection
+                        StreamBuilder<List<WalletModel>>(
+                          stream: widget.firestoreService.getWalletsStream(widget.currentUserId),
+                          builder: (ctx, snapshot) {
+                            final wallets = (snapshot.data ?? []).where((w) => !w.isDebt).toList();
+                            return ListTile(
+                              onTap: wallets.isEmpty ? null : () => _showLocalWalletPicker(context, wallets),
+                              leading: Icon(CupertinoIcons.creditcard, size: 20, color: primaryBlue.withOpacity(0.7)),
+                              title: Text(
+                                _selectedWallet?.walletName ?? 'Pilih Dompet',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: _selectedWallet != null ? (isDark ? Colors.white : Colors.black) : (isDark ? Colors.white38 : Colors.black38)
+                                ),
+                              ),
+                              trailing: Icon(CupertinoIcons.chevron_right, size: 14, color: isDark ? Colors.white24 : Colors.black26),
+                            );
+                          },
+                        ),
+                        Divider(height: 1, indent: 52, color: isDark ? Colors.white10 : Colors.black12),
+                        // Note
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                          child: TextField(
+                            controller: _noteController,
+                            textCapitalization: TextCapitalization.sentences,
+                            decoration: InputDecoration(
+                              hintText: 'Catatan (Opsional)',
+                              hintStyle: TextStyle(color: isDark ? Colors.white38 : Colors.black38),
+                              prefixIcon: Icon(CupertinoIcons.pencil, size: 20, color: primaryBlue.withOpacity(0.7)),
+                              border: InputBorder.none,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value, IconData icon, bool isDark, {Color? color}) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: color ?? (isDark ? Colors.white54 : Colors.black54)),
+        const SizedBox(width: 12),
+        Text(label, style: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 14)),
+        const Spacer(),
+        Text(value, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: color)),
+      ],
     );
   }
 }

@@ -887,6 +887,13 @@ class ToneManager {
       AppTone.boomer: 'Keterangan Catatan',
       AppTone.pasangan: 'Keterangan Apa Sayang?',
     },
+    'debt_history_table_title': {
+      AppTone.normal: 'Nama / Keterangan',
+      AppTone.genZ: 'Buat Apa / Siapa?',
+      AppTone.milenial: 'Title / Description',
+      AppTone.boomer: 'Keterangan Catatan',
+      AppTone.pasangan: 'Keterangan Apa Sayang?',
+    },
     'debt_label_total': {
       AppTone.normal: 'Total {type}',
       AppTone.genZ: 'Total {type}',
@@ -1002,7 +1009,7 @@ class ToneManager {
       AppTone.genZ: 'Edit Angka',
       AppTone.milenial: 'Edit Amount',
       AppTone.boomer: 'Koreksi Nominal',
-      AppTone.pasangan: 'Ubah Nominalnya Sayang',
+      AppTone.pasangan: 'Ubah Nominal',
     },
     'debt_tx_edit_msg': {
       AppTone.normal: 'Masukkan nominal transaksi yang benar:',

@@ -45,6 +45,7 @@ class HomeSliverAppBar extends StatelessWidget {
       pinned: true,
       stretch: true,
       elevation: 0,
+      surfaceTintColor: Colors.transparent,
       backgroundColor:
           Colors.transparent, // Background handled by flexibleSpace
       expandedHeight: 140,
@@ -60,7 +61,7 @@ class HomeSliverAppBar extends StatelessWidget {
           final subTextColor = isDark ? Colors.white70 : Colors.black54;
 
           final collapsePercent = ((140 - top) / (140 - 70)).clamp(0.0, 1.0);
-          final isCollapsed = collapsePercent > 0.6;
+          final isCollapsed = collapsePercent > 0.3; 
 
           return FlexibleSpaceBar(
             stretchModes: const [
@@ -128,9 +129,10 @@ class HomeSliverAppBar extends StatelessWidget {
                                             (0.8 * (1 - collapsePercent)),
                                       ),
                                       overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
                                     ),
                                   ),
-                                  if (isAdmin && !isCollapsed) ...[
+                                  if (isAdmin) ...[
                                     const SizedBox(width: 8),
                                     _buildAdminBadge(),
                                   ],

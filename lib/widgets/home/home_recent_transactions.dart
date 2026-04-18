@@ -51,7 +51,7 @@ class HomeRecentTransactions extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 24, 0, 10),
+                      padding: const EdgeInsets.fromLTRB(12, 8, 0, 10),
                       child: Text(
                         _getDateLabel(group.date).toUpperCase(),
                         style: TextStyle(

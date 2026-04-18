@@ -789,7 +789,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         // Bottom spacer for floating navbar
                         const SliverToBoxAdapter(
-                          child: SizedBox(height: 110),
+                          child: SizedBox(height: 150),
                         ),
                       ],
                     ),

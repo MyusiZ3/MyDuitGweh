@@ -188,52 +188,65 @@ class _ReportScreenState extends State<ReportScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
+      extendBodyBehindAppBar: true,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        centerTitle: true,
-        title: Text(ToneManager.t('report_title'),
-            style: TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 22,
-                letterSpacing: -0.5)),
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        titleSpacing: 24,
-        toolbarHeight: 70,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: InkWell(
-              onTap: _showExportDialog,
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: (Theme.of(context).brightness == Brightness.dark
-                          ? Colors.indigoAccent
-                          : Theme.of(context).primaryColor)
-                      .withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(70),
+        child: ClipRect(
+          child: BackdropFilter(
+            filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: AppBar(
+              centerTitle: true,
+              title: Text(ToneManager.t('report_title'),
+                  style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 22,
+                      letterSpacing: -0.5)),
+              backgroundColor: isDark
+                  ? Theme.of(context).scaffoldBackgroundColor.withOpacity(0.85)
+                  : Colors.white.withOpacity(0.85),
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              surfaceTintColor: Colors.transparent,
+              titleSpacing: 24,
+              toolbarHeight: 70,
+              actions: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: InkWell(
+                    onTap: _showExportDialog,
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: (Theme.of(context).brightness == Brightness.dark
+                                ? Colors.indigoAccent
+                                : Theme.of(context).primaryColor)
+                            .withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        CupertinoIcons.share,
+                        size: 24,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.indigoAccent
+                            : Theme.of(context).primaryColor,
+                      ),
+                    ),
+                  ),
                 ),
-                child: Icon(
-                  CupertinoIcons.share,
-                  size: 24,
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.indigoAccent
-                      : Theme.of(context).primaryColor,
-                ),
-              ),
+                const SizedBox(width: 16),
+              ],
             ),
           ),
-          const SizedBox(width: 16),
-        ],
+        ),
       ),
       body: StreamBuilder<List<WalletModel>>(
         stream: _walletStream,
         builder: (context, walletSnapshot) {
           if (walletSnapshot.connectionState == ConnectionState.waiting) {
             return const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24),
+                padding: EdgeInsets.fromLTRB(24, 100, 24, 0),
                 child: ShimmerTransactionList());
           }
 
@@ -259,7 +272,7 @@ class _ReportScreenState extends State<ReportScreen> {
             builder: (context, txnSnapshot) {
               if (txnSnapshot.connectionState == ConnectionState.waiting) {
                 return const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24),
+                    padding: EdgeInsets.fromLTRB(24, 100, 24, 0),
                     child: ShimmerTransactionList());
               }
 
@@ -267,6 +280,7 @@ class _ReportScreenState extends State<ReportScreen> {
               if (transactions.isEmpty) {
                 return ListView(
                   children: [
+                    const SizedBox(height: 100),
                     _buildDateFilter(),
                     _buildNoData(ToneManager.t('home_empty_title'),
                         ToneManager.t('home_empty_msg')),
@@ -290,7 +304,7 @@ class _ReportScreenState extends State<ReportScreen> {
 
               return ListView(
                 physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 24),
+                padding: const EdgeInsets.only(left: 24, right: 24, top: 100, bottom: 24),
                 children: [
                   const SizedBox(height: 16),
                   _buildDateFilter(),
@@ -391,7 +405,7 @@ class _ReportScreenState extends State<ReportScreen> {
         decoration: BoxDecoration(
           color: isDark
               ? const Color(0xFF1C1C1E)
-              : const Color(0xFF767680).withOpacity(0.12),
+              : Color(0xFF767680).withOpacity(0.12),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -476,7 +490,7 @@ class _ReportScreenState extends State<ReportScreen> {
                     surface: const Color(0xFF1C1C1E),
                     onSurface: Colors.white,
                     secondaryContainer:
-                        const Color(0xFF0A84FF).withOpacity(0.15),
+                        Color(0xFF0A84FF).withOpacity(0.15),
                   )
                 : ColorScheme.light(
                     primary: AppColors.primary,
@@ -3660,7 +3674,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: tone == AppTone.pasangan
-                          ? const Color(0xFFFF2D55).withOpacity(0.15)
+                          ? Color(0xFFFF2D55).withOpacity(0.15)
                           : Theme.of(context).primaryColor.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
