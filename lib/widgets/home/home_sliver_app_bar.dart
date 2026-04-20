@@ -33,9 +33,9 @@ class HomeSliverAppBar extends StatelessWidget {
   String _getGreetingText() {
     if (greeting != null) return greeting!;
     final hour = DateTime.now().hour;
-    if (hour < 11) return '${ToneManager.t('greeting_pagi')} ';
-    if (hour < 15) return '${ToneManager.t('greeting_siang')} ';
-    if (hour < 18) return '${ToneManager.t('greeting_sore')} ';
+    if (hour >= 3 && hour < 11) return '${ToneManager.t('greeting_pagi')} ';
+    if (hour >= 11 && hour < 15) return '${ToneManager.t('greeting_siang')} ';
+    if (hour >= 15 && hour < 18) return '${ToneManager.t('greeting_sore')} ';
     return '${ToneManager.t('greeting_malam')} ';
   }
 
