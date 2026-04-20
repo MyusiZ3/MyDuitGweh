@@ -22,7 +22,7 @@ import '../utils/ui_helper.dart';
 import '../utils/tone_dictionary.dart';
 import '../services/notif_listener_bridge.dart';
 import '../services/debt_service.dart';
-import '../models/debt_model.dart';
+// import '../models/debt_model.dart';
 
 class ReportScreen extends StatefulWidget {
   const ReportScreen({super.key});
@@ -46,6 +46,7 @@ class _ReportScreenState extends State<ReportScreen> {
 
   int _touchedPieIndex = -1;
   bool _isCategoryMode = true;
+  bool _showLineChart = false;
   bool _isCheckingAi = false;
   String? _aiApiKey;
   String? _aiApiPlatform; // 'gemini' or 'groq'
@@ -56,15 +57,27 @@ class _ReportScreenState extends State<ReportScreen> {
   bool _isNotifAccessGranted = false;
   bool _isNotifBannerDismissed = false;
 
+  // Added for new features
+  double _monthlyBudget = 0.0;
+  double _prevIncome = 0.0;
+  double _prevExpense = 0.0;
+  bool _isLoadingPrev = false;
+  String _activePreset = '30 Hari';
+  List<TransactionModel>? _cachedTransactions;
+
   Future<void> _checkNotifStatus() async {
     final granted = await NotifListenerBridge.isAccessGranted();
     final prefs = await SharedPreferences.getInstance();
     final dismissed = prefs.getBool('notif_banner_dismissed') ?? false;
+    final budget = prefs.getDouble('monthly_budget') ?? 0.0;
+
     if (mounted) {
       setState(() {
         _isNotifAccessGranted = granted;
         _isNotifBannerDismissed = dismissed;
+        _monthlyBudget = budget;
       });
+      _calculatePreviousPeriodData();
     }
   }
 
@@ -94,7 +107,89 @@ class _ReportScreenState extends State<ReportScreen> {
       startDate: selectedDateRange.start,
       endDate: selectedDateRange.end,
     );
+    _calculatePreviousPeriodData();
     return _txnStream!;
+  }
+
+  Future<void> _calculatePreviousPeriodData() async {
+    if (_currentWalletIds.isEmpty) return;
+
+    final duration = selectedDateRange.duration;
+    final prevStart = selectedDateRange.start.subtract(duration);
+    final prevEnd =
+        selectedDateRange.start.subtract(const Duration(seconds: 1));
+
+    if (mounted) setState(() => _isLoadingPrev = true);
+
+    try {
+      final prevTxns = await _firestoreService.getFilteredTransactions(
+        walletIds: _currentWalletIds,
+        startDate: prevStart,
+        endDate: prevEnd,
+      );
+
+      double inc = 0;
+      double exp = 0;
+      for (var t in prevTxns) {
+        if (t.isIncome) {
+          inc += t.amount;
+        } else {
+          exp += t.amount;
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _prevIncome = inc;
+          _prevExpense = exp;
+          _isLoadingPrev = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoadingPrev = false);
+    }
+  }
+
+  void _applyPreset(String preset) {
+    setState(() {
+      _activePreset = preset;
+      final now = DateTime.now();
+      switch (preset) {
+        case 'Hari Ini':
+          selectedDateRange = DateTimeRange(
+            start: DateTime(now.year, now.month, now.day),
+            end: now,
+          );
+          break;
+        case 'Minggu Ini':
+          final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+          selectedDateRange = DateTimeRange(
+            start:
+                DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day),
+            end: now,
+          );
+          break;
+        case 'Bulan Ini':
+          selectedDateRange = DateTimeRange(
+            start: DateTime(now.year, now.month, 1),
+            end: now,
+          );
+          break;
+        case '30 Hari':
+          selectedDateRange = DateTimeRange(
+            start: now.subtract(const Duration(days: 30)),
+            end: now,
+          );
+          break;
+        case 'Tahun Ini':
+          selectedDateRange = DateTimeRange(
+            start: DateTime(now.year, 1, 1),
+            end: now,
+          );
+          break;
+      }
+    });
+    _calculatePreviousPeriodData();
   }
 
   Future<void> _loadAIKey() async {
@@ -188,209 +283,275 @@ class _ReportScreenState extends State<ReportScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      extendBodyBehindAppBar: true,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(70),
-        child: ClipRect(
-          child: BackdropFilter(
-            filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: AppBar(
-              centerTitle: true,
-              title: Text(ToneManager.t('report_title'),
-                  style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 22,
-                      letterSpacing: -0.5)),
-              backgroundColor: isDark
-                  ? Theme.of(context).scaffoldBackgroundColor.withOpacity(0.85)
-                  : Colors.white.withOpacity(0.85),
+      body: NestedScrollView(
+        physics: const BouncingScrollPhysics(),
+        headerSliverBuilder: (context, innerBoxIsScrolled) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final headerColor = isDark
+              ? Colors.black.withOpacity(0.7)
+              : Colors.white.withOpacity(0.7);
+
+          return [
+            SliverAppBar(
+              pinned: true,
+              stretch: true,
+              centerTitle: false,
+              expandedHeight: 140,
+              collapsedHeight: 70,
               elevation: 0,
               scrolledUnderElevation: 0,
               surfaceTintColor: Colors.transparent,
-              titleSpacing: 24,
-              toolbarHeight: 70,
+              backgroundColor: Colors.transparent,
               actions: [
                 Padding(
                   padding: const EdgeInsets.only(right: 8),
-                  child: InkWell(
-                    onTap: _showExportDialog,
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: (Theme.of(context).brightness == Brightness.dark
-                                ? Colors.indigoAccent
-                                : Theme.of(context).primaryColor)
-                            .withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        CupertinoIcons.share,
-                        size: 24,
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.indigoAccent
-                            : Theme.of(context).primaryColor,
-                      ),
+                  child: IconButton(
+                    onPressed: _showExportDialog,
+                    icon: Icon(
+                      CupertinoIcons.share,
+                      size: 22,
+                      color: isDark ? Colors.white : AppColors.primary,
                     ),
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 8),
               ],
+              flexibleSpace: ClipRect(
+                child: BackdropFilter(
+                  filter: ui.ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                  child: FlexibleSpaceBar(
+                    stretchModes: const [
+                      StretchMode.blurBackground,
+                      StretchMode.zoomBackground,
+                    ],
+                    titlePadding: const EdgeInsets.only(left: 24, bottom: 16),
+                    centerTitle: false,
+                    title: Text(
+                      ToneManager.t('report_title'),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 28,
+                        letterSpacing: -1.0,
+                        color: isDark ? Colors.white : Colors.black,
+                      ),
+                    ),
+                    background: Container(color: headerColor),
+                  ),
+                ),
+              ),
             ),
-          ),
-        ),
-      ),
-      body: StreamBuilder<List<WalletModel>>(
-        stream: _walletStream,
-        builder: (context, walletSnapshot) {
-          if (walletSnapshot.connectionState == ConnectionState.waiting) {
-            return const Padding(
-                padding: EdgeInsets.fromLTRB(24, 100, 24, 0),
-                child: ShimmerTransactionList());
-          }
-
-          final wallets = walletSnapshot.data ?? [];
-          if (wallets.isEmpty) {
-            return _buildNoData(ToneManager.t('wallet_empty_title'), ToneManager.t('wallet_empty_msg'));
-          }
-
-          final walletIds = wallets.map((w) => w.id).toList();
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) {
-              _allWallets = wallets;
-              final set1 = _currentWalletIds.toSet();
-              final set2 = walletIds.toSet();
-              if (set1.length != set2.length || !set1.containsAll(set2)) {
-                setState(() => _currentWalletIds = walletIds);
-              }
+          ];
+        },
+        body: StreamBuilder<List<WalletModel>>(
+          stream: _walletStream,
+          builder: (context, walletSnapshot) {
+            if (walletSnapshot.connectionState == ConnectionState.waiting) {
+              return const Padding(
+                  padding: EdgeInsets.fromLTRB(24, 24, 24, 0),
+                  child: ShimmerTransactionList());
             }
-          });
 
-          return StreamBuilder<List<TransactionModel>>(
-            stream: _getTxnStream(walletIds),
-            builder: (context, txnSnapshot) {
-              if (txnSnapshot.connectionState == ConnectionState.waiting) {
-                return const Padding(
-                    padding: EdgeInsets.fromLTRB(24, 100, 24, 0),
-                    child: ShimmerTransactionList());
-              }
+            final wallets = walletSnapshot.data ?? [];
+            if (wallets.isEmpty) {
+              return _buildNoData(ToneManager.t('wallet_empty_title'),
+                  ToneManager.t('wallet_empty_msg'));
+            }
 
-              final transactions = txnSnapshot.data ?? [];
-              if (transactions.isEmpty) {
-                return ListView(
-                  children: [
-                    const SizedBox(height: 100),
-                    _buildDateFilter(),
-                    _buildNoData(ToneManager.t('home_empty_title'),
-                        ToneManager.t('home_empty_msg')),
-                  ],
-                );
-              }
-
-              double totalIncome = 0;
-              double totalExpense = 0;
-              Map<String, double> categoryTotals = {};
-
-              for (var txn in transactions) {
-                if (txn.isIncome) {
-                  totalIncome += txn.amount;
-                } else {
-                  totalExpense += txn.amount;
-                  categoryTotals[txn.category] =
-                      (categoryTotals[txn.category] ?? 0) + txn.amount;
+            final walletIds = wallets.map((w) => w.id).toList();
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                _allWallets = wallets;
+                final set1 = _currentWalletIds.toSet();
+                final set2 = walletIds.toSet();
+                if (set1.length != set2.length || !set1.containsAll(set2)) {
+                  setState(() => _currentWalletIds = walletIds);
                 }
               }
+            });
 
-              return ListView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.only(left: 24, right: 24, top: 100, bottom: 24),
-                children: [
-                  const SizedBox(height: 16),
-                  _buildDateFilter(),
-                  const SizedBox(height: 16),
-                  _buildSummaryCard(
-                      totalIncome - totalExpense, totalIncome, totalExpense),
-                  const SizedBox(height: 24),
-                  _buildInsightToggle(),
-                  const SizedBox(height: 24),
-                  if (_isCategoryMode)
-                    if (totalExpense > 0)
-                      _buildInteractivePieChart(categoryTotals, totalExpense)
-                    else
-                      const Center(child: Text('Belum ada pengeluaran'))
-                  else
-                    _buildWeeklyTrendChart(transactions),
-                  const SizedBox(height: 24),
-                  if (_isCategoryMode && totalExpense > 0)
-                    _buildCategoryList(categoryTotals, totalExpense),
-                  const SizedBox(height: 32),
-                  _buildNotifSettingsCard(),
-                  const SizedBox(height: 120),
-                ],
-              );
-            },
-          );
-        },
+            return StreamBuilder<List<TransactionModel>>(
+              stream: _getTxnStream(walletIds),
+              builder: (context, txnSnapshot) {
+                final transactions = txnSnapshot.data;
+                if (transactions != null) {
+                  _cachedTransactions = transactions;
+                }
+
+                final displayTransactions = transactions ?? _cachedTransactions;
+                final isLoading =
+                    txnSnapshot.connectionState == ConnectionState.waiting;
+
+                if (isLoading &&
+                    (displayTransactions == null ||
+                        displayTransactions.isEmpty)) {
+                  return const Padding(
+                      padding: EdgeInsets.fromLTRB(24, 100, 24, 0),
+                      child: ShimmerTransactionList());
+                }
+
+                final data = displayTransactions ?? [];
+                if (data.isEmpty) {
+                  return ListView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 20),
+                    children: [
+                      _buildQuickPresets(),
+                      const SizedBox(height: 16),
+                      _buildDateFilter(),
+                      const SizedBox(height: 40),
+                      _buildNoData(ToneManager.t('home_empty_title'),
+                          ToneManager.t('home_empty_msg')),
+                    ],
+                  );
+                }
+
+                double totalIncome = 0;
+                double totalExpense = 0;
+                Map<String, double> categoryTotals = {};
+
+                for (var txn in data) {
+                  if (txn.isIncome) {
+                    totalIncome += txn.amount;
+                  } else {
+                    totalExpense += txn.amount;
+                    categoryTotals[txn.category] =
+                        (categoryTotals[txn.category] ?? 0) + txn.amount;
+                  }
+                }
+
+                return ListView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.only(
+                      left: 20, right: 20, top: 20, bottom: 140),
+                  children: [
+                    _buildQuickPresets(),
+                    const SizedBox(height: 16),
+                    _buildDateFilter(),
+                    const SizedBox(height: 20),
+                    _buildSummaryCard(
+                        totalIncome - totalExpense, totalIncome, totalExpense),
+                    const SizedBox(height: 24),
+                    if (_monthlyBudget > 0) ...[
+                      _buildBudgetRings(totalExpense),
+                      const SizedBox(height: 24),
+                    ],
+                    _buildInsightToggle(),
+                    const SizedBox(height: 24),
+                    // Grouped Content Container
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).cardColor,
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                Colors.black.withOpacity(isDark ? 0.1 : 0.03),
+                            blurRadius: 15,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          if (_isCategoryMode)
+                            if (totalExpense > 0)
+                              _buildInteractivePieChart(
+                                  categoryTotals, totalExpense)
+                            else
+                              const Center(child: Text('Belum ada pengeluaran'))
+                          else
+                            _buildWeeklyTrendChart(data),
+                          if (_isCategoryMode && totalExpense > 0) ...[
+                            const SizedBox(height: 24),
+                            const Divider(height: 1),
+                            const SizedBox(height: 24),
+                            _buildCategoryList(categoryTotals, totalExpense),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    _buildActivityHeatmap(data),
+                    const SizedBox(height: 32),
+                    _buildNotifSettingsCard(),
+                    const SizedBox(height: 20),
+                  ],
+                );
+              },
+            );
+          },
+        ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          if (_isCheckingAi) return;
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(
+            bottom: 150), // Elevated to stay above bottom nav
+        child: FloatingActionButton.extended(
+          onPressed: () async {
+            if (_isCheckingAi) return;
 
-          setState(() {
-            _isCheckingAi = true;
-          });
+            setState(() {
+              _isCheckingAi = true;
+            });
 
-          // Check if AI is globally enabled
-          final isEnabled = await AIService.isGlobalAiEnabled();
+            // Check if AI is globally enabled
+            final isEnabled = await AIService.isGlobalAiEnabled();
 
-          if (!context.mounted) return;
+            if (!context.mounted) return;
+            setState(() {
+              _isCheckingAi = false;
+            });
 
-          setState(() {
-            _isCheckingAi = false;
-          });
-
-          if (!isEnabled) {
-            UIHelper.showAiMaintenanceDialog(context);
-            return;
-          }
-
-          showModalBottomSheet(
-            context: context,
-            isScrollControlled: true,
-            backgroundColor: Colors.transparent,
-            builder: (context) => _AIAdvisorSheet(
-              apiKey: _aiApiKey,
-              apiPlatform: _aiApiPlatform,
-              allApiKeys: _allApiKeys,
-              onSaveKey: _saveAIKey,
-              onDeleteKey: _deleteStoredKey,
-              onRemoveKey: _removeAIKey,
-              selectedDateRange: selectedDateRange,
-              uid: _uid,
-              firestoreService: _firestoreService,
-              walletIds: _currentWalletIds,
-              wallets: _allWallets,
-            ),
-          );
-        },
-        label: _isCheckingAi
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 2,
-                ),
-              )
-            : Text(ToneManager.t('arch_ai_button'),
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold, color: Colors.white)),
-        icon: _isCheckingAi
-            ? const SizedBox.shrink()
-            : Icon(CupertinoIcons.sparkles, color: Colors.white),
-        backgroundColor: Theme.of(context).primaryColor,
-        elevation: 4,
+            if (isEnabled) {
+              if (context.mounted) {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (context) => _AIAdvisorSheet(
+                    apiKey: _aiApiKey,
+                    apiPlatform: _aiApiPlatform,
+                    allApiKeys: _allApiKeys,
+                    onSaveKey: _saveAIKey,
+                    onDeleteKey: _deleteStoredKey,
+                    onRemoveKey: _removeAIKey,
+                    selectedDateRange: selectedDateRange,
+                    uid: _uid,
+                    firestoreService: _firestoreService,
+                    walletIds: _currentWalletIds,
+                    wallets: _allWallets,
+                  ),
+                );
+              }
+            } else {
+              if (context.mounted) {
+                UIHelper.showAiMaintenanceDialog(context);
+              }
+            }
+          },
+          label: _isCheckingAi
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
+              : Text(ToneManager.t('arch_ai_button'),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.white)),
+          icon: _isCheckingAi
+              ? const SizedBox.shrink()
+              : Icon(CupertinoIcons.sparkles, color: Colors.white),
+          backgroundColor: isDark
+              ? CupertinoColors.activeBlue
+              : Theme.of(context).primaryColor,
+          elevation: 4,
+        ),
       ),
     );
   }
@@ -399,74 +560,69 @@ class _ReportScreenState extends State<ReportScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return InkWell(
       onTap: _selectDateRange,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isDark
-              ? const Color(0xFF1C1C1E)
-              : Color(0xFF767680).withOpacity(0.12),
-          borderRadius: BorderRadius.circular(12),
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.1 : 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+          border: Border.all(
+            color:
+                Theme.of(context).dividerColor.withOpacity(isDark ? 0.05 : 0.1),
+            width: 0.5,
+          ),
         ),
         child: Row(
           children: [
-            // Modern Custom Calendar Icon
             Container(
-              width: 36,
-              height: 36,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF2C2C2E) : Colors.white,
-                borderRadius: BorderRadius.circular(10),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withOpacity(0.1)
-                      : Colors.black.withOpacity(0.05),
-                  width: 0.5,
-                ),
+                color: (isDark ? Colors.blueAccent : AppColors.primary)
+                    .withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Column(
-                children: [
-                  Container(
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color:
-                          isDark ? const Color(0xFF0A84FF) : AppColors.primary,
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(10),
-                        topRight: Radius.circular(10),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Center(
-                      child: Text(
-                        DateFormat('dd').format(selectedDateRange.end),
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w900,
-                          color: isDark ? Colors.white : AppColors.textPrimary,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+              child: Icon(
+                CupertinoIcons.calendar,
+                color: isDark ? Colors.blueAccent : AppColors.primary,
+                size: 20,
               ),
             ),
             const SizedBox(width: 14),
-            Text(
-              '${DateFormat('dd MMM').format(selectedDateRange.start)} - ${DateFormat('dd MMM yyyy').format(selectedDateRange.end)}',
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Periode Laporan',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).hintColor,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${DateFormat('dd MMM').format(selectedDateRange.start)} - ${DateFormat('dd MMM yyyy').format(selectedDateRange.end)}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const Spacer(),
-            Icon(CupertinoIcons.chevron_up_chevron_down,
-                color: Theme.of(context).hintColor.withOpacity(0.5), size: 18),
+            Icon(CupertinoIcons.chevron_right,
+                color: Theme.of(context).hintColor.withOpacity(0.3), size: 16),
           ],
         ),
       ),
@@ -474,7 +630,6 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Future<void> _selectDateRange() async {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final range = await showDateRangePicker(
       context: context,
       initialDateRange: selectedDateRange,
@@ -483,41 +638,285 @@ class _ReportScreenState extends State<ReportScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: isDark
-                ? ColorScheme.dark(
-                    primary: const Color(0xFF0A84FF),
+            colorScheme: Theme.of(context).brightness == Brightness.dark
+                ? const ColorScheme.dark(
+                    primary: CupertinoColors.activeBlue,
                     onPrimary: Colors.white,
-                    surface: const Color(0xFF1C1C1E),
+                    surface: Color(0xFF1C1C1E),
                     onSurface: Colors.white,
-                    secondaryContainer:
-                        Color(0xFF0A84FF).withOpacity(0.15),
                   )
                 : ColorScheme.light(
                     primary: AppColors.primary,
                     onPrimary: Colors.white,
-                    onSurface: AppColors.textPrimary,
-                    secondaryContainer: AppColors.primary.withOpacity(0.12),
+                    surface: Colors.white,
+                    onSurface: Colors.black,
                   ),
-            dialogTheme: DialogTheme(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20)),
-            ),
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                foregroundColor:
-                    isDark ? const Color(0xFF0A84FF) : AppColors.primary,
-                textStyle: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
           ),
           child: child!,
         );
       },
     );
-    if (range != null) setState(() => selectedDateRange = range);
+
+    if (range != null) {
+      setState(() {
+        selectedDateRange = range;
+        _activePreset = 'Custom';
+      });
+      _calculatePreviousPeriodData();
+    }
+  }
+
+  Widget _buildBudgetRings(double currentExpense) {
+    if (_monthlyBudget == 0) return const SizedBox.shrink();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final percent = (currentExpense / _monthlyBudget).clamp(0.0, 1.0);
+    final isOverBudget = currentExpense > _monthlyBudget;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1C1C1E) : Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+        border: isDark
+            ? Border.all(color: Colors.white.withOpacity(0.05), width: 1)
+            : null,
+      ),
+      child: Row(
+        children: [
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              SizedBox(
+                width: 80,
+                height: 80,
+                child: CircularProgressIndicator(
+                  value: percent,
+                  strokeWidth: 10,
+                  backgroundColor: isDark
+                      ? Colors.white.withOpacity(0.05)
+                      : Colors.black.withOpacity(0.05),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    isOverBudget
+                        ? const Color(0xFFFF453A) // iOS Red
+                        : (percent > 0.8
+                            ? const Color(0xFFFF9F0A)
+                            : (isDark
+                                ? CupertinoColors.activeBlue
+                                : AppColors.primary)),
+                  ),
+                  strokeCap: StrokeCap.round,
+                ),
+              ),
+              Text(
+                '${(percent * 100).toInt()}%',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 20),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Anggaran Bulanan',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).hintColor,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    '${CurrencyFormatter.formatCurrency(currentExpense)} / ${CurrencyFormatter.formatCurrency(_monthlyBudget)}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 17,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  isOverBudget
+                      ? 'Wah, kamu sudah melebihi anggaran!'
+                      : 'Sisa: ${CurrencyFormatter.formatCurrency(_monthlyBudget - currentExpense)}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: isOverBudget
+                        ? const Color(0xFFFF453A)
+                        : (isDark ? Colors.white38 : Colors.black45),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActivityHeatmap(List<TransactionModel> transactions) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    Map<DateTime, int> dailyCounts = {};
+    for (var tx in transactions) {
+      final dateOnly = DateTime(tx.date.year, tx.date.month, tx.date.day);
+      dailyCounts[dateOnly] = (dailyCounts[dateOnly] ?? 0) + 1;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1C1C1E) : Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+        border: isDark
+            ? Border.all(color: Colors.white.withOpacity(0.05), width: 1)
+            : null,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'AKTIVITAS TRANSAKSI',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  color: isDark ? Colors.white30 : Colors.black38,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              Text(
+                '4 Minggu Terakhir',
+                style:
+                    TextStyle(fontSize: 10, color: Theme.of(context).hintColor),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: List.generate(28, (index) {
+                final date = today.subtract(Duration(days: 27 - index));
+                final count = dailyCounts[date] ?? 0;
+
+                Color cellColor;
+                if (count == 0) {
+                  cellColor = isDark
+                      ? Colors.white.withOpacity(0.05)
+                      : Colors.black.withOpacity(0.03);
+                } else if (count <= 2) {
+                  cellColor =
+                      (isDark ? CupertinoColors.activeBlue : AppColors.primary)
+                          .withOpacity(0.3);
+                } else if (count <= 5) {
+                  cellColor =
+                      (isDark ? CupertinoColors.activeBlue : AppColors.primary)
+                          .withOpacity(0.6);
+                } else {
+                  cellColor =
+                      isDark ? CupertinoColors.activeBlue : AppColors.primary;
+                }
+
+                return Container(
+                  width: 8,
+                  height: 20,
+                  margin: const EdgeInsets.only(right: 4),
+                  decoration: BoxDecoration(
+                    color: cellColor,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                );
+              }),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickPresets() {
+    final presets = [
+      'Hari Ini',
+      'Minggu Ini',
+      'Bulan Ini',
+      '30 Hari',
+      'Tahun Ini'
+    ];
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Row(
+        children: presets.map((preset) {
+          final isSelected = _activePreset == preset;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: Text(preset),
+              selected: isSelected,
+              onSelected: (bool selected) {
+                if (selected) {
+                  HapticFeedback.selectionClick();
+                  _applyPreset(preset);
+                }
+              },
+              labelStyle: TextStyle(
+                color: isSelected
+                    ? Colors.white
+                    : (isDark ? Colors.white70 : Colors.black87),
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+              selectedColor:
+                  isDark ? CupertinoColors.activeBlue : AppColors.primary,
+              backgroundColor: isDark
+                  ? Colors.white.withOpacity(0.05)
+                  : Colors.black.withOpacity(0.05),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              side: BorderSide.none,
+              elevation: 0,
+              pressElevation: 0,
+            ),
+          );
+        }).toList(),
+      ),
+    );
   }
 
   Widget _buildNotifSettingsCard() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accentColor = isDark ? CupertinoColors.activeBlue : AppColors.primary;
+
     return StreamBuilder<bool>(
       stream: NotifListenerBridge.globalConfigStream,
       builder: (context, snapshot) {
@@ -528,15 +927,19 @@ class _ReportScreenState extends State<ReportScreen> {
         return Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
+            color:
+                isDark ? const Color(0xFF1C1C1E) : Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(28),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withOpacity(isDark ? 0.3 : 0.04),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
             ],
+            border: isDark
+                ? Border.all(color: Colors.white.withOpacity(0.05), width: 1)
+                : null,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -546,12 +949,12 @@ class _ReportScreenState extends State<ReportScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor.withOpacity(0.1),
+                      color: accentColor.withOpacity(0.15),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       CupertinoIcons.sparkles,
-                      color: Theme.of(context).primaryColor,
+                      color: accentColor,
                       size: 24,
                     ),
                   ),
@@ -566,29 +969,30 @@ class _ReportScreenState extends State<ReportScreen> {
                             fontWeight: FontWeight.w900,
                             fontSize: 18,
                             letterSpacing: -0.5,
+                            color: isDark ? Colors.white : Colors.black87,
                           ),
                         ),
                         const SizedBox(height: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
+                              horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color:
-                                Theme.of(context).primaryColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(4),
+                            color: accentColor.withOpacity(isDark ? 0.25 : 0.1),
+                            borderRadius: BorderRadius.circular(6),
                             border: Border.all(
-                                color: Theme.of(context)
-                                    .primaryColor
-                                    .withOpacity(0.2),
+                                color:
+                                    accentColor.withOpacity(isDark ? 0.4 : 0.2),
                                 width: 0.8),
                           ),
                           child: Text(
                             'EXPERIMENTAL',
                             style: TextStyle(
                               fontWeight: FontWeight.w900,
-                              fontSize: 7,
-                              color: Theme.of(context).primaryColor,
-                              letterSpacing: 0.5,
+                              fontSize: 8,
+                              color: isDark
+                                  ? accentColor.withOpacity(0.9)
+                                  : accentColor,
+                              letterSpacing: 0.8,
                             ),
                           ),
                         ),
@@ -597,7 +1001,7 @@ class _ReportScreenState extends State<ReportScreen> {
                           'Pencatatan otomatis dari notifikasi keuangan',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Theme.of(context).hintColor,
+                            color: isDark ? Colors.white60 : Colors.black54,
                           ),
                         ),
                       ],
@@ -605,11 +1009,13 @@ class _ReportScreenState extends State<ReportScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: AppColors.background.withOpacity(0.5),
+                  color: isDark
+                      ? Colors.white.withOpacity(0.05)
+                      : AppColors.background.withOpacity(0.5),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
@@ -617,30 +1023,39 @@ class _ReportScreenState extends State<ReportScreen> {
                     Icon(
                       _isNotifAccessGranted
                           ? CupertinoIcons.check_mark_circled_solid
-                          : CupertinoIcons.info,
-                      color:
-                          _isNotifAccessGranted ? Colors.green : Colors.orange,
-                      size: 20,
+                          : CupertinoIcons.info_circle_fill,
+                      color: _isNotifAccessGranted
+                          ? (isDark
+                              ? CupertinoColors.systemGreen
+                              : Colors.green)
+                          : (isDark
+                              ? CupertinoColors.systemOrange
+                              : Colors.orange),
+                      size: 22,
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 14),
                     Expanded(
                       child: Text(
                         _isNotifAccessGranted
                             ? 'Izin Akses Aktif'
                             : 'Izin Akses Belum Diberikan',
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: _isNotifAccessGranted
-                              ? Colors.green[700]
-                              : Colors.orange[800],
+                              ? (isDark
+                                  ? Colors.greenAccent
+                                  : Colors.green[800])
+                              : (isDark
+                                  ? Colors.orangeAccent
+                                  : Colors.orange[900]),
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 18),
               Row(
                 children: [
                   Expanded(
@@ -651,16 +1066,17 @@ class _ReportScreenState extends State<ReportScreen> {
                         Future.delayed(
                             const Duration(seconds: 2), _checkNotifStatus);
                       },
-                      icon: Icon(CupertinoIcons.settings,
+                      icon: const Icon(CupertinoIcons.settings,
                           color: Colors.white, size: 20),
-                      label: Text('Buka Pengaturan Perizinan'),
+                      label: const Text('Buka Pengaturan Perizinan',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).primaryColor,
+                        backgroundColor: accentColor,
                         foregroundColor: Colors.white,
                         elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 18),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(18),
                         ),
                       ),
                     ),
@@ -668,7 +1084,7 @@ class _ReportScreenState extends State<ReportScreen> {
                 ],
               ),
               if (_isNotifBannerDismissed && !_isNotifAccessGranted) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 TextButton(
                   onPressed: () async {
                     final prefs = await SharedPreferences.getInstance();
@@ -685,7 +1101,9 @@ class _ReportScreenState extends State<ReportScreen> {
                       style: TextStyle(
                         fontSize: 12,
                         decoration: TextDecoration.underline,
-                        color: Theme.of(context).hintColor,
+                        color: isDark
+                            ? Colors.white38
+                            : Theme.of(context).hintColor,
                       ),
                     ),
                   ),
@@ -699,158 +1117,244 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Widget _buildSummaryCard(double balance, double income, double expense) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      padding: const EdgeInsets.all(28),
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(32),
+        borderRadius: BorderRadius.circular(30),
         gradient: LinearGradient(
-          colors: [
-            Theme.of(context).primaryColor,
-            Theme.of(context).primaryColor.withOpacity(0.85)
-          ],
+          colors: isDark
+              ? [const Color(0xFF1C1C1E), const Color(0xFF2C2C2E)]
+              : [AppColors.primary, AppColors.primary.withOpacity(0.8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).primaryColor.withOpacity(0.3),
+            color: (isDark ? Colors.black : AppColors.primary).withOpacity(0.2),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
         ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('TOTAL SALDO BERSIH',
-              style: TextStyle(
-                  color: Colors.white70,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'RINGKASAN BERSIH',
+                style: TextStyle(
+                  color: isDark ? Colors.white54 : Colors.white70,
                   fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.5)),
-          const SizedBox(height: 8),
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              Icon(
+                CupertinoIcons.info_circle,
+                size: 16,
+                color: isDark ? Colors.white24 : Colors.white38,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
               CurrencyFormatter.formatCurrency(balance),
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 32,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.5),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 34,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -0.5,
+              ),
             ),
           ),
-          const SizedBox(height: 32),
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(
+                child: _buildStatItem(
+                  'Pemasukan',
+                  income,
+                  CupertinoIcons.arrow_down_circle_fill,
+                  isDark ? Colors.greenAccent : Colors.white.withOpacity(0.9),
+                ),
+              ),
+              Container(
+                height: 30,
+                width: 1,
+                color: Colors.white.withOpacity(0.2),
+              ),
+              Expanded(
+                child: _buildStatItem(
+                  'Pengeluaran',
+                  expense,
+                  CupertinoIcons.arrow_up_circle_fill,
+                  isDark ? Colors.redAccent : Colors.white.withOpacity(0.9),
+                ),
+              ),
+            ],
+          ),
+          if (!_isLoadingPrev) ...[
+            const SizedBox(height: 20),
+            const Divider(color: Colors.white10),
+            const SizedBox(height: 16),
+            Column(
               children: [
-                Expanded(
-                  child: _buildMiniStat('Pemasukan', income,
-                      CupertinoIcons.arrow_down, Colors.white),
-                ),
-                Container(width: 1, height: 24, color: Colors.white24),
-                Expanded(
-                  child: _buildMiniStat('Pengeluaran', expense,
-                      CupertinoIcons.arrow_up, Colors.white),
-                ),
+                _buildComparisonRow(income, _prevIncome, 'Pemasukan',
+                    isInverse: false),
+                const SizedBox(height: 8),
+                _buildComparisonRow(expense, _prevExpense, 'Pengeluaran',
+                    isInverse: true),
               ],
             ),
-          ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildMiniStat(
-      String label, double amount, IconData icon, Color color) {
-    return Column(
+  Widget _buildComparisonRow(double current, double previous, String label,
+      {bool isInverse = false}) {
+    if (previous == 0) return const SizedBox.shrink();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final difference = current - previous;
+    final percentChange = ((difference / previous) * 100).abs();
+
+    // For expenses (isInverse: true), lower is better. For income, higher is better.
+    final isImprovement = isInverse ? difference < 0 : difference > 0;
+
+    return Row(
       children: [
-        Row(
-          children: [
-            Icon(icon, size: 14, color: Colors.white70),
-            const SizedBox(width: 4),
-            Text(label, style: TextStyle(color: Colors.white70, fontSize: 12)),
-          ],
+        Icon(
+          difference == 0
+              ? CupertinoIcons.minus
+              : (isImprovement
+                  ? CupertinoIcons.arrow_down_right
+                  : CupertinoIcons.arrow_up_right),
+          size: 14,
+          color: difference == 0
+              ? (isDark ? Colors.white24 : Colors.black26)
+              : (isImprovement ? Colors.greenAccent : Colors.orangeAccent),
         ),
-        const SizedBox(height: 4),
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text(CurrencyFormatter.formatCurrency(amount),
-              style:
-                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            difference == 0
+                ? 'Sama dengan'
+                : '${percentChange.toStringAsFixed(1)}% ${difference > 0 ? 'lebih tinggi' : 'lebih rendah'}',
+            style: TextStyle(
+              color: difference == 0
+                  ? (isDark ? Colors.white54 : Colors.black54)
+                  : (isImprovement ? Colors.greenAccent : Colors.orangeAccent),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Flexible(
+          child: Text(
+            '$label periode lalu',
+            style: TextStyle(
+              color: isDark ? Colors.white30 : Colors.white60,
+              fontSize: 12,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildInsightToggle() {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? Colors.white.withOpacity(0.05)
-            : AppColors.surfaceVariant.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
+  Widget _buildStatItem(
+      String label, double amount, IconData icon, Color color) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: _toggleItem('Kategori', _isCategoryMode, () {
-              setState(() => _isCategoryMode = true);
-            }, context),
+          Row(
+            children: [
+              Icon(icon, size: 14, color: color.withOpacity(0.7)),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.6),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ),
-          Expanded(
-            child: _toggleItem('Tren Mingguan', !_isCategoryMode, () {
-              setState(() => _isCategoryMode = false);
-            }, context),
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              CurrencyFormatter.formatCurrency(amount),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.2,
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _toggleItem(
-      String label, bool isActive, VoidCallback onTap, BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: isActive
-              ? (Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0xFF0A84FF)
-                  : Theme.of(context).primaryColor)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: isActive
-              ? [
-                  BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2))
-                ]
-              : [],
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: isActive ? FontWeight.w800 : FontWeight.w500,
-              color: isActive
-                  ? Colors.white
-                  : (Theme.of(context).brightness == Brightness.dark
-                      ? Colors.white.withOpacity(0.5)
-                      : Theme.of(context).hintColor),
+  Widget _buildInsightToggle() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return SizedBox(
+      width: double.infinity,
+      child: CupertinoSlidingSegmentedControl<bool>(
+        groupValue: _isCategoryMode,
+        backgroundColor:
+            isDark ? const Color(0xFF1C1C1E) : Colors.black.withOpacity(0.05),
+        thumbColor: isDark ? const Color(0xFF3A3A3C) : Colors.white,
+        padding: const EdgeInsets.all(4),
+        children: {
+          true: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Text(
+              'Kategori',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: _isCategoryMode ? FontWeight.w700 : FontWeight.w500,
+                color: isDark ? Colors.white : Colors.black,
+              ),
             ),
           ),
-        ),
+          false: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Text(
+              'Tren Mingguan',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight:
+                    !_isCategoryMode ? FontWeight.w700 : FontWeight.w500,
+                color: isDark ? Colors.white : Colors.black,
+              ),
+            ),
+          ),
+        },
+        onValueChanged: (value) {
+          if (value != null) {
+            HapticFeedback.selectionClick();
+            setState(() => _isCategoryMode = value);
+          }
+        },
       ),
     );
   }
@@ -861,14 +1365,26 @@ class _ReportScreenState extends State<ReportScreen> {
       builder: (context, setChartState) {
         List<PieChartSectionData> sections = [];
         int i = 0;
-        final colors = [
-          Theme.of(context).primaryColor,
-          const Color(0xFF5856D6), // iOS Purple
-          AppColors.income,
-          const Color(0xFFFF9500), // iOS Orange
-          const Color(0xFFFF2D55), // iOS Red
-          const Color(0xFF8E8E93), // iOS Gray
-        ];
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final colors = isDark
+            ? [
+                const Color(0xFF0A84FF), // iOS System Blue (Dark)
+                const Color(0xFF30D158), // iOS System Green (Dark)
+                const Color(0xFF5E5CE6), // iOS System Indigo (Dark)
+                const Color(0xFFFF9F0A), // iOS System Orange (Dark)
+                const Color(0xFFFF375F), // iOS System Pink (Dark)
+                const Color(0xFFBF5AF2), // iOS System Purple (Dark)
+                const Color(0xFF64D2FF), // iOS System Teal (Dark)
+              ]
+            : [
+                const Color(0xFF007AFF), // iOS System Blue (Light)
+                const Color(0xFF34C759), // iOS System Green (Light)
+                const Color(0xFF5856D6), // iOS System Indigo (Light)
+                const Color(0xFFFF9500), // iOS System Orange (Light)
+                const Color(0xFFFF2D55), // iOS System Pink (Light)
+                const Color(0xFFAF52DE), // iOS System Purple (Light)
+                const Color(0xFF5AC8FA), // iOS System Teal (Light)
+              ];
 
         categoryTotals.forEach((cat, amount) {
           final isTouched = i == _touchedPieIndex;
@@ -926,7 +1442,7 @@ class _ReportScreenState extends State<ReportScreen> {
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                         color: Theme.of(context).brightness == Brightness.dark
-                            ? const Color(0xFF8E8E93)
+                            ? Colors.white70
                             : Theme.of(context).hintColor),
                   ),
                   const SizedBox(height: 2),
@@ -952,7 +1468,6 @@ class _ReportScreenState extends State<ReportScreen> {
     Map<String, double> incomeByDay = {};
     Map<String, double> expenseByDay = {};
 
-    // Sort to get chronological order
     final now = DateTime.now();
     final days =
         List.generate(7, (index) => now.subtract(Duration(days: 6 - index)));
@@ -974,6 +1489,61 @@ class _ReportScreenState extends State<ReportScreen> {
       }
     }
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              onPressed: () => setState(() => _showLineChart = !_showLineChart),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white.withOpacity(0.05)
+                      : Colors.black.withOpacity(0.03),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _showLineChart
+                          ? CupertinoIcons.graph_square_fill
+                          : CupertinoIcons.chart_bar_fill,
+                      size: 14,
+                      color: isDark ? Colors.white : Theme.of(context).primaryColor,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      _showLineChart ? 'Tampilan Garis' : 'Tampilan Batang',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white70
+                            : Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        _showLineChart
+            ? _buildLineChart(incomeByDay, expenseByDay)
+            : _buildBarChart(incomeByDay, expenseByDay),
+      ],
+    );
+  }
+
+  Widget _buildBarChart(
+      Map<String, double> incomeByDay, Map<String, double> expenseByDay) {
     List<BarChartGroupData> groups = [];
     int i = 0;
     incomeByDay.forEach((day, income) {
@@ -994,7 +1564,6 @@ class _ReportScreenState extends State<ReportScreen> {
             borderRadius: BorderRadius.circular(4),
           ),
         ],
-        showingTooltipIndicators: [],
       ));
       i++;
     });
@@ -1040,10 +1609,8 @@ class _ReportScreenState extends State<ReportScreen> {
               final type = rodIndex == 0 ? 'Pemasukan' : 'Pengeluaran';
               return BarTooltipItem(
                 '$type\n${CurrencyFormatter.formatCurrency(rod.toY)}',
-                TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12),
+                const TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold),
               );
             },
           ),
@@ -1052,10 +1619,144 @@ class _ReportScreenState extends State<ReportScreen> {
     );
   }
 
+  Widget _buildLineChart(
+      Map<String, double> incomeByDay, Map<String, double> expenseByDay) {
+    List<FlSpot> incomeSpots = [];
+    List<FlSpot> expenseSpots = [];
+
+    int i = 0;
+    incomeByDay.forEach((day, value) {
+      incomeSpots.add(FlSpot(i.toDouble(), value));
+      i++;
+    });
+
+    i = 0;
+    expenseByDay.forEach((day, value) {
+      expenseSpots.add(FlSpot(i.toDouble(), value));
+      i++;
+    });
+
+    return Container(
+      height: 240,
+      padding: const EdgeInsets.only(top: 20, right: 20, left: 10),
+      child: LineChart(
+        LineChartData(
+          gridData: FlGridData(
+            show: true,
+            drawVerticalLine: false,
+            horizontalInterval: 1000000,
+            getDrawingHorizontalLine: (value) => FlLine(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white.withOpacity(0.05)
+                  : Colors.black.withOpacity(0.03),
+              strokeWidth: 1,
+            ),
+          ),
+          titlesData: FlTitlesData(
+            topTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            leftTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (value, meta) {
+                  if (value.toInt() >= incomeByDay.length)
+                    return const SizedBox.shrink();
+                  final day = incomeByDay.keys.elementAt(value.toInt());
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(day,
+                        style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.color
+                                ?.withOpacity(0.7))),
+                  );
+                },
+              ),
+            ),
+          ),
+          borderData: FlBorderData(show: false),
+          lineBarsData: [
+            LineChartBarData(
+              spots: incomeSpots,
+              isCurved: true,
+              color: AppColors.income,
+              barWidth: 4,
+              isStrokeCapRound: true,
+              dotData: const FlDotData(show: false),
+              belowBarData: BarAreaData(
+                show: true,
+                color: AppColors.income.withOpacity(0.1),
+              ),
+            ),
+            LineChartBarData(
+              spots: expenseSpots,
+              isCurved: true,
+              color: AppColors.expense,
+              barWidth: 4,
+              isStrokeCapRound: true,
+              dotData: const FlDotData(show: false),
+              belowBarData: BarAreaData(
+                show: true,
+                color: AppColors.expense.withOpacity(0.1),
+              ),
+            ),
+          ],
+          lineTouchData: LineTouchData(
+            touchTooltipData: LineTouchTooltipData(
+              getTooltipItems: (touchedSpots) {
+                return touchedSpots.map((spot) {
+                  final type = spot.barIndex == 0 ? 'Pemasukan' : 'Pengeluaran';
+                  return LineTooltipItem(
+                    '$type\n${CurrencyFormatter.formatCurrency(spot.y)}',
+                    const TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.bold),
+                  );
+                }).toList();
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildCategoryList(Map<String, double> categoryTotals, double total) {
+    final categoryEntries = categoryTotals.entries.toList();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = isDark
+        ? [
+            const Color(0xFF0A84FF), // iOS System Blue (Dark)
+            const Color(0xFF30D158), // iOS System Green (Dark)
+            const Color(0xFF5E5CE6), // iOS System Indigo (Dark)
+            const Color(0xFFFF9F0A), // iOS System Orange (Dark)
+            const Color(0xFFFF375F), // iOS System Pink (Dark)
+            const Color(0xFFBF5AF2), // iOS System Purple (Dark)
+            const Color(0xFF64D2FF), // iOS System Teal (Dark)
+          ]
+        : [
+            const Color(0xFF007AFF), // iOS System Blue (Light)
+            const Color(0xFF34C759), // iOS System Green (Light)
+            const Color(0xFF5856D6), // iOS System Indigo (Light)
+            const Color(0xFFFF9500), // iOS System Orange (Light)
+            const Color(0xFFFF2D55), // iOS System Pink (Light)
+            const Color(0xFFAF52DE), // iOS System Purple (Light)
+            const Color(0xFF5AC8FA), // iOS System Teal (Light)
+          ];
+
     return Column(
-      children: categoryTotals.entries.map((e) {
+      children: List.generate(categoryEntries.length, (i) {
+        final e = categoryEntries[i];
         final percentage = (e.value / total);
+        final color = colors[i % colors.length];
+
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(16),
@@ -1067,36 +1768,24 @@ class _ReportScreenState extends State<ReportScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.white.withOpacity(0.08)
-                        : Theme.of(context)
-                            .scaffoldBackgroundColor
-                            .withOpacity(0.5),
+                    color: color.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(20)),
                 child: Icon(TransactionCategory.getIconForCategory(e.key),
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? const Color(0xFF0A84FF)
-                        : Theme.of(context).primaryColor,
-                    size: 20),
+                    color: color, size: 20),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(e.key, style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text(e.key, style: const TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 4),
                     LinearProgressIndicator(
                       value: percentage,
-                      backgroundColor:
-                          Theme.of(context).brightness == Brightness.dark
-                              ? Colors.white.withOpacity(0.12)
-                              : Theme.of(context).scaffoldBackgroundColor,
-                      valueColor: AlwaysStoppedAnimation<Color>(percentage > 0.5
-                          ? AppColors.expense
-                          : (Theme.of(context).brightness == Brightness.dark
-                              ? const Color(0xFF0A84FF)
-                              : Theme.of(context).primaryColor)),
+                      backgroundColor: isDark
+                          ? Colors.white.withOpacity(0.1)
+                          : Theme.of(context).scaffoldBackgroundColor,
+                      valueColor: AlwaysStoppedAnimation<Color>(color),
                       minHeight: 8,
                       borderRadius: BorderRadius.circular(4),
                     ),
@@ -1149,10 +1838,11 @@ class _ReportScreenState extends State<ReportScreen> {
               endDate: selectedDateRange.end)
           .first;
 
-      if (!context.mounted) return;
-      Navigator.pop(context); // Tutup loading
+      if (!mounted) return;
+      Navigator.of(context).pop(); // Tutup loading
 
       if (txns.isEmpty) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text(
                 'Tidak ada data transaksi di periode ini untuk diekspor.')));
@@ -1163,220 +1853,280 @@ class _ReportScreenState extends State<ReportScreen> {
       availableCategories.sort();
       List<String> selectedCategories = List.from(availableCategories);
 
+      if (!mounted) return;
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
         builder: (ctx) => StatefulBuilder(builder: (context, setSheetState) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+
           return Container(
             decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+              color: isDark
+                  ? Colors.black.withOpacity(0.8)
+                  : Colors.white.withOpacity(0.8),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(36)),
             ),
-            padding: EdgeInsets.only(
-                top: 12,
-                left: 24,
-                right: 24,
-                bottom: MediaQuery.of(context).padding.bottom + 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 24),
-                    decoration: BoxDecoration(
-                        color: Theme.of(context).hintColor.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(2)),
+            child: ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(36)),
+              child: BackdropFilter(
+                filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: Container(
+                  padding: EdgeInsets.only(
+                    top: 12,
+                    left: 24,
+                    right: 24,
+                    bottom: MediaQuery.of(context).padding.bottom + 24,
                   ),
-                ),
-                Text('Pilih Kategori',
-                    style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -0.5)),
-                const SizedBox(height: 8),
-                Text(
-                    'Tentukan kategori yang ingin kamu masukkan ke dalam laporan.',
-                    style: TextStyle(
-                        color: Theme.of(context).hintColor, fontSize: 13)),
-                const SizedBox(height: 24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 36,
+                          height: 5,
+                          margin: const EdgeInsets.only(bottom: 30),
+                          decoration: BoxDecoration(
+                            color: isDark ? Colors.white24 : Colors.black12,
+                            borderRadius: BorderRadius.circular(2.5),
+                          ),
+                        ),
+                      ),
+                      Text(
+                        'Pilih Kategori',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -1.0,
+                          color: isDark ? Colors.white : Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Pilih beberapa kategori untuk disertakan dalam laporan kamu.',
+                        style: TextStyle(
+                          color: isDark ? Colors.white60 : Colors.black54,
+                          fontSize: 15,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      const SizedBox(height: 28),
 
-                // Selection Actions
-                Row(
-                  children: [
-                    _buildQuickAction('Semua',
-                        selectedCategories.length == availableCategories.length,
-                        () {
-                      setSheetState(() =>
-                          selectedCategories = List.from(availableCategories));
-                    }),
-                    const SizedBox(width: 8),
-                    _buildQuickAction('Kosongkan', selectedCategories.isEmpty,
-                        () {
-                      setSheetState(() => selectedCategories.clear());
-                    }),
-                  ],
-                ),
-                const SizedBox(height: 16),
+                      // Quick Selection Actions
+                      Row(
+                        children: [
+                          _buildQuickAction(
+                            'Pilih Semua',
+                            CupertinoIcons.checkmark_circle_fill,
+                            selectedCategories.length ==
+                                availableCategories.length,
+                            () {
+                              HapticFeedback.mediumImpact();
+                              setSheetState(() => selectedCategories =
+                                  List.from(availableCategories));
+                            },
+                          ),
+                          const SizedBox(width: 10),
+                          _buildQuickAction(
+                            'Bersihkan',
+                            CupertinoIcons.xmark_circle,
+                            selectedCategories.isEmpty,
+                            () {
+                              HapticFeedback.lightImpact();
+                              setSheetState(() => selectedCategories.clear());
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
 
-                // Modern Chip List
-                ConstrainedBox(
-                  constraints: BoxConstraints(
-                      maxHeight: MediaQuery.of(context).size.height * 0.4),
-                  child: SingleChildScrollView(
-                    child: Wrap(
-                      spacing: 8,
-                      runSpacing: 10,
-                      children: availableCategories.map((cat) {
-                        final isSelected = selectedCategories.contains(cat);
-                        return InkWell(
-                          onTap: () {
-                            setSheetState(() {
-                              if (isSelected) {
-                                selectedCategories.remove(cat);
-                              } else {
-                                selectedCategories.add(cat);
-                              }
-                            });
-                          },
-                          borderRadius: BorderRadius.circular(12),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 10),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? (Theme.of(context).brightness ==
-                                              Brightness.dark
-                                          ? Colors.indigoAccent
-                                          : Theme.of(context).primaryColor)
-                                      .withOpacity(0.1)
-                                  : Theme.of(context).scaffoldBackgroundColor,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: isSelected
-                                    ? (Theme.of(context).brightness ==
-                                            Brightness.dark
-                                        ? Colors.indigoAccent
-                                        : Theme.of(context).primaryColor)
-                                    : Colors.transparent,
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  TransactionCategory.getIconForCategory(cat),
-                                  size: 16,
-                                  color: isSelected
-                                      ? (Theme.of(context).brightness ==
-                                              Brightness.dark
-                                          ? Colors.indigoAccent
-                                          : Theme.of(context).primaryColor)
-                                      : Theme.of(context).hintColor,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  cat,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: isSelected
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
+                      // Refined Category Grid
+                      ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxHeight: MediaQuery.of(context).size.height * 0.45,
+                        ),
+                        child: SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          child: Wrap(
+                            spacing: 12,
+                            runSpacing: 12,
+                            children: availableCategories.map((cat) {
+                              final isSelected =
+                                  selectedCategories.contains(cat);
+                              final accentColor = isDark
+                                  ? CupertinoColors.activeBlue
+                                  : AppColors.primary;
+
+                              return InkWell(
+                                onTap: () {
+                                  HapticFeedback.selectionClick();
+                                  setSheetState(() {
+                                    if (isSelected) {
+                                      selectedCategories.remove(cat);
+                                    } else {
+                                      selectedCategories.add(cat);
+                                    }
+                                  });
+                                },
+                                borderRadius: BorderRadius.circular(16),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 12),
+                                  decoration: BoxDecoration(
                                     color: isSelected
-                                        ? (Theme.of(context).brightness ==
-                                                Brightness.dark
-                                            ? Colors.indigoAccent
-                                            : Theme.of(context).primaryColor)
-                                        : Theme.of(context)
-                                                .textTheme
-                                                .bodyLarge
-                                                ?.color ??
-                                            Colors.black87,
+                                        ? accentColor.withOpacity(0.15)
+                                        : (isDark
+                                            ? Colors.white.withOpacity(0.05)
+                                            : Colors.black.withOpacity(0.03)),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? accentColor
+                                          : Colors.transparent,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        TransactionCategory.getIconForCategory(
+                                            cat),
+                                        size: 18,
+                                        color: isSelected
+                                            ? accentColor
+                                            : (isDark
+                                                ? Colors.white54
+                                                : Colors.black45),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Text(
+                                        cat,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: isSelected
+                                              ? FontWeight.bold
+                                              : FontWeight.w500,
+                                          color: isSelected
+                                              ? (isDark
+                                                  ? Colors.white
+                                                  : accentColor)
+                                              : (isDark
+                                                  ? Colors.white70
+                                                  : Colors.black87),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              ],
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 36),
+
+                      // Premium Export Actions
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildExportButton(
+                              label: 'EKSPOR PDF',
+                              icon: CupertinoIcons.doc_text_fill,
+                              color: isDark
+                                  ? const Color(0xFFFF453A)
+                                  : Colors.redAccent,
+                              onPressed: selectedCategories.isEmpty
+                                  ? null
+                                  : () {
+                                      HapticFeedback.mediumImpact();
+                                      _processExport(
+                                          ctx, txns, selectedCategories, true);
+                                    },
                             ),
                           ),
-                        );
-                      }).toList(),
-                    ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _buildExportButton(
+                              label: 'EKSPOR CSV',
+                              icon: CupertinoIcons.table,
+                              color: isDark
+                                  ? const Color(0xFF32D74B)
+                                  : Colors.green,
+                              onPressed: selectedCategories.isEmpty
+                                  ? null
+                                  : () {
+                                      HapticFeedback.mediumImpact();
+                                      _processExport(
+                                          ctx, txns, selectedCategories, false);
+                                    },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 32),
-
-                // Bottom Actions (Ramping & Modern)
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildExportButton(
-                        label: 'PDF',
-                        icon: CupertinoIcons.doc_text_fill,
-                        color: Colors.red,
-                        onPressed: selectedCategories.isEmpty
-                            ? null
-                            : () => _processExport(
-                                ctx, txns, selectedCategories, true),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildExportButton(
-                        label: 'CSV',
-                        icon: CupertinoIcons.table,
-                        color: Colors.green,
-                        onPressed: selectedCategories.isEmpty
-                            ? null
-                            : () => _processExport(
-                                ctx, txns, selectedCategories, false),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+              ),
             ),
           );
         }),
       );
     } catch (e) {
-      if (!context.mounted) return;
-      Navigator.pop(context);
+      if (!mounted) return;
+      Navigator.of(context).pop();
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Gagal menyiapkan data: $e')));
     }
   }
 
-  Widget _buildQuickAction(String label, bool isActive, VoidCallback onTap) {
+  Widget _buildQuickAction(
+      String label, IconData icon, bool isActive, VoidCallback onTap) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accentColor = isDark ? CupertinoColors.activeBlue : AppColors.primary;
+
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isActive
-              ? (Theme.of(context).brightness == Brightness.dark
-                  ? Colors.indigoAccent
-                  : Theme.of(context).primaryColor)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
+          color: isActive ? accentColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
-              color: isActive
-                  ? (Theme.of(context).brightness == Brightness.dark
-                      ? Colors.indigoAccent
-                      : Theme.of(context).primaryColor)
-                  : Theme.of(context).hintColor.withOpacity(0.3)),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-            color: isActive ? Colors.white : Theme.of(context).hintColor,
+            color: isActive
+                ? accentColor
+                : (isDark ? Colors.white24 : Colors.black12),
+            width: 1.5,
           ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 14,
+              color: isActive
+                  ? Colors.white
+                  : (isDark ? Colors.white60 : Colors.black54),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: isActive
+                    ? Colors.white
+                    : (isDark ? Colors.white60 : Colors.black54),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -1387,21 +2137,37 @@ class _ReportScreenState extends State<ReportScreen> {
       required IconData icon,
       required Color color,
       VoidCallback? onPressed}) {
-    return ElevatedButton(
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: color,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        disabledBackgroundColor: color.withOpacity(0.3),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          if (onPressed != null)
+            BoxShadow(
+              color: color.withOpacity(0.3),
+              blurRadius: 15,
+              offset: const Offset(0, 6),
+            ),
+        ],
       ),
-      child: Center(
-        child: Text(
+      child: ElevatedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, size: 18),
+        label: Text(
           label,
-          style: TextStyle(
-              fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: 1.2),
+          style: const TextStyle(
+            fontWeight: FontWeight.w900,
+            fontSize: 14,
+            letterSpacing: 0.5,
+          ),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(vertical: 18),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          disabledBackgroundColor: color.withOpacity(0.2),
         ),
       ),
     );
@@ -2925,12 +3691,13 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
 
             if (score > 80) {
               status = "Sangat Sehat";
-            } else if (score > 50)
+            } else if (score > 50) {
               status = "Cukup Sehat";
-            else if (score > 20)
+            } else if (score > 20) {
               status = "Waspada";
-            else
+            } else {
               status = "Kritis";
+            }
           } else if (expense > 0) {
             score = 0;
             status = "Kritis";
@@ -3044,7 +3811,10 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
                 // REAL AI ANALYSIS TEXT
                 FutureBuilder<String>(
                   future: (snapshot.hasData && snapshot.data!.isNotEmpty)
-                      ? DebtService().getUserDebts(widget.uid).first.then((debts) {
+                      ? DebtService()
+                          .getUserDebts(widget.uid)
+                          .first
+                          .then((debts) {
                           return AIService.getAdvisorAnalysis(
                             transactions: snapshot.data!,
                             wallets: widget.wallets,
@@ -3802,7 +4572,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
         setState(() {
           _messages.add({
             'text':
-                'Waduh, Archen lagi agak pusing (Limit/Error). Coba lagi beberapa saat lagi ya atau cek API di pengaturan.',
+                'Maaf, asisten AI sedang mengalami gangguan atau limit pada layanan. Silakan coba kembali beberapa saat lagi atau periksa konfigurasi kunci API Anda di pengaturan.',
             'isAI': true,
           });
           _isLoading = false;
@@ -3861,7 +4631,9 @@ class _AnimatedHeartbeatState extends State<AnimatedHeartbeat>
     int durationMs = 800;
     if (widget.score >= 80) {
       durationMs = 1200; // Calm heartbeat
-    } else if (widget.score < 50) durationMs = 400; // Panic heartbeat
+    } else if (widget.score < 50) {
+      durationMs = 400; // Panic heartbeat
+    }
 
     _controller.duration = Duration(milliseconds: durationMs);
     _controller.repeat(reverse: true);
