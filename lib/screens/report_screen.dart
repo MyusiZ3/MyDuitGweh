@@ -477,6 +477,10 @@ class _ReportScreenState extends State<ReportScreen> {
                     const SizedBox(height: 24),
                     _buildActivityHeatmap(data),
                     const SizedBox(height: 32),
+                    if (totalExpense > 0) ...[
+                      _buildStackedCategoryTimeline(data),
+                      const SizedBox(height: 32),
+                    ],
                     _buildNotifSettingsCard(),
                     const SizedBox(height: 20),
                   ],
@@ -767,6 +771,235 @@ class _ReportScreenState extends State<ReportScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildStackedCategoryTimeline(List<TransactionModel> transactions) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final expenseTransactions =
+        transactions.where((t) => !t.isIncome).toList();
+
+    if (expenseTransactions.isEmpty) return const SizedBox.shrink();
+
+    // Group by date
+    Map<String, Map<String, double>> dailyData = {};
+    List<String> categories = [];
+
+    for (var t in expenseTransactions) {
+      final dateKey =
+          "${t.date.year}-${t.date.month.toString().padLeft(2, '0')}-${t.date.day.toString().padLeft(2, '0')}";
+      if (!dailyData.containsKey(dateKey)) {
+        dailyData[dateKey] = {};
+      }
+      dailyData[dateKey]![t.category] =
+          (dailyData[dateKey]![t.category] ?? 0) + t.amount;
+
+      if (!categories.contains(t.category)) {
+        categories.add(t.category);
+      }
+    }
+
+    // Sort dates
+    final sortedDates = dailyData.keys.toList()..sort();
+    final colors = _getChartColors(isDark);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              'Timeline Pengeluaran',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: isDark ? Colors.white : Colors.black87,
+                letterSpacing: -0.5,
+              ),
+            ),
+            const Spacer(),
+            Icon(CupertinoIcons.layers_alt_fill,
+                size: 16, color: isDark ? Colors.white38 : Colors.black26),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Distribusi kategori per hari',
+          style: TextStyle(
+            fontSize: 13,
+            color: isDark ? Colors.white38 : Colors.black45,
+          ),
+        ),
+        const SizedBox(height: 24),
+        Container(
+          height: 250,
+          padding: const EdgeInsets.only(right: 16, top: 16),
+          child: BarChart(
+            BarChartData(
+              alignment: BarChartAlignment.spaceAround,
+              maxY: dailyData.values.isEmpty ? 100 : dailyData.values
+                      .map((e) =>
+                          e.values.fold(0.0, (prev, curr) => prev + curr))
+                      .reduce((a, b) => a > b ? a : b) *
+                  1.1,
+              barTouchData: BarTouchData(
+                enabled: true,
+                touchTooltipData: BarTouchTooltipData(
+                  tooltipBgColor: isDark ? const Color(0xFF2C2C2E) : Colors.white,
+                  getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                    final date = sortedDates[groupIndex];
+                    final total = rod.toY;
+                    return BarTooltipItem(
+                      '$date\n',
+                      TextStyle(
+                        color: isDark ? Colors.white : Colors.black,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: CurrencyFormatter.formatCurrency(total),
+                          style: TextStyle(
+                            color: isDark ? Colors.white70 : Colors.black54,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+              titlesData: FlTitlesData(
+                show: true,
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    getTitlesWidget: (value, meta) {
+                      if (value.toInt() >= 0 &&
+                          value.toInt() < sortedDates.length) {
+                        final dateStr = sortedDates[value.toInt()];
+                        final day = dateStr.split('-').last;
+                        // Only show labels occasionally to avoid crowding
+                        bool showLabel = true;
+                        if (sortedDates.length > 7) {
+                          showLabel = value.toInt() % (sortedDates.length ~/ 4 + 1) == 0;
+                        }
+                        
+                        if (!showLabel) return const SizedBox.shrink();
+
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            day,
+                            style: TextStyle(
+                              color: isDark ? Colors.white38 : Colors.black38,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                    reservedSize: 24,
+                  ),
+                ),
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    getTitlesWidget: (value, meta) {
+                      if (value == 0) return const SizedBox.shrink();
+                      return Text(
+                        CurrencyFormatter.formatCompact(value),
+                        style: TextStyle(
+                          color: isDark ? Colors.white24 : Colors.black26,
+                          fontSize: 9,
+                        ),
+                      );
+                    },
+                    reservedSize: 32,
+                  ),
+                ),
+                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              ),
+              gridData: FlGridData(
+                show: true,
+                drawVerticalLine: false,
+                getDrawingHorizontalLine: (value) => FlLine(
+                  color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
+                  strokeWidth: 1,
+                ),
+              ),
+              borderData: FlBorderData(show: false),
+              barGroups: sortedDates.asMap().entries.map((entry) {
+                final index = entry.key;
+                final dateKey = entry.value;
+                final catAmounts = dailyData[dateKey]!;
+
+                double currentY = 0;
+                List<BarChartRodStackItem> stackItems = [];
+                
+                // We need to maintain category order for consistency
+                for (int i = 0; i < categories.length; i++) {
+                  final cat = categories[i];
+                  final amount = catAmounts[cat] ?? 0;
+                  if (amount > 0) {
+                    stackItems.add(BarChartRodStackItem(
+                      currentY,
+                      currentY + amount,
+                      colors[i % colors.length],
+                    ));
+                    currentY += amount;
+                  }
+                }
+
+                return BarChartGroupData(
+                  x: index,
+                  barRods: [
+                    BarChartRodData(
+                      toY: currentY,
+                      width: sortedDates.length > 10 ? 8 : 16,
+                      borderRadius: BorderRadius.circular(4),
+                      rodStackItems: stackItems,
+                    ),
+                  ],
+                );
+              }).toList(),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        // Legend
+        Wrap(
+          spacing: 12,
+          runSpacing: 8,
+          children: categories.asMap().entries.map((e) {
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: colors[e.key % colors.length],
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  e.value,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: isDark ? Colors.white54 : Colors.black54,
+                  ),
+                ),
+              ],
+            );
+          }).toList(),
+        ),
+      ],
     );
   }
 
@@ -1201,22 +1434,28 @@ class _ReportScreenState extends State<ReportScreen> {
           ),
           if (!_isLoadingPrev) ...[
             const SizedBox(height: 20),
-            const Divider(color: Colors.white10),
-            const SizedBox(height: 16),
-            Column(
-              children: [
-                _buildComparisonRow(income, _prevIncome, 'Pemasukan',
-                    isInverse: false),
-                const SizedBox(height: 8),
-                _buildComparisonRow(expense, _prevExpense, 'Pengeluaran',
-                    isInverse: true),
-              ],
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                children: [
+                  _buildComparisonRow(income, _prevIncome, 'Pemasukan',
+                      isInverse: false),
+                  const SizedBox(height: 12),
+                  _buildComparisonRow(expense, _prevExpense, 'Pengeluaran',
+                      isInverse: true),
+                ],
+              ),
             ),
           ],
         ],
       ),
     );
   }
+
 
   Widget _buildComparisonRow(double current, double previous, String label,
       {bool isInverse = false}) {
@@ -1227,50 +1466,66 @@ class _ReportScreenState extends State<ReportScreen> {
 
     // For expenses (isInverse: true), lower is better. For income, higher is better.
     final isImprovement = isInverse ? difference < 0 : difference > 0;
+    final trendColor = isImprovement ? Colors.greenAccent : Colors.orangeAccent;
 
     return Row(
       children: [
-        Icon(
-          difference == 0
-              ? CupertinoIcons.minus
-              : (isImprovement
-                  ? CupertinoIcons.arrow_down_right
-                  : CupertinoIcons.arrow_up_right),
-          size: 14,
-          color: difference == 0
-              ? (isDark ? Colors.white24 : Colors.black26)
-              : (isImprovement ? Colors.greenAccent : Colors.orangeAccent),
-        ),
-        const SizedBox(width: 8),
-        Flexible(
-          child: Text(
-            difference == 0
-                ? 'Sama dengan'
-                : '${percentChange.toStringAsFixed(1)}% ${difference > 0 ? 'lebih tinggi' : 'lebih rendah'}',
-            style: TextStyle(
-              color: difference == 0
-                  ? (isDark ? Colors.white54 : Colors.black54)
-                  : (isImprovement ? Colors.greenAccent : Colors.orangeAccent),
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.5),
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            overflow: TextOverflow.ellipsis,
+            Text(
+              'vs Periode Sebelumnya',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.3),
+                fontSize: 9,
+              ),
+            ),
+          ],
+        ),
+        const Spacer(),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: trendColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: trendColor.withOpacity(0.2), width: 0.5),
           ),
-        ),
-        const SizedBox(width: 6),
-        Flexible(
-          child: Text(
-            '$label periode lalu',
-            style: TextStyle(
-              color: isDark ? Colors.white30 : Colors.white60,
-              fontSize: 12,
-            ),
-            overflow: TextOverflow.ellipsis,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                difference == 0
+                    ? CupertinoIcons.minus
+                    : (difference > 0
+                        ? CupertinoIcons.arrow_up_right
+                        : CupertinoIcons.arrow_down_right),
+                size: 10,
+                color: trendColor,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '${percentChange.toStringAsFixed(1)}%',
+                style: TextStyle(
+                  color: trendColor,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
         ),
       ],
     );
   }
+
 
   Widget _buildStatItem(
       String label, double amount, IconData icon, Color color) {
@@ -1359,32 +1614,40 @@ class _ReportScreenState extends State<ReportScreen> {
     );
   }
 
+  List<Color> _getChartColors(bool isDark) {
+    return isDark
+        ? [
+            const Color(0xFF0A84FF), // iOS System Blue (Dark)
+            const Color(0xFF30D158), // iOS System Green (Dark)
+            const Color(0xFF5E5CE6), // iOS System Indigo (Dark)
+            const Color(0xFFFF9F0A), // iOS System Orange (Dark)
+            const Color(0xFFFF375F), // iOS System Pink (Dark)
+            const Color(0xFFBF5AF2), // iOS System Purple (Dark)
+            const Color(0xFF64D2FF), // iOS System Teal (Dark)
+            const Color(0xFFAC8E68), // iOS System Brown (Dark)
+            const Color(0xFF8E8E93), // iOS System Gray (Dark)
+          ]
+        : [
+            const Color(0xFF007AFF), // iOS System Blue (Light)
+            const Color(0xFF34C759), // iOS System Green (Light)
+            const Color(0xFF5856D6), // iOS System Indigo (Light)
+            const Color(0xFFFF9500), // iOS System Orange (Light)
+            const Color(0xFFFF2D55), // iOS System Pink (Light)
+            const Color(0xFFAF52DE), // iOS System Purple (Light)
+            const Color(0xFF5AC8FA), // iOS System Teal (Light)
+            const Color(0xFFA2845E), // iOS System Brown (Light)
+            const Color(0xFF8E8E93), // iOS System Gray (Light)
+          ];
+  }
+
   Widget _buildInteractivePieChart(
       Map<String, double> categoryTotals, double total) {
     return StatefulBuilder(
       builder: (context, setChartState) {
         List<PieChartSectionData> sections = [];
-        int i = 0;
         final isDark = Theme.of(context).brightness == Brightness.dark;
-        final colors = isDark
-            ? [
-                const Color(0xFF0A84FF), // iOS System Blue (Dark)
-                const Color(0xFF30D158), // iOS System Green (Dark)
-                const Color(0xFF5E5CE6), // iOS System Indigo (Dark)
-                const Color(0xFFFF9F0A), // iOS System Orange (Dark)
-                const Color(0xFFFF375F), // iOS System Pink (Dark)
-                const Color(0xFFBF5AF2), // iOS System Purple (Dark)
-                const Color(0xFF64D2FF), // iOS System Teal (Dark)
-              ]
-            : [
-                const Color(0xFF007AFF), // iOS System Blue (Light)
-                const Color(0xFF34C759), // iOS System Green (Light)
-                const Color(0xFF5856D6), // iOS System Indigo (Light)
-                const Color(0xFFFF9500), // iOS System Orange (Light)
-                const Color(0xFFFF2D55), // iOS System Pink (Light)
-                const Color(0xFFAF52DE), // iOS System Purple (Light)
-                const Color(0xFF5AC8FA), // iOS System Teal (Light)
-              ];
+        final colors = _getChartColors(isDark);
+        int i = 0;
 
         categoryTotals.forEach((cat, amount) {
           final isTouched = i == _touchedPieIndex;
@@ -1451,7 +1714,8 @@ class _ReportScreenState extends State<ReportScreen> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w900,
-                      color: Theme.of(context).textTheme.titleLarge?.color,
+                      color: isDark ? Colors.white : Colors.black,
+                      letterSpacing: -0.5,
                     ),
                   ),
                 ],
@@ -1462,6 +1726,7 @@ class _ReportScreenState extends State<ReportScreen> {
       },
     );
   }
+
 
   Widget _buildWeeklyTrendChart(List<TransactionModel> transactions) {
     // Group by day for the last 7 days
@@ -1500,7 +1765,8 @@ class _ReportScreenState extends State<ReportScreen> {
               padding: EdgeInsets.zero,
               onPressed: () => setState(() => _showLineChart = !_showLineChart),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: Theme.of(context).brightness == Brightness.dark
                       ? Colors.white.withOpacity(0.05)
@@ -1515,7 +1781,9 @@ class _ReportScreenState extends State<ReportScreen> {
                           ? CupertinoIcons.graph_square_fill
                           : CupertinoIcons.chart_bar_fill,
                       size: 14,
-                      color: isDark ? Colors.white : Theme.of(context).primaryColor,
+                      color: isDark
+                          ? Colors.white
+                          : Theme.of(context).primaryColor,
                     ),
                     const SizedBox(width: 6),
                     Text(
@@ -1778,7 +2046,8 @@ class _ReportScreenState extends State<ReportScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(e.key, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text(e.key,
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 4),
                     LinearProgressIndicator(
                       value: percentage,
@@ -1860,219 +2129,183 @@ class _ReportScreenState extends State<ReportScreen> {
         backgroundColor: Colors.transparent,
         builder: (ctx) => StatefulBuilder(builder: (context, setSheetState) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
+          final accentColor =
+              isDark ? CupertinoColors.activeBlue : AppColors.primary;
 
           return Container(
             decoration: BoxDecoration(
               color: isDark
-                  ? Colors.black.withOpacity(0.8)
-                  : Colors.white.withOpacity(0.8),
+                  ? CupertinoColors.systemBackground.resolveFrom(context)
+                  : CupertinoColors.secondarySystemBackground
+                      .resolveFrom(context),
               borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(36)),
+                  const BorderRadius.vertical(top: Radius.circular(20)),
             ),
-            child: ClipRRect(
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(36)),
-              child: BackdropFilter(
-                filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                child: Container(
-                  padding: EdgeInsets.only(
-                    top: 12,
-                    left: 24,
-                    right: 24,
-                    bottom: MediaQuery.of(context).padding.bottom + 24,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle Bar
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 5,
+                    margin: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white24 : Colors.black12,
+                      borderRadius: BorderRadius.circular(2.5),
+                    ),
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                ),
+
+                // Header
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Center(
-                        child: Container(
-                          width: 36,
-                          height: 5,
-                          margin: const EdgeInsets.only(bottom: 30),
-                          decoration: BoxDecoration(
-                            color: isDark ? Colors.white24 : Colors.black12,
-                            borderRadius: BorderRadius.circular(2.5),
-                          ),
-                        ),
-                      ),
                       Text(
                         'Pilih Kategori',
                         style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -1.0,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -0.5,
                           color: isDark ? Colors.white : Colors.black,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Pilih beberapa kategori untuk disertakan dalam laporan kamu.',
-                        style: TextStyle(
-                          color: isDark ? Colors.white60 : Colors.black54,
-                          fontSize: 15,
-                          letterSpacing: -0.2,
-                        ),
-                      ),
-                      const SizedBox(height: 28),
-
-                      // Quick Selection Actions
-                      Row(
-                        children: [
-                          _buildQuickAction(
-                            'Pilih Semua',
-                            CupertinoIcons.checkmark_circle_fill,
-                            selectedCategories.length ==
-                                availableCategories.length,
-                            () {
-                              HapticFeedback.mediumImpact();
-                              setSheetState(() => selectedCategories =
-                                  List.from(availableCategories));
-                            },
-                          ),
-                          const SizedBox(width: 10),
-                          _buildQuickAction(
-                            'Bersihkan',
-                            CupertinoIcons.xmark_circle,
-                            selectedCategories.isEmpty,
-                            () {
-                              HapticFeedback.lightImpact();
-                              setSheetState(() => selectedCategories.clear());
-                            },
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Refined Category Grid
-                      ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxHeight: MediaQuery.of(context).size.height * 0.45,
-                        ),
-                        child: SingleChildScrollView(
-                          physics: const BouncingScrollPhysics(),
-                          child: Wrap(
-                            spacing: 12,
-                            runSpacing: 12,
-                            children: availableCategories.map((cat) {
-                              final isSelected =
-                                  selectedCategories.contains(cat);
-                              final accentColor = isDark
-                                  ? CupertinoColors.activeBlue
-                                  : AppColors.primary;
-
-                              return InkWell(
-                                onTap: () {
-                                  HapticFeedback.selectionClick();
-                                  setSheetState(() {
-                                    if (isSelected) {
-                                      selectedCategories.remove(cat);
-                                    } else {
-                                      selectedCategories.add(cat);
-                                    }
-                                  });
-                                },
-                                borderRadius: BorderRadius.circular(16),
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 12),
-                                  decoration: BoxDecoration(
-                                    color: isSelected
-                                        ? accentColor.withOpacity(0.15)
-                                        : (isDark
-                                            ? Colors.white.withOpacity(0.05)
-                                            : Colors.black.withOpacity(0.03)),
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(
-                                      color: isSelected
-                                          ? accentColor
-                                          : Colors.transparent,
-                                      width: 2,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        TransactionCategory.getIconForCategory(
-                                            cat),
-                                        size: 18,
-                                        color: isSelected
-                                            ? accentColor
-                                            : (isDark
-                                                ? Colors.white54
-                                                : Colors.black45),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Text(
-                                        cat,
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: isSelected
-                                              ? FontWeight.bold
-                                              : FontWeight.w500,
-                                          color: isSelected
-                                              ? (isDark
-                                                  ? Colors.white
-                                                  : accentColor)
-                                              : (isDark
-                                                  ? Colors.white70
-                                                  : Colors.black87),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            }).toList(),
+                      CupertinoButton(
+                        padding: EdgeInsets.zero,
+                        child: Text(
+                          selectedCategories.length ==
+                                  availableCategories.length
+                              ? 'Bersihkan'
+                              : 'Pilih Semua',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: accentColor,
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 36),
-
-                      // Premium Export Actions
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildExportButton(
-                              label: 'EKSPOR PDF',
-                              icon: CupertinoIcons.doc_text_fill,
-                              color: isDark
-                                  ? const Color(0xFFFF453A)
-                                  : Colors.redAccent,
-                              onPressed: selectedCategories.isEmpty
-                                  ? null
-                                  : () {
-                                      HapticFeedback.mediumImpact();
-                                      _processExport(
-                                          ctx, txns, selectedCategories, true);
-                                    },
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: _buildExportButton(
-                              label: 'EKSPOR CSV',
-                              icon: CupertinoIcons.table,
-                              color: isDark
-                                  ? const Color(0xFF32D74B)
-                                  : Colors.green,
-                              onPressed: selectedCategories.isEmpty
-                                  ? null
-                                  : () {
-                                      HapticFeedback.mediumImpact();
-                                      _processExport(
-                                          ctx, txns, selectedCategories, false);
-                                    },
-                            ),
-                          ),
-                        ],
+                        onPressed: () {
+                          HapticFeedback.mediumImpact();
+                          setSheetState(() {
+                            if (selectedCategories.length ==
+                                availableCategories.length) {
+                              selectedCategories.clear();
+                            } else {
+                              selectedCategories =
+                                  List.from(availableCategories);
+                            }
+                          });
+                        },
                       ),
                     ],
                   ),
                 ),
-              ),
+
+                // Category List
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.6,
+                  ),
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: CupertinoListSection.insetGrouped(
+                      margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                      backgroundColor: Colors.transparent,
+                      children: availableCategories.map((cat) {
+                        final isSelected = selectedCategories.contains(cat);
+                        return CupertinoListTile.notched(
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            setSheetState(() {
+                              if (isSelected) {
+                                selectedCategories.remove(cat);
+                              } else {
+                                selectedCategories.add(cat);
+                              }
+                            });
+                          },
+                          leading: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? accentColor.withOpacity(0.1)
+                                  : (isDark
+                                      ? Colors.white10
+                                      : Colors.black.withOpacity(0.05)),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              TransactionCategory.getIconForCategory(cat),
+                              size: 20,
+                              color: isSelected
+                                  ? accentColor
+                                  : (isDark ? Colors.white70 : Colors.black54),
+                            ),
+                          ),
+                          title: Text(
+                            cat,
+                            style: TextStyle(
+                              fontSize: 17,
+                              color: isDark ? Colors.white : Colors.black,
+                            ),
+                          ),
+                          trailing: isSelected
+                              ? Icon(
+                                  CupertinoIcons.checkmark_alt,
+                                  color: accentColor,
+                                  size: 24,
+                                )
+                              : null,
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+
+                // Export Buttons
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                      20, 0, 20, MediaQuery.of(context).padding.bottom + 20),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _buildExportButton(
+                          label: 'PDF',
+                          icon: CupertinoIcons.doc_text_fill,
+                          color: isDark
+                              ? CupertinoColors.systemRed.darkColor
+                              : CupertinoColors.systemRed,
+                          onPressed: selectedCategories.isEmpty
+                              ? null
+                              : () {
+                                  HapticFeedback.mediumImpact();
+                                  _processExport(
+                                      ctx, txns, selectedCategories, true);
+                                },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildExportButton(
+                          label: 'CSV',
+                          icon: CupertinoIcons.table,
+                          color: isDark
+                              ? CupertinoColors.systemGreen.darkColor
+                              : CupertinoColors.systemGreen,
+                          onPressed: selectedCategories.isEmpty
+                              ? null
+                              : () {
+                                  HapticFeedback.mediumImpact();
+                                  _processExport(
+                                      ctx, txns, selectedCategories, false);
+                                },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           );
         }),
@@ -2085,89 +2318,45 @@ class _ReportScreenState extends State<ReportScreen> {
     }
   }
 
-  Widget _buildQuickAction(
-      String label, IconData icon, bool isActive, VoidCallback onTap) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accentColor = isDark ? CupertinoColors.activeBlue : AppColors.primary;
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: isActive ? accentColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isActive
-                ? accentColor
-                : (isDark ? Colors.white24 : Colors.black12),
-            width: 1.5,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 14,
-              color: isActive
-                  ? Colors.white
-                  : (isDark ? Colors.white60 : Colors.black54),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: isActive
-                    ? Colors.white
-                    : (isDark ? Colors.white60 : Colors.black54),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildExportButton(
       {required String label,
       required IconData icon,
       required Color color,
       VoidCallback? onPressed}) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          if (onPressed != null)
-            BoxShadow(
-              color: color.withOpacity(0.3),
-              blurRadius: 15,
-              offset: const Offset(0, 6),
-            ),
-        ],
-      ),
-      child: ElevatedButton.icon(
-        onPressed: onPressed,
-        icon: Icon(icon, size: 18),
-        label: Text(
-          label,
-          style: const TextStyle(
-            fontWeight: FontWeight.w900,
-            fontSize: 14,
-            letterSpacing: 0.5,
-          ),
+    final isEnabled = onPressed != null;
+
+    return CupertinoButton(
+      padding: EdgeInsets.zero,
+      onPressed: onPressed,
+      child: Container(
+        height: 54,
+        decoration: BoxDecoration(
+          color: isEnabled ? color : color.withOpacity(0.3),
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            if (isEnabled)
+              BoxShadow(
+                color: color.withOpacity(0.2),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+          ],
         ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(vertical: 18),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          disabledBackgroundColor: color.withOpacity(0.2),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: Colors.white, size: 20),
+            const SizedBox(width: 10),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -4594,6 +4783,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
   }
 }
 
+
 class AnimatedHeartbeat extends StatefulWidget {
   final double score;
   final IconData icon;
@@ -4666,3 +4856,5 @@ class _AnimatedHeartbeatState extends State<AnimatedHeartbeat>
     );
   }
 }
+
+
