@@ -526,6 +526,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   }
 
   void _showCategoryPicker() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final categories = TransactionCategory.getCategoriesForType(_selectedType);
     final searchController = TextEditingController();
     List<String> filteredCategories = List.from(categories);
@@ -536,46 +537,41 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) => Container(
-          height: MediaQuery.of(context).size.height * 0.7,
-          padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).padding.bottom + 16),
+          height: MediaQuery.of(context).size.height * 0.75,
           decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: Column(
             children: [
-              const SizedBox(height: 12),
+              // iOS Drag Handle & Title
+              const SizedBox(height: 10),
               Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                      color: Theme.of(context).dividerColor,
-                      borderRadius: BorderRadius.circular(2))),
-              const SizedBox(height: 20),
+                width: 36,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white24 : Colors.black12,
+                  borderRadius: BorderRadius.circular(2.5),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Pilih Kategori',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? Colors.white : Colors.black,
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Search Bar
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: TextField(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: CupertinoSearchTextField(
                   controller: searchController,
-                  autofocus: true,
-                  decoration: InputDecoration(
-                    hintText: 'Cari kategori...',
-                    prefixIcon: const Icon(CupertinoIcons.search),
-                    suffixIcon: searchController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(CupertinoIcons.xmark_circle_fill),
-                            onPressed: () {
-                              searchController.clear();
-                              setModalState(
-                                  () => filteredCategories = categories);
-                            },
-                          )
-                        : null,
-                    filled: false,
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide.none),
-                  ),
+                  placeholder: 'Cari kategori...',
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black),
                   onChanged: (val) {
                     setModalState(() {
                       filteredCategories = categories
@@ -586,94 +582,93 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                   },
                 ),
               ),
-              const SizedBox(height: 12),
-              const Divider(height: 1),
+              const SizedBox(height: 16),
+
               Expanded(
-                child: ClipRRect(
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(0)),
-                  child: filteredCategories.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(CupertinoIcons.search,
-                                  size: 48, color: AppColors.textHint),
-                              const SizedBox(height: 16),
-                              Text(
-                                ToneManager.t('category_not_found'),
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                    color: AppColors.textHint,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500),
-                              ),
-                            ],
-                          ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          itemCount: filteredCategories.length,
-                          itemBuilder: (context, index) {
-                            final category = filteredCategories[index];
-                            final isSelected = _selectedCategory == category;
-                            return ListTile(
-                              leading: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? (Theme.of(context).brightness ==
-                                              Brightness.dark
-                                          ? const Color(0xFF0A84FF)
-                                              .withOpacity(0.15)
-                                          : AppColors.primary.withOpacity(0.1))
-                                      : (Theme.of(context).brightness ==
-                                              Brightness.dark
-                                          ? const Color(0xFF2C2C2E)
-                                          : Colors.grey[100]),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  TransactionCategory.getIconForCategory(
-                                      category),
-                                  color: isSelected
-                                      ? (Theme.of(context).brightness ==
-                                              Brightness.dark
-                                          ? const Color(0xFF0A84FF)
-                                          : AppColors.primary)
-                                      : AppColors.textSecondary,
-                                  size: 20,
-                                ),
-                              ),
-                              title: Text(
-                                category,
-                                style: TextStyle(
-                                  fontWeight: isSelected
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                  color: isSelected
-                                      ? (Theme.of(context).brightness ==
-                                              Brightness.dark
-                                          ? const Color(0xFF0A84FF)
-                                          : AppColors.primary)
-                                      : Theme.of(context)
-                                          .textTheme
-                                          .bodyLarge
-                                          ?.color,
-                                ),
-                              ),
-                              trailing: isSelected
-                                  ? const Icon(CupertinoIcons.checkmark_circle_fill,
-                                      color: AppColors.primary)
-                                  : null,
-                              onTap: () {
-                                setState(() => _selectedCategory = category);
-                                Navigator.pop(context);
-                              },
-                            );
-                          },
+                child: filteredCategories.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(CupertinoIcons.search,
+                                size: 48,
+                                color: isDark ? Colors.white24 : Colors.black12),
+                            const SizedBox(height: 16),
+                            Text(
+                              ToneManager.t('category_not_found'),
+                              style: TextStyle(
+                                  color: isDark ? Colors.white38 : Colors.black38,
+                                  fontSize: 15),
+                            ),
+                          ],
                         ),
-                ),
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: filteredCategories.length,
+                        separatorBuilder: (context, index) => Divider(
+                          height: 1,
+                          indent: 50,
+                          color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
+                        ),
+                        itemBuilder: (context, index) {
+                          final category = filteredCategories[index];
+                          final isSelected = _selectedCategory == category;
+                          final iconData = TransactionCategory.getIconForCategory(category);
+                          
+                          return InkWell(
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              setState(() => _selectedCategory = category);
+                              Navigator.pop(context);
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? (isDark
+                                              ? const Color(0xFF0A84FF).withOpacity(0.2)
+                                              : const Color(0xFF007AFF).withOpacity(0.1))
+                                          : (isDark
+                                              ? const Color(0xFF2C2C2E)
+                                              : Colors.grey[100]),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Icon(
+                                      iconData,
+                                      color: isSelected
+                                          ? (isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF))
+                                          : (isDark ? Colors.white70 : Colors.black54),
+                                      size: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Text(
+                                      category,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                        color: isDark ? Colors.white : Colors.black,
+                                      ),
+                                    ),
+                                  ),
+                                  if (isSelected)
+                                    const Icon(
+                                      CupertinoIcons.checkmark_alt,
+                                      color: Color(0xFF007AFF),
+                                      size: 20,
+                                    ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
               ),
             ],
           ),
@@ -683,6 +678,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   }
 
   void _showWalletPicker() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final searchController = TextEditingController();
     List<WalletModel> filteredWallets = List.from(_wallets);
 
@@ -692,46 +688,41 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) => Container(
-          height: MediaQuery.of(context).size.height * 0.7,
-          padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).padding.bottom + 16),
+          height: MediaQuery.of(context).size.height * 0.75,
           decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: Column(
             children: [
-              const SizedBox(height: 12),
+              // iOS Drag Handle & Title
+              const SizedBox(height: 10),
               Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                      color: Theme.of(context).dividerColor,
-                      borderRadius: BorderRadius.circular(2))),
-              const SizedBox(height: 20),
+                width: 36,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white24 : Colors.black12,
+                  borderRadius: BorderRadius.circular(2.5),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Pilih Dompet',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? Colors.white : Colors.black,
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Search Bar
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: TextField(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: CupertinoSearchTextField(
                   controller: searchController,
-                  autofocus: true,
-                  decoration: InputDecoration(
-                    hintText: 'Cari dompet...',
-                    prefixIcon: const Icon(CupertinoIcons.search),
-                    suffixIcon: searchController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(CupertinoIcons.xmark_circle_fill),
-                            onPressed: () {
-                              searchController.clear();
-                              setModalState(
-                                  () => filteredWallets = List.from(_wallets));
-                            },
-                          )
-                        : null,
-                    filled: false,
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide.none),
-                  ),
+                  placeholder: 'Cari dompet...',
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black),
                   onChanged: (val) {
                     setModalState(() {
                       filteredWallets = _wallets
@@ -743,108 +734,104 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                   },
                 ),
               ),
-              const SizedBox(height: 12),
-              const Divider(height: 1),
+              const SizedBox(height: 16),
+
               Expanded(
-                child: ClipRRect(
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(0)),
-                  child: filteredWallets.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(CupertinoIcons.creditcard,
-                                  size: 48, color: AppColors.textHint),
-                              const SizedBox(height: 16),
-                              Text(
-                                ToneManager.t('wallet_not_found'),
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                    color: AppColors.textHint,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500),
-                              ),
-                            ],
-                          ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          itemCount: filteredWallets.length,
-                          itemBuilder: (context, index) {
-                            final wallet = filteredWallets[index];
-                            final isSelected = _selectedWalletId == wallet.id;
-                            return ListTile(
-                              leading: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? (Theme.of(context).brightness ==
-                                              Brightness.dark
-                                          ? const Color(0xFF32D74B)
-                                              .withOpacity(0.15)
-                                          : const Color(0xFF34C759)
-                                              .withOpacity(0.1))
-                                      : (Theme.of(context).brightness ==
-                                              Brightness.dark
-                                          ? const Color(0xFF2C2C2E)
-                                          : Colors.grey[100]),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  CupertinoIcons.creditcard,
-                                  color: isSelected
-                                      ? (Theme.of(context).brightness ==
-                                              Brightness.dark
-                                          ? const Color(0xFF32D74B)
-                                          : const Color(0xFF34C759))
-                                      : AppColors.textSecondary,
-                                  size: 20,
-                                ),
-                              ),
-                              title: Text(
-                                wallet.walletName,
-                                style: TextStyle(
-                                  fontWeight: isSelected
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                  color: isSelected
-                                      ? (Theme.of(context).brightness ==
-                                              Brightness.dark
-                                          ? const Color(0xFF0A84FF)
-                                          : AppColors.primary)
-                                      : Theme.of(context)
-                                          .textTheme
-                                          .bodyLarge
-                                          ?.color,
-                                ),
-                              ),
-                              subtitle: Text(
-                                CurrencyFormatter.formatCurrency(
-                                    wallet.balance),
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: isSelected
-                                      ? (Theme.of(context).brightness ==
-                                              Brightness.dark
-                                          ? const Color(0xFF32D74B)
-                                          : const Color(0xFF34C759)
-                                              .withOpacity(0.7))
-                                      : AppColors.textSecondary,
-                                ),
-                              ),
-                              trailing: isSelected
-                                  ? const Icon(Icons.check_circle,
-                                      color: AppColors.primary)
-                                  : null,
-                              onTap: () {
-                                setState(() => _selectedWalletId = wallet.id);
-                                Navigator.pop(context);
-                              },
-                            );
-                          },
+                child: filteredWallets.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(CupertinoIcons.creditcard,
+                                size: 48,
+                                color: isDark ? Colors.white24 : Colors.black12),
+                            const SizedBox(height: 16),
+                            Text(
+                              ToneManager.t('wallet_not_found'),
+                              style: TextStyle(
+                                  color: isDark ? Colors.white38 : Colors.black38,
+                                  fontSize: 15),
+                            ),
+                          ],
                         ),
-                ),
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: filteredWallets.length,
+                        separatorBuilder: (context, index) => Divider(
+                          height: 1,
+                          indent: 50,
+                          color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
+                        ),
+                        itemBuilder: (context, index) {
+                          final wallet = filteredWallets[index];
+                          final isSelected = _selectedWalletId == wallet.id;
+                          
+                          return InkWell(
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              setState(() => _selectedWalletId = wallet.id);
+                              Navigator.pop(context);
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? (isDark
+                                              ? const Color(0xFF32D74B).withOpacity(0.2)
+                                              : const Color(0xFF34C759).withOpacity(0.1))
+                                          : (isDark
+                                              ? const Color(0xFF2C2C2E)
+                                              : Colors.grey[100]),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Icon(
+                                      CupertinoIcons.creditcard_fill,
+                                      color: isSelected
+                                          ? (isDark ? const Color(0xFF32D74B) : const Color(0xFF34C759))
+                                          : (isDark ? Colors.white70 : Colors.black54),
+                                      size: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          wallet.walletName,
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                            color: isDark ? Colors.white : Colors.black,
+                                          ),
+                                        ),
+                                        Text(
+                                          CurrencyFormatter.formatCurrency(wallet.balance),
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: isDark ? Colors.white38 : Colors.black38,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (isSelected)
+                                    const Icon(
+                                      CupertinoIcons.checkmark_alt,
+                                      color: Color(0xFF34C759),
+                                      size: 20,
+                                    ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
               ),
             ],
           ),
