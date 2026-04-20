@@ -114,7 +114,6 @@ class HomeWalletList extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Icon(
                   _getWalletIcon(w.type),
@@ -123,12 +122,25 @@ class HomeWalletList extends StatelessWidget {
                       ? AppColors.primary
                       : Colors.white.withOpacity(0.9),
                 ),
-                if (w.isColab)
-                  Icon(
-                    CupertinoIcons.person_2_fill,
-                    size: 14,
-                    color: subColor,
+                if (w.type == 'colab') ...[
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text(
+                      'SHARED',
+                      style: TextStyle(
+                        fontSize: 7,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
                   ),
+                ],
               ],
             ),
             const SizedBox(height: 10),

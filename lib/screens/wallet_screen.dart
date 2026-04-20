@@ -64,7 +64,8 @@ class WalletScreenState extends State<WalletScreen> {
             final isDark = Theme.of(context).brightness == Brightness.dark;
             return [
               SliverOverlapAbsorber(
-                handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+                handle:
+                    NestedScrollView.sliverOverlapAbsorberHandleFor(context),
                 sliver: SliverAppBar(
                   pinned: true,
                   floating: false,
@@ -438,7 +439,6 @@ class WalletScreenState extends State<WalletScreen> {
                             final isOnline =
                                 await ConnectivityService.isOnline();
 
-
                             if (selectedType == 'debt') {
                               if (totalAmountController.text.isEmpty ||
                                   selectedWalletId == null ||
@@ -559,7 +559,6 @@ class WalletScreenState extends State<WalletScreen> {
                         Padding(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 20, vertical: 8),
-
                           child: Text(
                             'TIPE DOMPET',
                             style: TextStyle(
@@ -577,7 +576,6 @@ class WalletScreenState extends State<WalletScreen> {
                             color: isDark
                                 ? Colors.white.withOpacity(0.05)
                                 : Colors.black.withOpacity(0.05),
-
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Row(
@@ -603,7 +601,6 @@ class WalletScreenState extends State<WalletScreen> {
                                   'Hutang',
                                   selectedType,
                                   (v) => selectedType = v),
-
                             ],
                           ),
                         ),
@@ -680,10 +677,11 @@ class WalletScreenState extends State<WalletScreen> {
                                                       contact
                                                           .phones.first.number;
                                                 }
-                                                nameController.text =
-                                                    debtType == 'payable'
-                                                        ? 'Hutang ke ${contact.displayName}'
-                                                        : 'Piutang ${contact.displayName}';
+                                                nameController
+                                                    .text = debtType ==
+                                                        'payable'
+                                                    ? 'Hutang ke ${contact.displayName}'
+                                                    : 'Piutang ${contact.displayName}';
                                               });
                                             });
                                           }
@@ -693,10 +691,10 @@ class WalletScreenState extends State<WalletScreen> {
                                     onChanged: (val) {
                                       setModalState(() {
                                         if (val.isNotEmpty) {
-                                          nameController.text = debtType ==
-                                                  'payable'
-                                              ? 'Hutang ke $val'
-                                              : 'Piutang $val';
+                                          nameController.text =
+                                              debtType == 'payable'
+                                                  ? 'Hutang ke $val'
+                                                  : 'Piutang $val';
                                         } else {
                                           nameController.text = '';
                                         }
@@ -737,12 +735,8 @@ class WalletScreenState extends State<WalletScreen> {
                                         ? Colors.white10
                                         : Colors.black12),
                                 // Transaction Type (Radio)
-                                _buildIOSRadioTile(
-                                    sbCtx,
-                                    setModalState,
-                                    'Saya Berhutang',
-                                    'payable',
-                                    debtType, (v) {
+                                _buildIOSRadioTile(sbCtx, setModalState,
+                                    'Saya Berhutang', 'payable', debtType, (v) {
                                   debtType = v;
                                   if (debtorNameController.text.isNotEmpty) {
                                     nameController.text =
@@ -904,8 +898,8 @@ class WalletScreenState extends State<WalletScreen> {
                                     return ListTile(
                                       onTap: () => _showWalletPicker(
                                           sbCtx, wallets, (wallet) {
-                                        setModalState(() =>
-                                            selectedWalletId = wallet.id);
+                                        setModalState(
+                                            () => selectedWalletId = wallet.id);
                                       }),
                                       leading: Icon(CupertinoIcons.creditcard,
                                           size: 20,
@@ -1117,7 +1111,8 @@ class WalletScreenState extends State<WalletScreen> {
     );
   }
 
-  void _showWalletPicker(BuildContext context, List<WalletModel> wallets, Function(WalletModel) onPicked) {
+  void _showWalletPicker(BuildContext context, List<WalletModel> wallets,
+      Function(WalletModel) onPicked) {
     String query = "";
 
     showModalBottomSheet(
@@ -1135,7 +1130,8 @@ class WalletScreenState extends State<WalletScreen> {
             height: MediaQuery.of(sbCtx).size.height * 0.7,
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(20)),
             ),
             child: SafeArea(
               child: Column(
@@ -1155,75 +1151,99 @@ class WalletScreenState extends State<WalletScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('PILIH SUMBER DANA', 
-                          style: TextStyle(
-                            fontSize: 13, 
-                            fontWeight: FontWeight.w600, 
-                            color: isDark ? Colors.white60 : Colors.black54,
-                            letterSpacing: 0.5,
-                          )
-                        ),
+                        Text('PILIH SUMBER DANA',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white60 : Colors.black54,
+                              letterSpacing: 0.5,
+                            )),
                         GestureDetector(
                           onTap: () => Navigator.pop(ctx),
-                          child: Text('Tutup', 
-                            style: TextStyle(
-                              color: isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF), 
-                              fontWeight: FontWeight.w600,
-                              fontSize: 15,
-                            )
-                          ),
+                          child: Text('Tutup',
+                              style: TextStyle(
+                                color: isDark
+                                    ? const Color(0xFF0A84FF)
+                                    : const Color(0xFF007AFF),
+                                fontWeight: FontWeight.w600,
+                                fontSize: 15,
+                              )),
                         ),
                       ],
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: CupertinoSearchTextField(
                       placeholder: 'Cari dompet...',
                       onChanged: (v) => setPickerState(() => query = v),
-                      style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                      style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black),
                     ),
                   ),
                   const SizedBox(height: 8),
                   Expanded(
                     child: filtered.isEmpty
-                      ? Center(child: Text('Dompet tidak ditemukan', style: TextStyle(color: isDark ? Colors.white38 : Colors.black38)))
-                      : ListView.separated(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          itemCount: filtered.length,
-                          itemBuilder: (lCtx, i) {
-                            final w = filtered[i];
-                            return ListTile(
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              tileColor: isDark ? const Color(0xFF2C2C2E) : Colors.white,
-                              leading: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
-                                  borderRadius: BorderRadius.circular(8),
+                        ? Center(
+                            child: Text('Dompet tidak ditemukan',
+                                style: TextStyle(
+                                    color: isDark
+                                        ? Colors.white38
+                                        : Colors.black38)))
+                        : ListView.separated(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 8),
+                            itemCount: filtered.length,
+                            itemBuilder: (lCtx, i) {
+                              final w = filtered[i];
+                              return ListTile(
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 4),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12)),
+                                tileColor: isDark
+                                    ? const Color(0xFF2C2C2E)
+                                    : Colors.white,
+                                leading: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: isDark
+                                        ? Colors.white.withOpacity(0.05)
+                                        : Colors.black.withOpacity(0.05),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Icon(
+                                    w.type == 'personal'
+                                        ? CupertinoIcons.person_fill
+                                        : (w.type == 'colab'
+                                            ? CupertinoIcons.person_3_fill
+                                            : CupertinoIcons.creditcard_fill),
+                                    color: isDark
+                                        ? const Color(0xFF0A84FF)
+                                        : const Color(0xFF007AFF),
+                                    size: 20,
+                                  ),
                                 ),
-                                child: Icon(
-                                  w.type == 'personal' ? CupertinoIcons.person_fill : (w.type == 'colab' ? CupertinoIcons.person_3_fill : CupertinoIcons.creditcard_fill),
-                                  color: isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF),
-                                  size: 20,
-                                ),
-                              ),
-                              title: Text(w.walletName, 
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 15,
-                                )
-                              ),
-                              trailing: Icon(CupertinoIcons.chevron_right, size: 14, color: isDark ? Colors.white24 : Colors.black26),
-                              onTap: () {
-                                onPicked(w);
-                                Navigator.pop(ctx);
-                              },
-                            );
-                          },
-                          separatorBuilder: (_, __) => const SizedBox(height: 8),
-                        ),
+                                title: Text(w.walletName,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 15,
+                                    )),
+                                trailing: Icon(CupertinoIcons.chevron_right,
+                                    size: 14,
+                                    color: isDark
+                                        ? Colors.white24
+                                        : Colors.black26),
+                                onTap: () {
+                                  onPicked(w);
+                                  Navigator.pop(ctx);
+                                },
+                              );
+                            },
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 8),
+                          ),
                   ),
                 ],
               ),
@@ -1465,7 +1485,8 @@ class WalletScreenState extends State<WalletScreen> {
           return Container(
             decoration: BoxDecoration(
               color: backgroundColor,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(20)),
             ),
             padding: EdgeInsets.only(
               bottom: MediaQuery.of(sbCtx).viewInsets.bottom + 20,
@@ -1486,7 +1507,8 @@ class WalletScreenState extends State<WalletScreen> {
                 ),
                 const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
                     border: Border(
                       bottom: BorderSide(
@@ -1520,9 +1542,12 @@ class WalletScreenState extends State<WalletScreen> {
                         onPressed: isSaving
                             ? null
                             : () async {
-                                final newAmount = double.tryParse(amountController.text);
-                                if (newAmount == null || titleController.text.isEmpty) {
-                                  UIHelper.showErrorSnackBar(sbCtx, 'Lengkapi data terlebih dahulu.');
+                                final newAmount =
+                                    double.tryParse(amountController.text);
+                                if (newAmount == null ||
+                                    titleController.text.isEmpty) {
+                                  UIHelper.showErrorSnackBar(
+                                      sbCtx, 'Lengkapi data terlebih dahulu.');
                                   return;
                                 }
 
@@ -1536,13 +1561,15 @@ class WalletScreenState extends State<WalletScreen> {
                                     dueDate: selectedDate,
                                   );
                                   if (sbCtx.mounted) {
-                                    UIHelper.showSuccessSnackBar(sbCtx, 'Berhasil memperbarui $typeLabel');
+                                    UIHelper.showSuccessSnackBar(sbCtx,
+                                        'Berhasil memperbarui $typeLabel');
                                     Navigator.pop(sbCtx);
                                   }
                                 } catch (e) {
                                   if (sbCtx.mounted) {
                                     setModalState(() => isSaving = false);
-                                    UIHelper.showErrorSnackBar(sbCtx, 'Gagal: $e');
+                                    UIHelper.showErrorSnackBar(
+                                        sbCtx, 'Gagal: $e');
                                   }
                                 }
                               },
@@ -1584,40 +1611,60 @@ class WalletScreenState extends State<WalletScreen> {
                           children: [
                             // Title
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 4),
                               child: TextField(
                                 controller: titleController,
                                 textCapitalization: TextCapitalization.words,
                                 decoration: InputDecoration(
                                   hintText: 'Keterangan / Label',
-                                  prefixIcon: Icon(CupertinoIcons.pencil, size: 20, color: primaryBlue.withOpacity(0.7)),
+                                  prefixIcon: Icon(CupertinoIcons.pencil,
+                                      size: 20,
+                                      color: primaryBlue.withOpacity(0.7)),
                                   border: InputBorder.none,
                                 ),
                               ),
                             ),
-                            Divider(height: 1, indent: 52, color: isDark ? Colors.white10 : Colors.black12),
+                            Divider(
+                                height: 1,
+                                indent: 52,
+                                color:
+                                    isDark ? Colors.white10 : Colors.black12),
                             // Amount
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 4),
                               child: TextField(
                                 controller: amountController,
                                 keyboardType: TextInputType.number,
-                                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                                style: const TextStyle(fontWeight: FontWeight.w600),
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly
+                                ],
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w600),
                                 decoration: InputDecoration(
                                   hintText: '0',
                                   prefixIcon: Padding(
-                                    padding: const EdgeInsets.only(left: 12, right: 8),
+                                    padding: const EdgeInsets.only(
+                                        left: 12, right: 8),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Icon(CupertinoIcons.creditcard, size: 20, color: primaryBlue.withOpacity(0.7)),
+                                        Icon(CupertinoIcons.creditcard,
+                                            size: 20,
+                                            color:
+                                                primaryBlue.withOpacity(0.7)),
                                         const SizedBox(width: 8),
-                                        Text('Rp ', style: TextStyle(color: primaryBlue, fontWeight: FontWeight.w700, fontSize: 16)),
+                                        Text('Rp ',
+                                            style: TextStyle(
+                                                color: primaryBlue,
+                                                fontWeight: FontWeight.w700,
+                                                fontSize: 16)),
                                       ],
                                     ),
                                   ),
-                                  prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                                  prefixIconConstraints: const BoxConstraints(
+                                      minWidth: 0, minHeight: 0),
                                   border: InputBorder.none,
                                 ),
                               ),
@@ -1658,7 +1705,8 @@ class WalletScreenState extends State<WalletScreen> {
                                             surface: backgroundColor,
                                             onSurface: Colors.white,
                                           ),
-                                          dialogBackgroundColor: backgroundColor,
+                                          dialogBackgroundColor:
+                                              backgroundColor,
                                         )
                                       : ThemeData.light().copyWith(
                                           colorScheme: ColorScheme.light(
@@ -1676,12 +1724,18 @@ class WalletScreenState extends State<WalletScreen> {
                               setModalState(() => selectedDate = picked);
                             }
                           },
-                          leading: Icon(CupertinoIcons.calendar, size: 20, color: primaryBlue.withOpacity(0.7)),
+                          leading: Icon(CupertinoIcons.calendar,
+                              size: 20, color: primaryBlue.withOpacity(0.7)),
                           title: Text(
-                            selectedDate != null ? DateFormat('dd MMMM yyyy').format(selectedDate!) : 'Pilih Tanggal',
+                            selectedDate != null
+                                ? DateFormat('dd MMMM yyyy')
+                                    .format(selectedDate!)
+                                : 'Pilih Tanggal',
                             style: const TextStyle(fontSize: 15),
                           ),
-                          trailing: Icon(CupertinoIcons.chevron_right, size: 14, color: isDark ? Colors.white24 : Colors.black26),
+                          trailing: Icon(CupertinoIcons.chevron_right,
+                              size: 14,
+                              color: isDark ? Colors.white24 : Colors.black26),
                         ),
                       ),
                       const SizedBox(height: 48),
@@ -1695,7 +1749,6 @@ class WalletScreenState extends State<WalletScreen> {
       ),
     );
   }
-
 
   void _showIncreaseDebtDialog(DebtModel debt) {
     final amountController = TextEditingController();
@@ -1719,7 +1772,8 @@ class WalletScreenState extends State<WalletScreen> {
           return Container(
             decoration: BoxDecoration(
               color: backgroundColor,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(20)),
             ),
             padding: EdgeInsets.only(
               bottom: MediaQuery.of(sbCtx).viewInsets.bottom + 20,
@@ -1740,7 +1794,8 @@ class WalletScreenState extends State<WalletScreen> {
                 ),
                 const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
                     border: Border(
                       bottom: BorderSide(
@@ -1774,9 +1829,13 @@ class WalletScreenState extends State<WalletScreen> {
                         onPressed: isSaving
                             ? null
                             : () async {
-                                final amount = double.tryParse(amountController.text);
-                                if (amount == null || amount <= 0 || selectedWalletId == null) {
-                                  UIHelper.showErrorSnackBar(sbCtx, 'Lengkapi data terlebih dahulu.');
+                                final amount =
+                                    double.tryParse(amountController.text);
+                                if (amount == null ||
+                                    amount <= 0 ||
+                                    selectedWalletId == null) {
+                                  UIHelper.showErrorSnackBar(
+                                      sbCtx, 'Lengkapi data terlebih dahulu.');
                                   return;
                                 }
 
@@ -1784,19 +1843,23 @@ class WalletScreenState extends State<WalletScreen> {
                                 try {
                                   await _debtService.increaseDebt(
                                     userId: _uid,
-                                    userName: FirebaseAuth.instance.currentUser?.displayName ?? 'User',
+                                    userName: FirebaseAuth.instance.currentUser
+                                            ?.displayName ??
+                                        'User',
                                     debt: debt,
                                     additionalAmount: amount,
                                     walletId: selectedWalletId!,
                                   );
                                   if (sbCtx.mounted) {
-                                    UIHelper.showSuccessSnackBar(sbCtx, 'Berhasil menambahkan nominal $typeLabel');
+                                    UIHelper.showSuccessSnackBar(sbCtx,
+                                        'Berhasil menambahkan nominal $typeLabel');
                                     Navigator.pop(sbCtx);
                                   }
                                 } catch (e) {
                                   if (sbCtx.mounted) {
                                     setModalState(() => isSaving = false);
-                                    UIHelper.showErrorSnackBar(sbCtx, 'Gagal: $e');
+                                    UIHelper.showErrorSnackBar(
+                                        sbCtx, 'Gagal: $e');
                                   }
                                 }
                               },
@@ -1837,26 +1900,39 @@ class WalletScreenState extends State<WalletScreen> {
                         child: Column(
                           children: [
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 4),
                               child: TextField(
                                 controller: amountController,
                                 keyboardType: TextInputType.number,
-                                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                                style: const TextStyle(fontWeight: FontWeight.w600),
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly
+                                ],
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w600),
                                 decoration: InputDecoration(
                                   hintText: 'Nominal',
                                   prefixIcon: Padding(
-                                    padding: const EdgeInsets.only(left: 12, right: 8),
+                                    padding: const EdgeInsets.only(
+                                        left: 12, right: 8),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Icon(CupertinoIcons.plus_circle, size: 20, color: primaryBlue.withOpacity(0.7)),
+                                        Icon(CupertinoIcons.plus_circle,
+                                            size: 20,
+                                            color:
+                                                primaryBlue.withOpacity(0.7)),
                                         const SizedBox(width: 8),
-                                        Text('Rp ', style: TextStyle(color: primaryBlue, fontWeight: FontWeight.w700, fontSize: 16)),
+                                        Text('Rp ',
+                                            style: TextStyle(
+                                                color: primaryBlue,
+                                                fontWeight: FontWeight.w700,
+                                                fontSize: 16)),
                                       ],
                                     ),
                                   ),
-                                  prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                                  prefixIconConstraints: const BoxConstraints(
+                                      minWidth: 0, minHeight: 0),
                                   border: InputBorder.none,
                                 ),
                               ),
@@ -1878,9 +1954,13 @@ class WalletScreenState extends State<WalletScreen> {
                       StreamBuilder<List<WalletModel>>(
                         stream: _firestoreService.getWalletsStream(_uid),
                         builder: (ctx, snapshot) {
-                          final wallets = (snapshot.data ?? []).where((w) => w.isPersonal).toList();
+                          final wallets = (snapshot.data ?? [])
+                              .where((w) => w.isPersonal)
+                              .toList();
                           final selectedWallet = selectedWalletId != null
-                              ? wallets.firstWhere((w) => w.id == selectedWalletId, orElse: () => wallets.first)
+                              ? wallets.firstWhere(
+                                  (w) => w.id == selectedWalletId,
+                                  orElse: () => wallets.first)
                               : null;
 
                           return Container(
@@ -1889,15 +1969,24 @@ class WalletScreenState extends State<WalletScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: ListTile(
-                              onTap: () => _showWalletPicker(sbCtx, wallets, (wallet) {
-                                setModalState(() => selectedWalletId = wallet.id);
+                              onTap: () =>
+                                  _showWalletPicker(sbCtx, wallets, (wallet) {
+                                setModalState(
+                                    () => selectedWalletId = wallet.id);
                               }),
-                              leading: Icon(CupertinoIcons.creditcard, size: 20, color: primaryBlue.withOpacity(0.7)),
+                              leading: Icon(CupertinoIcons.creditcard,
+                                  size: 20,
+                                  color: primaryBlue.withOpacity(0.7)),
                               title: Text(
-                                selectedWallet != null ? selectedWallet.walletName : 'Pilih Dompet',
+                                selectedWallet != null
+                                    ? selectedWallet.walletName
+                                    : 'Pilih Dompet',
                                 style: const TextStyle(fontSize: 15),
                               ),
-                              trailing: Icon(CupertinoIcons.chevron_right, size: 14, color: isDark ? Colors.white24 : Colors.black26),
+                              trailing: Icon(CupertinoIcons.chevron_right,
+                                  size: 14,
+                                  color:
+                                      isDark ? Colors.white24 : Colors.black26),
                             ),
                           );
                         },
@@ -2214,110 +2303,115 @@ class WalletScreenState extends State<WalletScreen> {
                               color: Theme.of(context).hintColor,
                               letterSpacing: 1)),
                       const SizedBox(height: 12),
-                      ...wallet.members.take(2).map((memberUid) => FutureBuilder<
-                              Map<String, dynamic>?>(
-                          future: _firestoreService.getUserInfo(memberUid),
-                          builder: (context, snapshot) {
-                            final name =
-                                snapshot.data?['displayName'] ?? 'Memuat...';
-                            final isOwner = memberUid == wallet.owner;
-                            final isMe = memberUid == _uid;
+                      ...wallet.members.take(2).map(
+                          (memberUid) => FutureBuilder<Map<String, dynamic>?>(
+                              future: _firestoreService.getUserInfo(memberUid),
+                              builder: (context, snapshot) {
+                                final name = snapshot.data?['displayName'] ??
+                                    'Memuat...';
+                                final isOwner = memberUid == wallet.owner;
+                                final isMe = memberUid == _uid;
 
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: Row(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 14,
-                                    backgroundColor: (Theme.of(context)
-                                                    .brightness ==
-                                                Brightness.dark
-                                            ? const Color(0xFF0A84FF)
-                                            : Theme.of(context).primaryColor)
-                                        .withOpacity(0.1),
-                                    child: Text(
-                                        name.isNotEmpty
-                                            ? name[0].toUpperCase()
-                                            : '?',
-                                        style: TextStyle(
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.bold,
-                                            color:
-                                                Theme.of(context).brightness ==
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: Row(
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 14,
+                                        backgroundColor:
+                                            (Theme.of(context).brightness ==
+                                                        Brightness.dark
+                                                    ? const Color(0xFF0A84FF)
+                                                    : Theme.of(context)
+                                                        .primaryColor)
+                                                .withOpacity(0.1),
+                                        child: Text(
+                                            name.isNotEmpty
+                                                ? name[0].toUpperCase()
+                                                : '?',
+                                            style: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                                color: Theme.of(context)
+                                                            .brightness ==
                                                         Brightness.dark
                                                     ? const Color(0xFF0A84FF)
                                                     : Theme.of(context)
                                                         .primaryColor)),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Text(
-                                      isMe ? '$name (Anda)' : name,
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: isMe
-                                            ? FontWeight.w700
-                                            : FontWeight.w500,
-                                        color: Theme.of(context)
-                                            .textTheme
-                                            .bodyLarge
-                                            ?.color,
                                       ),
-                                    ),
-                                  ),
-                                  if (isOwner)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 6, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: (Theme.of(context).brightness ==
-                                                    Brightness.dark
-                                                ? const Color(0xFF0A84FF)
-                                                : Theme.of(context)
-                                                    .primaryColor)
-                                            .withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text('OWNER',
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          isMe ? '$name (Anda)' : name,
                                           style: TextStyle(
-                                              fontSize: 8,
-                                              fontWeight: FontWeight.w800,
-                                              color: Theme.of(context)
-                                                          .brightness ==
-                                                      Brightness.dark
-                                                  ? const Color(0xFF0A84FF)
-                                                  : Theme.of(context)
-                                                      .primaryColor)),
-                                    )
-                                  else if (wallet.owner == _uid)
-                                    IconButton(
-                                      icon: Icon(
-                                          CupertinoIcons.person_badge_minus,
-                                          color: AppColors.expense,
-                                          size: 18),
-                                      onPressed: () async {
-                                        final confirm =
-                                            await UIHelper.showConfirmDialog(
-                                          context: context,
-                                          title: 'Keluarkan Member?',
-                                          message:
-                                              'Apakah Anda yakin ingin mengeluarkan $name dari dompet ini?',
-                                        );
-                                        if (confirm == true) {
-                                          await _firestoreService.kickMember(
-                                              wallet.id, memberUid);
-                                        }
-                                      },
-                                    ),
-                                ],
-                              ),
-                            );
-                          })),
+                                            fontSize: 14,
+                                            fontWeight: isMe
+                                                ? FontWeight.w700
+                                                : FontWeight.w500,
+                                            color: Theme.of(context)
+                                                .textTheme
+                                                .bodyLarge
+                                                ?.color,
+                                          ),
+                                        ),
+                                      ),
+                                      if (isOwner)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: (Theme.of(context)
+                                                            .brightness ==
+                                                        Brightness.dark
+                                                    ? const Color(0xFF0A84FF)
+                                                    : Theme.of(context)
+                                                        .primaryColor)
+                                                .withOpacity(0.1),
+                                            borderRadius:
+                                                BorderRadius.circular(4),
+                                          ),
+                                          child: Text('OWNER',
+                                              style: TextStyle(
+                                                  fontSize: 8,
+                                                  fontWeight: FontWeight.w800,
+                                                  color: Theme.of(context)
+                                                              .brightness ==
+                                                          Brightness.dark
+                                                      ? const Color(0xFF0A84FF)
+                                                      : Theme.of(context)
+                                                          .primaryColor)),
+                                        )
+                                      else if (wallet.owner == _uid)
+                                        IconButton(
+                                          icon: Icon(
+                                              CupertinoIcons.person_badge_minus,
+                                              color: AppColors.expense,
+                                              size: 18),
+                                          onPressed: () async {
+                                            final confirm = await UIHelper
+                                                .showConfirmDialog(
+                                              context: context,
+                                              title: 'Keluarkan Member?',
+                                              message:
+                                                  'Apakah Anda yakin ingin mengeluarkan $name dari dompet ini?',
+                                            );
+                                            if (confirm == true) {
+                                              await _firestoreService
+                                                  .kickMember(
+                                                      wallet.id, memberUid);
+                                            }
+                                          },
+                                        ),
+                                    ],
+                                  ),
+                                );
+                              })),
                       if (wallet.members.length > 2)
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 24),
                           child: TextButton(
-                            onPressed: () => _showAllMembersDialog(wallet),
+                            onPressed: () =>
+                                _showAllMembersDialog(context, wallet),
                             style: TextButton.styleFrom(
                               padding: EdgeInsets.zero,
                               minimumSize: const Size(0, 30),
@@ -2552,6 +2646,122 @@ class WalletScreenState extends State<WalletScreen> {
     );
   }
 
+  void _showAllMembersDialog(BuildContext context, WalletModel wallet) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (_, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
+          ),
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).dividerColor,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  'Semua Anggota',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).textTheme.titleLarge?.color,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: ListView.separated(
+                  controller: scrollController,
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  itemCount: wallet.members.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 16),
+                  itemBuilder: (context, index) {
+                    final memberUid = wallet.members[index];
+                    return FutureBuilder<Map<String, dynamic>?>(
+                      future: _firestoreService.getUserInfo(memberUid),
+                      builder: (context, snapshot) {
+                        final name =
+                            snapshot.data?['displayName'] ?? 'Memuat...';
+                        final isOwner = memberUid == wallet.owner;
+                        final isMe = memberUid == _uid;
+
+                        return Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 18,
+                              backgroundColor: (Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? const Color(0xFF0A84FF)
+                                      : Theme.of(context).primaryColor)
+                                  .withOpacity(0.1),
+                              child: Text(
+                                name.isNotEmpty ? name[0].toUpperCase() : '?',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? const Color(0xFF0A84FF)
+                                      : Theme.of(context).primaryColor,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Text(
+                                isMe ? '$name (Anda)' : name,
+                                style: const TextStyle(
+                                    fontSize: 15, fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                            if (isOwner)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: (Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? const Color(0xFF0A84FF)
+                                          : Theme.of(context).primaryColor)
+                                      .withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text('OWNER',
+                                    style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w800,
+                                        color: Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? const Color(0xFF0A84FF)
+                                            : Theme.of(context).primaryColor)),
+                              ),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _showRenameWalletDialog(WalletModel wallet) {
     final nameController = TextEditingController(text: wallet.walletName);
 
@@ -2738,8 +2948,7 @@ class WalletScreenState extends State<WalletScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(CupertinoIcons.creditcard,
-                size: 80,
-                color: Theme.of(context).hintColor.withOpacity(0.3)),
+                size: 80, color: Theme.of(context).hintColor.withOpacity(0.3)),
             const SizedBox(height: 20),
             Text(
               ToneManager.t('wallet_empty_title'),
@@ -2888,7 +3097,8 @@ class _WalletCard extends StatelessWidget {
           ),
         ],
         border: Border.all(
-          color: Theme.of(context).dividerColor.withOpacity(isDark ? 0.05 : 0.08),
+          color:
+              Theme.of(context).dividerColor.withOpacity(isDark ? 0.05 : 0.08),
           width: 0.5,
         ),
       ),
@@ -3041,7 +3251,8 @@ class _DebtCard extends StatelessWidget {
           ),
         ],
         border: Border.all(
-          color: Theme.of(context).dividerColor.withOpacity(isDark ? 0.05 : 0.08),
+          color:
+              Theme.of(context).dividerColor.withOpacity(isDark ? 0.05 : 0.08),
           width: 0.5,
         ),
       ),
@@ -3087,7 +3298,8 @@ class _DebtCard extends StatelessWidget {
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
                               letterSpacing: -0.3,
-                              color: Theme.of(context).textTheme.titleLarge?.color,
+                              color:
+                                  Theme.of(context).textTheme.titleLarge?.color,
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -3113,14 +3325,16 @@ class _DebtCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
-                            color: Theme.of(context).textTheme.titleLarge?.color,
+                            color:
+                                Theme.of(context).textTheme.titleLarge?.color,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: remaining <= 0 
+                            color: remaining <= 0
                                 ? AppColors.income.withOpacity(0.12)
                                 : Colors.orange.withOpacity(0.12),
                             borderRadius: BorderRadius.circular(6),
@@ -3130,7 +3344,9 @@ class _DebtCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 8,
                               fontWeight: FontWeight.w900,
-                              color: remaining <= 0 ? AppColors.income : Colors.orange,
+                              color: remaining <= 0
+                                  ? AppColors.income
+                                  : Colors.orange,
                               letterSpacing: 0.5,
                             ),
                           ),
@@ -3689,7 +3905,8 @@ class _DebtDetailsSheet extends StatelessWidget {
             ),
             decoration: BoxDecoration(
               color: backgroundColor,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(20)),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -3707,7 +3924,8 @@ class _DebtDetailsSheet extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
                     border: Border(
                       bottom: BorderSide(
@@ -3741,7 +3959,8 @@ class _DebtDetailsSheet extends StatelessWidget {
                         onPressed: isSaving
                             ? null
                             : () async {
-                                final newAmount = double.tryParse(amountController.text);
+                                final newAmount =
+                                    double.tryParse(amountController.text);
                                 if (newAmount == null || newAmount <= 0) return;
 
                                 setModalState(() => isSaving = true);
@@ -3753,14 +3972,17 @@ class _DebtDetailsSheet extends StatelessWidget {
                                     newAmount: newAmount,
                                   );
                                   if (sbCtx.mounted) {
-                                    UIHelper.showSuccessSnackBar(sbCtx,
-                                        ToneManager.t('debt_tx_success_update'));
+                                    UIHelper.showSuccessSnackBar(
+                                        sbCtx,
+                                        ToneManager.t(
+                                            'debt_tx_success_update'));
                                     Navigator.pop(sbCtx);
                                   }
                                 } catch (e) {
                                   if (sbCtx.mounted) {
                                     setModalState(() => isSaving = false);
-                                    UIHelper.showErrorSnackBar(sbCtx, 'Gagal: $e');
+                                    UIHelper.showErrorSnackBar(
+                                        sbCtx, 'Gagal: $e');
                                   }
                                 }
                               },
@@ -3784,7 +4006,8 @@ class _DebtDetailsSheet extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 8),
                         child: Text(
                           'NOMINAL BARU',
                           style: TextStyle(
@@ -3805,22 +4028,32 @@ class _DebtDetailsSheet extends StatelessWidget {
                         child: TextField(
                           controller: amountController,
                           keyboardType: TextInputType.number,
-                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly
+                          ],
                           style: const TextStyle(fontWeight: FontWeight.w600),
                           decoration: InputDecoration(
                             hintText: '0',
                             prefixIcon: Padding(
-                              padding: const EdgeInsets.only(left: 12, right: 8),
+                              padding:
+                                  const EdgeInsets.only(left: 12, right: 8),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(CupertinoIcons.creditcard, size: 20, color: primaryBlue.withOpacity(0.7)),
+                                  Icon(CupertinoIcons.creditcard,
+                                      size: 20,
+                                      color: primaryBlue.withOpacity(0.7)),
                                   const SizedBox(width: 8),
-                                  Text('Rp ', style: TextStyle(color: primaryBlue, fontWeight: FontWeight.w700, fontSize: 16)),
+                                  Text('Rp ',
+                                      style: TextStyle(
+                                          color: primaryBlue,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 16)),
                                 ],
                               ),
                             ),
-                            prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                            prefixIconConstraints:
+                                const BoxConstraints(minWidth: 0, minHeight: 0),
                             border: InputBorder.none,
                           ),
                         ),
@@ -3917,9 +4150,11 @@ class _DebtPaymentModalState extends State<_DebtPaymentModal> {
       builder: (modalCtx) => StatefulBuilder(
         builder: (sbCtx, setPickerState) {
           final isDark = Theme.of(sbCtx).brightness == Brightness.dark;
-          final backgroundColor = isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7);
+          final backgroundColor =
+              isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7);
           final sectionColor = isDark ? const Color(0xFF2C2C2E) : Colors.white;
-          final primaryBlue = isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF);
+          final primaryBlue =
+              isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF);
 
           final filtered = wallets.where((w) {
             return w.walletName.toLowerCase().contains(query.toLowerCase());
@@ -3929,7 +4164,8 @@ class _DebtPaymentModalState extends State<_DebtPaymentModal> {
             height: MediaQuery.of(sbCtx).size.height * 0.7,
             decoration: BoxDecoration(
               color: backgroundColor,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(20)),
             ),
             child: Column(
               children: [
@@ -3951,9 +4187,12 @@ class _DebtPaymentModalState extends State<_DebtPaymentModal> {
                     children: [
                       TextButton(
                         onPressed: () => Navigator.pop(sbCtx),
-                        child: Text('Tutup', style: TextStyle(color: primaryBlue, fontSize: 17)),
+                        child: Text('Tutup',
+                            style: TextStyle(color: primaryBlue, fontSize: 17)),
                       ),
-                      const Text('Pilih Dompet', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                      const Text('Pilih Dompet',
+                          style: TextStyle(
+                              fontSize: 17, fontWeight: FontWeight.bold)),
                       const SizedBox(width: 60),
                     ],
                   ),
@@ -3963,13 +4202,19 @@ class _DebtPaymentModalState extends State<_DebtPaymentModal> {
                   child: CupertinoSearchTextField(
                     onChanged: (v) => setPickerState(() => query = v),
                     placeholder: 'Cari dompet...',
-                    style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                    style:
+                        TextStyle(color: isDark ? Colors.white : Colors.black),
                   ),
                 ),
                 const SizedBox(height: 16),
                 Expanded(
                   child: filtered.isEmpty
-                      ? Center(child: Text('Dompet tidak ditemukan', style: TextStyle(color: isDark ? Colors.white38 : Colors.black38)))
+                      ? Center(
+                          child: Text('Dompet tidak ditemukan',
+                              style: TextStyle(
+                                  color: isDark
+                                      ? Colors.white38
+                                      : Colors.black38)))
                       : ListView.builder(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           itemCount: filtered.length,
@@ -3981,7 +4226,9 @@ class _DebtPaymentModalState extends State<_DebtPaymentModal> {
                               decoration: BoxDecoration(
                                 color: sectionColor,
                                 borderRadius: BorderRadius.circular(12),
-                                border: isSelected ? Border.all(color: primaryBlue, width: 2) : null,
+                                border: isSelected
+                                    ? Border.all(color: primaryBlue, width: 2)
+                                    : null,
                               ),
                               child: ListTile(
                                 leading: Container(
@@ -3990,11 +4237,23 @@ class _DebtPaymentModalState extends State<_DebtPaymentModal> {
                                     color: primaryBlue.withOpacity(0.1),
                                     shape: BoxShape.circle,
                                   ),
-                                  child: Icon(CupertinoIcons.creditcard, color: primaryBlue, size: 20),
+                                  child: Icon(CupertinoIcons.creditcard,
+                                      color: primaryBlue, size: 20),
                                 ),
-                                title: Text(w.walletName, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                subtitle: Text(CurrencyFormatter.formatCurrency(w.balance), style: TextStyle(fontSize: 12, color: isDark ? Colors.white54 : Colors.black54)),
-                                trailing: isSelected ? Icon(CupertinoIcons.checkmark_circle_fill, color: primaryBlue) : null,
+                                title: Text(w.walletName,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold)),
+                                subtitle: Text(
+                                    CurrencyFormatter.formatCurrency(w.balance),
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        color: isDark
+                                            ? Colors.white54
+                                            : Colors.black54)),
+                                trailing: isSelected
+                                    ? Icon(CupertinoIcons.checkmark_circle_fill,
+                                        color: primaryBlue)
+                                    : null,
                                 onTap: () {
                                   setState(() => _selectedWallet = w);
                                   Navigator.pop(sbCtx);
@@ -4016,10 +4275,13 @@ class _DebtPaymentModalState extends State<_DebtPaymentModal> {
   Widget build(BuildContext context) {
     final remaining = widget.debt.totalAmount - widget.debt.paidAmount;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7);
+    final backgroundColor =
+        isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7);
     final sectionColor = isDark ? const Color(0xFF2C2C2E) : Colors.white;
-    final primaryBlue = isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF);
-    final accentColor = widget.debt.isUtang ? AppColors.expense : AppColors.income;
+    final primaryBlue =
+        isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF);
+    final accentColor =
+        widget.debt.isUtang ? AppColors.expense : AppColors.income;
 
     return Container(
       padding: EdgeInsets.only(
@@ -4049,27 +4311,34 @@ class _DebtPaymentModalState extends State<_DebtPaymentModal> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: isDark ? Colors.white10 : Colors.black12, width: 0.5)),
+              border: Border(
+                  bottom: BorderSide(
+                      color: isDark ? Colors.white10 : Colors.black12,
+                      width: 0.5)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text('Batal', style: TextStyle(color: primaryBlue, fontSize: 17)),
+                  child: Text('Batal',
+                      style: TextStyle(color: primaryBlue, fontSize: 17)),
                 ),
                 Text(
                   widget.debt.isUtang ? 'Bayar Hutang' : 'Terima Piutang',
-                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                      fontSize: 17, fontWeight: FontWeight.w600),
                 ),
                 TextButton(
                   onPressed: _isLoading || _selectedWallet == null
                       ? null
                       : () async {
-                          final amount = double.tryParse(_amountController.text);
+                          final amount =
+                              double.tryParse(_amountController.text);
                           if (amount == null || amount <= 0) return;
                           if (amount > remaining) {
-                            UIHelper.showErrorSnackBar(context, 'Melebihi sisa ${widget.debt.isUtang ? 'hutang' : 'piutang'}');
+                            UIHelper.showErrorSnackBar(context,
+                                'Melebihi sisa ${widget.debt.isUtang ? 'hutang' : 'piutang'}');
                             return;
                           }
 
@@ -4077,13 +4346,16 @@ class _DebtPaymentModalState extends State<_DebtPaymentModal> {
                           try {
                             await widget.debtService.payInstallment(
                               currentUserId: widget.currentUserId,
-                              currentUserName: FirebaseAuth.instance.currentUser?.displayName ?? 'User',
+                              currentUserName: FirebaseAuth
+                                      .instance.currentUser?.displayName ??
+                                  'User',
                               targetDebt: widget.debt,
                               installmentAmount: amount,
                               paymentWalletId: _selectedWallet!.id,
                             );
                             if (mounted) {
-                              UIHelper.showSuccessSnackBar(context, ToneManager.t('debt_tx_success_add'));
+                              UIHelper.showSuccessSnackBar(context,
+                                  ToneManager.t('debt_tx_success_add'));
                               Navigator.pop(context);
                             }
                           } catch (e) {
@@ -4098,7 +4370,9 @@ class _DebtPaymentModalState extends State<_DebtPaymentModal> {
                       : Text(
                           'Simpan',
                           style: TextStyle(
-                            color: _selectedWallet == null ? Colors.grey : primaryBlue,
+                            color: _selectedWallet == null
+                                ? Colors.grey
+                                : primaryBlue,
                             fontSize: 17,
                             fontWeight: FontWeight.w600,
                           ),
@@ -4116,7 +4390,8 @@ class _DebtPaymentModalState extends State<_DebtPaymentModal> {
                 children: [
                   // Debt Info
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                     child: Text(
                       'INFO ${widget.debt.isUtang ? 'HUTANG' : 'PIUTANG'}',
                       style: TextStyle(
@@ -4136,9 +4411,15 @@ class _DebtPaymentModalState extends State<_DebtPaymentModal> {
                     ),
                     child: Column(
                       children: [
-                        _buildInfoRow('Pihak', widget.debt.title, CupertinoIcons.person_2, isDark),
+                        _buildInfoRow('Pihak', widget.debt.title,
+                            CupertinoIcons.person_2, isDark),
                         const Divider(height: 24),
-                        _buildInfoRow('Sisa', CurrencyFormatter.formatCurrency(remaining), CupertinoIcons.hourglass, isDark, color: Colors.orange),
+                        _buildInfoRow(
+                            'Sisa',
+                            CurrencyFormatter.formatCurrency(remaining),
+                            CupertinoIcons.hourglass,
+                            isDark,
+                            color: Colors.orange),
                       ],
                     ),
                   ),
@@ -4147,7 +4428,8 @@ class _DebtPaymentModalState extends State<_DebtPaymentModal> {
 
                   // Payment Form
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                     child: Text(
                       'PEMBAYARAN',
                       style: TextStyle(
@@ -4168,58 +4450,93 @@ class _DebtPaymentModalState extends State<_DebtPaymentModal> {
                       children: [
                         // Amount
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 4),
                           child: TextField(
                             controller: _amountController,
                             keyboardType: TextInputType.number,
-                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly
+                            ],
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 18),
                             decoration: InputDecoration(
                               hintText: '0',
                               border: InputBorder.none,
                               prefixIcon: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(CupertinoIcons.money_rubl, size: 20, color: accentColor),
+                                  Icon(CupertinoIcons.money_rubl,
+                                      size: 20, color: accentColor),
                                   const SizedBox(width: 8),
-                                  Text('Rp ', style: TextStyle(color: accentColor, fontWeight: FontWeight.bold, fontSize: 16)),
+                                  Text('Rp ',
+                                      style: TextStyle(
+                                          color: accentColor,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16)),
                                 ],
                               ),
-                              prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                              prefixIconConstraints: const BoxConstraints(
+                                  minWidth: 0, minHeight: 0),
                             ),
                           ),
                         ),
-                        Divider(height: 1, indent: 52, color: isDark ? Colors.white10 : Colors.black12),
+                        Divider(
+                            height: 1,
+                            indent: 52,
+                            color: isDark ? Colors.white10 : Colors.black12),
                         // Wallet Selection
                         StreamBuilder<List<WalletModel>>(
-                          stream: widget.firestoreService.getWalletsStream(widget.currentUserId),
+                          stream: widget.firestoreService
+                              .getWalletsStream(widget.currentUserId),
                           builder: (ctx, snapshot) {
-                            final wallets = (snapshot.data ?? []).where((w) => !w.isDebt).toList();
+                            final wallets = (snapshot.data ?? [])
+                                .where((w) => !w.isDebt)
+                                .toList();
                             return ListTile(
-                              onTap: wallets.isEmpty ? null : () => _showLocalWalletPicker(context, wallets),
-                              leading: Icon(CupertinoIcons.creditcard, size: 20, color: primaryBlue.withOpacity(0.7)),
+                              onTap: wallets.isEmpty
+                                  ? null
+                                  : () =>
+                                      _showLocalWalletPicker(context, wallets),
+                              leading: Icon(CupertinoIcons.creditcard,
+                                  size: 20,
+                                  color: primaryBlue.withOpacity(0.7)),
                               title: Text(
                                 _selectedWallet?.walletName ?? 'Pilih Dompet',
                                 style: TextStyle(
-                                  fontSize: 15,
-                                  color: _selectedWallet != null ? (isDark ? Colors.white : Colors.black) : (isDark ? Colors.white38 : Colors.black38)
-                                ),
+                                    fontSize: 15,
+                                    color: _selectedWallet != null
+                                        ? (isDark ? Colors.white : Colors.black)
+                                        : (isDark
+                                            ? Colors.white38
+                                            : Colors.black38)),
                               ),
-                              trailing: Icon(CupertinoIcons.chevron_right, size: 14, color: isDark ? Colors.white24 : Colors.black26),
+                              trailing: Icon(CupertinoIcons.chevron_right,
+                                  size: 14,
+                                  color:
+                                      isDark ? Colors.white24 : Colors.black26),
                             );
                           },
                         ),
-                        Divider(height: 1, indent: 52, color: isDark ? Colors.white10 : Colors.black12),
+                        Divider(
+                            height: 1,
+                            indent: 52,
+                            color: isDark ? Colors.white10 : Colors.black12),
                         // Note
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 4),
                           child: TextField(
                             controller: _noteController,
                             textCapitalization: TextCapitalization.sentences,
                             decoration: InputDecoration(
                               hintText: 'Catatan (Opsional)',
-                              hintStyle: TextStyle(color: isDark ? Colors.white38 : Colors.black38),
-                              prefixIcon: Icon(CupertinoIcons.pencil, size: 20, color: primaryBlue.withOpacity(0.7)),
+                              hintStyle: TextStyle(
+                                  color:
+                                      isDark ? Colors.white38 : Colors.black38),
+                              prefixIcon: Icon(CupertinoIcons.pencil,
+                                  size: 20,
+                                  color: primaryBlue.withOpacity(0.7)),
                               border: InputBorder.none,
                             ),
                           ),
@@ -4237,14 +4554,21 @@ class _DebtPaymentModalState extends State<_DebtPaymentModal> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value, IconData icon, bool isDark, {Color? color}) {
+  Widget _buildInfoRow(String label, String value, IconData icon, bool isDark,
+      {Color? color}) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: color ?? (isDark ? Colors.white54 : Colors.black54)),
+        Icon(icon,
+            size: 20,
+            color: color ?? (isDark ? Colors.white54 : Colors.black54)),
         const SizedBox(width: 12),
-        Text(label, style: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 14)),
+        Text(label,
+            style: TextStyle(
+                color: isDark ? Colors.white54 : Colors.black54, fontSize: 14)),
         const Spacer(),
-        Text(value, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: color)),
+        Text(value,
+            style: TextStyle(
+                fontWeight: FontWeight.w600, fontSize: 15, color: color)),
       ],
     );
   }
@@ -4294,12 +4618,12 @@ class _DebtPaymentModalState extends State<_DebtPaymentModal> {
                   itemBuilder: (context, index) {
                     final memberUid = wallet.members[index];
                     return FutureBuilder<Map<String, dynamic>?>(
-                      future: _firestoreService.getUserInfo(memberUid),
+                      future: widget.firestoreService.getUserInfo(memberUid),
                       builder: (context, snapshot) {
                         final name =
                             snapshot.data?['displayName'] ?? 'Memuat...';
                         final isOwner = memberUid == wallet.owner;
-                        final isMe = memberUid == _uid;
+                        final isMe = memberUid == widget.currentUserId;
 
                         return Row(
                           children: [
