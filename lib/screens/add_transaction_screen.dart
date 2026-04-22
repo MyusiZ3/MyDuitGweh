@@ -11,6 +11,7 @@ import '../utils/app_theme.dart';
 import '../utils/ui_helper.dart';
 import '../utils/tone_dictionary.dart';
 import '../utils/currency_formatter.dart';
+import '../utils/category_matcher.dart';
 
 class AddTransactionScreen extends StatefulWidget {
   final double? initialAmount;
@@ -35,6 +36,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   final String _uid = FirebaseAuth.instance.currentUser!.uid;
   final _amountController = TextEditingController();
   final _noteController = TextEditingController();
+  Timer? _debounceTimer;
 
   String _selectedType = 'expense';
   String? _selectedCategory;
@@ -60,7 +62,24 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       _selectedCategory = widget.initialCategory;
     }
 
+    _noteController.addListener(_onNoteChanged);
     _loadWallets();
+  }
+
+  void _onNoteChanged() {
+    if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 600), () {
+      if (_noteController.text.isNotEmpty && _selectedCategory == null) {
+        final matched = CategoryMatcher.matchCategory(_noteController.text);
+        if (matched != null) {
+          final categories =
+              TransactionCategory.getCategoriesForType(_selectedType);
+          if (categories.contains(matched)) {
+            setState(() => _selectedCategory = matched);
+          }
+        }
+      }
+    });
   }
 
   Future<void> _loadWallets() async {
@@ -80,6 +99,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   void dispose() {
     _amountController.dispose();
     _noteController.dispose();
+    _debounceTimer?.cancel();
     super.dispose();
   }
 

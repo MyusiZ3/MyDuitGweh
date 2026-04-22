@@ -230,6 +230,27 @@ class FirestoreService {
     });
   }
 
+  Stream<double> getMonthlyIncomeStream(String uid) {
+    final now = DateTime.now();
+    final startOfMonth = DateTime(now.year, now.month, 1);
+    final endOfMonth = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
+
+    return _firestore
+        .collection('transactions')
+        .where('createdBy', isEqualTo: uid)
+        .where('type', isEqualTo: 'income')
+        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth))
+        .where('date', isLessThanOrEqualTo: Timestamp.fromDate(endOfMonth))
+        .snapshots()
+        .map((snapshot) {
+      double total = 0;
+      for (var doc in snapshot.docs) {
+        total += (doc.data()['amount'] ?? 0).toDouble();
+      }
+      return total;
+    });
+  }
+
   Stream<double> getTodayExpenseStream(String uid) {
     final now = DateTime.now();
     final startOfDay = DateTime(now.year, now.month, now.day);

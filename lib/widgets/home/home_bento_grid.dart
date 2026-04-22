@@ -5,17 +5,20 @@ import '../../utils/currency_formatter.dart';
 import '../../utils/tone_dictionary.dart';
 import '../../services/firestore_service.dart';
 import 'home_budget_tracker.dart';
+import 'home_observer_card.dart';
 import 'package:flutter/services.dart';
 
 class HomeBentoGrid extends StatelessWidget {
   final String uid;
   final double monthlyBudget;
+  final double netWorth;
   final FirestoreService firestoreService;
 
   const HomeBentoGrid({
     super.key,
     required this.uid,
     required this.monthlyBudget,
+    required this.netWorth,
     required this.firestoreService,
   });
 
@@ -31,61 +34,76 @@ class HomeBentoGrid extends StatelessWidget {
           builder: (context, todaySnapshot) {
             final todaySpent = todaySnapshot.data ?? 0.0;
 
-            return Column(
-              children: [
-                if (monthlyBudget > 0)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: HomeBudgetTracker(
-                      monthlyBudget: monthlyBudget,
-                      totalExpense: totalMonthlySpent,
-                    ),
-                  ),
-                const SizedBox(height: 12),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: IntrinsicHeight(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Expanded(
-                          child: _BentoCard(
-                            title: ToneManager.t('date_today'),
-                            value: CurrencyFormatter.formatCurrency(todaySpent),
-                            icon: CupertinoIcons.today,
-                            color: AppColors.expense.withOpacity(0.1),
-                            iconColor: AppColors.expense,
-                            subtitle: 'Total hari ini',
-                          ),
+            return StreamBuilder<double>(
+              stream: firestoreService.getMonthlyIncomeStream(uid),
+              builder: (context, incomeSnapshot) {
+                final totalMonthlyIncome = incomeSnapshot.data ?? 0.0;
+
+                return Column(
+                  children: [
+                    if (monthlyBudget > 0)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: HomeBudgetTracker(
+                          monthlyBudget: monthlyBudget,
+                          totalExpense: totalMonthlySpent,
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ValueListenableBuilder<AppTone>(
-                            valueListenable: ToneManager.notifier,
-                            builder: (context, tone, _) {
-                              final currentTip = ToneManager.getSmartTip(
-                                todaySpent: todaySpent,
-                                monthlyBudget: monthlyBudget,
-                                totalMonthlySpent: totalMonthlySpent,
-                              );
-                              return _BentoCard(
-                                title: 'Tips',
-                                value: currentTip,
-                                icon: CupertinoIcons.lightbulb_fill,
-                                color: Colors.amber.withOpacity(0.1),
-                                iconColor: Colors.amber,
-                                subtitle: 'Simak rekomendasi',
-                                onTap: () =>
-                                    _showTipDetail(context, currentTip),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
+                      ),
+                    const SizedBox(height: 12),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: HomeObserverCard(
+                        netWorth: netWorth,
+                        monthlyIncome: totalMonthlyIncome,
+                      ),
                     ),
-                  ),
-                ),
-              ],
+                    const SizedBox(height: 12),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(
+                              child: _BentoCard(
+                                title: ToneManager.t('date_today'),
+                                value: CurrencyFormatter.formatCurrency(todaySpent),
+                                icon: CupertinoIcons.today,
+                                color: AppColors.expense.withOpacity(0.1),
+                                iconColor: AppColors.expense,
+                                subtitle: 'Total hari ini',
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: ValueListenableBuilder<AppTone>(
+                                valueListenable: ToneManager.notifier,
+                                builder: (context, tone, _) {
+                                  final currentTip = ToneManager.getSmartTip(
+                                    todaySpent: todaySpent,
+                                    monthlyBudget: monthlyBudget,
+                                    totalMonthlySpent: totalMonthlySpent,
+                                  );
+                                  return _BentoCard(
+                                    title: 'Tips',
+                                    value: currentTip,
+                                    icon: CupertinoIcons.lightbulb_fill,
+                                    color: Colors.amber.withOpacity(0.1),
+                                    iconColor: Colors.amber,
+                                    subtitle: 'Simak rekomendasi',
+                                    onTap: () =>
+                                        _showTipDetail(context, currentTip),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
             );
           },
         );
@@ -285,15 +303,21 @@ class _BentoCardState extends State<_BentoCard>
                 ),
               ),
               const SizedBox(height: 4),
-              Text(
-                widget.value,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.5,
-                  height: 1.2,
+              SizedBox(
+                height: 24,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    widget.value,
+                    maxLines: 1,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.5,
+                      height: 1.2,
+                    ),
+                  ),
                 ),
               ),
               const Spacer(),

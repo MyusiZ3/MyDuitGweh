@@ -6,9 +6,13 @@ class ShimmerWalletCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final baseColor = isDark ? Colors.grey[850]! : Colors.grey[300]!;
+    final highlightColor = isDark ? Colors.grey[800]! : Colors.grey[100]!;
+
     return Shimmer.fromColors(
-      baseColor: Colors.grey[300]!,
-      highlightColor: Colors.grey[100]!,
+      baseColor: baseColor,
+      highlightColor: highlightColor,
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         height: 120,
@@ -26,14 +30,18 @@ class ShimmerTransactionList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final baseColor = isDark ? Colors.grey[850]! : Colors.grey[300]!;
+    final highlightColor = isDark ? Colors.grey[800]! : Colors.grey[100]!;
+
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: 5,
       itemBuilder: (context, index) {
         return Shimmer.fromColors(
-          baseColor: Colors.grey[300]!,
-          highlightColor: Colors.grey[100]!,
+          baseColor: baseColor,
+          highlightColor: highlightColor,
           child: Container(
             margin: const EdgeInsets.only(bottom: 12),
             child: Row(
@@ -87,24 +95,27 @@ class ShimmerHomeScreen extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _circle(height: 12, width: 80),
+                  _circle(context, height: 12, width: 80),
                   const SizedBox(height: 8),
-                  _circle(height: 20, width: 140),
+                  _circle(context, height: 20, width: 140),
                 ],
               ),
-              _circle(height: 38, width: 38, shape: BoxShape.circle),
+              _circle(context, height: 38, width: 38, shape: BoxShape.circle),
             ],
           ),
           const SizedBox(height: 32),
-          _circle(height: 160, width: double.infinity, borderRadius: 24),
+          _circle(context,
+              height: 160, width: double.infinity, borderRadius: 24),
           const SizedBox(height: 32),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: List.generate(
-                4, (index) => _circle(height: 60, width: 60, borderRadius: 16)),
+                4,
+                (index) => _circle(context,
+                    height: 60, width: 60, borderRadius: 16)),
           ),
           const SizedBox(height: 32),
-          _circle(height: 20, width: 120),
+          _circle(context, height: 20, width: 120),
           const SizedBox(height: 16),
           const ShimmerTransactionList(),
         ],
@@ -112,14 +123,18 @@ class ShimmerHomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _circle(
+  Widget _circle(BuildContext context,
       {required double height,
       required double width,
       double? borderRadius,
       BoxShape shape = BoxShape.rectangle}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final baseColor = isDark ? Colors.grey[850]! : Colors.grey[300]!;
+    final highlightColor = isDark ? Colors.grey[800]! : Colors.grey[100]!;
+
     return Shimmer.fromColors(
-      baseColor: Colors.grey[300]!,
-      highlightColor: Colors.grey[100]!,
+      baseColor: baseColor,
+      highlightColor: highlightColor,
       child: Container(
         height: height,
         width: width,

@@ -283,13 +283,10 @@ class _MaintenanceGateWrapperState extends State<MaintenanceGateWrapper> {
         // Jika error atau dokumen tidak ada, kita harus hati-hati
         if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
           final error = snapshot.error?.toString().toLowerCase() ?? '';
-          if (error.contains('permission-denied') || error.contains('not find document')) {
-            debugPrint('--- MAINTENANCE GATE: Auth/Permission issue detected. Staying in safe zone. ---');
-            return const SplashView(); 
-          }
-          
           debugPrint(
-              '--- MAINTENANCE GATE: Fallback to MainNav (error: $error) ---');
+              '--- MAINTENANCE GATE: Handling error/missing data: $error ---');
+          
+          // Fallback to MainNav instead of being stuck in SplashView
           return const MainNav();
         }
 

@@ -719,7 +719,7 @@ class _ReportScreenState extends State<ReportScreen> {
                 ),
               ),
               Text(
-                '${(percent * 100).toInt()}%',
+                '${(percent * 100).toStringAsFixed(0)}%',
                 style: TextStyle(
                   fontWeight: FontWeight.w900,
                   fontSize: 16,

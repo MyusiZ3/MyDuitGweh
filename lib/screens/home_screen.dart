@@ -751,6 +751,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: HomeBentoGrid(
                               uid: _uid,
                               monthlyBudget: _monthlyBudget,
+                              netWorth: netWorth,
                               firestoreService: _firestoreService,
                             ),
                           ),
