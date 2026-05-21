@@ -368,15 +368,34 @@ class _SurveyDataScreenState extends State<SurveyDataScreen> {
               children: [
                 Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.indigo.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        feedback.category.toUpperCase(),
-                        style: const TextStyle(color: Colors.indigo, fontWeight: FontWeight.w900, fontSize: 10),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        physics: const BouncingScrollPhysics(),
+                        child: Row(
+                          children: feedback.category
+                              .split(',')
+                              .map((e) => e.trim())
+                              .where((e) => e.isNotEmpty)
+                              .map((cat) {
+                            return Container(
+                              margin: const EdgeInsets.only(right: 6),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.indigo.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                cat.toUpperCase(),
+                                style: const TextStyle(
+                                  color: Colors.indigo,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
