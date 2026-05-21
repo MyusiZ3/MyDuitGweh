@@ -18,7 +18,26 @@ class TransactionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isIncome = transaction.isIncome;
+    bool isTxIncome = transaction.isIncome;
+    Color displayColor = isTxIncome ? AppColors.income : AppColors.expense;
+    String sign = isTxIncome ? '+' : '-';
+    
+    if (transaction.isTransfer) {
+      if (transaction.walletId == walletId) {
+        isTxIncome = false;
+        displayColor = AppColors.primary;
+        sign = '-';
+      } else if (transaction.targetWalletId == walletId) {
+        isTxIncome = true;
+        displayColor = const Color(0xFF34C759);
+        sign = '+';
+      } else {
+        isTxIncome = false;
+        displayColor = AppColors.primary;
+        sign = '';
+      }
+    }
+
     return Container(
       constraints: const BoxConstraints(minHeight: 74),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -39,12 +58,12 @@ class TransactionCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: (isIncome ? AppColors.income : AppColors.expense).withOpacity(0.1),
+              color: displayColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(
               TransactionCategory.getIconForCategory(transaction.category),
-              color: isIncome ? AppColors.income : AppColors.expense,
+              color: displayColor,
               size: 20,
             ),
           ),
@@ -85,10 +104,10 @@ class TransactionCard extends StatelessWidget {
             child: FittedBox(
               fit: BoxFit.scaleDown,
               child: Text(
-                '${isIncome ? '+' : '-'}${CurrencyFormatter.formatCurrency(transaction.amount)}',
+                '$sign${CurrencyFormatter.formatCurrency(transaction.amount)}',
                 style: TextStyle(
                   fontWeight: FontWeight.w900,
-                  color: isIncome ? AppColors.income : AppColors.expense,
+                  color: displayColor,
                   fontSize: 15,
                 ),
               ),

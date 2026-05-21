@@ -20,11 +20,14 @@ class FirestoreService {
     return _firestore
         .collection('wallets')
         .where('members', arrayContains: uid)
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => WalletModel.fromJson(doc.data(), docId: doc.id))
-            .toList());
+        .map((snapshot) {
+          final list = snapshot.docs
+              .map((doc) => WalletModel.fromJson(doc.data(), docId: doc.id))
+              .toList();
+          list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return list;
+        });
   }
 
   Stream<List<WalletModel>> getPersonalWalletsStream(String uid) {

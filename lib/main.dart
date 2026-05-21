@@ -26,9 +26,14 @@ import 'screens/security_gate_screen.dart';
 import 'services/notif_sync_service.dart';
 import 'services/notif_listener_bridge.dart';
 import 'screens/suspension_gate_screen.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize local date symbols for Indonesian localization
+  await initializeDateFormatting('id_ID', null);
+  await initializeDateFormatting('id', null);
 
   // FIX: Force Camera2 implementation to avoid CameraX "Unsupported value" crash on some devices (like Xiaomi)
   if (defaultTargetPlatform == TargetPlatform.android) {

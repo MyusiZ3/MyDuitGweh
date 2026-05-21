@@ -233,41 +233,22 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Widget _buildHeader() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // App icon
-        Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF007AFF), Color(0xFF5856D6)],
-            ),
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF007AFF).withOpacity(0.3),
-                blurRadius: 16,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Center(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: Image.asset(
-                'assets/images/logo_app.png',
-                width: 36,
-                height: 36,
-                fit: BoxFit.contain,
-              ),
-            ),
+        const SizedBox(height: 20),
+        // App icon (Raw iOS-style logo only with soft rounded corners)
+        ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Image.asset(
+            'assets/images/logo_app.png',
+            width: 72,
+            height: 72,
+            fit: BoxFit.contain,
           ),
         ),
-        const SizedBox(height: 28),
+        const SizedBox(height: 24),
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 400),
           transitionBuilder: (child, anim) =>
@@ -275,12 +256,13 @@ class _LoginScreenState extends State<LoginScreen>
           child: Text(
             _isLogin ? 'Selamat Datang' : 'Buat Akun Baru',
             key: ValueKey(_isLogin ? 'login_title' : 'register_title'),
+            textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 32,
+              fontSize: 28,
               fontWeight: FontWeight.w800,
-              color: Theme.of(context).textTheme.titleLarge?.color,
-              letterSpacing: -1.2,
-              height: 1.15,
+              color: isDark ? Colors.white : Colors.black,
+              letterSpacing: -0.8,
+              height: 1.2,
             ),
           ),
         ),
@@ -292,9 +274,10 @@ class _LoginScreenState extends State<LoginScreen>
                 ? 'Masuk ke akun MyDuitGweh kamu'
                 : 'Daftar dan mulai kelola keuanganmu',
             key: ValueKey(_isLogin ? 'login_sub' : 'register_sub'),
+            textAlign: TextAlign.center,
             style: const TextStyle(
               color: Color(0xFF8E8E93),
-              fontSize: 16,
+              fontSize: 15,
               fontWeight: FontWeight.w500,
               letterSpacing: -0.2,
             ),

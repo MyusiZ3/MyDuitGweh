@@ -16,6 +16,8 @@ class TransactionModel {
   final String? debtId;
   final String? targetWalletId; // For transfers
 
+  final String? subscriptionId;
+
   TransactionModel({
     required this.id,
     required this.walletId,
@@ -28,6 +30,7 @@ class TransactionModel {
     required this.date,
     this.debtId,
     this.targetWalletId,
+    this.subscriptionId,
   });
 
   static String generateId({String prefix = 'TX'}) {
@@ -66,6 +69,7 @@ class TransactionModel {
       date: (json['date'] as Timestamp).toDate(),
       debtId: json['debtId'] as String?,
       targetWalletId: json['targetWalletId'] as String?,
+      subscriptionId: json['subscriptionId'] as String?,
     );
   }
 
@@ -81,6 +85,7 @@ class TransactionModel {
       'date': Timestamp.fromDate(date),
       if (debtId != null) 'debtId': debtId,
       if (targetWalletId != null) 'targetWalletId': targetWalletId,
+      if (subscriptionId != null) 'subscriptionId': subscriptionId,
     };
   }
 
@@ -100,6 +105,7 @@ class TransactionModel {
     DateTime? date,
     String? debtId,
     String? targetWalletId,
+    String? subscriptionId,
   }) {
     return TransactionModel(
       id: id ?? this.id,
@@ -113,6 +119,7 @@ class TransactionModel {
       date: date ?? this.date,
       debtId: debtId ?? this.debtId,
       targetWalletId: targetWalletId ?? this.targetWalletId,
+      subscriptionId: subscriptionId ?? this.subscriptionId,
     );
   }
 }
@@ -169,6 +176,7 @@ class TransactionCategory {
         return CupertinoIcons.cart;
       case 'Pinjaman':
         return CupertinoIcons.money_dollar_circle;
+      case 'Pindah Dana':
       case 'Transfer Masuk':
       case 'Transfer Keluar':
         return CupertinoIcons.arrow_right_arrow_left;

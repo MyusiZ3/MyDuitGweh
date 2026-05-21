@@ -567,6 +567,54 @@ class ToneManager {
       AppTone.pasangan:
           'Cari brankas kita di sini ya sayang, biar rahasia keuangan kita aman~ (✿◠‿◠)',
     },
+    'tab_tagihan': {
+      AppTone.normal: 'Tagihan',
+      AppTone.genZ: 'Tagihan',
+      AppTone.milenial: 'Bills',
+      AppTone.boomer: 'Tagihan',
+      AppTone.pasangan: 'Tagihan',
+    },
+    'sub_empty_title': {
+      AppTone.normal: 'Belum ada tagihan',
+      AppTone.genZ: 'Belum ada tagihan nih skid',
+      AppTone.milenial: 'No active bills',
+      AppTone.boomer: 'Belum ada tagihan terdaftar',
+      AppTone.pasangan: 'Belum ada tagihan sayang~ (✿◠‿◠)',
+    },
+    'sub_empty_msg': {
+      AppTone.normal: 'Yuk buat tagihan rutin pertamamu agar terpantau!',
+      AppTone.genZ: 'Catat tagihan rutin lu biar gak lupa bayar, cik!',
+      AppTone.milenial:
+          'Add a subscription or recurring bill to track your budget.',
+      AppTone.boomer:
+          'Silakan daftarkan tagihan rutin anda agar tidak telat bayar.',
+      AppTone.pasangan:
+          'Yuk tambahin tagihan rutin kita biar gak lupa bayar sayang~ ^_^',
+    },
+    'btn_add_sub': {
+      AppTone.normal: 'Tambah',
+      AppTone.genZ: 'Tambah',
+      AppTone.milenial: 'Add Bill',
+      AppTone.boomer: 'Tambah',
+      AppTone.pasangan: 'Tambah',
+    },
+    'debt_empty_title': {
+      AppTone.normal: 'Belum ada catatan hutang',
+      AppTone.genZ: 'Sirkel Lu Aman dari Utang',
+      AppTone.milenial: 'No active debts or loans',
+      AppTone.boomer: 'Belum ada catatan hutang piutang',
+      AppTone.pasangan: 'Belum ada hutang sayang~ ^_^',
+    },
+    'debt_empty_msg': {
+      AppTone.normal:
+          'Yuk catat hutang atau piutangmu agar tidak lupa menagih atau membayar!',
+      AppTone.genZ: 'Catat utang/piutang lu biar kaga lupa pas ditagih!',
+      AppTone.milenial:
+          'Track money you owe or are owed to stay on top of your finances.',
+      AppTone.boomer:
+          'Silakan catat hutang piutang anda di sini demi ketertiban bersama.',
+      AppTone.pasangan: 'Yuk catat hutang kita biar cepat lunas sayang~',
+    },
     'error_not_creator_delete': {
       AppTone.normal: 'Kamu hanya bisa menghapus transaksimu sendiri!',
       AppTone.genZ: 'Eits, bukan lu yang input ini! Jangan main apus aja!',

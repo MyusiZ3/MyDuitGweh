@@ -133,7 +133,7 @@ class _ReportScreenState extends State<ReportScreen> {
       for (var t in prevTxns) {
         if (t.isIncome) {
           inc += t.amount;
-        } else {
+        } else if (t.isExpense) {
           exp += t.amount;
         }
       }
@@ -414,7 +414,7 @@ class _ReportScreenState extends State<ReportScreen> {
                 for (var txn in data) {
                   if (txn.isIncome) {
                     totalIncome += txn.amount;
-                  } else {
+                  } else if (txn.isExpense) {
                     totalExpense += txn.amount;
                     categoryTotals[txn.category] =
                         (categoryTotals[txn.category] ?? 0) + txn.amount;
@@ -777,7 +777,7 @@ class _ReportScreenState extends State<ReportScreen> {
   Widget _buildStackedCategoryTimeline(List<TransactionModel> transactions) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final expenseTransactions =
-        transactions.where((t) => !t.isIncome).toList();
+        transactions.where((t) => t.isExpense).toList();
 
     if (expenseTransactions.isEmpty) return const SizedBox.shrink();
 
@@ -1748,7 +1748,7 @@ class _ReportScreenState extends State<ReportScreen> {
       if (incomeByDay.containsKey(dayKey)) {
         if (txn.isIncome) {
           incomeByDay[dayKey] = (incomeByDay[dayKey] ?? 0) + txn.amount;
-        } else {
+        } else if (txn.isExpense) {
           expenseByDay[dayKey] = (expenseByDay[dayKey] ?? 0) + txn.amount;
         }
       }
@@ -2374,7 +2374,7 @@ class _ReportScreenState extends State<ReportScreen> {
     for (var txn in filteredTxns) {
       if (txn.isIncome) {
         totalIncome += txn.amount;
-      } else {
+      } else if (txn.isExpense) {
         totalExpense += txn.amount;
       }
     }
@@ -3863,7 +3863,7 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
             for (var txn in snapshot.data!) {
               if (txn.isIncome) {
                 income += txn.amount;
-              } else {
+              } else if (txn.isExpense) {
                 expense += txn.amount;
               }
             }
