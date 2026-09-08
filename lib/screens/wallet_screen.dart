@@ -23,6 +23,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../widgets/bottom_sheets/create_wallet_sheet.dart';
+import '../widgets/empty_state_widget.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -663,9 +664,11 @@ class WalletScreenState extends State<WalletScreen>
           final primaryBlue =
               isDark ? const Color(0xFF6B64DB) : const Color(0xFF8B85F6);
 
+          final safeBottom = MediaQuery.of(sbCtx).padding.bottom;
           return Container(
             padding: EdgeInsets.only(
-              bottom: MediaQuery.of(sbCtx).viewInsets.bottom + 20,
+              bottom: MediaQuery.of(sbCtx).viewInsets.bottom +
+                  (safeBottom > 0 ? safeBottom + 12 : 24),
             ),
             decoration: BoxDecoration(
               color: backgroundColor,
@@ -881,7 +884,10 @@ class WalletScreenState extends State<WalletScreen>
                   const BorderRadius.vertical(top: Radius.circular(20)),
             ),
             padding: EdgeInsets.only(
-              bottom: MediaQuery.of(sbCtx).viewInsets.bottom + 20,
+              bottom: MediaQuery.of(sbCtx).viewInsets.bottom +
+                  (MediaQuery.of(sbCtx).padding.bottom > 0
+                      ? MediaQuery.of(sbCtx).padding.bottom + 12
+                      : 24),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -1168,7 +1174,10 @@ class WalletScreenState extends State<WalletScreen>
                   const BorderRadius.vertical(top: Radius.circular(20)),
             ),
             padding: EdgeInsets.only(
-              bottom: MediaQuery.of(sbCtx).viewInsets.bottom + 20,
+              bottom: MediaQuery.of(sbCtx).viewInsets.bottom +
+                  (MediaQuery.of(sbCtx).padding.bottom > 0
+                      ? MediaQuery.of(sbCtx).padding.bottom + 12
+                      : 24),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -1927,10 +1936,12 @@ class WalletScreenState extends State<WalletScreen>
                     }
                     final txns = snapshot.data!;
                     if (txns.isEmpty) {
-                      return Center(
-                          child: Text('Belum ada transaksi',
-                              style: TextStyle(
-                                  color: Theme.of(context).hintColor)));
+                      return const EmptyStateWidget(
+                        title: 'Belum Ada Transaksi',
+                        subtitle: 'Transaksi pada dompet ini akan muncul di sini secara otomatis.',
+                        icon: CupertinoIcons.doc_plaintext,
+                        paddingVertical: 32,
+                      );
                     }
 
                     return ListView.builder(
@@ -2125,7 +2136,10 @@ class WalletScreenState extends State<WalletScreen>
 
           return Container(
             padding: EdgeInsets.only(
-              bottom: MediaQuery.of(sbCtx).viewInsets.bottom,
+              bottom: MediaQuery.of(sbCtx).viewInsets.bottom +
+                  (MediaQuery.of(sbCtx).padding.bottom > 0
+                      ? MediaQuery.of(sbCtx).padding.bottom + 12
+                      : 24),
             ),
             decoration: BoxDecoration(
               color: backgroundColor,
@@ -5567,20 +5581,11 @@ class _DebtDetailsSheet extends StatelessWidget {
 
                 final transactions = snapshot.data ?? [];
                 if (transactions.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(CupertinoIcons.doc_text,
-                            size: 40,
-                            color:
-                                Theme.of(context).hintColor.withOpacity(0.3)),
-                        const SizedBox(height: 16),
-                        Text('Belum ada transaksi',
-                            style:
-                                TextStyle(color: Theme.of(context).hintColor)),
-                      ],
-                    ),
+                  return const EmptyStateWidget(
+                    title: 'Belum Ada Transaksi',
+                    subtitle: 'Semua histori transaksi keuangan dompet ini akan muncul di sini.',
+                    icon: CupertinoIcons.tray_fill,
+                    paddingVertical: 40,
                   );
                 }
 
@@ -5780,7 +5785,10 @@ class _DebtDetailsSheet extends StatelessWidget {
 
           return Container(
             padding: EdgeInsets.only(
-              bottom: MediaQuery.of(sbCtx).viewInsets.bottom + 20,
+              bottom: MediaQuery.of(sbCtx).viewInsets.bottom +
+                  (MediaQuery.of(sbCtx).padding.bottom > 0
+                      ? MediaQuery.of(sbCtx).padding.bottom + 12
+                      : 24),
             ),
             decoration: BoxDecoration(
               color: backgroundColor,
@@ -6164,7 +6172,10 @@ class _DebtPaymentModalState extends State<_DebtPaymentModal> {
 
     return Container(
       padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom +
+            (MediaQuery.of(context).padding.bottom > 0
+                ? MediaQuery.of(context).padding.bottom + 12
+                : 24),
       ),
       decoration: BoxDecoration(
         color: backgroundColor,

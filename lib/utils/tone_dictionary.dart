@@ -57,14 +57,14 @@ class ToneManager {
     'home_empty_title': {
       AppTone.normal: 'Satu catatan, satu perubahan!',
       AppTone.genZ: 'Dompet Lu Anteng Banget!',
-      AppTone.milenial: 'Clean Slate, Zero Spend.',
+      AppTone.milenial: 'Pengeluaran Masih Bersih!',
       AppTone.boomer: 'Alhamdulillah, Buku Kas Bersih.',
       AppTone.pasangan: 'Belum ada pengeluaran nih sayang~',
     },
     'home_empty_msg': {
       AppTone.normal: 'Belum ada transaksi, yuk mulai catat sekarang!',
       AppTone.genZ: 'Sepi amat, belom jajan ya? Click + yuk!',
-      AppTone.milenial: 'No transactions yet. Start tracking your cashflow!',
+      AppTone.milenial: 'Belum ada transaksi, yuk mulai catat transaksi keuanganmu!',
       AppTone.boomer: 'Hari ini tidak ada pengumuman belanja.',
       AppTone.pasangan: 'Yuk catat belanja kita hari ini ^_^',
     },

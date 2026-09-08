@@ -22,6 +22,7 @@ import '../utils/ui_helper.dart';
 import '../utils/tone_dictionary.dart';
 import '../services/notif_listener_bridge.dart';
 import '../services/debt_service.dart';
+import '../widgets/empty_state_widget.dart';
 // import '../models/debt_model.dart';
 
 class ReportScreen extends StatefulWidget {
@@ -462,7 +463,12 @@ class _ReportScreenState extends State<ReportScreen> {
                               _buildInteractivePieChart(
                                   categoryTotals, totalExpense)
                             else
-                              const Center(child: Text('Belum ada pengeluaran'))
+                              const EmptyStateWidget(
+                                title: 'Belum Ada Pengeluaran',
+                                subtitle: 'Grafik kategori akan tampil setelah kamu mencatat transaksi pengeluaran.',
+                                icon: CupertinoIcons.chart_pie_fill,
+                                paddingVertical: 24,
+                              )
                           else
                             _buildWeeklyTrendChart(data),
                           if (_isCategoryMode && totalExpense > 0) ...[
@@ -2075,18 +2081,11 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Widget _buildNoData(String title, String subtitle) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(CupertinoIcons.chart_pie_fill,
-              size: 80, color: Theme.of(context).hintColor.withOpacity(0.2)),
-          const SizedBox(height: 16),
-          Text(title,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          Text(subtitle, style: TextStyle(color: Theme.of(context).hintColor)),
-        ],
-      ),
+    return EmptyStateWidget(
+      title: title,
+      subtitle: subtitle,
+      icon: CupertinoIcons.chart_pie_fill,
+      paddingVertical: 40,
     );
   }
 

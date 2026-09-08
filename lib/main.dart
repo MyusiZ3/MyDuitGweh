@@ -184,8 +184,10 @@ class _AuthGateState extends State<AuthGate> {
 
   Future<bool> _checkOnboarding() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getBool('onboarding_completed') ?? false;
+      // TEMPORARY DEV OVERRIDE: Always show onboarding screen for live preview & editing
+      return false;
+      // final prefs = await SharedPreferences.getInstance();
+      // return prefs.getBool('onboarding_completed') ?? false;
     } catch (_) {
       return false;
     }

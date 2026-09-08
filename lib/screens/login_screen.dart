@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'dart:ui';
 import '../services/auth_service.dart';
 import '../utils/ui_helper.dart';
@@ -36,14 +37,14 @@ class _LoginScreenState extends State<LoginScreen>
     super.initState();
     _animController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 900),
+      duration: const Duration(milliseconds: 700),
     );
     _fadeAnim = CurvedAnimation(
       parent: _animController,
       curve: Curves.easeOutCubic,
     );
     _slideAnim = Tween<Offset>(
-      begin: const Offset(0, 0.08),
+      begin: const Offset(0, 0.05),
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _animController,
@@ -90,14 +91,14 @@ class _LoginScreenState extends State<LoginScreen>
       if (_isLogin) {
         await _authService.signInWithEmail(email, password);
         if (mounted) {
+          // ignore: use_build_context_synchronously
           UIHelper.showSuccessSnackBar(context, 'Berhasil Masuk!');
-          // AuthGate mendengar authStateChanges dan otomatis navigasi ke Home
         }
       } else {
         await _authService.signUpWithEmail(email, password, name);
         if (mounted) {
+          // ignore: use_build_context_synchronously
           UIHelper.showSuccessSnackBar(context, 'Akun berhasil dibuat!');
-          // AuthGate mendengar authStateChanges dan otomatis navigasi ke Home
         }
       }
     } catch (e) {
@@ -113,7 +114,6 @@ class _LoginScreenState extends State<LoginScreen>
       final user = await _authService.signInWithGoogle();
       if (user != null && mounted) {
         UIHelper.showSuccessSnackBar(context, 'Login Google Berhasil!');
-        // AuthGate mendengar authStateChanges dan otomatis navigasi ke Home
       }
     } catch (e) {
       if (mounted) {
@@ -126,23 +126,23 @@ class _LoginScreenState extends State<LoginScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryBg = isDark ? const Color(0xFF18181B) : const Color(0xFFFAFAFA);
+    final accentPastel = const Color(0xFF6366F1); // Brand Periwinkle Blue color
+
     return Scaffold(
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF000000)
-          : const Color(0xFFF2F2F7),
+      backgroundColor: primaryBg,
       body: Stack(
         children: [
-          // Gradient background blobs
-          _buildVisualDecoration(),
           // Main content
           SafeArea(
             child: LayoutBuilder(builder: (context, constraints) {
               return SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 child: ConstrainedBox(
                   constraints:
-                      BoxConstraints(minHeight: constraints.maxHeight - 40),
+                      BoxConstraints(minHeight: constraints.maxHeight - 32),
                   child: FadeTransition(
                     opacity: _fadeAnim,
                     child: SlideTransition(
@@ -151,15 +151,15 @@ class _LoginScreenState extends State<LoginScreen>
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          _buildHeader(),
+                          _buildHeader(isDark, accentPastel),
                           const SizedBox(height: 32),
-                          _buildFormCard(),
-                          const SizedBox(height: 20),
-                          _buildDividerRow(),
-                          const SizedBox(height: 20),
-                          _buildGoogleButton(),
+                          _buildFormCard(isDark, accentPastel),
                           const SizedBox(height: 24),
-                          _buildSwitchRow(),
+                          _buildDividerRow(isDark),
+                          const SizedBox(height: 20),
+                          _buildGoogleButton(isDark),
+                          const SizedBox(height: 28),
+                          _buildSwitchRow(isDark, accentPastel),
                           SizedBox(
                               height:
                                   MediaQuery.of(context).padding.bottom + 8),
@@ -171,13 +171,13 @@ class _LoginScreenState extends State<LoginScreen>
               );
             }),
           ),
-          // Loading overlay
+          // Clean Loading Overlay
           if (_isLoading)
             Positioned.fill(
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                 child: Container(
-                  color: Theme.of(context).brightness == Brightness.dark
+                  color: isDark
                       ? Colors.black.withOpacity(0.6)
                       : Colors.white.withOpacity(0.6),
                   child: const Center(child: LoadingWidget()),
@@ -189,97 +189,73 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Widget _buildVisualDecoration() {
-    return Stack(
-      children: [
-        // Top-right gradient blob
-        Positioned(
-          top: -80,
-          right: -60,
-          child: Container(
-            width: 280,
-            height: 280,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(
-                colors: [
-                  const Color(0xFF007AFF).withOpacity(0.12),
-                  const Color(0xFF007AFF).withOpacity(0.0),
-                ],
-              ),
-            ),
-          ),
-        ),
-        // Bottom-left gradient blob
-        Positioned(
-          bottom: -120,
-          left: -80,
-          child: Container(
-            width: 350,
-            height: 350,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(
-                colors: [
-                  const Color(0xFF5856D6).withOpacity(0.08),
-                  const Color(0xFF5856D6).withOpacity(0.0),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHeader() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+  Widget _buildHeader(bool isDark, Color accentPastel) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const SizedBox(height: 20),
-        // App icon (Raw iOS-style logo only with soft rounded corners)
-        ClipRRect(
-          borderRadius: BorderRadius.circular(16),
+        const SizedBox(height: 12),
+        // Minimalist App Logo Badge
+        Container(
+          width: 68,
+          height: 68,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF27272A) : Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.06),
+              width: 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
           child: Image.asset(
             'assets/images/logo_app.png',
-            width: 72,
-            height: 72,
             fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) => Icon(
+              CupertinoIcons.creditcard_fill,
+              size: 32,
+              color: accentPastel,
+            ),
           ),
         ),
         const SizedBox(height: 24),
         AnimatedSwitcher(
-          duration: const Duration(milliseconds: 400),
+          duration: const Duration(milliseconds: 300),
           transitionBuilder: (child, anim) =>
               FadeTransition(opacity: anim, child: child),
           child: Text(
-            _isLogin ? 'Selamat Datang' : 'Buat Akun Baru',
+            _isLogin ? 'Selamat Datang Kembali' : 'Buat Akun Baru',
             key: ValueKey(_isLogin ? 'login_title' : 'register_title'),
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 28,
+              fontSize: 26,
               fontWeight: FontWeight.w800,
-              color: isDark ? Colors.white : Colors.black,
-              letterSpacing: -0.8,
+              color: isDark ? Colors.white : const Color(0xFF18181B),
+              letterSpacing: -0.6,
               height: 1.2,
             ),
           ),
         ),
         const SizedBox(height: 8),
         AnimatedSwitcher(
-          duration: const Duration(milliseconds: 400),
+          duration: const Duration(milliseconds: 300),
           child: Text(
             _isLogin
-                ? 'Masuk ke akun MyDuitGweh kamu'
-                : 'Daftar dan mulai kelola keuanganmu',
+                ? 'Masuk ke akun MyDuitGweh untuk lanjut'
+                : 'Daftar sekarang dan mulai kelola keuanganmu',
             key: ValueKey(_isLogin ? 'login_sub' : 'register_sub'),
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Color(0xFF8E8E93),
-              fontSize: 15,
-              fontWeight: FontWeight.w500,
-              letterSpacing: -0.2,
+            style: TextStyle(
+              color: isDark ? const Color(0xFFA1A1AA) : const Color(0xFF71717A),
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              height: 1.4,
             ),
           ),
         ),
@@ -287,111 +263,142 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Widget _buildFormCard() {
+  Widget _buildFormCard(bool isDark, Color accentPastel) {
+    final cardBg = isDark ? const Color(0xFF27272A) : Colors.white;
+    final borderColor = isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.06);
+
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(20),
+        color: cardBg,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 20,
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.04),
+            blurRadius: 24,
             offset: const Offset(0, 8),
           ),
         ],
       ),
       child: AnimatedSize(
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.fastOutSlowIn,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Name field (register only)
             if (!_isLogin) ...[
+              _buildInputLabel('Nama Lengkap', isDark),
+              const SizedBox(height: 6),
               _buildInput(
                 controller: _nameController,
-                hint: 'Nama',
+                hint: 'Masukkan nama lengkap',
                 icon: CupertinoIcons.person,
+                isDark: isDark,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
             ],
-            // Email
+            // Email field
+            _buildInputLabel('Email', isDark),
+            const SizedBox(height: 6),
             _buildInput(
               controller: _emailController,
-              hint: 'Email',
+              hint: 'nama@email.com',
               icon: CupertinoIcons.mail,
               keyboardType: TextInputType.emailAddress,
+              isDark: isDark,
             ),
-            const SizedBox(height: 12),
-            // Password
+            const SizedBox(height: 16),
+            // Password field
+            _buildInputLabel('Password', isDark),
+            const SizedBox(height: 6),
             _buildInput(
               controller: _passwordController,
-              hint: 'Password',
+              hint: '••••••••',
               icon: CupertinoIcons.lock,
               isPassword: true,
               obscureText: _obscurePassword,
               onToggleVisibility: () =>
                   setState(() => _obscurePassword = !_obscurePassword),
+              isDark: isDark,
             ),
-            // Confirm password (register only)
+            // Confirm password field (register only)
             if (!_isLogin) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
+              _buildInputLabel('Konfirmasi Password', isDark),
+              const SizedBox(height: 6),
               _buildInput(
                 controller: _confirmPasswordController,
-                hint: 'Ulangi Password',
-                icon: CupertinoIcons.lock_rotation,
+                hint: '••••••••',
+                icon: CupertinoIcons.lock_shield,
                 isPassword: true,
                 obscureText: _obscureConfirmPassword,
                 onToggleVisibility: () => setState(
                     () => _obscureConfirmPassword = !_obscureConfirmPassword),
+                isDark: isDark,
               ),
             ],
             // Forgot password link
             if (_isLogin) ...[
-              const SizedBox(height: 4),
+              const SizedBox(height: 8),
               Align(
                 alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: _showForgotPass,
-                  style: TextButton.styleFrom(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: const Text('Lupa Password?',
+                child: GestureDetector(
+                  onTap: _showForgotPass,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Text(
+                      'Lupa Password?',
                       style: TextStyle(
-                          color: Color(0xFF007AFF),
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13)),
+                        color: accentPastel,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],
-            const SizedBox(height: 20),
-            // Submit button
+            const SizedBox(height: 24),
+            // Submit primary button
             SizedBox(
               width: double.infinity,
               height: 52,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _submit,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF007AFF),
+                  backgroundColor: accentPastel,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
                 child: Text(
-                  _isLogin ? 'Masuk' : 'Daftar',
+                  _isLogin ? 'Masuk' : 'Daftar Akun',
                   style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.3),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.3,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildInputLabel(String text, bool isDark) {
+    return Text(
+      text,
+      style: TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        color: isDark ? const Color(0xFFE4E4E7) : const Color(0xFF3F3F46),
       ),
     );
   }
@@ -400,39 +407,50 @@ class _LoginScreenState extends State<LoginScreen>
     required TextEditingController controller,
     required String hint,
     required IconData icon,
+    required bool isDark,
     bool isPassword = false,
     bool? obscureText,
     VoidCallback? onToggleVisibility,
     TextInputType? keyboardType,
   }) {
+    final inputBg = isDark ? const Color(0xFF18181B) : const Color(0xFFF4F4F5);
+    final borderColor = isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.06);
+
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).canvasColor,
-        borderRadius: BorderRadius.circular(12),
+        color: inputBg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: borderColor),
       ),
       child: TextField(
         controller: controller,
         obscureText: obscureText ?? false,
         keyboardType: keyboardType,
         style: TextStyle(
-            fontWeight: FontWeight.w500,
-            fontSize: 16,
-            color: Theme.of(context).textTheme.bodyLarge?.color),
+          fontWeight: FontWeight.w500,
+          fontSize: 15,
+          color: isDark ? Colors.white : const Color(0xFF18181B),
+        ),
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(
-              color: Theme.of(context).hintColor,
-              fontSize: 16,
-              fontWeight: FontWeight.w400),
-          prefixIcon: Icon(icon, color: const Color(0xFF8E8E93), size: 20),
+            color: isDark ? const Color(0xFF71717A) : const Color(0xFFA1A1AA),
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+          ),
+          prefixIcon: Icon(
+            icon,
+            color: isDark ? const Color(0xFFA1A1AA) : const Color(0xFF71717A),
+            size: 18,
+          ),
           suffixIcon: isPassword
               ? IconButton(
                   icon: Icon(
                     obscureText!
                         ? CupertinoIcons.eye_slash
                         : CupertinoIcons.eye,
-                    color: Theme.of(context).hintColor,
-                    size: 20,
+                    color: isDark ? const Color(0xFFA1A1AA) : const Color(0xFF71717A),
+                    size: 18,
                   ),
                   onPressed: onToggleVisibility,
                   splashColor: Colors.transparent,
@@ -440,106 +458,287 @@ class _LoginScreenState extends State<LoginScreen>
                 )
               : null,
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 15),
+          contentPadding: const EdgeInsets.symmetric(vertical: 14),
         ),
       ),
     );
   }
 
-  Widget _buildDividerRow() {
+  Widget _buildDividerRow(bool isDark) {
+    final lineDividerColor = isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.08);
+
     return Row(
       children: [
-        Expanded(
-            child:
-                Divider(color: Theme.of(context).dividerColor, thickness: 0.5)),
+        Expanded(child: Divider(color: lineDividerColor, thickness: 1)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text('atau',
-              style: TextStyle(
-                  color: Theme.of(context).hintColor,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500)),
+          child: Text(
+            'atau masuk dengan',
+            style: TextStyle(
+              color: isDark ? const Color(0xFFA1A1AA) : const Color(0xFF71717A),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ),
-        Expanded(
-            child:
-                Divider(color: Theme.of(context).dividerColor, thickness: 0.5)),
+        Expanded(child: Divider(color: lineDividerColor, thickness: 1)),
       ],
     );
   }
 
-  Widget _buildGoogleButton() {
+  Widget _buildGoogleButton(bool isDark) {
+    final btnBg = isDark ? const Color(0xFF27272A) : Colors.white;
+    final borderColor = isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.08);
+
     return SizedBox(
       width: double.infinity,
       height: 52,
       child: OutlinedButton(
         onPressed: _isLoading ? null : _handleGoogleSignIn,
         style: OutlinedButton.styleFrom(
-          side: BorderSide(color: Theme.of(context).dividerColor, width: 1),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          backgroundColor: Theme.of(context).cardColor,
+          side: BorderSide(color: borderColor, width: 1.2),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          backgroundColor: btnBg,
           elevation: 0,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.network('https://www.google.com/favicon.ico', height: 18),
+            Image.network(
+              'https://www.google.com/favicon.ico',
+              height: 18,
+              errorBuilder: (context, error, stackTrace) => Icon(
+                CupertinoIcons.globe,
+                size: 18,
+                color: isDark ? Colors.white : Colors.black,
+              ),
+            ),
             const SizedBox(width: 10),
-            Text('Masuk dengan Google',
-                style: TextStyle(
-                    color: Theme.of(context).textTheme.titleLarge?.color,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: -0.3)),
+            Text(
+              'Lanjutkan dengan Google',
+              style: TextStyle(
+                color: isDark ? Colors.white : const Color(0xFF18181B),
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.2,
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSwitchRow() {
+  Widget _buildSwitchRow(bool isDark, Color accentPastel) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
           _isLogin ? 'Belum punya akun?' : 'Sudah punya akun?',
-          style: const TextStyle(
-              color: Color(0xFF8E8E93),
-              fontSize: 14,
-              fontWeight: FontWeight.w500),
+          style: TextStyle(
+            color: isDark ? const Color(0xFFA1A1AA) : const Color(0xFF71717A),
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+          ),
         ),
-        TextButton(
-          onPressed: () => setState(() => _isLogin = !_isLogin),
-          style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 6),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap),
-          child: Text(
-            _isLogin ? 'Daftar' : 'Masuk',
-            style: const TextStyle(
-                color: Color(0xFF007AFF),
+        const SizedBox(width: 4),
+        GestureDetector(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            setState(() => _isLogin = !_isLogin);
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            child: Text(
+              _isLogin ? 'Daftar' : 'Masuk',
+              style: TextStyle(
+                color: accentPastel,
                 fontSize: 14,
-                fontWeight: FontWeight.w700),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
         ),
       ],
     );
   }
 
-  void _showForgotPass() async {
-    final email = _emailController.text.trim();
-    if (email.isEmpty) {
-      UIHelper.showErrorSnackBar(context, 'Masukkan alamat email Anda.');
-      return;
-    }
-    try {
-      await _authService.sendPasswordResetEmail(email);
-      if (mounted) {
-        UIHelper.showSuccessSnackBar(
-            context, 'Cek e-mail kamu untuk reset password!');
-      }
-    } catch (e) {
-      if (mounted) UIHelper.showErrorSnackBar(context, e.toString());
-    }
+  void _showForgotPass() {
+    final emailController =
+        TextEditingController(text: _emailController.text.trim());
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accentPastel = const Color(0xFF6366F1); // Brand Periwinkle Blue
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: isDark ? const Color(0xFF18181B) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (context) {
+        final viewInsetsBottom = MediaQuery.of(context).viewInsets.bottom;
+        final safeBottom = MediaQuery.of(context).padding.bottom;
+
+        return Padding(
+          padding: EdgeInsets.fromLTRB(
+            24,
+            12,
+            24,
+            viewInsetsBottom + (viewInsetsBottom > 0 ? 16 : (safeBottom > 0 ? safeBottom + 16 : 24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top drag indicator handle
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE4E4E7),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              // Header Row with Icon Badge
+              Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: accentPastel.withOpacity(0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      CupertinoIcons.lock_shield_fill,
+                      color: accentPastel,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Reset Password',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: isDark ? Colors.white : const Color(0xFF18181B),
+                            letterSpacing: -0.4,
+                          ),
+                        ),
+                        Text(
+                          'Kirim tautan pemulihan ke email kamu',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDark ? const Color(0xFFA1A1AA) : const Color(0xFF71717A),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Email Akun',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? const Color(0xFFE4E4E7) : const Color(0xFF3F3F46),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF27272A) : const Color(0xFFF4F4F5),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.06),
+                  ),
+                ),
+                child: TextField(
+                  controller: emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 15,
+                    color: isDark ? Colors.white : const Color(0xFF18181B),
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'nama@email.com',
+                    hintStyle: TextStyle(
+                      color: isDark ? const Color(0xFF71717A) : const Color(0xFFA1A1AA),
+                      fontSize: 14,
+                    ),
+                    prefixIcon: Icon(
+                      CupertinoIcons.mail,
+                      color: isDark ? const Color(0xFFA1A1AA) : const Color(0xFF71717A),
+                      size: 18,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: accentPastel,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  onPressed: () async {
+                    final targetEmail = emailController.text.trim();
+                    if (targetEmail.isEmpty) {
+                      UIHelper.showErrorSnackBar(context, 'Masukkan alamat email Anda.');
+                      return;
+                    }
+                    final nav = Navigator.of(context);
+                    nav.pop();
+
+                    if (!mounted) return;
+                    setState(() => _isLoading = true);
+                    try {
+                      await _authService.sendPasswordResetEmail(targetEmail);
+                      if (!mounted) return;
+                      // ignore: use_build_context_synchronously
+                      UIHelper.showSuccessSnackBar(
+                          context, 'Tautan reset password dikirim ke $targetEmail');
+                    } catch (e) {
+                      if (!mounted) return;
+                      // ignore: use_build_context_synchronously
+                      UIHelper.showErrorSnackBar(context, e.toString());
+                    } finally {
+                      if (mounted) setState(() => _isLoading = false);
+                    }
+                  },
+                  child: const Text(
+                    'Kirim Link Reset Password',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }

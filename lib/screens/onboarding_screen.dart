@@ -59,8 +59,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final pages = _getPages();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryBg = isDark ? const Color(0xFF121214) : const Color(0xFFFAFAFA);
-    // Brand identity pastel sky blue accent
-    final accentColor = const Color(0xFF38BDF8); 
+    // Brand identity pastel periwinkle blue accent matching user swatch
+    final accentColor = const Color(0xFF6366F1); 
 
     return Scaffold(
       backgroundColor: primaryBg,
@@ -96,35 +96,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Circular App Icon Logo
-          Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF27272A) : const Color(0xFF18181B),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.12),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Center(
-              child: Image.asset(
-                'assets/images/logo_app.png',
-                width: 22,
-                height: 22,
-                errorBuilder: (context, error, stackTrace) => const Icon(
-                  CupertinoIcons.text_quote,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ),
+          // App Title Text
+          Text(
+            'MyDuitGweh',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: isDark ? Colors.white : const Color(0xFF18181B),
+              letterSpacing: -0.5,
             ),
           ),
-          // Capsule "Lewati" Button
+          // Capsule "Skip" Button
           GestureDetector(
             onTap: _navigateToLogin,
             child: Container(
@@ -203,7 +185,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget _buildHeroWidget(OnboardingType type, bool isDark) {
     switch (type) {
       case OnboardingType.balance:
-        return _buildArtisticLedgerIllustration(isDark, const Color(0xFF38BDF8)); // Pastel Sky Blue
+        return _buildArtisticLedgerIllustration(isDark, const Color(0xFF6366F1)); // Brand Periwinkle Blue
       case OnboardingType.shared:
         return _buildArtisticDoorwayIllustration(isDark, const Color(0xFFA78BFA)); // Pastel Lavender
       case OnboardingType.report:
@@ -636,9 +618,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   // --- FOOTER: Dots Indicator (Left) & Circular Arrow Navigation (Right) ---
   Widget _buildFooter(List<OnboardingData> pages, bool isDark, Color accentColor) {
     final isLastPage = _currentPage == pages.length - 1;
+    final bottomInset = MediaQuery.of(context).padding.bottom;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(28, 0, 28, 28),
+      padding: EdgeInsets.fromLTRB(28, 0, 28, 20 + bottomInset),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

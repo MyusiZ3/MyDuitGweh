@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../services/firestore_service.dart';
 import '../utils/app_theme.dart';
 import '../utils/ui_helper.dart';
+import '../widgets/empty_state_widget.dart';
 import '../widgets/loading_widget.dart';
 
 class NotificationsScreen extends StatefulWidget {
@@ -442,20 +443,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(CupertinoIcons.bell_slash_fill,
-              size: 80, color: Colors.black12),
-          const SizedBox(height: 16),
-          const Text('Belum ada notifikasi',
-              style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black26)),
-        ],
-      ),
+    return const EmptyStateWidget(
+      title: 'Belum Ada Notifikasi',
+      subtitle: 'Semua notifikasi transaksi & aktivitas kamu akan muncul di sini.',
+      icon: CupertinoIcons.bell_fill,
+      paddingVertical: 60,
     );
   }
 

@@ -293,8 +293,9 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
   }
 
   Widget _buildSpeedDialMenu() {
+    final safeBottom = MediaQuery.of(context).padding.bottom;
     return Positioned(
-      bottom: 140, // Lifted up to clear the new floating nav bar
+      bottom: 104 + safeBottom, // Dynamically clears the floating navbar on all devices
       left: 0,
       right: 0,
       child: Column(

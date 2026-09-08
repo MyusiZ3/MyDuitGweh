@@ -7,6 +7,7 @@ import '../../widgets/shimmer_loading.dart';
 import '../../widgets/transaction_card.dart';
 import '../../utils/tone_dictionary.dart';
 import '../../utils/app_theme.dart';
+import '../empty_state_widget.dart';
 
 class HomeRecentTransactions extends StatelessWidget {
   final List<String> walletIds;
@@ -23,35 +24,33 @@ class HomeRecentTransactions extends StatelessWidget {
     return StreamBuilder<List<TransactionModel>>(
       stream: firestoreService.getAllTransactionsStream(walletIds),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
           return const SliverToBoxAdapter(
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24),
+              padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
               child: ShimmerTransactionList(),
             ),
           );
         }
 
-        final txns = snapshot.data!;
+        final txns = snapshot.data ?? [];
         if (txns.isEmpty) {
           return _buildEmptyState(context);
         }
 
-        // Grouping logic (limit to first 10 for performance/main home view)
-        final limitedTxns = txns.take(10).toList();
-        final groups = _groupTransactions(limitedTxns);
+        final grouped = _groupTransactions(txns);
 
         return SliverList(
           delegate: SliverChildBuilderDelegate(
             (context, index) {
-              final group = groups[index];
+              final group = grouped[index];
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 8, 0, 10),
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
                       child: Text(
                         _getDateLabel(group.date).toUpperCase(),
                         style: TextStyle(
@@ -62,52 +61,18 @@ class HomeRecentTransactions extends StatelessWidget {
                         ),
                       ),
                     ),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(
-                          color: Theme.of(context).dividerColor.withOpacity(0.05),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.02),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
+                    ...group.transactions.map((tx) => Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                          child: TransactionCard(
+                            transaction: tx,
+                            walletId: tx.walletId,
                           ),
-                        ],
-                      ),
-                      child: Column(
-                        children: List.generate(group.transactions.length, (i) {
-                          final t = group.transactions[i];
-                          final isLast = i == group.transactions.length - 1;
-                          
-                          return Column(
-                            children: [
-                              TransactionCard(
-                                transaction: t,
-                                walletId: t.walletId,
-                                isFlat: true,
-                              ),
-                              if (!isLast)
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 64),
-                                  child: Divider(
-                                    height: 1,
-                                    thickness: 0.5,
-                                    color: Theme.of(context).dividerColor.withOpacity(0.08),
-                                  ),
-                                ),
-                            ],
-                          );
-                        }),
-                      ),
-                    ),
+                        )),
                   ],
                 ),
               );
             },
-            childCount: groups.length,
+            childCount: grouped.length,
           ),
         );
       },
@@ -116,53 +81,11 @@ class HomeRecentTransactions extends StatelessWidget {
 
   Widget _buildEmptyState(BuildContext context) {
     return SliverToBoxAdapter(
-      child: Container(
-        height: 160,
-        margin: const EdgeInsets.symmetric(horizontal: 24),
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor.withOpacity(0.5),
-          borderRadius: BorderRadius.circular(28),
-          border: Border.all(
-            color: Theme.of(context).dividerColor.withOpacity(0.05),
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.pastelBlue.withOpacity(0.12),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                CupertinoIcons.square_list_fill,
-                color: AppColors.pastelBlue,
-                size: 32,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              ToneManager.t('home_empty_title'),
-              style: TextStyle(
-                color: Theme.of(context).textTheme.titleLarge?.color,
-                fontSize: 16,
-                fontWeight: FontWeight.w900,
-                letterSpacing: -0.5,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              ToneManager.t('home_empty_msg'),
-              style: TextStyle(
-                color: Theme.of(context).hintColor,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
+      child: EmptyStateWidget(
+        title: ToneManager.t('home_empty_title'),
+        subtitle: ToneManager.t('home_empty_msg'),
+        icon: CupertinoIcons.square_list_fill,
+        paddingVertical: 20,
       ),
     );
   }

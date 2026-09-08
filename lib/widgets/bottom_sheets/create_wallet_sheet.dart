@@ -55,7 +55,10 @@ void showCreateWalletSheet(BuildContext context) {
         return Container(
           height: MediaQuery.of(sbCtx).size.height * 0.85,
           padding: EdgeInsets.only(
-            bottom: MediaQuery.of(sbCtx).viewInsets.bottom + 20,
+            bottom: MediaQuery.of(sbCtx).viewInsets.bottom +
+                (MediaQuery.of(sbCtx).padding.bottom > 0
+                    ? MediaQuery.of(sbCtx).padding.bottom + 12
+                    : 24),
           ),
           decoration: BoxDecoration(
             color: backgroundColor,
