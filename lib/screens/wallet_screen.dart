@@ -780,18 +780,20 @@ class WalletScreenState extends State<WalletScreen>
                                               ? Colors.white38
                                               : Colors.black38),
                                       border: InputBorder.none,
-                                      prefixIcon: Container(
-                                        padding: const EdgeInsets.all(8),
-                                        margin: const EdgeInsets.only(right: 8),
-                                        decoration: BoxDecoration(
-                                          color: primaryBlue.withOpacity(0.12),
-                                          shape: BoxShape.circle,
+                                      prefixIcon: Padding(
+                                        padding: const EdgeInsets.only(right: 12),
+                                        child: Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: primaryBlue.withOpacity(0.12),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Icon(CupertinoIcons.person_fill,
+                                              size: 16, color: primaryBlue),
                                         ),
-                                        child: Icon(CupertinoIcons.person_fill,
-                                            size: 16, color: primaryBlue),
                                       ),
                                       prefixIconConstraints: const BoxConstraints(
-                                        minWidth: 40,
+                                        minWidth: 48,
                                         minHeight: 40,
                                       ),
                                       suffixIcon: IconButton(
@@ -850,7 +852,7 @@ class WalletScreenState extends State<WalletScreen>
                                 ),
                                 Divider(
                                     height: 1,
-                                    indent: 52,
+                                    indent: 56,
                                     color: borderColor),
                                 // Phone Number
                                 Padding(
@@ -870,18 +872,20 @@ class WalletScreenState extends State<WalletScreen>
                                           color: isDark
                                               ? Colors.white38
                                               : Colors.black38),
-                                      prefixIcon: Container(
-                                        padding: const EdgeInsets.all(8),
-                                        margin: const EdgeInsets.only(right: 8),
-                                        decoration: BoxDecoration(
-                                          color: primaryBlue.withOpacity(0.12),
-                                          shape: BoxShape.circle,
+                                      prefixIcon: Padding(
+                                        padding: const EdgeInsets.only(right: 12),
+                                        child: Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: primaryBlue.withOpacity(0.12),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Icon(CupertinoIcons.phone_fill,
+                                              size: 16, color: primaryBlue),
                                         ),
-                                        child: Icon(CupertinoIcons.phone_fill,
-                                            size: 16, color: primaryBlue),
                                       ),
                                       prefixIconConstraints: const BoxConstraints(
-                                        minWidth: 40,
+                                        minWidth: 48,
                                         minHeight: 40,
                                       ),
                                       border: InputBorder.none,
@@ -890,7 +894,7 @@ class WalletScreenState extends State<WalletScreen>
                                 ),
                                 Divider(
                                     height: 1,
-                                    indent: 52,
+                                    indent: 56,
                                     color: borderColor),
                                 // Transaction Type (Radio)
                                 _buildIOSRadioTile(sbCtx, setModalState,
@@ -903,7 +907,7 @@ class WalletScreenState extends State<WalletScreen>
                                 }),
                                 Divider(
                                     height: 1,
-                                    indent: 52,
+                                    indent: 56,
                                     color: borderColor),
                                 _buildIOSRadioTile(
                                     sbCtx,
@@ -946,25 +950,27 @@ class WalletScreenState extends State<WalletScreen>
                                             ? Colors.white38
                                             : Colors.black38),
                                     border: InputBorder.none,
-                                    prefixIcon: Container(
-                                      padding: const EdgeInsets.all(8),
-                                      margin: const EdgeInsets.only(right: 8),
-                                      decoration: BoxDecoration(
-                                        color: primaryBlue.withOpacity(0.12),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Icon(
-                                        selectedType == 'colab'
-                                            ? CupertinoIcons.person_2_fill
-                                            : selectedType == 'debt'
-                                                ? CupertinoIcons.doc_text_fill
-                                                : CupertinoIcons.creditcard_fill,
-                                        color: primaryBlue,
-                                        size: 16,
+                                    prefixIcon: Padding(
+                                      padding: const EdgeInsets.only(right: 12),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: primaryBlue.withOpacity(0.12),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          selectedType == 'colab'
+                                              ? CupertinoIcons.person_2_fill
+                                              : selectedType == 'debt'
+                                                  ? CupertinoIcons.doc_text_fill
+                                                  : CupertinoIcons.creditcard_fill,
+                                          color: primaryBlue,
+                                          size: 16,
+                                        ),
                                       ),
                                     ),
                                     prefixIconConstraints: const BoxConstraints(
-                                      minWidth: 40,
+                                      minWidth: 48,
                                       minHeight: 40,
                                     ),
                                   ),
@@ -1022,9 +1028,9 @@ class WalletScreenState extends State<WalletScreen>
                                         color: isDark ? Colors.white38 : Colors.black38,
                                       ),
                                       prefixIcon: Padding(
-                                        padding: const EdgeInsets.only(right: 8),
+                                        padding: const EdgeInsets.only(right: 12),
                                         child: Text(
-                                          'Rp ',
+                                          'Rp',
                                           style: TextStyle(
                                             color: primaryBlue,
                                             fontWeight: FontWeight.w700,
@@ -1200,7 +1206,7 @@ class WalletScreenState extends State<WalletScreen>
           children: [
             Container(
               padding: const EdgeInsets.all(8),
-              margin: const EdgeInsets.only(right: 8),
+              margin: const EdgeInsets.only(right: 12),
               decoration: BoxDecoration(
                 color: isSelected
                     ? primaryBlue.withOpacity(0.12)
@@ -1217,7 +1223,6 @@ class WalletScreenState extends State<WalletScreen>
                 size: 16,
               ),
             ),
-            const SizedBox(width: 4),
             Text(
               title,
               style: TextStyle(
