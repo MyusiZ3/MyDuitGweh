@@ -448,7 +448,7 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
     final double totalBalance = wallets.fold(0.0, (acc, w) => acc + w.balance);
 
     return SliverPadding(
-      padding: const EdgeInsets.only(left: 24, right: 24, top: 12, bottom: 120),
+      padding: const EdgeInsets.only(left: 24, right: 24, top: 12, bottom: 180),
       sliver: SliverToBoxAdapter(
         child: _UnifiedWalletGroupCard(
           wallets: wallets,
