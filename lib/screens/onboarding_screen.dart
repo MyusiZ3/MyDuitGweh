@@ -59,7 +59,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final pages = _getPages();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryBg = isDark ? const Color(0xFF121214) : const Color(0xFFFAFAFA);
-    final accentColor = const Color(0xFFF59E0B); // Warm amber yellow accent matching reference
+    // Brand identity pastel sky blue accent
+    final accentColor = const Color(0xFF38BDF8); 
 
     return Scaffold(
       backgroundColor: primaryBg,
@@ -77,7 +78,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 },
                 itemCount: pages.length,
                 itemBuilder: (context, index) {
-                  return _buildPage(pages[index], isDark, accentColor);
+                  return _buildPage(pages[index], isDark);
                 },
               ),
             ),
@@ -154,7 +155,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   // --- PAGE BODY: Hero Graphic & Left-Aligned Text ---
-  Widget _buildPage(OnboardingData data, bool isDark, Color accentColor) {
+  Widget _buildPage(OnboardingData data, bool isDark) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 28.0),
       child: Column(
@@ -166,7 +167,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             child: SizedBox(
               height: 270,
               width: 280,
-              child: _buildHeroWidget(data.type, isDark, accentColor),
+              child: _buildHeroWidget(data.type, isDark),
             ),
           ),
           const Spacer(flex: 1),
@@ -199,19 +200,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _buildHeroWidget(OnboardingType type, bool isDark, Color accentColor) {
+  Widget _buildHeroWidget(OnboardingType type, bool isDark) {
     switch (type) {
       case OnboardingType.balance:
-        return _buildArtisticLedgerIllustration(isDark, accentColor);
+        return _buildArtisticLedgerIllustration(isDark, const Color(0xFF38BDF8)); // Pastel Sky Blue
       case OnboardingType.shared:
-        return _buildArtisticDoorwayIllustration(isDark, accentColor);
+        return _buildArtisticDoorwayIllustration(isDark, const Color(0xFFA78BFA)); // Pastel Lavender
       case OnboardingType.report:
-        return _buildArtisticReportIllustration(isDark, accentColor);
+        return _buildArtisticReportIllustration(isDark, const Color(0xFF34D399)); // Pastel Mint
     }
   }
 
   // --- ARTISTIC VECTOR 1: Isometric Ledger & Magnifying Glass ---
-  Widget _buildArtisticLedgerIllustration(bool isDark, Color accentColor) {
+  Widget _buildArtisticLedgerIllustration(bool isDark, Color slideAccent) {
     final outlineColor = isDark ? Colors.white : const Color(0xFF18181B);
     final bookBg = isDark ? const Color(0xFF27272A) : const Color(0xFFFFFFFF);
 
@@ -227,11 +228,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             width: 58,
             height: 58,
             decoration: BoxDecoration(
-              color: accentColor,
+              color: slideAccent,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: accentColor.withOpacity(0.35),
+                  color: slideAccent.withOpacity(0.35),
                   blurRadius: 18,
                   offset: const Offset(0, 6),
                 ),
@@ -385,7 +386,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   // --- ARTISTIC VECTOR 2: Doorway Portal & Winding Path ---
-  Widget _buildArtisticDoorwayIllustration(bool isDark, Color accentColor) {
+  Widget _buildArtisticDoorwayIllustration(bool isDark, Color slideAccent) {
     final outlineColor = isDark ? Colors.white : const Color(0xFF18181B);
     final doorBg = isDark ? const Color(0xFF27272A) : const Color(0xFF18181B);
 
@@ -393,7 +394,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       alignment: Alignment.center,
       clipBehavior: Clip.none,
       children: [
-        // Floating Yellow Sun/Circle
+        // Floating Pastel Circle
         Positioned(
           top: 25,
           right: 25,
@@ -401,11 +402,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: accentColor,
+              color: slideAccent,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: accentColor.withOpacity(0.35),
+                  color: slideAccent.withOpacity(0.35),
                   blurRadius: 18,
                   offset: const Offset(0, 6),
                 ),
@@ -474,7 +475,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           child: Icon(
             CupertinoIcons.sparkles,
             size: 28,
-            color: accentColor,
+            color: slideAccent,
           ),
         ),
       ],
@@ -482,7 +483,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   // --- ARTISTIC VECTOR 3: Open Notebook & Floating PDF/File Tags ---
-  Widget _buildArtisticReportIllustration(bool isDark, Color accentColor) {
+  Widget _buildArtisticReportIllustration(bool isDark, Color slideAccent) {
     final outlineColor = isDark ? Colors.white : const Color(0xFF18181B);
     final binderBg = isDark ? const Color(0xFF27272A) : const Color(0xFFFFFFFF);
 
@@ -490,7 +491,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       alignment: Alignment.center,
       clipBehavior: Clip.none,
       children: [
-        // Floating Yellow Accent Circle
+        // Floating Pastel Mint Circle
         Positioned(
           top: 40,
           left: 20,
@@ -498,11 +499,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             width: 52,
             height: 52,
             decoration: BoxDecoration(
-              color: accentColor,
+              color: slideAccent,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: accentColor.withOpacity(0.35),
+                  color: slideAccent.withOpacity(0.35),
                   blurRadius: 18,
                   offset: const Offset(0, 6),
                 ),
@@ -536,7 +537,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
               child: Stack(
                 children: [
-                  // Yellow Ribbon Bookmark
+                  // Pastel Ribbon Bookmark
                   Positioned(
                     top: 0,
                     right: 35,
@@ -544,7 +545,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       width: 16,
                       height: 45,
                       decoration: BoxDecoration(
-                        color: accentColor,
+                        color: slideAccent,
                         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(4)),
                       ),
                     ),
@@ -603,6 +604,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       ],
     );
   }
+
 
   Widget _buildFileBadge(String label, bool isDark, Color outlineColor) {
     return Container(
