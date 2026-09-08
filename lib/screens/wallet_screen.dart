@@ -22,6 +22,7 @@ import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../widgets/bottom_sheets/create_wallet_sheet.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -464,692 +465,7 @@ class WalletScreenState extends State<WalletScreen>
   }
 
   void _showCreateWalletDialog() {
-    String selectedType = 'personal';
-    String debtType = 'payable'; // 'payable' or 'receivable'
-    String? selectedWalletId;
-    final nameController = TextEditingController();
-    final debtorNameController = TextEditingController();
-    final debtorPhoneController = TextEditingController();
-    final totalAmountController = TextEditingController();
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      enableDrag: true,
-      backgroundColor: Colors.transparent,
-      builder: (modalCtx) => StatefulBuilder(
-        builder: (sbCtx, setModalState) {
-          final isDark = Theme.of(sbCtx).brightness == Brightness.dark;
-          final backgroundColor =
-              isDark ? const Color(0xFF18181B) : const Color(0xFFF4F4F5);
-          final sectionColor =
-              isDark ? const Color(0xFF27272A) : Colors.white;
-          final primaryBlue =
-              isDark ? const Color(0xFF6B64DB) : const Color(0xFF8B85F6);
-          final borderColor = isDark
-              ? Colors.white.withOpacity(0.06)
-              : Colors.black.withOpacity(0.05);
-
-          return Container(
-            height: MediaQuery.of(sbCtx).size.height * 0.85,
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(sbCtx).viewInsets.bottom + 20,
-            ),
-            decoration: BoxDecoration(
-              color: backgroundColor,
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(24)),
-            ),
-            child: Column(
-              children: [
-                // iOS Drag Handle
-                const SizedBox(height: 12),
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.white24 : Colors.black12,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                // Action Bar
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(
-                        color: borderColor,
-                        width: 1,
-                      ),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(sbCtx),
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        child: Text(
-                          'Batal',
-                          style: TextStyle(
-                            color: isDark ? Colors.white60 : Colors.black54,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      const Text(
-                        'Dompet Baru',
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.3,
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () async {
-                          if (nameController.text.isNotEmpty) {
-                            final isOnline =
-                                await ConnectivityService.isOnline();
-
-                            if (selectedType == 'debt') {
-                              if (totalAmountController.text.isEmpty ||
-                                  selectedWalletId == null ||
-                                  debtorNameController.text.isEmpty) {
-                                if (!sbCtx.mounted) return;
-                                UIHelper.showErrorSnackBar(
-                                    sbCtx, 'Lengkapi semua field hutang!');
-                                return;
-                              }
-                              final amount =
-                                  double.tryParse(totalAmountController.text) ??
-                                      0;
-
-                              if (!isOnline) {
-                                if (!sbCtx.mounted) return;
-                                UIHelper.showInfoSnackBar(sbCtx,
-                                    'Penambahan hutang butuh koneksi internet');
-                                return;
-                              }
-
-                              try {
-                                final debtTypePayload =
-                                    debtType == 'payable' ? 'utang' : 'piutang';
-                                final currentUser =
-                                    FirebaseAuth.instance.currentUser;
-                                final currentUserName =
-                                    currentUser?.displayName ?? "User";
-                                final debtTitle = nameController.text;
-
-                                await _debtService.addDebt(
-                                  currentUserId: _uid,
-                                  currentUserName: currentUserName,
-                                  type: debtTypePayload,
-                                  title: debtTitle,
-                                  totalAmount: amount,
-                                  walletId: selectedWalletId!,
-                                );
-                                if (!sbCtx.mounted) return;
-                                Navigator.pop(sbCtx);
-                                UIHelper.showSuccessSnackBar(
-                                    sbCtx, 'Berhasil mencatat $debtTitle!');
-                              } catch (e) {
-                                if (sbCtx.mounted) {
-                                  UIHelper.showErrorSnackBar(
-                                      sbCtx, 'Gagal: $e');
-                                }
-                              }
-                              return;
-                            }
-
-                            final newWallet = WalletModel(
-                              id: '', // Will be set by service
-                              walletName: nameController.text,
-                              balance: 0,
-                              type: selectedType,
-                              members: [_uid],
-                              owner: _uid,
-                              createdAt: DateTime.now(),
-                            );
-
-                            if (!isOnline) {
-                              _firestoreService.createWallet(newWallet);
-                              if (!sbCtx.mounted) return;
-                              Navigator.pop(sbCtx);
-                              UIHelper.showInfoSnackBar(
-                                  sbCtx, 'Dompet dibuat offline');
-
-                              return;
-                            }
-
-                            try {
-                              await _firestoreService
-                                  .createWallet(newWallet)
-                                  .timeout(
-                                    const Duration(seconds: 10),
-                                    onTimeout: () =>
-                                        throw TimeoutException('Timeout'),
-                                  );
-                              if (!sbCtx.mounted) return;
-                              Navigator.pop(sbCtx);
-                              UIHelper.showSuccessSnackBar(sbCtx,
-                                  'Dompet "${nameController.text}" berhasil dibuat!');
-                            } catch (e) {
-                              if (sbCtx.mounted) {
-                                if (e is TimeoutException) {
-                                  Navigator.pop(sbCtx);
-                                  UIHelper.showInfoSnackBar(sbCtx,
-                                      'Koneksi lambat, dompet akan muncul saat tersambung.');
-                                } else {
-                                  UIHelper.showErrorSnackBar(
-                                      sbCtx, 'Gagal: $e');
-                                }
-                              }
-                            }
-                          }
-                        },
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        child: Text(
-                          'Simpan',
-                          style: TextStyle(
-                            color: primaryBlue,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                Expanded(
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Section 1: Type Selection
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 6),
-                          child: Text(
-                            'TIPE DOMPET',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isDark ? Colors.white38 : Colors.black45,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.8,
-                            ),
-                          ),
-                        ),
-                        Container(
-                          width: double.infinity,
-                          margin: const EdgeInsets.symmetric(horizontal: 16),
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? Colors.white.withOpacity(0.05)
-                                : Colors.black.withOpacity(0.04),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: borderColor),
-                          ),
-                          child: Row(
-                            children: [
-                              _buildIOSTypeOption(
-                                  sbCtx,
-                                  setModalState,
-                                  'personal',
-                                  'Pribadi',
-                                  selectedType,
-                                  (v) => selectedType = v),
-                              _buildIOSTypeOption(
-                                  sbCtx,
-                                  setModalState,
-                                  'colab',
-                                  'Bersama',
-                                  selectedType,
-                                  (v) => selectedType = v),
-                              _buildIOSTypeOption(
-                                  sbCtx,
-                                  setModalState,
-                                  'debt',
-                                  'Hutang',
-                                  selectedType,
-                                  (v) => selectedType = v),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // Section 2: Info Utama
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 6),
-                          child: Text(
-                            'INFORMASI UTAMA',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isDark ? Colors.white38 : Colors.black45,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.8,
-                            ),
-                          ),
-                        ),
-                        Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 16),
-                          decoration: BoxDecoration(
-                            color: sectionColor,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: borderColor),
-                          ),
-                          child: Column(
-                            children: [
-                              // Conditional Debt Sub-Sections
-                              if (selectedType == 'debt') ...[
-                                // Debtor Name
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 14, vertical: 6),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          color: primaryBlue.withOpacity(0.12),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: Icon(CupertinoIcons.person_fill,
-                                            size: 16, color: primaryBlue),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        child: TextField(
-                                          controller: debtorNameController,
-                                          textCapitalization:
-                                              TextCapitalization.words,
-                                          style: TextStyle(
-                                            fontSize: 15,
-                                            color: isDark ? Colors.white : Colors.black87,
-                                          ),
-                                          decoration: InputDecoration(
-                                            hintText: 'Nama Teman / Pihak Lain',
-                                            hintStyle: TextStyle(
-                                                fontSize: 15,
-                                                color: isDark
-                                                    ? Colors.white38
-                                                    : Colors.black38),
-                                            border: InputBorder.none,
-                                            isDense: true,
-                                            contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                                          ),
-                                          onChanged: (val) {
-                                            setModalState(() {
-                                              if (val.isNotEmpty) {
-                                                nameController.text =
-                                                    debtType == 'payable'
-                                                        ? 'Hutang ke $val'
-                                                        : 'Piutang $val';
-                                              } else {
-                                                nameController.text = '';
-                                              }
-                                            });
-                                          },
-                                        ),
-                                      ),
-                                      IconButton(
-                                        icon: Icon(
-                                            CupertinoIcons
-                                                .person_crop_circle_fill_badge_plus,
-                                            size: 22,
-                                            color: primaryBlue),
-                                        onPressed: () async {
-                                          var status =
-                                              await Permission.contacts.status;
-                                          if (!status.isGranted) {
-                                            status = await Permission.contacts
-                                                .request();
-                                          }
-                                          if (status.isGranted) {
-                                            final allContacts =
-                                                await FlutterContacts
-                                                    .getContacts(
-                                                        withProperties: true);
-                                            if (!sbCtx.mounted) return;
-                                            _showContactPicker(
-                                                sbCtx, allContacts, (contact) {
-                                              setModalState(() {
-                                                debtorNameController.text =
-                                                    contact.displayName;
-                                                if (contact.phones.isNotEmpty) {
-                                                  debtorPhoneController.text =
-                                                      contact
-                                                          .phones.first.number;
-                                                }
-                                                nameController
-                                                    .text = debtType ==
-                                                        'payable'
-                                                    ? 'Hutang ke ${contact.displayName}'
-                                                    : 'Piutang ${contact.displayName}';
-                                              });
-                                            });
-                                          }
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Divider(
-                                    height: 1,
-                                    indent: 62,
-                                    color: borderColor),
-                                // Phone Number
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 14, vertical: 6),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          color: primaryBlue.withOpacity(0.12),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: Icon(CupertinoIcons.phone_fill,
-                                            size: 16, color: primaryBlue),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        child: TextField(
-                                          controller: debtorPhoneController,
-                                          keyboardType: TextInputType.phone,
-                                          style: TextStyle(
-                                            fontSize: 15,
-                                            color: isDark ? Colors.white : Colors.black87,
-                                          ),
-                                          decoration: InputDecoration(
-                                            hintText: 'Nomor HP (Opsional)',
-                                            hintStyle: TextStyle(
-                                                fontSize: 15,
-                                                color: isDark
-                                                    ? Colors.white38
-                                                    : Colors.black38),
-                                            border: InputBorder.none,
-                                            isDense: true,
-                                            contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Divider(
-                                    height: 1,
-                                    indent: 62,
-                                    color: borderColor),
-                                // Transaction Type (Radio)
-                                _buildIOSRadioTile(sbCtx, setModalState,
-                                    'Saya Berhutang', 'payable', debtType, (v) {
-                                  debtType = v;
-                                  if (debtorNameController.text.isNotEmpty) {
-                                    nameController.text =
-                                        'Hutang ke ${debtorNameController.text}';
-                                  }
-                                }),
-                                Divider(
-                                    height: 1,
-                                    indent: 62,
-                                    color: borderColor),
-                                _buildIOSRadioTile(
-                                    sbCtx,
-                                    setModalState,
-                                    'Saya Meminjamkan',
-                                    'receivable',
-                                    debtType, (v) {
-                                  debtType = v;
-                                  if (debtorNameController.text.isNotEmpty) {
-                                    nameController.text =
-                                        'Piutang ${debtorNameController.text}';
-                                  }
-                                }),
-                                Divider(
-                                    height: 1,
-                                    indent: 16,
-                                    color: borderColor),
-                              ],
-
-                              // Main Name / Label Input
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 14, vertical: 6),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: primaryBlue.withOpacity(0.12),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Icon(
-                                        selectedType == 'colab'
-                                            ? CupertinoIcons.person_2_fill
-                                            : selectedType == 'debt'
-                                                ? CupertinoIcons.doc_text_fill
-                                                : CupertinoIcons.creditcard_fill,
-                                        color: primaryBlue,
-                                        size: 16,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: TextField(
-                                        controller: nameController,
-                                        textCapitalization: TextCapitalization.words,
-                                        style: TextStyle(
-                                          fontSize: 15,
-                                          color: isDark ? Colors.white : Colors.black87,
-                                        ),
-                                        decoration: InputDecoration(
-                                          hintText: selectedType == 'colab'
-                                              ? 'Nama kelompok/tujuan'
-                                              : selectedType == 'debt'
-                                                  ? 'Label Catatan (Misal: Hutang Budi)'
-                                                  : 'Nama dompet (misal: Jajan)',
-                                          hintStyle: TextStyle(
-                                              fontSize: 15,
-                                              color: isDark
-                                                  ? Colors.white38
-                                                  : Colors.black38),
-                                          border: InputBorder.none,
-                                          isDense: true,
-                                          contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        if (selectedType == 'debt') ...[
-                          const SizedBox(height: 20),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 6),
-                            child: Text(
-                              'NOMINAL & SUMBER DANA',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: isDark ? Colors.white38 : Colors.black45,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.8,
-                              ),
-                            ),
-                          ),
-                          Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 16),
-                            decoration: BoxDecoration(
-                              color: sectionColor,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: borderColor),
-                            ),
-                            child: Column(
-                              children: [
-                                // Amount Input
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 12),
-                                  child: Row(
-                                    children: [
-                                      Text(
-                                        'Rp',
-                                        style: TextStyle(
-                                          color: primaryBlue,
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 18,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        child: TextField(
-                                          controller: totalAmountController,
-                                          keyboardType: TextInputType.number,
-                                          inputFormatters: [
-                                            FilteringTextInputFormatter.digitsOnly
-                                          ],
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 18,
-                                            color:
-                                                isDark ? Colors.white : Colors.black,
-                                          ),
-                                          decoration: InputDecoration(
-                                            hintText: '0',
-                                            hintStyle: TextStyle(
-                                              fontWeight: FontWeight.w700,
-                                              fontSize: 18,
-                                              color: isDark ? Colors.white38 : Colors.black38,
-                                            ),
-                                            border: InputBorder.none,
-                                            isDense: true,
-                                            contentPadding: EdgeInsets.zero,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Divider(
-                                    height: 1,
-                                    indent: 16,
-                                    color: borderColor),
-                                // Wallet Selection
-                                StreamBuilder<List<WalletModel>>(
-                                  stream:
-                                      _firestoreService.getWalletsStream(_uid),
-                                  builder: (ctx, snapshot) {
-                                    if (!snapshot.hasData)
-                                      return const SizedBox.shrink();
-                                    final wallets = snapshot.data!
-                                        .where((w) => !w.isDebt)
-                                        .toList();
-                                    final selectedWallet =
-                                        selectedWalletId != null
-                                            ? wallets.firstWhere(
-                                                (w) => w.id == selectedWalletId,
-                                                orElse: () => wallets.first)
-                                            : null;
-
-                                    return ListTile(
-                                      onTap: () => _showWalletPicker(
-                                          sbCtx, wallets, (wallet) {
-                                        setModalState(
-                                            () => selectedWalletId = wallet.id);
-                                      }),
-                                      leading: Container(
-                                        padding: const EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          color: primaryBlue.withOpacity(0.12),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: Icon(CupertinoIcons.creditcard_fill,
-                                            size: 16,
-                                            color: primaryBlue),
-                                      ),
-                                      title: Text(
-                                        selectedWallet != null
-                                            ? selectedWallet.walletName
-                                            : 'Pilih Dompet Sumber/Tujuan',
-                                        style: TextStyle(
-                                            fontSize: 15,
-                                            fontWeight: selectedWallet != null
-                                                ? FontWeight.w600
-                                                : FontWeight.w400,
-                                            color: selectedWallet != null
-                                                ? (isDark
-                                                    ? Colors.white
-                                                    : Colors.black)
-                                                : (isDark
-                                                    ? Colors.white38
-                                                    : Colors.black38)),
-                                      ),
-                                      trailing: Icon(
-                                          CupertinoIcons.chevron_right,
-                                          size: 14,
-                                          color: isDark
-                                              ? Colors.white38
-                                              : Colors.black38),
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-
-                        const SizedBox(height: 28),
-                        Center(
-                          child: TextButton(
-                            onPressed: () {
-                              Navigator.pop(sbCtx);
-                              _showJoinWalletDialog();
-                            },
-                            child: Text(
-                              'Sudah punya kode undangan? Gabung di sini',
-                              style: TextStyle(
-                                color: primaryBlue,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 40),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
+    showCreateWalletSheet(context);
   }
 
   Widget _buildIOSTypeOption(BuildContext context, StateSetter setState,
@@ -1318,144 +634,15 @@ class WalletScreenState extends State<WalletScreen>
 
   void _showWalletPicker(BuildContext context, List<WalletModel> wallets,
       Function(WalletModel) onPicked) {
-    String query = "";
-
-    showModalBottomSheet(
+    _showWalletPickerDialog(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => StatefulBuilder(
-        builder: (sbCtx, setPickerState) {
-          final isDark = Theme.of(sbCtx).brightness == Brightness.dark;
-          final filtered = wallets.where((w) {
-            return w.walletName.toLowerCase().contains(query.toLowerCase());
-          }).toList();
-
-          return Container(
-            height: MediaQuery.of(sbCtx).size.height * 0.7,
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7),
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            child: SafeArea(
-              child: Column(
-                children: [
-                  const SizedBox(height: 10),
-                  // iOS Drag Handle
-                  Container(
-                    width: 36,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.white24 : Colors.black12,
-                      borderRadius: BorderRadius.circular(2.5),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('PILIH SUMBER DANA',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white60 : Colors.black54,
-                              letterSpacing: 0.5,
-                            )),
-                        GestureDetector(
-                          onTap: () => Navigator.pop(ctx),
-                          child: Text('Tutup',
-                              style: TextStyle(
-                                color: isDark
-                                    ? const Color(0xFF6B64DB)
-                                    : const Color(0xFF8B85F6),
-                                fontWeight: FontWeight.w600,
-                                fontSize: 15,
-                              )),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: CupertinoSearchTextField(
-                      placeholder: 'Cari dompet...',
-                      onChanged: (v) => setPickerState(() => query = v),
-                      style: TextStyle(
-                          color: isDark ? Colors.white : Colors.black),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Expanded(
-                    child: filtered.isEmpty
-                        ? Center(
-                            child: Text('Dompet tidak ditemukan',
-                                style: TextStyle(
-                                    color: isDark
-                                        ? Colors.white38
-                                        : Colors.black38)))
-                        : ListView.separated(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 8),
-                            itemCount: filtered.length,
-                            itemBuilder: (lCtx, i) {
-                              final w = filtered[i];
-                              return ListTile(
-                                contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 4),
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12)),
-                                tileColor: isDark
-                                    ? const Color(0xFF2C2C2E)
-                                    : Colors.white,
-                                leading: Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: isDark
-                                        ? Colors.white.withOpacity(0.05)
-                                        : Colors.black.withOpacity(0.05),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Icon(
-                                    w.type == 'personal'
-                                        ? CupertinoIcons.person_fill
-                                        : (w.type == 'colab'
-                                            ? CupertinoIcons.person_3_fill
-                                            : CupertinoIcons.creditcard_fill),
-                                    color: isDark
-                                        ? const Color(0xFF6B64DB)
-                                        : const Color(0xFF8B85F6),
-                                    size: 20,
-                                  ),
-                                ),
-                                title: Text(w.walletName,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 15,
-                                    )),
-                                trailing: Icon(CupertinoIcons.chevron_right,
-                                    size: 14,
-                                    color: isDark
-                                        ? Colors.white24
-                                        : Colors.black26),
-                                onTap: () {
-                                  onPicked(w);
-                                  Navigator.pop(ctx);
-                                },
-                              );
-                            },
-                            separatorBuilder: (_, __) =>
-                                const SizedBox(height: 8),
-                          ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
+      wallets: wallets,
+      currentSelectedId: null,
+      onSelected: (selectedId) {
+        final w = wallets.firstWhere((item) => item.id == selectedId,
+            orElse: () => wallets.first);
+        onPicked(w);
+      },
     );
   }
 
@@ -2787,68 +1974,9 @@ class WalletScreenState extends State<WalletScreen>
                             child:
                                 Icon(CupertinoIcons.trash, color: Colors.white),
                           ),
-                          child: ListTile(
-                            contentPadding:
-                                const EdgeInsets.symmetric(vertical: 4),
-                            leading: Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: (t.type == 'transfer'
-                                        ? (t.walletId == wallet.id
-                                            ? Colors.blue
-                                            : Colors.green)
-                                        : (t.isIncome
-                                            ? AppColors.income
-                                            : AppColors.expense))
-                                    .withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Icon(
-                                TransactionCategory.getIconForCategory(
-                                    t.category),
-                                color: t.type == 'transfer'
-                                    ? (t.walletId == wallet.id
-                                        ? Colors.blue
-                                        : Colors.green)
-                                    : (t.isIncome
-                                        ? AppColors.income
-                                        : AppColors.expense),
-                              ),
-                            ),
-                            title: Text(t.category,
-                                style: TextStyle(fontWeight: FontWeight.bold)),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                    DateFormat('dd MMM yyyy • HH:mm')
-                                        .format(t.date),
-                                    style: TextStyle(fontSize: 12)),
-                                if (wallet.isColab) ...[
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    'Dibuat oleh: ${t.createdByName}',
-                                    style: TextStyle(
-                                        fontSize: 12,
-                                        color: Theme.of(context).primaryColor,
-                                        fontWeight: FontWeight.w600),
-                                  ),
-                                ]
-                              ],
-                            ),
-                            trailing: Text(
-                              '${t.type == 'transfer' ? (t.walletId == wallet.id ? '-' : '+') : (t.isIncome ? '+' : '-')}${CurrencyFormatter.formatCurrency(t.amount)}',
-                              style: TextStyle(
-                                color: t.type == 'transfer'
-                                    ? (t.walletId == wallet.id
-                                        ? Colors.blue
-                                        : Colors.green)
-                                    : (t.isIncome
-                                        ? AppColors.income
-                                        : AppColors.expense),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                          child: _ExpandableTransactionTile(
+                            t: t,
+                            wallet: wallet,
                           ),
                         );
                       },
@@ -3553,14 +2681,24 @@ class WalletScreenState extends State<WalletScreen>
                           decoration: BoxDecoration(
                             color: sectionColor,
                             borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: isDark
+                                  ? Colors.white.withOpacity(0.06)
+                                  : Colors.black.withOpacity(0.05),
+                            ),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Row(
                                 children: [
-                                  Icon(CupertinoIcons.creditcard,
-                                      color: primaryBlue, size: 20),
+                                  Icon(
+                                    CupertinoIcons.creditcard,
+                                    color: isDark
+                                        ? const Color(0xFFA1A1AA)
+                                        : const Color(0xFF71717A),
+                                    size: 20,
+                                  ),
                                   const SizedBox(width: 12),
                                   Column(
                                     crossAxisAlignment:
@@ -3573,7 +2711,7 @@ class WalletScreenState extends State<WalletScreen>
                                           fontWeight: FontWeight.w600,
                                           color: isDark
                                               ? Colors.white
-                                              : Colors.black,
+                                              : const Color(0xFF1C1C1E),
                                         ),
                                       ),
                                       Text(
@@ -3581,8 +2719,8 @@ class WalletScreenState extends State<WalletScreen>
                                         style: TextStyle(
                                           fontSize: 12,
                                           color: isDark
-                                              ? Colors.white54
-                                              : Colors.black54,
+                                              ? const Color(0xFFA1A1AA)
+                                              : const Color(0xFF71717A),
                                         ),
                                       ),
                                     ],
@@ -3605,7 +2743,9 @@ class WalletScreenState extends State<WalletScreen>
                         width: double.infinity,
                         height: 52,
                         child: CupertinoButton(
-                          color: primaryBlue,
+                          color: isDark
+                              ? const Color(0xFF27272A)
+                              : const Color(0xFF18181B),
                           borderRadius: BorderRadius.circular(16),
                           onPressed: () async {
                             final customAmt = double.tryParse(amountController
@@ -4474,266 +3614,413 @@ class WalletScreenState extends State<WalletScreen>
                 : sub;
 
             return Container(
-              height: MediaQuery.of(modalCtx).size.height * 0.70,
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(modalCtx).padding.bottom + 16,
-                left: 20,
-                right: 20,
-                top: 16,
-              ),
-              decoration: BoxDecoration(
-                color: backgroundColor,
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(24)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 36,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.white24 : Colors.black12,
-                        borderRadius: BorderRadius.circular(2.5),
-                      ),
+            height: MediaQuery.of(modalCtx).size.height * 0.7,
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(modalCtx).padding.bottom + 16,
+              left: 20,
+              right: 20,
+              top: 14,
+            ),
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white24 : Colors.black12,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          activeSub.name,
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                            color: isDark ? Colors.white : Colors.black,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        activeSub.name,
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          color: isDark ? Colors.white : const Color(0xFF1C1C1E),
+                          letterSpacing: -0.5,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    PopupMenuButton<String>(
+                      icon: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: sectionColor,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isDark
+                                ? Colors.white.withOpacity(0.08)
+                                : Colors.black.withOpacity(0.06),
                           ),
-                          overflow: TextOverflow.ellipsis,
+                        ),
+                        child: Icon(
+                          CupertinoIcons.ellipsis,
+                          size: 18,
+                          color: isDark ? Colors.white : const Color(0xFF1C1C1E),
                         ),
                       ),
-                      PopupMenuButton<String>(
-                        icon: Icon(
-                          CupertinoIcons.ellipsis,
-                          color: isDark ? Colors.white : Colors.black87,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      onSelected: (value) {
+                        if (value == 'edit') {
+                          Navigator.pop(modalCtx);
+                          _showEditSubscriptionDialog(activeSub);
+                        } else if (value == 'delete') {
+                          _showDeleteSubscriptionDialog(activeSub);
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(
+                          value: 'edit',
+                          child: Row(
+                            children: [
+                              Icon(CupertinoIcons.pencil, size: 18),
+                              SizedBox(width: 12),
+                              Text('Ubah Detail'),
+                            ],
+                          ),
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                        const PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(CupertinoIcons.trash,
+                                  size: 18, color: AppColors.expense),
+                              SizedBox(width: 12),
+                              Text('Hapus Tagihan',
+                                  style: TextStyle(color: AppColors.expense)),
+                            ],
+                          ),
                         ),
-                        onSelected: (value) {
-                          if (value == 'edit') {
-                            Navigator.pop(modalCtx);
-                            _showEditSubscriptionDialog(activeSub);
-                          } else if (value == 'delete') {
-                            _showDeleteSubscriptionDialog(activeSub);
-                          }
-                        },
-                        itemBuilder: (context) => [
-                          const PopupMenuItem(
-                            value: 'edit',
-                            child: Row(
-                              children: [
-                                Icon(CupertinoIcons.pencil, size: 20),
-                                SizedBox(width: 12),
-                                Text('Ubah Detail'),
-                              ],
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: sectionColor,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isDark
+                          ? Colors.white.withOpacity(0.06)
+                          : Colors.black.withOpacity(0.05),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Nominal Tagihan',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: isDark
+                                  ? const Color(0xFFA1A1AA)
+                                  : const Color(0xFF71717A),
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
-                          const PopupMenuItem(
-                            value: 'delete',
-                            child: Row(
-                              children: [
-                                Icon(CupertinoIcons.trash,
-                                    size: 20, color: AppColors.expense),
-                                SizedBox(width: 12),
-                                Text('Hapus Tagihan',
-                                    style: TextStyle(color: AppColors.expense)),
-                              ],
+                          Text(
+                            CurrencyFormatter.formatCurrency(activeSub.amount),
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? Colors.white : const Color(0xFF1C1C1E),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Divider(
+                        height: 20,
+                        thickness: 0.8,
+                        color: isDark
+                            ? Colors.white.withOpacity(0.06)
+                            : Colors.black.withOpacity(0.05),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Jatuh Tempo',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: isDark
+                                  ? const Color(0xFFA1A1AA)
+                                  : const Color(0xFF71717A),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Text(
+                            'Setiap Tanggal ${activeSub.dueDay}',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white : const Color(0xFF1C1C1E),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Divider(
+                        height: 20,
+                        thickness: 0.8,
+                        color: isDark
+                            ? Colors.white.withOpacity(0.06)
+                            : Colors.black.withOpacity(0.05),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Kategori',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: isDark
+                                  ? const Color(0xFFA1A1AA)
+                                  : const Color(0xFF71717A),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? const Color(0xFF3F3F46).withOpacity(0.4)
+                                  : const Color(0xFFE4E4E7),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              activeSub.category,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: isDark
+                                    ? const Color(0xFFE4E4E7)
+                                    : const Color(0xFF3F3F46),
+                              ),
                             ),
                           ),
                         ],
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: sectionColor,
-                      borderRadius: BorderRadius.circular(16),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Icon(
+                      CupertinoIcons.clock_fill,
+                      size: 16,
+                      color: isDark
+                          ? const Color(0xFFA1A1AA)
+                          : const Color(0xFF71717A),
                     ),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('Nominal Tagihan'),
-                            Text(
-                              CurrencyFormatter.formatCurrency(
-                                  activeSub.amount),
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                        const Divider(height: 24),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('Jatuh Tempo'),
-                            Text('Setiap Tanggal ${activeSub.dueDay}'),
-                          ],
-                        ),
-                        const Divider(height: 24),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('Kategori'),
-                            Text(activeSub.category),
-                          ],
-                        ),
-                      ],
+                    const SizedBox(width: 8),
+                    Text(
+                      'Riwayat Pembayaran',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                        color: isDark ? Colors.white : const Color(0xFF1C1C1E),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  const Row(
-                    children: [
-                      Icon(CupertinoIcons.list_bullet, size: 18),
-                      SizedBox(width: 8),
-                      Text(
-                        'Riwayat Pembayaran',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16),
+                    if (activeSub.paidMonths.isNotEmpty) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? const Color(0xFF27272A)
+                              : const Color(0xFFE4E4E7),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '${activeSub.paidMonths.length}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: isDark
+                                ? const Color(0xFFA1A1AA)
+                                : const Color(0xFF71717A),
+                          ),
+                        ),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 12),
-                  Expanded(
-                    child: FutureBuilder<List<TransactionModel>>(
-                      future: _subscriptionService.getSubscriptionTransactions(
-                        _uid,
-                        activeSub.id,
-                        activeSub.name,
-                      ),
-                      builder: (futCtx, futSnapshot) {
-                        final txs = futSnapshot.data ?? [];
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: FutureBuilder<List<TransactionModel>>(
+                    future: _subscriptionService.getSubscriptionTransactions(
+                      _uid,
+                      activeSub.id,
+                      activeSub.name,
+                    ),
+                    builder: (futCtx, futSnapshot) {
+                      final txs = futSnapshot.data ?? [];
 
-                        // Map each YYYY-MM month string to its transaction amount
-                        final Map<String, double> paidAmounts = {};
-                        for (var tx in txs) {
-                          final parts = tx.note.split(' - ');
-                          if (parts.length >= 2) {
-                            final monthStr = parts.last.trim();
-                            paidAmounts[monthStr] = tx.amount;
-                          }
+                      // Map each YYYY-MM month string to its transaction amount
+                      final Map<String, double> paidAmounts = {};
+                      for (var tx in txs) {
+                        final parts = tx.note.split(' - ');
+                        if (parts.length >= 2) {
+                          final monthStr = parts.last.trim();
+                          paidAmounts[monthStr] = tx.amount;
                         }
+                      }
 
-                        if (activeSub.paidMonths.isEmpty) {
-                          return Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  CupertinoIcons.doc_text,
-                                  size: 40,
-                                  color: Theme.of(modalCtx)
-                                      .hintColor
-                                      .withOpacity(0.3),
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'Belum ada riwayat pembayaran',
-                                  style: TextStyle(
-                                      color: Theme.of(modalCtx).hintColor),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-
-                        return ListView.builder(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.only(bottom: 24),
-                          itemCount: activeSub.paidMonths.length,
-                          itemBuilder: (context, idx) {
-                            final m = activeSub.paidMonths[idx];
-                            final amountPaid =
-                                paidAmounts[m] ?? activeSub.amount;
-
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 10),
-                              decoration: BoxDecoration(
-                                color: sectionColor,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: isDark
-                                      ? Colors.white.withOpacity(0.05)
-                                      : Colors.black.withOpacity(0.03),
-                                ),
+                      if (activeSub.paidMonths.isEmpty) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                CupertinoIcons.doc_text,
+                                size: 40,
+                                color: Theme.of(modalCtx)
+                                    .hintColor
+                                    .withOpacity(0.3),
                               ),
-                              child: ListTile(
-                                contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 4),
-                                leading: Container(
-                                  padding: const EdgeInsets.all(8),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Belum ada riwayat pembayaran',
+                                style: TextStyle(
+                                    color: Theme.of(modalCtx).hintColor),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      return ListView.builder(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.only(bottom: 24),
+                        itemCount: activeSub.paidMonths.length,
+                        itemBuilder: (context, idx) {
+                          final m = activeSub.paidMonths[idx];
+                          final amountPaid =
+                              paidAmounts[m] ?? activeSub.amount;
+
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 10),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: sectionColor,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: isDark
+                                    ? Colors.white.withOpacity(0.06)
+                                    : Colors.black.withOpacity(0.04),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 36,
+                                  height: 36,
                                   decoration: BoxDecoration(
-                                    color: Colors.green.withOpacity(0.12),
+                                    color: isDark
+                                        ? const Color(0xFF14532D)
+                                            .withOpacity(0.35)
+                                        : const Color(0xFFDCFCE7),
                                     shape: BoxShape.circle,
                                   ),
-                                  child: const Icon(
+                                  child: Icon(
                                     CupertinoIcons.checkmark_seal_fill,
                                     size: 18,
-                                    color: Colors.green,
+                                    color: isDark
+                                        ? const Color(0xFF4ADE80)
+                                        : const Color(0xFF15803D),
                                   ),
                                 ),
-                                title: Text(
-                                  'Pembayaran ${_formatPaidMonth(m)}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Pembayaran ${_formatPaidMonth(m)}',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14,
+                                          color: isDark
+                                              ? Colors.white
+                                              : const Color(0xFF1C1C1E),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'Terbayar',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                          color: isDark
+                                              ? const Color(0xFF4ADE80)
+                                              : const Color(0xFF15803D),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                subtitle: const Text(
-                                  'Tagihan Lunas Terbayar',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                                trailing: Row(
+                                const SizedBox(width: 8),
+                                Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Text(
                                       CurrencyFormatter.formatCurrency(
                                           amountPaid),
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w900,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w700,
                                         fontSize: 14,
-                                        color: Colors.green,
+                                        color: isDark
+                                            ? const Color(0xFF4ADE80)
+                                            : const Color(0xFF15803D),
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
-                                    IconButton(
-                                      padding: EdgeInsets.zero,
-                                      constraints: const BoxConstraints(),
-                                      icon: Icon(
-                                        CupertinoIcons.trash,
-                                        size: 18,
-                                        color:
-                                            AppColors.expense.withOpacity(0.8),
-                                      ),
-                                      onPressed: () {
+                                    const SizedBox(width: 6),
+                                    InkWell(
+                                      onTap: () {
                                         HapticFeedback.mediumImpact();
                                         _showRollbackPaymentDialog(
                                             activeSub, m);
                                       },
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(6),
+                                        child: Icon(
+                                          CupertinoIcons.trash,
+                                          size: 16,
+                                          color: AppColors.expense
+                                              .withOpacity(0.7),
+                                        ),
+                                      ),
                                     ),
                                   ],
                                 ),
-                              ),
-                            );
+                              ],
+                            ),
+                          );
                           },
                         );
                       },
@@ -4834,20 +4121,18 @@ class WalletScreenState extends State<WalletScreen>
     required List<WalletModel> wallets,
     required String? currentSelectedId,
     required ValueChanged<String> onSelected,
+    String title = 'Pilih Dompet',
   }) {
     String searchQuery = '';
 
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (dialogCtx) => StatefulBuilder(
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (bottomCtx) => StatefulBuilder(
         builder: (sbCtx, setPickerState) {
           final isDark = Theme.of(sbCtx).brightness == Brightness.dark;
-          final backgroundColor =
-              isDark ? const Color(0xFF2C2C2E) : Colors.white;
-          final sectionColor =
-              isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7);
-          final primaryBlue =
-              isDark ? const Color(0xFF6B64DB) : const Color(0xFF8B85F6);
+          final safeBottom = MediaQuery.of(sbCtx).padding.bottom;
 
           final filteredWallets = wallets.where((w) {
             return w.walletName
@@ -4855,117 +4140,215 @@ class WalletScreenState extends State<WalletScreen>
                 .contains(searchQuery.toLowerCase());
           }).toList();
 
-          return Dialog(
-            backgroundColor: backgroundColor,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            child: Container(
-              width: MediaQuery.of(sbCtx).size.width * 0.85,
-              height: 400,
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Pilih Dompet',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      IconButton(
-                        icon:
-                            const Icon(CupertinoIcons.clear_circled, size: 20),
-                        onPressed: () => Navigator.pop(dialogCtx),
-                      ),
-                    ],
+          return Container(
+            height: MediaQuery.of(sbCtx).size.height * 0.75,
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF18181B) : Colors.white,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(
+              children: [
+                // iOS Drag Handle
+                const SizedBox(height: 12),
+                Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white24 : Colors.black12,
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                  const SizedBox(height: 12),
-                  CupertinoSearchTextField(
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : const Color(0xFF1C1C1E),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Search Bar
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: CupertinoSearchTextField(
                     placeholder: 'Cari dompet...',
-                    style:
-                        TextStyle(color: isDark ? Colors.white : Colors.black),
+                    style: TextStyle(
+                        color: isDark ? Colors.white : const Color(0xFF1C1C1E)),
                     onChanged: (val) {
                       setPickerState(() {
                         searchQuery = val;
                       });
                     },
                   ),
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: filteredWallets.isEmpty
-                        ? const Center(
-                            child: Text(
-                              'Dompet tidak ditemukan',
-                              style: TextStyle(color: Colors.grey),
-                            ),
-                          )
-                        : ListView.builder(
-                            itemCount: filteredWallets.length,
-                            itemBuilder: (context, idx) {
-                              final w = filteredWallets[idx];
-                              final isSelected = w.id == currentSelectedId;
-                              return Container(
-                                margin: const EdgeInsets.only(bottom: 8),
-                                decoration: BoxDecoration(
-                                  color: sectionColor,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: ListTile(
-                                  contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 12),
-                                  leading: Container(
-                                    width: 36,
-                                    height: 36,
-                                    decoration: BoxDecoration(
-                                      color: isSelected
-                                          ? primaryBlue.withOpacity(0.15)
-                                          : Colors.grey.withOpacity(0.1),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(
-                                      CupertinoIcons.creditcard_fill,
-                                      color: isSelected
-                                          ? primaryBlue
-                                          : Colors.grey,
-                                      size: 18,
-                                    ),
-                                  ),
-                                  title: Text(
-                                    w.walletName,
-                                    style: TextStyle(
-                                      fontWeight: isSelected
-                                          ? FontWeight.bold
-                                          : FontWeight.normal,
-                                      fontSize: 14,
-                                      color:
-                                          isDark ? Colors.white : Colors.black,
-                                    ),
-                                  ),
-                                  subtitle: Text(
-                                    CurrencyFormatter.formatCurrency(w.balance),
-                                    style: const TextStyle(
-                                        fontSize: 12, color: Colors.grey),
-                                  ),
-                                  trailing: isSelected
-                                      ? Icon(CupertinoIcons.checkmark_seal_fill,
-                                          color: primaryBlue, size: 18)
-                                      : null,
-                                  onTap: () {
-                                    HapticFeedback.lightImpact();
-                                    onSelected(w.id);
-                                    Navigator.pop(dialogCtx);
-                                  },
-                                ),
-                              );
-                            },
+                ),
+                const SizedBox(height: 16),
+
+                Expanded(
+                  child: filteredWallets.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                CupertinoIcons.creditcard,
+                                size: 48,
+                                color: isDark
+                                    ? Colors.white24
+                                    : Colors.black12,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                ToneManager.t('wallet_not_found'),
+                                style: TextStyle(
+                                    color: isDark
+                                        ? Colors.white38
+                                        : Colors.black38,
+                                    fontSize: 15),
+                              ),
+                            ],
                           ),
-                  ),
-                ],
-              ),
+                        )
+                      : ListView.separated(
+                          padding: EdgeInsets.only(
+                            left: 16,
+                            right: 16,
+                            bottom: safeBottom > 0 ? safeBottom + 24 : 24,
+                          ),
+                          itemCount: filteredWallets.length,
+                          separatorBuilder: (context, index) => Divider(
+                            height: 1,
+                            indent: 50,
+                            color: isDark
+                                ? Colors.white10
+                                : Colors.black.withOpacity(0.05),
+                          ),
+                          itemBuilder: (context, index) {
+                            final wallet = filteredWallets[index];
+                            final isSelected = wallet.id == currentSelectedId;
+                            const activeColor = Color(0xFF34D399);
+
+                            return InkWell(
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                onSelected(wallet.id);
+                                Navigator.pop(bottomCtx);
+                              },
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? activeColor.withOpacity(0.15)
+                                            : (isDark
+                                                ? const Color(0xFF27272A)
+                                                : const Color(0xFFF4F4F5)),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Icon(
+                                        CupertinoIcons.creditcard_fill,
+                                        color: isSelected
+                                            ? activeColor
+                                            : (isDark
+                                                ? const Color(0xFFA1A1AA)
+                                                : const Color(0xFF71717A)),
+                                        size: 20,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Flexible(
+                                                child: Text(
+                                                  wallet.walletName,
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: isSelected
+                                                        ? FontWeight.w700
+                                                        : FontWeight.w500,
+                                                    color: isDark
+                                                        ? Colors.white
+                                                        : const Color(
+                                                            0xFF1C1C1E),
+                                                  ),
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              if (index == 0 &&
+                                                  searchQuery.isEmpty) ...[
+                                                const SizedBox(width: 8),
+                                                Container(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                      horizontal: 6,
+                                                      vertical: 2),
+                                                  decoration: BoxDecoration(
+                                                    color: isDark
+                                                        ? const Color(
+                                                            0xFF3F3F46)
+                                                        : const Color(
+                                                            0xFFE4E4E7),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            6),
+                                                  ),
+                                                  child: Text(
+                                                    'Sering dipakai',
+                                                    style: TextStyle(
+                                                      fontSize: 10,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: isDark
+                                                          ? const Color(
+                                                              0xFFA1A1AA)
+                                                          : const Color(
+                                                              0xFF71717A),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ],
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            CurrencyFormatter.formatCurrency(
+                                                wallet.balance),
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              color: isDark
+                                                  ? const Color(0xFFA1A1AA)
+                                                  : const Color(0xFF71717A),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    if (isSelected)
+                                      const Icon(
+                                        CupertinoIcons.checkmark_alt_circle_fill,
+                                        color: activeColor,
+                                        size: 22,
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
             ),
           );
         },
@@ -4993,10 +4376,6 @@ class _SubscriptionCard extends StatelessWidget {
     final currentMonthStr = DateFormat('yyyy-MM').format(DateTime.now());
     final isPaid = subscription.isPaidForMonth(currentMonthStr);
 
-    final accentColor = isPaid
-        ? const Color(0xFF34D399)
-        : const Color(0xFFFBBF24); // Green if paid, Orange if unpaid
-
     IconData getIcon() {
       switch (subscription.category) {
         case 'Hiburan':
@@ -5007,6 +4386,21 @@ class _SubscriptionCard extends StatelessWidget {
           return CupertinoIcons.arrow_right_arrow_left_square_fill;
       }
     }
+
+    // Off-black (avoid pure #000000) — Apple-style near-black
+    const offBlack = Color(0xFF1C1C1E);
+    // Icon placeholder
+    final iconBg = isDark ? Colors.white.withOpacity(0.08) : const Color(0xFFF0F0F0);
+    final iconColor = isDark ? Colors.white70 : const Color(0xFF3A3A3C);
+    // Belum Bayar badge — fully opaque, off-black/dark on light mode
+    final unpaidBg = isDark ? const Color(0xFF3A3A3C) : const Color(0xFFEDEDED);
+    const unpaidColor = Colors.white;
+    const unpaidColorLight = offBlack;
+    // Lunas Bulan Ini badge — pastel green fully opaque
+    const paidBg = Color(0xFFDCFCE7);          // pastel green light
+    const paidBgDark = Color(0xFF166534);      // deep pastel green dark
+    const paidColor = Color(0xFF15803D);       // green text light
+    const paidColorDark = Color(0xFF86EFAC);   // soft green text dark
 
     return Container(
       decoration: BoxDecoration(
@@ -5043,12 +4437,12 @@ class _SubscriptionCard extends StatelessWidget {
                       width: 48,
                       height: 48,
                       decoration: BoxDecoration(
-                        color: accentColor.withOpacity(isDark ? 0.2 : 0.1),
+                        color: iconBg,
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Icon(
                         getIcon(),
-                        color: accentColor,
+                        color: iconColor,
                         size: 24,
                       ),
                     ),
@@ -5109,12 +4503,14 @@ class _SubscriptionCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Status Badge
+                    // Status Badge — fully opaque, no border
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        color: accentColor.withOpacity(0.12),
+                        color: isPaid
+                            ? (isDark ? paidBgDark : paidBg)
+                            : unpaidBg,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
@@ -5124,7 +4520,9 @@ class _SubscriptionCard extends StatelessWidget {
                                 ? CupertinoIcons.checkmark_alt_circle_fill
                                 : CupertinoIcons.exclamationmark_circle_fill,
                             size: 14,
-                            color: accentColor,
+                            color: isPaid
+                                ? (isDark ? paidColorDark : paidColor)
+                                : (isDark ? unpaidColor : unpaidColorLight),
                           ),
                           const SizedBox(width: 4),
                           Text(
@@ -5132,31 +4530,44 @@ class _SubscriptionCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
-                              color: accentColor,
+                              color: isPaid
+                                  ? (isDark ? paidColorDark : paidColor)
+                                  : (isDark ? unpaidColor : unpaidColorLight),
                             ),
                           ),
                         ],
                       ),
                     ),
 
-                    // Quick Action button
+                    // Quick Action button — monochrome
                     if (!isPaid)
                       SizedBox(
                         height: 30,
-                        child: CupertinoButton(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          color: const Color(0xFF8B85F6),
-                          borderRadius: BorderRadius.circular(20),
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            side: BorderSide(
+                              color: isDark
+                                  ? Colors.white.withOpacity(0.3)
+                                  : Colors.black.withOpacity(0.2),
+                              width: 1,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            foregroundColor:
+                                isDark ? Colors.white : Colors.black,
+                          ),
                           onPressed: () {
                             HapticFeedback.mediumImpact();
                             onPay();
                           },
-                          child: const Text(
+                          child: Text(
                             'Bayar',
                             style: TextStyle(
                               fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white : Colors.black87,
                             ),
                           ),
                         ),
@@ -5166,6 +4577,188 @@ class _SubscriptionCard extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ExpandableTransactionTile extends StatefulWidget {
+  final TransactionModel t;
+  final WalletModel wallet;
+
+  const _ExpandableTransactionTile({
+    super.key,
+    required this.t,
+    required this.wallet,
+  });
+
+  @override
+  State<_ExpandableTransactionTile> createState() =>
+      __ExpandableTransactionTileState();
+}
+
+class __ExpandableTransactionTileState
+    extends State<_ExpandableTransactionTile> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = widget.t;
+    final wallet = widget.wallet;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isTransfer = t.type == 'transfer';
+    final amountColor = isTransfer
+        ? (t.walletId == wallet.id
+            ? AppColors.pastelBlue
+            : AppColors.income)
+        : (t.isIncome
+            ? AppColors.income
+            : AppColors.expense);
+    final amountPrefix = isTransfer
+        ? (t.walletId == wallet.id ? '-' : '+')
+        : (t.isIncome ? '+' : '-');
+
+    final dateStr = DateFormat('dd MMM yyyy • HH:mm').format(t.date);
+    final dateSubtitle =
+        wallet.isColab ? '$dateStr • ${t.createdByName}' : dateStr;
+    final hasNote = t.note.trim().isNotEmpty;
+    final monochromeText =
+        isDark ? const Color(0xFFA1A1AA) : const Color(0xFF71717A);
+
+    return GestureDetector(
+      onTap: hasNote
+          ? () {
+              setState(() {
+                _isExpanded = !_isExpanded;
+              });
+            }
+          : null,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOut,
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF27272A) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: _isExpanded
+                ? (isDark ? Colors.white24 : Colors.black26)
+                : (isDark
+                    ? Colors.white.withOpacity(0.06)
+                    : Colors.black.withOpacity(0.04)),
+            width: _isExpanded ? 1.5 : 1.0,
+          ),
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: amountColor.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    TransactionCategory.getIconForCategory(t.category),
+                    color: amountColor,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        t.category,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? Colors.white : Colors.black87,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        dateSubtitle,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark ? Colors.white38 : Colors.black45,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '$amountPrefix${CurrencyFormatter.formatCurrency(t.amount)}',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: amountColor,
+                      ),
+                    ),
+                    if (hasNote) ...[
+                      const SizedBox(height: 2),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _isExpanded ? 'Tutup' : 'Detail',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: monochromeText,
+                            ),
+                          ),
+                          const SizedBox(width: 2),
+                          Icon(
+                            _isExpanded
+                                ? CupertinoIcons.chevron_up
+                                : CupertinoIcons.chevron_down,
+                            size: 10,
+                            color: monochromeText,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+            if (hasNote && _isExpanded) ...[
+              const SizedBox(height: 10),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withOpacity(0.04)
+                      : Colors.black.withOpacity(0.03),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  t.note.trim(),
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 1.35,
+                    color: isDark ? Colors.white70 : Colors.black87,
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
       ),
     );
