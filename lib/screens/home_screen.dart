@@ -1894,7 +1894,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _quickActionItem(
             context,
             icon: CupertinoIcons.arrow_up_right,
-            label: ToneManager.t('nav_manual'),
+            label: ToneManager.t('quick_expense'),
             circleBgColor: circleBgColor,
             iconColor: iconColor,
             textColor: textColor,
@@ -1903,36 +1903,50 @@ class _HomeScreenState extends State<HomeScreen> {
                 context: context,
                 isScrollControlled: true,
                 backgroundColor: Colors.transparent,
-                builder: (_) => const AddTransactionScreen(),
+                builder: (_) => const AddTransactionScreen(initialType: 'expense'),
               );
             },
           ),
           _quickActionItem(
             context,
             icon: CupertinoIcons.arrow_down_left,
-            label: ToneManager.t('nav_colab'),
+            label: ToneManager.t('quick_income'),
             circleBgColor: circleBgColor,
             iconColor: iconColor,
             textColor: textColor,
-            onTap: () => MainNav.of(context)?.setTab(3),
+            onTap: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (_) => const AddTransactionScreen(initialType: 'income'),
+              );
+            },
+          ),
+          _quickActionItem(
+            context,
+            icon: CupertinoIcons.arrow_right_arrow_left,
+            label: ToneManager.t('quick_transfer'),
+            circleBgColor: circleBgColor,
+            iconColor: iconColor,
+            textColor: textColor,
+            onTap: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (_) => const AddTransactionScreen(initialType: 'transfer'),
+              );
+            },
           ),
           _quickActionItem(
             context,
             icon: CupertinoIcons.creditcard,
-            label: ToneManager.t('nav_wallet'),
+            label: ToneManager.t('quick_wallet'),
             circleBgColor: circleBgColor,
             iconColor: iconColor,
             textColor: textColor,
             onTap: () => MainNav.of(context)?.setTab(1),
-          ),
-          _quickActionItem(
-            context,
-            icon: CupertinoIcons.ellipsis,
-            label: ToneManager.t('nav_report'),
-            circleBgColor: circleBgColor,
-            iconColor: iconColor,
-            textColor: textColor,
-            onTap: () => MainNav.of(context)?.setTab(4),
           ),
         ],
       ),

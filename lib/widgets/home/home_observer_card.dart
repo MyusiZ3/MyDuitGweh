@@ -48,7 +48,7 @@ class HomeObserverCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Financial Observer',
+            'Kewajiban Finansial',
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
@@ -116,12 +116,17 @@ class HomeObserverCard extends StatelessWidget {
                 color: isDark ? Colors.white54 : const Color(0xFF6B7280),
               ),
             ),
-            Text(
-              statusText,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: statusColor,
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                statusText,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: statusColor,
+                ),
               ),
             ),
           ],

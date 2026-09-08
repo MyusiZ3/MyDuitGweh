@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../utils/currency_formatter.dart';
+import '../../utils/app_theme.dart';
 
 class HomeBudgetTracker extends StatelessWidget {
   final double totalExpense;
@@ -18,14 +19,38 @@ class HomeBudgetTracker extends StatelessWidget {
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final percent = (totalExpense / monthlyBudget).clamp(0.0, 1.0);
-    final isWarning = percent > 0.8;
 
     final currentMonth = DateFormat('MMMM', 'id_ID').format(DateTime.now());
-    final accentColor = isWarning
-        ? (isDark ? const Color(0xFFF87171) : const Color(0xFFEF4444))
-        : (isDark ? const Color(0xFF6B64DB) : const Color(0xFF8B85F6));
-
     final cardBg = isDark ? const Color(0xFF1C1C22) : Colors.white;
+
+    // Dynamic pastel gradient colors and text highlight based on budget percentage threshold
+    final List<Color> gradientColors;
+    final Color percentTextColor;
+
+    if (percent <= 0.40) {
+      // Under 40%: Soft Emerald Mint Pastel
+      percentTextColor = AppColors.income; // 0xFF34D399
+      gradientColors = const [
+        Color(0xFF34D399),
+        Color(0xFF6EE7B7),
+      ];
+    } else if (percent <= 0.70) {
+      // 40% - 70%: Smooth transition from Mint Green to Honey Gold Pastel
+      percentTextColor = AppColors.warning; // 0xFFFBBF24
+      gradientColors = const [
+        Color(0xFF34D399),
+        Color(0xFFFBBF24),
+      ];
+    } else {
+      // Above 70%: Smooth transition from Honey Gold to Coral Red Pastel
+      percentTextColor = AppColors.expense; // 0xFFF87171
+      gradientColors = const [
+        Color(0xFFFBBF24),
+        Color(0xFFF87171),
+      ];
+    }
+
+    final remainingBudget = monthlyBudget - totalExpense;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
@@ -66,21 +91,54 @@ class HomeBudgetTracker extends StatelessWidget {
                 style: TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 13,
-                  color: accentColor,
+                  color: percentTextColor,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(100),
-            child: LinearProgressIndicator(
-              value: percent,
-              minHeight: 5,
-              backgroundColor:
-                  isDark ? Colors.white.withOpacity(0.1) : const Color(0xFFF4F4F5),
-              color: accentColor,
-            ),
+          
+          // Modern Interactive Gradient Progress Bar
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final barWidth = constraints.maxWidth;
+              final filledWidth = barWidth * percent;
+
+              return Container(
+                height: 8,
+                width: barWidth,
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withOpacity(0.08)
+                      : const Color(0xFFF4F4F5),
+                  borderRadius: BorderRadius.circular(100),
+                ),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 400),
+                    curve: Curves.easeOutCubic,
+                    width: filledWidth,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(100),
+                      gradient: LinearGradient(
+                        colors: gradientColors,
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: gradientColors.last.withOpacity(0.3),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
           const SizedBox(height: 12),
           Row(
@@ -91,10 +149,14 @@ class HomeBudgetTracker extends StatelessWidget {
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Sisa: ${CurrencyFormatter.formatCurrency(monthlyBudget - totalExpense)}',
+                    remainingBudget < 0
+                        ? 'Overbudget: ${CurrencyFormatter.formatCurrency(remainingBudget.abs())}'
+                        : 'Sisa: ${CurrencyFormatter.formatCurrency(remainingBudget)}',
                     style: TextStyle(
                       fontSize: 12,
-                      color: isDark ? Colors.white70 : const Color(0xFF6B7280),
+                      color: remainingBudget < 0
+                          ? AppColors.expense
+                          : (isDark ? Colors.white70 : const Color(0xFF6B7280)),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
