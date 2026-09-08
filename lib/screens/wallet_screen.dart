@@ -17,6 +17,7 @@ import '../utils/app_theme.dart';
 import '../utils/currency_formatter.dart';
 import '../utils/ui_helper.dart';
 import '../utils/tone_dictionary.dart';
+import '../widgets/home/home_wallet_list.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
@@ -85,7 +86,6 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: NestedScrollView(
@@ -184,28 +184,38 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
   }
 
   Widget _buildSearchBar(BuildContext context, bool isDark) {
+    final bg = isDark ? const Color(0xFF1C1C22) : const Color(0xFFF4F4F5);
+    final borderColor = isDark
+        ? Colors.white.withOpacity(0.06)
+        : Colors.black.withOpacity(0.04);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Container(
         height: 44,
         decoration: BoxDecoration(
-          color: isDark
-              ? const Color(0xFF2C2C2E)
-              : Color(0xFF767680).withOpacity(0.12),
-          borderRadius: BorderRadius.circular(12),
+          color: bg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: borderColor, width: 1),
         ),
         child: TextField(
           controller: _searchController,
-          style: const TextStyle(fontSize: 16),
+          style: TextStyle(
+            fontSize: 14,
+            color: isDark ? Colors.white : const Color(0xFF18181B),
+          ),
           onChanged: (val) => setState(() => _searchQuery = val.toLowerCase()),
           decoration: InputDecoration(
             hintText: ToneManager.t('wallet_search_hint'),
             hintStyle: TextStyle(
-              color: Theme.of(context).hintColor.withOpacity(0.5),
-              fontSize: 15,
+              color: isDark ? Colors.white38 : const Color(0xFF9CA3AF),
+              fontSize: 14,
             ),
-            prefixIcon: Icon(CupertinoIcons.search,
-                color: Theme.of(context).hintColor.withOpacity(0.5), size: 18),
+            prefixIcon: Icon(
+              CupertinoIcons.search,
+              color: isDark ? Colors.white38 : const Color(0xFF9CA3AF),
+              size: 18,
+            ),
             suffixIcon: _searchQuery.isEmpty
                 ? null
                 : GestureDetector(
@@ -213,11 +223,14 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                       _searchController.clear();
                       setState(() => _searchQuery = "");
                     },
-                    child: Icon(CupertinoIcons.xmark_circle_fill,
-                        color: Theme.of(context).hintColor, size: 18),
+                    child: Icon(
+                      CupertinoIcons.xmark_circle_fill,
+                      color: isDark ? Colors.white38 : const Color(0xFF9CA3AF),
+                      size: 18,
+                    ),
                   ),
             border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(vertical: 11),
+            contentPadding: const EdgeInsets.symmetric(vertical: 12),
           ),
         ),
       ),
@@ -225,14 +238,21 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
   }
 
   Widget _buildSegmentedControl(BuildContext context, bool isDark) {
+    final bg = isDark ? const Color(0xFF1C1C22) : const Color(0xFFF4F4F5);
+    final indicatorBg = isDark ? const Color(0xFF27272A) : Colors.white;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24),
-      padding: const EdgeInsets.all(3),
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: isDark
-            ? const Color(0xFF2C2C2E)
-            : Color(0xFF767680).withOpacity(0.12),
-        borderRadius: BorderRadius.circular(10),
+        color: bg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withOpacity(0.06)
+              : Colors.black.withOpacity(0.04),
+          width: 1,
+        ),
       ),
       child: TabBar(
         controller: _tabController,
@@ -240,20 +260,21 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
         indicatorSize: TabBarIndicatorSize.tab,
         dividerColor: Colors.transparent,
         indicator: BoxDecoration(
-          color: isDark ? const Color(0xFF636366) : Colors.white,
-          borderRadius: BorderRadius.circular(7),
+          color: indicatorBg,
+          borderRadius: BorderRadius.circular(10),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(isDark ? 0.3 : 0.12),
-              blurRadius: 1,
-              offset: const Offset(0, 1),
+              color: Colors.black.withOpacity(isDark ? 0.25 : 0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
-        labelColor: isDark ? Colors.white : Colors.black,
-        unselectedLabelColor: const Color(0xFF8E8E93),
+        labelColor: isDark ? Colors.white : const Color(0xFF18181B),
+        unselectedLabelColor:
+            isDark ? Colors.white38 : const Color(0xFF71717A),
         labelStyle: const TextStyle(
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
           fontSize: 12,
           letterSpacing: -0.2,
         ),
@@ -423,21 +444,17 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
         ),
       );
     }
+
+    final double totalBalance = wallets.fold(0.0, (acc, w) => acc + w.balance);
+
     return SliverPadding(
-      padding: const EdgeInsets.only(left: 24, right: 24, top: 8, bottom: 120),
-      sliver: SliverList(
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            final wallet = wallets[index];
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: _WalletCard(
-                wallet: wallet,
-                onTap: () => _showWalletDetails(wallet),
-              ),
-            );
-          },
-          childCount: wallets.length,
+      padding: const EdgeInsets.only(left: 24, right: 24, top: 12, bottom: 120),
+      sliver: SliverToBoxAdapter(
+        child: _UnifiedWalletGroupCard(
+          wallets: wallets,
+          totalBalance: totalBalance,
+          isColab: isColab,
+          onWalletTap: (wallet) => _showWalletDetails(wallet),
         ),
       ),
     );
@@ -4912,48 +4929,237 @@ class _SubscriptionCard extends StatelessWidget {
                   ],
                 ),
               ],
-            ),
           ),
         ),
+      ),
+    ),
+  );
+}
+}
+
+class _UnifiedWalletGroupCard extends StatelessWidget {
+  final List<WalletModel> wallets;
+  final double totalBalance;
+  final bool isColab;
+  final Function(WalletModel) onWalletTap;
+
+  const _UnifiedWalletGroupCard({
+    required this.wallets,
+    required this.totalBalance,
+    required this.isColab,
+    required this.onWalletTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1C1C22) : Colors.white;
+    final dividerColor = isDark
+        ? Colors.white.withOpacity(0.06)
+        : Colors.black.withOpacity(0.04);
+    final headerTitleColor = isDark ? Colors.white54 : const Color(0xFF71717A);
+    final mainTextColor = isDark ? Colors.white : const Color(0xFF18181B);
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: dividerColor,
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.25 : 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isColab ? 'TOTAL DOMPET BERSAMA' : 'TOTAL DOMPET PRIBADI',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: headerTitleColor,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      CurrencyFormatter.formatCurrency(totalBalance),
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5,
+                        color: mainTextColor,
+                      ),
+                    ),
+                  ],
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? const Color(0xFF27272A)
+                        : const Color(0xFFF4F4F5),
+                    borderRadius: BorderRadius.circular(100),
+                  ),
+                  child: Text(
+                    '${wallets.length} Dompet',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white70 : const Color(0xFF71717A),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Divider(height: 1, thickness: 1, color: dividerColor),
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: EdgeInsets.zero,
+            itemCount: wallets.length,
+            separatorBuilder: (context, index) => Divider(
+              height: 1,
+              thickness: 1,
+              indent: 68,
+              endIndent: 16,
+              color: dividerColor,
+            ),
+            itemBuilder: (context, index) {
+              final wallet = wallets[index];
+              final isLast = index == wallets.length - 1;
+
+              return _WalletRowItem(
+                wallet: wallet,
+                isLast: isLast,
+                onTap: () => onWalletTap(wallet),
+              );
+            },
+          ),
+        ],
       ),
     );
   }
 }
 
-class _WalletCard extends StatelessWidget {
+class _WalletRowItem extends StatelessWidget {
   final WalletModel wallet;
+  final bool isLast;
   final VoidCallback onTap;
 
-  const _WalletCard({required this.wallet, required this.onTap});
+  const _WalletRowItem({
+    required this.wallet,
+    required this.isLast,
+    required this.onTap,
+  });
 
-  Color _getCardAccent(BuildContext context) {
+  Widget _buildIcon(BuildContext context, bool isDark) {
+    final iconBg = isDark ? const Color(0xFF27272A) : const Color(0xFFF4F4F5);
+    final iconColor = isDark ? Colors.white : const Color(0xFF18181B);
+
     if (wallet.isDebt) {
-      return wallet.debtType == 'payable'
-          ? AppColors.expense
-          : AppColors.income;
+      return Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: iconBg,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          CupertinoIcons.doc_text_fill,
+          color: wallet.debtType == 'payable'
+              ? (isDark ? const Color(0xFFF87171) : const Color(0xFFDC2626))
+              : (isDark ? const Color(0xFF34D399) : const Color(0xFF059669)),
+          size: 18,
+        ),
+      );
     }
+
     if (wallet.isColab) {
-      return (Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF0A84FF)
-          : AppColors.primary);
+      return Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: iconBg,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          CupertinoIcons.person_2_fill,
+          color: iconColor,
+          size: 18,
+        ),
+      );
     }
 
-    // In dark mode, use a slightly lighter primary color for icons if the primary is too dark
-    final primary = Theme.of(context).primaryColor;
-    if (Theme.of(context).brightness == Brightness.dark) {
-      // Return a lighter version or specific vibrant blue for iOS feel
-      return const Color(0xFF0A84FF); // iOS Vibrant Blue
+    switch (wallet.type) {
+      case 'cash':
+        return Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: iconBg,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            CupertinoIcons.money_dollar_circle_fill,
+            color: iconColor,
+            size: 18,
+          ),
+        );
+      case 'e-wallet':
+        return Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: iconBg,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            CupertinoIcons.device_phone_portrait,
+            color: iconColor,
+            size: 18,
+          ),
+        );
+      default:
+        return Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: iconBg,
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: CardSlotIcon(
+              size: 18,
+              color: iconColor,
+              strokeWidth: 1.8,
+            ),
+          ),
+        );
     }
-    return primary;
   }
 
-  IconData get _cardIcon {
-    if (wallet.isDebt) return CupertinoIcons.rectangle_stack_person_crop;
-    if (wallet.isColab) return CupertinoIcons.person_2_fill;
-    return CupertinoIcons.creditcard_fill;
-  }
-
-  String get _subtitle {
+  String? get _subtitle {
     if (wallet.isDebt) {
       final label = wallet.debtType == 'payable' ? 'Hutang' : 'Piutang';
       final name = wallet.debtorName?.isNotEmpty == true
@@ -4961,138 +5167,100 @@ class _WalletCard extends StatelessWidget {
           : '';
       return '$label$name';
     }
-    if (wallet.isColab) return 'Bersama · ${wallet.members.length} anggota';
-    return 'Dompet Pribadi';
+    if (wallet.isColab) return '${wallet.members.length} Anggota';
+    switch (wallet.type) {
+      case 'bank':
+        return 'Bank';
+      case 'cash':
+        return 'Tunai';
+      case 'e-wallet':
+        return 'E-Wallet';
+      default:
+        return null;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.1 : 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-        border: Border.all(
-          color:
-              Theme.of(context).dividerColor.withOpacity(isDark ? 0.05 : 0.08),
-          width: 0.5,
+    final mainTextColor = isDark ? Colors.white : const Color(0xFF18181B);
+    final subTextColor = isDark ? Colors.white54 : const Color(0xFF71717A);
+    final sub = _subtitle;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
+        borderRadius: BorderRadius.vertical(
+          bottom: isLast ? const Radius.circular(24) : Radius.zero,
         ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            HapticFeedback.lightImpact();
-            onTap();
-          },
-          borderRadius: BorderRadius.circular(22),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Icon Container
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: _getCardAccent(context).withOpacity(
-                        Theme.of(context).brightness == Brightness.dark
-                            ? 0.2
-                            : 0.1),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child:
-                      Icon(_cardIcon, color: _getCardAccent(context), size: 24),
-                ),
-                const SizedBox(width: 14),
-                // Info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        wallet.walletName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.3,
-                          color: Theme.of(context).textTheme.titleLarge?.color,
-                        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              _buildIcon(context, isDark),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      wallet.walletName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.3,
+                        color: mainTextColor,
                       ),
+                    ),
+                    if (sub != null) ...[
                       const SizedBox(height: 2),
                       Text(
-                        _subtitle,
+                        sub,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 13,
-                          color: Theme.of(context).hintColor.withOpacity(0.8),
+                          fontSize: 12,
+                          color: subTextColor,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // Trailing part: Balance & Chevron
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          CurrencyFormatter.formatCurrency(wallet.balance),
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.5,
-                            color: wallet.isDebt && wallet.debtType == 'payable'
-                                ? AppColors.expense
-                                : Theme.of(context).textTheme.titleLarge?.color,
-                          ),
-                        ),
-                        if (wallet.isColab)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 2),
-                            child: Text(
-                              'BERSAMA',
-                              style: TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w900,
-                                color: (Theme.of(context).brightness ==
-                                            Brightness.dark
-                                        ? Colors.blueAccent
-                                        : AppColors.deepBlue)
-                                    .withOpacity(0.7),
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(width: 6),
-                    Icon(
-                      CupertinoIcons.chevron_right,
-                      color: Theme.of(context).hintColor.withOpacity(0.3),
-                      size: 18,
-                    ),
                   ],
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 8),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    CurrencyFormatter.formatCurrency(wallet.balance),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.4,
+                      color: wallet.isDebt && wallet.debtType == 'payable'
+                          ? (isDark
+                              ? const Color(0xFFF87171)
+                              : const Color(0xFFDC2626))
+                          : mainTextColor,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Icon(
+                    CupertinoIcons.chevron_right,
+                    color: isDark ? Colors.white24 : Colors.black26,
+                    size: 14,
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),
