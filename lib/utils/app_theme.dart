@@ -24,10 +24,11 @@ class AppColors {
   static const Color textSecondary = Color(0xFF6C757D);
   static const Color textHint = Color(0xFFADB5BD);
 
-  // Semantic
-  static const Color income = Color(0xFF40C4AA);
-  static const Color expense = Color(0xFFE76F6F);
-  static const Color warning = Color(0xFFF4A261);
+  // Semantic Pastel Palette
+  static const Color income = Color(0xFF34D399); // Soft Mint Emerald Pastel
+  static const Color expense = Color(0xFFF87171); // Soft Coral Salmon Pastel
+  static const Color pastelBlue = Color(0xFF8B85F6); // Soft Periwinkle Pastel
+  static const Color warning = Color(0xFFFBBF24); // Soft Honey Gold Pastel
 
   static const Color shadow = Color(0x0A000000);
 

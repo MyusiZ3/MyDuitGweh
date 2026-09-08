@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import '../../utils/currency_formatter.dart';
 import '../../utils/tone_dictionary.dart';
-import '../../screens/main_nav.dart';
+import '../bottom_sheets/create_wallet_sheet.dart';
 
 class HomeBalanceCard extends StatelessWidget {
   final double totalBalance;
@@ -10,6 +10,7 @@ class HomeBalanceCard extends StatelessWidget {
   final double todayExpense;
   final bool isBalanceVisible;
   final VoidCallback onToggleVisibility;
+  final VoidCallback? onAddWallet;
 
   const HomeBalanceCard({
     super.key,
@@ -18,6 +19,7 @@ class HomeBalanceCard extends StatelessWidget {
     required this.todayExpense,
     required this.isBalanceVisible,
     required this.onToggleVisibility,
+    this.onAddWallet,
   });
 
   @override
@@ -239,7 +241,13 @@ class HomeBalanceCard extends StatelessWidget {
                   bottom: 0,
                   right: 0,
                   child: GestureDetector(
-                    onTap: () => MainNav.of(context)?.setTab(1),
+                    onTap: () {
+                      if (onAddWallet != null) {
+                        onAddWallet!();
+                      } else {
+                        showCreateWalletSheet(context);
+                      }
+                    },
                     child: Container(
                       padding: const EdgeInsets.fromLTRB(6, 6, 18, 6),
                       decoration: BoxDecoration(

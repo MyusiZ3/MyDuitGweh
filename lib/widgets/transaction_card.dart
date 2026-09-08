@@ -25,15 +25,15 @@ class TransactionCard extends StatelessWidget {
     if (transaction.isTransfer) {
       if (transaction.walletId == walletId) {
         isTxIncome = false;
-        displayColor = AppColors.primary;
+        displayColor = AppColors.pastelBlue;
         sign = '-';
       } else if (transaction.targetWalletId == walletId) {
         isTxIncome = true;
-        displayColor = const Color(0xFF34C759);
+        displayColor = AppColors.income;
         sign = '+';
       } else {
         isTxIncome = false;
-        displayColor = AppColors.primary;
+        displayColor = AppColors.pastelBlue;
         sign = '';
       }
     }

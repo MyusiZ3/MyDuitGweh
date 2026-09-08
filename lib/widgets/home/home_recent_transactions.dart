@@ -133,12 +133,12 @@ class HomeRecentTransactions extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.05),
+                color: AppColors.pastelBlue.withOpacity(0.12),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
+              child: const Icon(
                 CupertinoIcons.square_list_fill,
-                color: AppColors.primary.withOpacity(0.4),
+                color: AppColors.pastelBlue,
                 size: 32,
               ),
             ),

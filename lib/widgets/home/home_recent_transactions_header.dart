@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../utils/app_theme.dart';
 import '../../utils/tone_dictionary.dart';
 import '../../screens/main_nav.dart';
 
@@ -33,7 +32,9 @@ class HomeRecentTransactionsHeader extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFA1A1AA)
+                        : const Color(0xFF71717A),
                   ),
                 ),
               ),
