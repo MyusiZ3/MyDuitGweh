@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
-import '../../utils/app_theme.dart';
 import '../../utils/currency_formatter.dart';
 import '../../utils/financial_logic.dart';
 
@@ -20,78 +18,72 @@ class HomeObserverCard extends StatelessWidget {
     final zakatAmount = FinancialLogic.calculateZakat(netWorth);
     final taxAmount = FinancialLogic.calculateTax(monthlyIncome);
     final reachesNisab = FinancialLogic.reachesNisab(netWorth);
-    final nisabProgress = FinancialLogic.getNisabProgress(netWorth);
+
+    final cardBg = isDark ? const Color(0xFF1C1C22) : Colors.white;
+    final zakatStatusColor = reachesNisab
+        ? (isDark ? const Color(0xFF34D399) : const Color(0xFF059669))
+        : (isDark ? Colors.white38 : const Color(0xFF9CA3AF));
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(28),
+        color: cardBg,
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: Theme.of(context).dividerColor.withOpacity(0.08),
+          color: isDark
+              ? Colors.white.withOpacity(0.06)
+              : Colors.black.withOpacity(0.04),
+          width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(isDark ? 0.25 : 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.indigo.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(CupertinoIcons.shield_lefthalf_fill,
-                    color: Colors.indigo, size: 20),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'Financial Observer',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: -0.2,
-                ),
-              ),
-            ],
+          Text(
+            'Financial Observer',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.2,
+              color: isDark ? Colors.white : const Color(0xFF18181B),
+            ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 14),
           Row(
             children: [
               Expanded(
-                child: _buildObligationItem(
+                child: _buildMetricItem(
                   context,
-                  title: 'Estimasi Zakat',
+                  title: 'Zakat',
                   amount: zakatAmount,
-                  icon: CupertinoIcons.heart_fill,
-                  color: Colors.teal,
-                  subtitle: reachesNisab ? 'Wajib Zakat' : 'Belum Nisab',
-                  progress: nisabProgress,
+                  statusText: reachesNisab ? 'Wajib Zakat' : 'Belum Nisab',
+                  statusColor: zakatStatusColor,
                 ),
               ),
               Container(
                 width: 1,
-                height: 60,
+                height: 42,
                 margin: const EdgeInsets.symmetric(horizontal: 16),
-                color: Theme.of(context).dividerColor.withOpacity(0.1),
+                color: isDark
+                    ? Colors.white.withOpacity(0.08)
+                    : Colors.black.withOpacity(0.06),
               ),
               Expanded(
-                child: _buildObligationItem(
+                child: _buildMetricItem(
                   context,
-                  title: 'Estimasi Pajak',
+                  title: 'Pajak',
                   amount: taxAmount,
-                  icon: CupertinoIcons.doc_text_fill,
-                  color: Colors.orange,
-                  subtitle: 'Proyeksi bulanan',
+                  statusText: 'Estimasi PPh',
+                  statusColor:
+                      isDark ? const Color(0xFFFBBF24) : const Color(0xFFD97706),
                 ),
               ),
             ],
@@ -101,72 +93,55 @@ class HomeObserverCard extends StatelessWidget {
     );
   }
 
-  Widget _buildObligationItem(
+  Widget _buildMetricItem(
     BuildContext context, {
     required String title,
     required double amount,
-    required IconData icon,
-    required Color color,
-    required String subtitle,
-    double? progress,
+    required String statusText,
+    required Color statusColor,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Icon(icon, size: 14, color: color),
-            const SizedBox(width: 6),
             Text(
-              title.toUpperCase(),
+              title,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white54 : const Color(0xFF6B7280),
+              ),
+            ),
+            Text(
+              statusText,
               style: TextStyle(
                 fontSize: 10,
-                fontWeight: FontWeight.w800,
-                color: Theme.of(context).textTheme.bodySmall?.color,
-                letterSpacing: 0.5,
+                fontWeight: FontWeight.w600,
+                color: statusColor,
               ),
             ),
           ],
-        ),
-        const SizedBox(height: 6),
-        Text(
-          CurrencyFormatter.formatCurrency(amount),
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w900,
-            letterSpacing: -0.5,
-          ),
         ),
         const SizedBox(height: 4),
-        Row(
-          children: [
-            Text(
-              subtitle,
-              style: TextStyle(
-                fontSize: 10,
-                color: amount > 0 
-                  ? color.withOpacity(0.8) 
-                  : Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.5),
-                fontWeight: FontWeight.w600,
-              ),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            CurrencyFormatter.formatCurrency(amount),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.3,
+              color: isDark ? Colors.white : const Color(0xFF18181B),
             ),
-            if (progress != null && progress < 1.0) ...[
-              const SizedBox(width: 6),
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(2),
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    backgroundColor: color.withOpacity(0.1),
-                    valueColor: AlwaysStoppedAnimation<Color>(color.withOpacity(0.5)),
-                    minHeight: 2,
-                  ),
-                ),
-              ),
-            ],
-          ],
+          ),
         ),
       ],
     );
   }
 }
+

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../utils/app_theme.dart';
+import 'package:intl/intl.dart';
 import '../../utils/currency_formatter.dart';
 
 class HomeBudgetTracker extends StatelessWidget {
@@ -15,18 +15,36 @@ class HomeBudgetTracker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (monthlyBudget == 0.0) return const SizedBox.shrink();
-    
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final percent = (totalExpense / monthlyBudget).clamp(0.0, 1.0);
     final isWarning = percent > 0.8;
 
+    final currentMonth = DateFormat('MMMM', 'id_ID').format(DateTime.now());
+    final accentColor = isWarning
+        ? (isDark ? const Color(0xFFF87171) : const Color(0xFFEF4444))
+        : (isDark ? const Color(0xFF6B64DB) : const Color(0xFF8B85F6));
+
+    final cardBg = isDark ? const Color(0xFF1C1C22) : Colors.white;
+
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(28),
+        color: cardBg,
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: Theme.of(context).dividerColor.withOpacity(0.08),
+          color: isDark
+              ? Colors.white.withOpacity(0.06)
+              : Colors.black.withOpacity(0.04),
+          width: 1,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.25 : 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -34,15 +52,21 @@ class HomeBudgetTracker extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Target Budget Bulanan',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+              Text(
+                'Budget $currentMonth',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                  letterSpacing: -0.2,
+                  color: isDark ? Colors.white : const Color(0xFF18181B),
+                ),
               ),
               Text(
                 '${(percent * 100).toStringAsFixed(0)}%',
                 style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  color: isWarning ? AppColors.expense : AppColors.primary,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13,
+                  color: accentColor,
                 ),
               ),
             ],
@@ -52,12 +76,13 @@ class HomeBudgetTracker extends StatelessWidget {
             borderRadius: BorderRadius.circular(100),
             child: LinearProgressIndicator(
               value: percent,
-              minHeight: 10,
-              backgroundColor: AppColors.surfaceVariant,
-              color: isWarning ? AppColors.expense : AppColors.primary,
+              minHeight: 5,
+              backgroundColor:
+                  isDark ? Colors.white.withOpacity(0.1) : const Color(0xFFF4F4F5),
+              color: accentColor,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -68,8 +93,8 @@ class HomeBudgetTracker extends StatelessWidget {
                   child: Text(
                     'Sisa: ${CurrencyFormatter.formatCurrency(monthlyBudget - totalExpense)}',
                     style: TextStyle(
-                      fontSize: 11,
-                      color: Theme.of(context).textTheme.bodySmall?.color,
+                      fontSize: 12,
+                      color: isDark ? Colors.white70 : const Color(0xFF6B7280),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -83,8 +108,9 @@ class HomeBudgetTracker extends StatelessWidget {
                   child: Text(
                     'Dari ${CurrencyFormatter.formatCurrency(monthlyBudget)}',
                     style: TextStyle(
-                      fontSize: 11,
-                      color: Theme.of(context).textTheme.bodySmall?.color,
+                      fontSize: 12,
+                      color: isDark ? Colors.white38 : const Color(0xFF9CA3AF),
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
