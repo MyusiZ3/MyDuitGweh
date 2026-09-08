@@ -20,13 +20,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       OnboardingData(
         title: 'Kelola Keuangan\nDengan Mudah',
         subtitle:
-            'Catat setiap transaksi harian secara rapi, hemat, dan terkontrol dalam satu aplikasi.',
+            'Catat setiap transaksi harian secara rapi, hemat, dan terkontrol dalam satu tempat.',
         type: OnboardingType.balance,
       ),
       OnboardingData(
         title: 'Dompet Kolaborasi\nSirkel & Pasangan',
         subtitle:
-            'Pantau anggaran bersama teman atau pasangan secara transparan dan seru.',
+            'Pantau anggaran bersama teman atau pasangan secara transparan dan teratur.',
         type: OnboardingType.shared,
       ),
       OnboardingData(
@@ -58,7 +58,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     final pages = _getPages();
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryBg = isDark ? const Color(0xFF18181B) : const Color(0xFFFAFAFA);
+    final primaryBg = isDark ? const Color(0xFF121214) : const Color(0xFFFAFAFA);
+    final accentColor = const Color(0xFFF59E0B); // Warm amber yellow accent matching reference
 
     return Scaffold(
       backgroundColor: primaryBg,
@@ -76,40 +77,73 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 },
                 itemCount: pages.length,
                 itemBuilder: (context, index) {
-                  return _buildPage(pages[index], isDark);
+                  return _buildPage(pages[index], isDark, accentColor);
                 },
               ),
             ),
-            _buildFooter(pages, isDark),
+            _buildFooter(pages, isDark, accentColor),
           ],
         ),
       ),
     );
   }
 
+  // --- HEADER: Top Circular App Badge (Left) & Capsule Skip Button (Right) ---
   Widget _buildHeader(bool isDark) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          // Circular App Icon Logo
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF27272A) : const Color(0xFF18181B),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.12),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Image.asset(
+                'assets/images/logo_app.png',
+                width: 22,
+                height: 22,
+                errorBuilder: (context, error, stackTrace) => const Icon(
+                  CupertinoIcons.text_quote,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+            ),
+          ),
+          // Capsule "Lewati" Button
           GestureDetector(
             onTap: _navigateToLogin,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF27272A) : const Color(0xFFF4F4F5),
-                borderRadius: BorderRadius.circular(20),
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(24),
                 border: Border.all(
-                  color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05),
+                  color: isDark
+                      ? Colors.white.withOpacity(0.15)
+                      : Colors.black.withOpacity(0.12),
+                  width: 1.2,
                 ),
               ),
               child: Text(
-                'Lewati',
+                'Skip',
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
-                  color: isDark ? const Color(0xFFA1A1AA) : const Color(0xFF71717A),
+                  color: isDark ? const Color(0xFFE4E4E7) : const Color(0xFF3F3F46),
                 ),
               ),
             ),
@@ -119,151 +153,190 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _buildPage(OnboardingData data, bool isDark) {
+  // --- PAGE BODY: Hero Graphic & Left-Aligned Text ---
+  Widget _buildPage(OnboardingData data, bool isDark, Color accentColor) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      padding: const EdgeInsets.symmetric(horizontal: 28.0),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Spacer(flex: 1),
-          // Hero Graphic Illustration
-          SizedBox(
-            height: 240,
-            child: Center(
-              child: _buildHeroWidget(data.type, isDark),
+          // Center Graphic Illustration
+          Center(
+            child: SizedBox(
+              height: 260,
+              child: _buildHeroWidget(data.type, isDark, accentColor),
             ),
           ),
           const Spacer(flex: 1),
-          // Clean Typography
+          // Left-Aligned Headline & Subtitle
           Text(
             data.title,
-            textAlign: TextAlign.center,
+            textAlign: TextAlign.left,
             style: TextStyle(
-              fontSize: 26,
+              fontSize: 28,
               fontWeight: FontWeight.w800,
               color: isDark ? Colors.white : const Color(0xFF18181B),
-              height: 1.25,
-              letterSpacing: -0.5,
+              height: 1.2,
+              letterSpacing: -0.6,
             ),
           ),
           const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Text(
-              data.subtitle,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-                color: isDark ? const Color(0xFFA1A1AA) : const Color(0xFF71717A),
-                height: 1.5,
-              ),
+          Text(
+            data.subtitle,
+            textAlign: TextAlign.left,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              color: isDark ? const Color(0xFFA1A1AA) : const Color(0xFF71717A),
+              height: 1.5,
             ),
           ),
-          const Spacer(flex: 2),
+          const SizedBox(height: 20),
         ],
       ),
     );
   }
 
-  Widget _buildHeroWidget(OnboardingType type, bool isDark) {
+  Widget _buildHeroWidget(OnboardingType type, bool isDark, Color accentColor) {
     switch (type) {
       case OnboardingType.balance:
-        return _buildMinimalBalanceHero(isDark);
+        return _buildMinimalBalanceHero(isDark, accentColor);
       case OnboardingType.shared:
-        return _buildMinimalSharedHero(isDark);
+        return _buildMinimalSharedHero(isDark, accentColor);
       case OnboardingType.report:
-        return _buildMinimalReportHero(isDark);
+        return _buildMinimalReportHero(isDark, accentColor);
     }
   }
 
-  // --- HERO 1: Minimalist Balance Card ---
-  Widget _buildMinimalBalanceHero(bool isDark) {
+  // --- HERO 1: Minimalist Balance Card with Floating Circles ---
+  Widget _buildMinimalBalanceHero(bool isDark, Color accentColor) {
     final cardBg = isDark ? const Color(0xFF27272A) : Colors.white;
     final borderColor = isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.06);
 
-    return Container(
-      width: 280,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: borderColor),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.3 : 0.04),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
+    return Stack(
+      alignment: Alignment.center,
+      clipBehavior: Clip.none,
+      children: [
+        // Floating Yellow Accent Circle (Background element like reference)
+        Positioned(
+          top: 15,
+          left: 15,
+          child: Container(
+            width: 54,
+            height: 54,
+            decoration: BoxDecoration(
+              color: accentColor,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: accentColor.withOpacity(0.3),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Total Saldo',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: isDark ? const Color(0xFFA1A1AA) : const Color(0xFF71717A),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF34D399).withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: const [
-                    Icon(CupertinoIcons.arrow_up_right, size: 10, color: Color(0xFF34D399)),
-                    SizedBox(width: 2),
-                    Text(
-                      '+12%',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF34D399),
-                      ),
-                    ),
-                  ],
-                ),
+        ),
+        // Floating Grey Secondary Circle
+        Positioned(
+          top: 5,
+          right: 25,
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE4E4E7),
+              shape: BoxShape.circle,
+            ),
+          ),
+        ),
+        // Main Card
+        Container(
+          width: 270,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: borderColor),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(isDark ? 0.35 : 0.05),
+                blurRadius: 24,
+                offset: const Offset(0, 12),
               ),
             ],
           ),
-          const SizedBox(height: 6),
-          Text(
-            'Rp 24.500.000',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.6,
-              color: isDark ? Colors.white : const Color(0xFF18181B),
-            ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Total Saldo',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: isDark ? const Color(0xFFA1A1AA) : const Color(0xFF71717A),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: accentColor.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(CupertinoIcons.arrow_up_right, size: 10, color: accentColor),
+                        const SizedBox(width: 2),
+                        Text(
+                          '+12%',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: accentColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Rp 24.500.000',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.6,
+                  color: isDark ? Colors.white : const Color(0xFF18181B),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Divider(color: borderColor, height: 1),
+              const SizedBox(height: 12),
+              _buildTransactionRow(
+                isDark,
+                icon: CupertinoIcons.arrow_down_left,
+                iconColor: const Color(0xFF10B981),
+                title: 'Gaji Bulanan',
+                amount: '+Rp 8.500.000',
+              ),
+              const SizedBox(height: 8),
+              _buildTransactionRow(
+                isDark,
+                icon: CupertinoIcons.arrow_up_right,
+                iconColor: const Color(0xFFEF4444),
+                title: 'Belanja Harian',
+                amount: '-Rp 125.000',
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          Divider(color: borderColor, height: 1),
-          const SizedBox(height: 12),
-          _buildTransactionRow(
-            isDark,
-            icon: CupertinoIcons.arrow_down_left,
-            iconColor: const Color(0xFF34D399),
-            title: 'Gaji Bulanan',
-            amount: '+Rp 8.500.000',
-          ),
-          const SizedBox(height: 8),
-          _buildTransactionRow(
-            isDark,
-            icon: CupertinoIcons.arrow_up_right,
-            iconColor: const Color(0xFFF87171),
-            title: 'Belanja Harian',
-            amount: '-Rp 125.000',
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -308,112 +381,130 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   // --- HERO 2: Minimalist Shared Wallet ---
-  Widget _buildMinimalSharedHero(bool isDark) {
+  Widget _buildMinimalSharedHero(bool isDark, Color accentColor) {
     final cardBg = isDark ? const Color(0xFF27272A) : Colors.white;
     final borderColor = isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.06);
 
-    return Container(
-      width: 270,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: borderColor),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.3 : 0.04),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF8B85F6).withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  CupertinoIcons.person_3_fill,
-                  size: 16,
-                  color: Color(0xFF8B85F6),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Dompet Liburan ✈️',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : const Color(0xFF18181B),
-                      ),
-                    ),
-                    Text(
-                      '3 Anggota',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: isDark ? const Color(0xFFA1A1AA) : const Color(0xFF71717A),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Rp 8.500.000',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.6,
-              color: isDark ? Colors.white : const Color(0xFF18181B),
+    return Stack(
+      alignment: Alignment.center,
+      clipBehavior: Clip.none,
+      children: [
+        Positioned(
+          top: 10,
+          right: 20,
+          child: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: accentColor,
+              shape: BoxShape.circle,
             ),
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              SizedBox(
-                width: 60,
-                height: 24,
-                child: Stack(
-                  children: [
-                    _buildAvatarPill('A', const Color(0xFF60A5FA), 0),
-                    _buildAvatarPill('B', const Color(0xFFA78BFA), 16),
-                    _buildAvatarPill('C', const Color(0xFFFBBF24), 32),
-                  ],
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFF4F4F5),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  'Aktif',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white70 : const Color(0xFF3F3F46),
-                  ),
-                ),
+        ),
+        Container(
+          width: 270,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: borderColor),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(isDark ? 0.35 : 0.05),
+                blurRadius: 24,
+                offset: const Offset(0, 12),
               ),
             ],
           ),
-        ],
-      ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white10 : const Color(0xFFF4F4F5),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      CupertinoIcons.person_3_fill,
+                      size: 16,
+                      color: isDark ? Colors.white : const Color(0xFF18181B),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Dompet Liburan ✈️',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white : const Color(0xFF18181B),
+                          ),
+                        ),
+                        Text(
+                          '3 Anggota',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDark ? const Color(0xFFA1A1AA) : const Color(0xFF71717A),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Rp 8.500.000',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.6,
+                  color: isDark ? Colors.white : const Color(0xFF18181B),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  SizedBox(
+                    width: 60,
+                    height: 24,
+                    child: Stack(
+                      children: [
+                        _buildAvatarPill('A', const Color(0xFF3B82F6), 0),
+                        _buildAvatarPill('B', const Color(0xFF8B5CF6), 16),
+                        _buildAvatarPill('C', accentColor, 32),
+                      ],
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFF4F4F5),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'Aktif',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white70 : const Color(0xFF3F3F46),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -443,61 +534,125 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   // --- HERO 3: Minimalist PDF Report ---
-  Widget _buildMinimalReportHero(bool isDark) {
+  Widget _buildMinimalReportHero(bool isDark, Color accentColor) {
     final cardBg = isDark ? const Color(0xFF27272A) : Colors.white;
     final borderColor = isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.06);
 
-    return Container(
-      width: 250,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: borderColor),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.3 : 0.04),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
+    return Stack(
+      alignment: Alignment.center,
+      clipBehavior: Clip.none,
+      children: [
+        Positioned(
+          top: 15,
+          left: 20,
+          child: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: accentColor,
+              shape: BoxShape.circle,
+            ),
           ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF87171).withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  CupertinoIcons.doc_text_fill,
-                  size: 16,
-                  color: Color(0xFFF87171),
-                ),
+        ),
+        Container(
+          width: 250,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: borderColor),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(isDark ? 0.35 : 0.05),
+                blurRadius: 24,
+                offset: const Offset(0, 12),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Laporan_Mei.pdf',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : const Color(0xFF18181B),
-                      ),
-                      overflow: TextOverflow.ellipsis,
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white10 : const Color(0xFFF4F4F5),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    Text(
-                      'Siap diunduh',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: isDark ? const Color(0xFFA1A1AA) : const Color(0xFF71717A),
+                    child: Icon(
+                      CupertinoIcons.doc_text_fill,
+                      size: 16,
+                      color: isDark ? Colors.white : const Color(0xFF18181B),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Laporan_Mei.pdf',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white : const Color(0xFF18181B),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          'Siap diunduh',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDark ? const Color(0xFFA1A1AA) : const Color(0xFF71717A),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF18181B) : const Color(0xFFF4F4F5),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Sisa Anggaran',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: isDark ? const Color(0xFFA1A1AA) : const Color(0xFF71717A),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '78% Aman',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white : const Color(0xFF18181B),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: accentColor,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        CupertinoIcons.checkmark,
+                        size: 12,
+                        color: Colors.white,
                       ),
                     ),
                   ],
@@ -505,123 +660,131 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF18181B) : const Color(0xFFF4F4F5),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Sisa Anggaran',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: isDark ? const Color(0xFFA1A1AA) : const Color(0xFF71717A),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '78% Aman',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : const Color(0xFF18181B),
-                      ),
-                    ),
-                  ],
-                ),
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF34D399),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    CupertinoIcons.checkmark,
-                    size: 12,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  Widget _buildFooter(List<OnboardingData> pages, bool isDark) {
+  // --- FOOTER: Dots Indicator (Left) & Circular Arrow Navigation (Right) ---
+  Widget _buildFooter(List<OnboardingData> pages, bool isDark, Color accentColor) {
     final isLastPage = _currentPage == pages.length - 1;
-    final btnBg = isDark ? Colors.white : const Color(0xFF18181B);
-    final btnFg = isDark ? const Color(0xFF18181B) : Colors.white;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      padding: const EdgeInsets.fromLTRB(28, 0, 28, 28),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Dots Indicator
+          // Dots Indicator (Left)
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(
               pages.length,
               (index) => AnimatedContainer(
                 duration: const Duration(milliseconds: 250),
-                margin: const EdgeInsets.symmetric(horizontal: 3),
-                height: 6,
-                width: _currentPage == index ? 24 : 6,
+                margin: const EdgeInsets.only(right: 6),
+                height: 7,
+                width: _currentPage == index ? 7 : 7,
                 decoration: BoxDecoration(
                   color: _currentPage == index
-                      ? (isDark ? Colors.white : const Color(0xFF18181B))
+                      ? accentColor
                       : (isDark
                           ? const Color(0xFF3F3F46)
                           : const Color(0xFFE4E4E7)),
-                  borderRadius: BorderRadius.circular(3),
+                  shape: BoxShape.circle,
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 24),
-          // Clean Monochrome CTA Button
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              onPressed: () {
-                HapticFeedback.lightImpact();
-                if (_currentPage < pages.length - 1) {
-                  _pageController.nextPage(
-                    duration: const Duration(milliseconds: 400),
-                    curve: Curves.easeOutCubic,
-                  );
-                } else {
-                  _navigateToLogin();
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: btnBg,
-                foregroundColor: btnFg,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+          // Arrow Controls (Right)
+          Row(
+            children: [
+              // Back Button (shown if page > 0)
+              if (_currentPage > 0) ...[
+                GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    _pageController.previousPage(
+                      duration: const Duration(milliseconds: 350),
+                      curve: Curves.easeInOutCubic,
+                    );
+                  },
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? const Color(0xFF27272A)
+                          : const Color(0xFFF4F4F5),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      CupertinoIcons.arrow_left,
+                      size: 18,
+                      color: isDark ? Colors.white : const Color(0xFF18181B),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+              ],
+              // Next / Finish Button
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.mediumImpact();
+                  if (_currentPage < pages.length - 1) {
+                    _pageController.nextPage(
+                      duration: const Duration(milliseconds: 400),
+                      curve: Curves.easeInOutCubic,
+                    );
+                  } else {
+                    _navigateToLogin();
+                  }
+                },
+                child: Container(
+                  width: isLastPage ? 110 : 54,
+                  height: 54,
+                  padding: isLastPage
+                      ? const EdgeInsets.symmetric(horizontal: 16)
+                      : EdgeInsets.zero,
+                  decoration: BoxDecoration(
+                    color: accentColor,
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: [
+                      BoxShadow(
+                        color: accentColor.withOpacity(0.35),
+                        blurRadius: 14,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: isLastPage
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Text(
+                              'Mulai',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                            SizedBox(width: 6),
+                            Icon(
+                              CupertinoIcons.arrow_right,
+                              size: 16,
+                              color: Colors.white,
+                            ),
+                          ],
+                        )
+                      : const Center(
+                          child: Icon(
+                            CupertinoIcons.arrow_right,
+                            size: 20,
+                            color: Colors.white,
+                          ),
+                        ),
                 ),
               ),
-              child: Text(
-                isLastPage ? 'Mulai Sekarang' : 'Lanjutkan',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.3,
-                  color: btnFg,
-                ),
-              ),
-            ),
+            ],
           ),
         ],
       ),
