@@ -10,6 +10,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 
 
+import '../models/transaction_model.dart';
+
 class SecurityService {
   final LocalAuthentication _auth = LocalAuthentication();
   static const String _biometricKey = 'use_biometrics';
@@ -30,7 +32,9 @@ class SecurityService {
     Map<String, dynamic>? metadata,
   }) async {
     try {
-      await _firestore.collection('security_logs').add({
+      final customId = TransactionModel.generateId(prefix: 'SEC');
+      await _firestore.collection('security_logs').doc(customId).set({
+        'id': customId,
         'type': type,
         'severity': severity,
         'message': message,

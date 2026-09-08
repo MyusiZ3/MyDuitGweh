@@ -39,12 +39,19 @@ class AuthService {
             .get();
 
         if (!userDoc.exists) {
+          final uid = userCredential.user!.uid;
+          final shortHash = uid.length >= 8 ? uid.substring(0, 8).toUpperCase() : uid.toUpperCase();
+          final userCode = 'USR-GGL-$shortHash';
+
           // Hanya buat User baru (Initial Role)
           await _firestore
               .collection('users')
-              .doc(userCredential.user!.uid)
+              .doc(uid)
               .set({
-            'uid': userCredential.user!.uid,
+            'uid': uid,
+            'userCode': userCode,
+            'provider': 'GOOGLE',
+            'authMethod': 'google.com',
             'email': userCredential.user!.email,
             'displayName': userCredential.user!.displayName,
             'photoURL': userCredential.user!.photoURL,
@@ -80,8 +87,15 @@ class AuthService {
           .createUserWithEmailAndPassword(email: email, password: password);
 
       if (userCredential.user != null) {
-        await _firestore.collection('users').doc(userCredential.user!.uid).set({
-          'uid': userCredential.user!.uid,
+        final uid = userCredential.user!.uid;
+        final shortHash = uid.length >= 8 ? uid.substring(0, 8).toUpperCase() : uid.toUpperCase();
+        final userCode = 'USR-EML-$shortHash';
+
+        await _firestore.collection('users').doc(uid).set({
+          'uid': uid,
+          'userCode': userCode,
+          'provider': 'EMAIL',
+          'authMethod': 'password',
           'email': email,
           'displayName': name,
           'photoURL': null,

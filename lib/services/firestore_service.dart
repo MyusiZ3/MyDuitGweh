@@ -761,7 +761,9 @@ class FirestoreService {
     required String type, // info, urgent, news
     DateTime? scheduledTime,
   }) async {
-    await _firestore.collection('broadcasts').add({
+    final customId = _generateProfessionalId('BCST');
+    await _firestore.collection('broadcasts').doc(customId).set({
+      'id': customId,
       'title': title,
       'message': message,
       'type': type,
@@ -850,7 +852,14 @@ class FirestoreService {
 
   /// Submit user feedback
   Future<void> submitFeedback(FeedbackModel feedback) async {
-    await _firestore.collection('user_feedbacks').add(feedback.toJson());
+    final customId = _generateProfessionalId('FBK');
+    final data = feedback.toJson();
+    data['id'] = customId;
+
+    await _firestore
+        .collection('user_feedbacks')
+        .doc(customId)
+        .set(data);
 
     // Mark user as having completed the survey
     await _firestore.collection('users').doc(feedback.userId).update({
