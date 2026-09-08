@@ -763,40 +763,54 @@ class WalletScreenState extends State<WalletScreen>
                                 // Debtor Name
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 4),
-                                  child: TextField(
-                                    controller: debtorNameController,
-                                    textCapitalization:
-                                        TextCapitalization.words,
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      color: isDark ? Colors.white : Colors.black87,
-                                    ),
-                                    decoration: InputDecoration(
-                                      hintText: 'Nama Teman / Pihak Lain',
-                                      hintStyle: TextStyle(
-                                          fontSize: 15,
-                                          color: isDark
-                                              ? Colors.white38
-                                              : Colors.black38),
-                                      border: InputBorder.none,
-                                      prefixIcon: Padding(
-                                        padding: const EdgeInsets.only(right: 12),
-                                        child: Container(
-                                          padding: const EdgeInsets.all(8),
-                                          decoration: BoxDecoration(
-                                            color: primaryBlue.withOpacity(0.12),
-                                            shape: BoxShape.circle,
+                                      horizontal: 14, vertical: 6),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: primaryBlue.withOpacity(0.12),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(CupertinoIcons.person_fill,
+                                            size: 16, color: primaryBlue),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: TextField(
+                                          controller: debtorNameController,
+                                          textCapitalization:
+                                              TextCapitalization.words,
+                                          style: TextStyle(
+                                            fontSize: 15,
+                                            color: isDark ? Colors.white : Colors.black87,
                                           ),
-                                          child: Icon(CupertinoIcons.person_fill,
-                                              size: 16, color: primaryBlue),
+                                          decoration: InputDecoration(
+                                            hintText: 'Nama Teman / Pihak Lain',
+                                            hintStyle: TextStyle(
+                                                fontSize: 15,
+                                                color: isDark
+                                                    ? Colors.white38
+                                                    : Colors.black38),
+                                            border: InputBorder.none,
+                                            isDense: true,
+                                            contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                                          ),
+                                          onChanged: (val) {
+                                            setModalState(() {
+                                              if (val.isNotEmpty) {
+                                                nameController.text =
+                                                    debtType == 'payable'
+                                                        ? 'Hutang ke $val'
+                                                        : 'Piutang $val';
+                                              } else {
+                                                nameController.text = '';
+                                              }
+                                            });
+                                          },
                                         ),
                                       ),
-                                      prefixIconConstraints: const BoxConstraints(
-                                        minWidth: 48,
-                                        minHeight: 40,
-                                      ),
-                                      suffixIcon: IconButton(
+                                      IconButton(
                                         icon: Icon(
                                             CupertinoIcons
                                                 .person_crop_circle_fill_badge_plus,
@@ -835,19 +849,7 @@ class WalletScreenState extends State<WalletScreen>
                                           }
                                         },
                                       ),
-                                    ),
-                                    onChanged: (val) {
-                                      setModalState(() {
-                                        if (val.isNotEmpty) {
-                                          nameController.text =
-                                              debtType == 'payable'
-                                                  ? 'Hutang ke $val'
-                                                  : 'Piutang $val';
-                                        } else {
-                                          nameController.text = '';
-                                        }
-                                      });
-                                    },
+                                    ],
                                   ),
                                 ),
                                 Divider(
@@ -857,39 +859,41 @@ class WalletScreenState extends State<WalletScreen>
                                 // Phone Number
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 4),
-                                  child: TextField(
-                                    controller: debtorPhoneController,
-                                    keyboardType: TextInputType.phone,
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      color: isDark ? Colors.white : Colors.black87,
-                                    ),
-                                    decoration: InputDecoration(
-                                      hintText: 'Nomor HP (Opsional)',
-                                      hintStyle: TextStyle(
-                                          fontSize: 15,
-                                          color: isDark
-                                              ? Colors.white38
-                                              : Colors.black38),
-                                      prefixIcon: Padding(
-                                        padding: const EdgeInsets.only(right: 12),
-                                        child: Container(
-                                          padding: const EdgeInsets.all(8),
-                                          decoration: BoxDecoration(
-                                            color: primaryBlue.withOpacity(0.12),
-                                            shape: BoxShape.circle,
+                                      horizontal: 14, vertical: 6),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: primaryBlue.withOpacity(0.12),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(CupertinoIcons.phone_fill,
+                                            size: 16, color: primaryBlue),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: TextField(
+                                          controller: debtorPhoneController,
+                                          keyboardType: TextInputType.phone,
+                                          style: TextStyle(
+                                            fontSize: 15,
+                                            color: isDark ? Colors.white : Colors.black87,
                                           ),
-                                          child: Icon(CupertinoIcons.phone_fill,
-                                              size: 16, color: primaryBlue),
+                                          decoration: InputDecoration(
+                                            hintText: 'Nomor HP (Opsional)',
+                                            hintStyle: TextStyle(
+                                                fontSize: 15,
+                                                color: isDark
+                                                    ? Colors.white38
+                                                    : Colors.black38),
+                                            border: InputBorder.none,
+                                            isDense: true,
+                                            contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                                          ),
                                         ),
                                       ),
-                                      prefixIconConstraints: const BoxConstraints(
-                                        minWidth: 48,
-                                        minHeight: 40,
-                                      ),
-                                      border: InputBorder.none,
-                                    ),
+                                    ],
                                   ),
                                 ),
                                 Divider(
@@ -930,50 +934,52 @@ class WalletScreenState extends State<WalletScreen>
                               // Main Name / Label Input
                               Padding(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 4),
-                                child: TextField(
-                                  controller: nameController,
-                                  textCapitalization: TextCapitalization.words,
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    color: isDark ? Colors.white : Colors.black87,
-                                  ),
-                                  decoration: InputDecoration(
-                                    hintText: selectedType == 'colab'
-                                        ? 'Nama kelompok/tujuan'
-                                        : selectedType == 'debt'
-                                            ? 'Label Catatan (Misal: Hutang Budi)'
-                                            : 'Nama dompet (misal: Jajan)',
-                                    hintStyle: TextStyle(
-                                        fontSize: 15,
-                                        color: isDark
-                                            ? Colors.white38
-                                            : Colors.black38),
-                                    border: InputBorder.none,
-                                    prefixIcon: Padding(
-                                      padding: const EdgeInsets.only(right: 12),
-                                      child: Container(
-                                        padding: const EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          color: primaryBlue.withOpacity(0.12),
-                                          shape: BoxShape.circle,
+                                    horizontal: 14, vertical: 6),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: primaryBlue.withOpacity(0.12),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        selectedType == 'colab'
+                                            ? CupertinoIcons.person_2_fill
+                                            : selectedType == 'debt'
+                                                ? CupertinoIcons.doc_text_fill
+                                                : CupertinoIcons.creditcard_fill,
+                                        color: primaryBlue,
+                                        size: 16,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: TextField(
+                                        controller: nameController,
+                                        textCapitalization: TextCapitalization.words,
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          color: isDark ? Colors.white : Colors.black87,
                                         ),
-                                        child: Icon(
-                                          selectedType == 'colab'
-                                              ? CupertinoIcons.person_2_fill
+                                        decoration: InputDecoration(
+                                          hintText: selectedType == 'colab'
+                                              ? 'Nama kelompok/tujuan'
                                               : selectedType == 'debt'
-                                                  ? CupertinoIcons.doc_text_fill
-                                                  : CupertinoIcons.creditcard_fill,
-                                          color: primaryBlue,
-                                          size: 16,
+                                                  ? 'Label Catatan (Misal: Hutang Budi)'
+                                                  : 'Nama dompet (misal: Jajan)',
+                                          hintStyle: TextStyle(
+                                              fontSize: 15,
+                                              color: isDark
+                                                  ? Colors.white38
+                                                  : Colors.black38),
+                                          border: InputBorder.none,
+                                          isDense: true,
+                                          contentPadding: const EdgeInsets.symmetric(vertical: 8),
                                         ),
                                       ),
                                     ),
-                                    prefixIconConstraints: const BoxConstraints(
-                                      minWidth: 48,
-                                      minHeight: 40,
-                                    ),
-                                  ),
+                                  ],
                                 ),
                               ),
                             ],
@@ -1007,42 +1013,45 @@ class WalletScreenState extends State<WalletScreen>
                                 // Amount Input
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 8),
-                                  child: TextField(
-                                    controller: totalAmountController,
-                                    keyboardType: TextInputType.number,
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter.digitsOnly
-                                    ],
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 18,
-                                      color:
-                                          isDark ? Colors.white : Colors.black,
-                                    ),
-                                    decoration: InputDecoration(
-                                      hintText: '0',
-                                      hintStyle: TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 18,
-                                        color: isDark ? Colors.white38 : Colors.black38,
+                                      horizontal: 16, vertical: 12),
+                                  child: Row(
+                                    children: [
+                                      Text(
+                                        'Rp',
+                                        style: TextStyle(
+                                          color: primaryBlue,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 18,
+                                        ),
                                       ),
-                                      prefixIcon: Padding(
-                                        padding: const EdgeInsets.only(right: 12),
-                                        child: Text(
-                                          'Rp',
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: TextField(
+                                          controller: totalAmountController,
+                                          keyboardType: TextInputType.number,
+                                          inputFormatters: [
+                                            FilteringTextInputFormatter.digitsOnly
+                                          ],
                                           style: TextStyle(
-                                            color: primaryBlue,
                                             fontWeight: FontWeight.w700,
                                             fontSize: 18,
+                                            color:
+                                                isDark ? Colors.white : Colors.black,
+                                          ),
+                                          decoration: InputDecoration(
+                                            hintText: '0',
+                                            hintStyle: TextStyle(
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 18,
+                                              color: isDark ? Colors.white38 : Colors.black38,
+                                            ),
+                                            border: InputBorder.none,
+                                            isDense: true,
+                                            contentPadding: EdgeInsets.zero,
                                           ),
                                         ),
                                       ),
-                                      prefixIconConstraints:
-                                          const BoxConstraints(
-                                              minWidth: 0, minHeight: 0),
-                                      border: InputBorder.none,
-                                    ),
+                                    ],
                                   ),
                                 ),
                                 Divider(
