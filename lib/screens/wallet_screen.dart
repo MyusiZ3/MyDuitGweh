@@ -30,7 +30,8 @@ class WalletScreen extends StatefulWidget {
   WalletScreenState createState() => WalletScreenState();
 }
 
-class WalletScreenState extends State<WalletScreen> with SingleTickerProviderStateMixin {
+class WalletScreenState extends State<WalletScreen>
+    with SingleTickerProviderStateMixin {
   final FirestoreService _firestoreService = FirestoreService();
   final DebtService _debtService = DebtService();
   final SubscriptionService _subscriptionService = SubscriptionService();
@@ -59,7 +60,7 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
         });
       }
     });
-    
+
     // Initialize Streams once
     _personalWalletsStream = _firestoreService.getWalletsStream(_uid);
     _sharedWalletsStream = _firestoreService.getWalletsStream(_uid);
@@ -94,8 +95,7 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
           final isDark = Theme.of(context).brightness == Brightness.dark;
           return [
             SliverOverlapAbsorber(
-              handle:
-                  NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+              handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
               sliver: SliverAppBar(
                 pinned: true,
                 floating: false,
@@ -271,8 +271,7 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
           ],
         ),
         labelColor: isDark ? Colors.white : const Color(0xFF18181B),
-        unselectedLabelColor:
-            isDark ? Colors.white38 : const Color(0xFF71717A),
+        unselectedLabelColor: isDark ? Colors.white38 : const Color(0xFF71717A),
         labelStyle: const TextStyle(
           fontWeight: FontWeight.w700,
           fontSize: 12,
@@ -308,7 +307,8 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                 return SliverToBoxAdapter(
                   child: Center(
                     child: Padding(
-                      padding: const EdgeInsets.only(top: 80, left: 24, right: 24),
+                      padding:
+                          const EdgeInsets.only(top: 80, left: 24, right: 24),
                       child: Text(
                         'Gagal memuat dompet: ${snapshot.error}',
                         textAlign: TextAlign.center,
@@ -351,7 +351,8 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                 return SliverToBoxAdapter(
                   child: Center(
                     child: Padding(
-                      padding: const EdgeInsets.only(top: 80, left: 24, right: 24),
+                      padding:
+                          const EdgeInsets.only(top: 80, left: 24, right: 24),
                       child: Text(
                         'Gagal memuat dompet bersama: ${snapshot.error}',
                         textAlign: TextAlign.center,
@@ -394,7 +395,8 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                 return SliverToBoxAdapter(
                   child: Center(
                     child: Padding(
-                      padding: const EdgeInsets.only(top: 80, left: 24, right: 24),
+                      padding:
+                          const EdgeInsets.only(top: 80, left: 24, right: 24),
                       child: Text(
                         'Gagal memuat hutang: ${snapshot.error}',
                         textAlign: TextAlign.center,
@@ -432,7 +434,8 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
     );
   }
 
-  Widget _buildWalletSliverList(List<WalletModel> wallets, {required bool isColab}) {
+  Widget _buildWalletSliverList(List<WalletModel> wallets,
+      {required bool isColab}) {
     if (wallets.isEmpty) {
       return SliverToBoxAdapter(
         child: _buildEmptyState(
@@ -448,7 +451,7 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
     final double totalBalance = wallets.fold(0.0, (acc, w) => acc + w.balance);
 
     return SliverPadding(
-      padding: const EdgeInsets.only(left: 24, right: 24, top: 12, bottom: 180),
+      padding: const EdgeInsets.only(left: 24, right: 24, top: 12, bottom: 130),
       sliver: SliverToBoxAdapter(
         child: _UnifiedWalletGroupCard(
           wallets: wallets,
@@ -481,7 +484,7 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
               isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7);
           final sectionColor = isDark ? const Color(0xFF2C2C2E) : Colors.white;
           final primaryBlue =
-              isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF);
+              isDark ? const Color(0xFF6B64DB) : const Color(0xFF8B85F6);
 
           return Container(
             height: MediaQuery.of(sbCtx).size.height * 0.85,
@@ -1121,7 +1124,7 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
     final isSelected = value == groupValue;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryBlue =
-        isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF);
+        isDark ? const Color(0xFF6B64DB) : const Color(0xFF8B85F6);
 
     return InkWell(
       onTap: () => setState(() => onChanged(value)),
@@ -1271,8 +1274,8 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                           child: Text('Tutup',
                               style: TextStyle(
                                 color: isDark
-                                    ? const Color(0xFF0A84FF)
-                                    : const Color(0xFF007AFF),
+                                    ? const Color(0xFF6B64DB)
+                                    : const Color(0xFF8B85F6),
                                 fontWeight: FontWeight.w600,
                                 fontSize: 15,
                               )),
@@ -1328,8 +1331,8 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                                             ? CupertinoIcons.person_3_fill
                                             : CupertinoIcons.creditcard_fill),
                                     color: isDark
-                                        ? const Color(0xFF0A84FF)
-                                        : const Color(0xFF007AFF),
+                                        ? const Color(0xFF6B64DB)
+                                        : const Color(0xFF8B85F6),
                                     size: 20,
                                   ),
                                 ),
@@ -1377,7 +1380,7 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
               isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7);
           final sectionColor = isDark ? const Color(0xFF2C2C2E) : Colors.white;
           final primaryBlue =
-              isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF);
+              isDark ? const Color(0xFF6B64DB) : const Color(0xFF8B85F6);
 
           return Container(
             padding: EdgeInsets.only(
@@ -1588,7 +1591,7 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
               isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7);
           final sectionColor = isDark ? const Color(0xFF2C2C2E) : Colors.white;
           final primaryBlue =
-              isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF);
+              isDark ? const Color(0xFF6B64DB) : const Color(0xFF8B85F6);
 
           return Container(
             decoration: BoxDecoration(
@@ -1875,7 +1878,7 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
               isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7);
           final sectionColor = isDark ? const Color(0xFF2C2C2E) : Colors.white;
           final primaryBlue =
-              isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF);
+              isDark ? const Color(0xFF6B64DB) : const Color(0xFF8B85F6);
 
           return Container(
             decoration: BoxDecoration(
@@ -2315,13 +2318,13 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     color: (Theme.of(context).brightness == Brightness.dark
-                            ? const Color(0xFF0A84FF)
+                            ? const Color(0xFF6B64DB)
                             : Theme.of(context).primaryColor)
                         .withOpacity(0.12),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                         color: (Theme.of(context).brightness == Brightness.dark
-                                ? const Color(0xFF0A84FF)
+                                ? const Color(0xFF6B64DB)
                                 : Theme.of(context).primaryColor)
                             .withOpacity(0.2)),
                   ),
@@ -2337,7 +2340,7 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                                   fontWeight: FontWeight.bold,
                                   color: Theme.of(context).brightness ==
                                           Brightness.dark
-                                      ? Color(0xFF0A84FF).withOpacity(0.9)
+                                      ? Color(0xFF6B64DB).withOpacity(0.9)
                                       : Theme.of(context).hintColor,
                                   letterSpacing: 1)),
                           const SizedBox(height: 6),
@@ -2366,14 +2369,14 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                           decoration: BoxDecoration(
                             color:
                                 Theme.of(context).brightness == Brightness.dark
-                                    ? const Color(0xFF0A84FF)
+                                    ? const Color(0xFF6B64DB)
                                     : Theme.of(context).primaryColor,
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
                                   color: (Theme.of(context).brightness ==
                                               Brightness.dark
-                                          ? const Color(0xFF0A84FF)
+                                          ? const Color(0xFF6B64DB)
                                           : Theme.of(context).primaryColor)
                                       .withOpacity(0.3),
                                   blurRadius: 8,
@@ -2429,7 +2432,7 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                                         backgroundColor:
                                             (Theme.of(context).brightness ==
                                                         Brightness.dark
-                                                    ? const Color(0xFF0A84FF)
+                                                    ? const Color(0xFF6B64DB)
                                                     : Theme.of(context)
                                                         .primaryColor)
                                                 .withOpacity(0.1),
@@ -2443,7 +2446,7 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                                                 color: Theme.of(context)
                                                             .brightness ==
                                                         Brightness.dark
-                                                    ? const Color(0xFF0A84FF)
+                                                    ? const Color(0xFF6B64DB)
                                                     : Theme.of(context)
                                                         .primaryColor)),
                                       ),
@@ -2471,7 +2474,7 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                                             color: (Theme.of(context)
                                                             .brightness ==
                                                         Brightness.dark
-                                                    ? const Color(0xFF0A84FF)
+                                                    ? const Color(0xFF6B64DB)
                                                     : Theme.of(context)
                                                         .primaryColor)
                                                 .withOpacity(0.1),
@@ -2485,7 +2488,7 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                                                   color: Theme.of(context)
                                                               .brightness ==
                                                           Brightness.dark
-                                                      ? const Color(0xFF0A84FF)
+                                                      ? const Color(0xFF6B64DB)
                                                       : Theme.of(context)
                                                           .primaryColor)),
                                         )
@@ -2603,7 +2606,7 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                             child: Icon(CupertinoIcons.person_fill,
                                 color: Theme.of(context).brightness ==
                                         Brightness.dark
-                                    ? const Color(0xFF0A84FF)
+                                    ? const Color(0xFF6B64DB)
                                     : Theme.of(context).hintColor),
                           ),
                           const SizedBox(width: 12),
@@ -2824,7 +2827,7 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                               radius: 18,
                               backgroundColor: (Theme.of(context).brightness ==
                                           Brightness.dark
-                                      ? const Color(0xFF0A84FF)
+                                      ? const Color(0xFF6B64DB)
                                       : Theme.of(context).primaryColor)
                                   .withOpacity(0.1),
                               child: Text(
@@ -2833,7 +2836,7 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                                   fontWeight: FontWeight.bold,
                                   color: Theme.of(context).brightness ==
                                           Brightness.dark
-                                      ? const Color(0xFF0A84FF)
+                                      ? const Color(0xFF6B64DB)
                                       : Theme.of(context).primaryColor,
                                 ),
                               ),
@@ -2853,7 +2856,7 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                                 decoration: BoxDecoration(
                                   color: (Theme.of(context).brightness ==
                                               Brightness.dark
-                                          ? const Color(0xFF0A84FF)
+                                          ? const Color(0xFF6B64DB)
                                           : Theme.of(context).primaryColor)
                                       .withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(6),
@@ -2864,7 +2867,7 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                                         fontWeight: FontWeight.w800,
                                         color: Theme.of(context).brightness ==
                                                 Brightness.dark
-                                            ? const Color(0xFF0A84FF)
+                                            ? const Color(0xFF6B64DB)
                                             : Theme.of(context).primaryColor)),
                               ),
                           ],
@@ -2896,7 +2899,7 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
               isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7);
           final sectionColor = isDark ? const Color(0xFF2C2C2E) : Colors.white;
           final primaryBlue =
-              isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF);
+              isDark ? const Color(0xFF6B64DB) : const Color(0xFF8B85F6);
 
           return Container(
             padding: EdgeInsets.only(
@@ -3096,7 +3099,7 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                 style: ElevatedButton.styleFrom(
                   backgroundColor:
                       Theme.of(context).brightness == Brightness.dark
-                          ? const Color(0xFF0A84FF)
+                          ? const Color(0xFF6B64DB)
                           : Theme.of(context).primaryColor,
                   foregroundColor: Colors.white,
                   elevation: 0,
@@ -3104,8 +3107,8 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                       borderRadius: BorderRadius.circular(20)),
                 ),
                 child: Text(btnText,
-                    style:
-                        const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w800, fontSize: 16)),
               ),
             ),
           ],
@@ -3189,7 +3192,8 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                 return SliverToBoxAdapter(
                   child: Center(
                     child: Padding(
-                      padding: const EdgeInsets.only(top: 80, left: 24, right: 24),
+                      padding:
+                          const EdgeInsets.only(top: 80, left: 24, right: 24),
                       child: Text(
                         'Gagal memuat tagihan: ${snapshot.error}',
                         textAlign: TextAlign.center,
@@ -3207,7 +3211,7 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
               final filtered = subscriptions
                   .where((s) => s.name.toLowerCase().contains(_searchQuery))
                   .toList();
-                  
+
               if (filtered.isEmpty) {
                 return SliverToBoxAdapter(
                   child: Padding(
@@ -3222,9 +3226,10 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                   ),
                 );
               }
-              
+
               return SliverPadding(
-                padding: const EdgeInsets.only(left: 24, right: 24, top: 8, bottom: 120),
+                padding: const EdgeInsets.only(
+                    left: 24, right: 24, top: 8, bottom: 120),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
@@ -3253,10 +3258,11 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
     final now = DateTime.now();
     final currentMonthStr = DateFormat('yyyy-MM').format(now);
     final monthNameStr = DateFormat('MMMM yyyy', 'id').format(now);
-    
-    final amountController = TextEditingController(text: sub.amount.toInt().toString());
+
+    final amountController =
+        TextEditingController(text: sub.amount.toInt().toString());
     String? selectedWalletId;
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -3268,22 +3274,24 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
               isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7);
           final sectionColor = isDark ? const Color(0xFF2C2C2E) : Colors.white;
           final primaryBlue =
-              isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF);
-              
+              isDark ? const Color(0xFF6B64DB) : const Color(0xFF8B85F6);
+
           return StreamBuilder<List<WalletModel>>(
             stream: _firestoreService.getWalletsStream(_uid),
             builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+              if (snapshot.connectionState == ConnectionState.waiting &&
+                  !snapshot.hasData) {
                 return Container(
                   height: MediaQuery.of(sbCtx).size.height * 0.4,
                   decoration: BoxDecoration(
                     color: backgroundColor,
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(20)),
                   ),
                   child: const Center(child: CupertinoActivityIndicator()),
                 );
               }
-              
+
               final wallets = snapshot.data ?? [];
               if (wallets.isEmpty) {
                 return Container(
@@ -3291,13 +3299,15 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     color: backgroundColor,
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(20)),
                   ),
                   child: Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(CupertinoIcons.creditcard, size: 48, color: Colors.grey),
+                        const Icon(CupertinoIcons.creditcard,
+                            size: 48, color: Colors.grey),
                         const SizedBox(height: 16),
                         const Text(
                           'Kamu belum membuat dompet.\nSilakan buat dompet terlebih dahulu untuk membayar tagihan.',
@@ -3317,24 +3327,29 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
               }
 
               // Safely set initial selectedWalletId
-              if (selectedWalletId == null || !wallets.any((w) => w.id == selectedWalletId)) {
+              if (selectedWalletId == null ||
+                  !wallets.any((w) => w.id == selectedWalletId)) {
                 selectedWalletId = wallets.any((w) => w.id == sub.walletId)
                     ? sub.walletId
                     : wallets.first.id;
               }
-              
-              final activeWallet = wallets.firstWhere((w) => w.id == selectedWalletId);
-              
+
+              final activeWallet =
+                  wallets.firstWhere((w) => w.id == selectedWalletId);
+
               return Container(
                 padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(sbCtx).viewInsets.bottom + MediaQuery.of(sbCtx).padding.bottom + 20,
+                  bottom: MediaQuery.of(sbCtx).viewInsets.bottom +
+                      MediaQuery.of(sbCtx).padding.bottom +
+                      20,
                   left: 20,
                   right: 20,
                   top: 16,
                 ),
                 decoration: BoxDecoration(
                   color: backgroundColor,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(20)),
                 ),
                 child: SingleChildScrollView(
                   child: Column(
@@ -3369,10 +3384,11 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                         ),
                       ),
                       const SizedBox(height: 24),
-                      
+
                       // Input Nominal
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
                           color: sectionColor,
                           borderRadius: BorderRadius.circular(16),
@@ -3385,7 +3401,9 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w500,
-                                color: isDark ? Colors.white70 : Colors.black.withOpacity(0.7),
+                                color: isDark
+                                    ? Colors.white70
+                                    : Colors.black.withOpacity(0.7),
                               ),
                             ),
                             const SizedBox(width: 24),
@@ -3410,7 +3428,7 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                         ),
                       ),
                       const SizedBox(height: 16),
-                      
+
                       Text(
                         'BAYAR MENGGUNAKAN',
                         style: TextStyle(
@@ -3420,7 +3438,7 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                         ),
                       ),
                       const SizedBox(height: 8),
-                      
+
                       // Wallet Selector Button
                       GestureDetector(
                         onTap: () {
@@ -3436,7 +3454,8 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                           );
                         },
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(
                             color: sectionColor,
                             borderRadius: BorderRadius.circular(16),
@@ -3446,38 +3465,47 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                             children: [
                               Row(
                                 children: [
-                                  Icon(CupertinoIcons.creditcard, color: primaryBlue, size: 20),
+                                  Icon(CupertinoIcons.creditcard,
+                                      color: primaryBlue, size: 20),
                                   const SizedBox(width: 12),
                                   Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         activeWallet.walletName,
                                         style: TextStyle(
                                           fontSize: 15,
                                           fontWeight: FontWeight.w600,
-                                          color: isDark ? Colors.white : Colors.black,
+                                          color: isDark
+                                              ? Colors.white
+                                              : Colors.black,
                                         ),
                                       ),
                                       Text(
                                         'Saldo: ${CurrencyFormatter.formatCurrency(activeWallet.balance)}',
                                         style: TextStyle(
                                           fontSize: 12,
-                                          color: isDark ? Colors.white54 : Colors.black54,
+                                          color: isDark
+                                              ? Colors.white54
+                                              : Colors.black54,
                                         ),
                                       ),
                                     ],
                                   ),
                                 ],
                               ),
-                              Icon(CupertinoIcons.chevron_down, size: 16, color: isDark ? Colors.white38 : Colors.black38),
+                              Icon(CupertinoIcons.chevron_down,
+                                  size: 16,
+                                  color:
+                                      isDark ? Colors.white38 : Colors.black38),
                             ],
                           ),
                         ),
                       ),
-                      
+
                       const SizedBox(height: 24),
-                      
+
                       // Pay Button
                       SizedBox(
                         width: double.infinity,
@@ -3486,20 +3514,26 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                           color: primaryBlue,
                           borderRadius: BorderRadius.circular(16),
                           onPressed: () async {
-                            final customAmt = double.tryParse(amountController.text.replaceAll(RegExp(r'[^0-9]'), ''));
+                            final customAmt = double.tryParse(amountController
+                                .text
+                                .replaceAll(RegExp(r'[^0-9]'), ''));
                             if (customAmt == null || customAmt <= 0) {
-                              UIHelper.showErrorSnackBar(sbCtx, 'Nominal bayar tidak valid!');
+                              UIHelper.showErrorSnackBar(
+                                  sbCtx, 'Nominal bayar tidak valid!');
                               return;
                             }
                             if (customAmt > activeWallet.balance) {
-                              UIHelper.showErrorSnackBar(sbCtx, 'Saldo ${activeWallet.walletName} tidak cukup!');
+                              UIHelper.showErrorSnackBar(sbCtx,
+                                  'Saldo ${activeWallet.walletName} tidak cukup!');
                               return;
                             }
-                            
+
                             try {
-                              final currentUser = FirebaseAuth.instance.currentUser;
-                              final userName = currentUser?.displayName ?? 'User';
-                              
+                              final currentUser =
+                                  FirebaseAuth.instance.currentUser;
+                              final userName =
+                                  currentUser?.displayName ?? 'User';
+
                               await _subscriptionService.paySubscription(
                                 userId: _uid,
                                 userName: userName,
@@ -3508,13 +3542,15 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                                 walletId: selectedWalletId!,
                                 customAmount: customAmt,
                               );
-                              
+
                               if (!sbCtx.mounted) return;
                               Navigator.pop(modalCtx);
-                              UIHelper.showSuccessSnackBar(context, 'Pembayaran tagihan ${sub.name} berhasil dicatat!');
+                              UIHelper.showSuccessSnackBar(context,
+                                  'Pembayaran tagihan ${sub.name} berhasil dicatat!');
                             } catch (e) {
                               if (!sbCtx.mounted) return;
-                              UIHelper.showErrorSnackBar(sbCtx, 'Gagal membayar: $e');
+                              UIHelper.showErrorSnackBar(
+                                  sbCtx, 'Gagal membayar: $e');
                             }
                           },
                           child: const Text(
@@ -3544,7 +3580,7 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
     int dueDay = 1;
     String category = 'Tagihan';
     String? selectedWalletId;
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -3556,19 +3592,22 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
               isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7);
           final sectionColor = isDark ? const Color(0xFF2C2C2E) : Colors.white;
           final primaryBlue =
-              isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF);
-              
+              isDark ? const Color(0xFF6B64DB) : const Color(0xFF8B85F6);
+
           return Container(
             height: MediaQuery.of(sbCtx).size.height * 0.8,
             padding: EdgeInsets.only(
-              bottom: MediaQuery.of(sbCtx).viewInsets.bottom + MediaQuery.of(sbCtx).padding.bottom + 20,
+              bottom: MediaQuery.of(sbCtx).viewInsets.bottom +
+                  MediaQuery.of(sbCtx).padding.bottom +
+                  20,
               left: 20,
               right: 20,
               top: 10,
             ),
             decoration: BoxDecoration(
               color: backgroundColor,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(20)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -3610,16 +3649,20 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                         if (nameController.text.isEmpty ||
                             amountController.text.isEmpty ||
                             selectedWalletId == null) {
-                          UIHelper.showErrorSnackBar(sbCtx, 'Lengkapi semua data tagihan!');
+                          UIHelper.showErrorSnackBar(
+                              sbCtx, 'Lengkapi semua data tagihan!');
                           return;
                         }
-                        
-                        final amount = double.tryParse(amountController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+
+                        final amount = double.tryParse(amountController.text
+                                .replaceAll(RegExp(r'[^0-9]'), '')) ??
+                            0;
                         if (amount <= 0) {
-                          UIHelper.showErrorSnackBar(sbCtx, 'Jumlah nominal tidak valid!');
+                          UIHelper.showErrorSnackBar(
+                              sbCtx, 'Jumlah nominal tidak valid!');
                           return;
                         }
-                        
+
                         try {
                           await _subscriptionService.addSubscription(
                             userId: _uid,
@@ -3629,10 +3672,11 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                             category: category,
                             walletId: selectedWalletId!,
                           );
-                          
+
                           if (!sbCtx.mounted) return;
                           Navigator.pop(sbCtx);
-                          UIHelper.showSuccessSnackBar(context, 'Berhasil menambahkan tagihan "${nameController.text}"!');
+                          UIHelper.showSuccessSnackBar(context,
+                              'Berhasil menambahkan tagihan "${nameController.text}"!');
                         } catch (e) {
                           if (sbCtx.mounted) {
                             UIHelper.showErrorSnackBar(sbCtx, 'Gagal: $e');
@@ -3651,7 +3695,6 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                   ],
                 ),
                 const SizedBox(height: 16),
-                
                 Expanded(
                   child: SingleChildScrollView(
                     child: Column(
@@ -3674,7 +3717,8 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                           ),
                           child: TextField(
                             controller: nameController,
-                            style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                            style: TextStyle(
+                                color: isDark ? Colors.white : Colors.black),
                             decoration: const InputDecoration(
                               hintText: 'Misal: Netflix, Listrik, Kosan',
                               border: InputBorder.none,
@@ -3682,7 +3726,6 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                           ),
                         ),
                         const SizedBox(height: 16),
-                        
                         Text(
                           'NOMINAL TAGIHAN (Rp)',
                           style: TextStyle(
@@ -3701,7 +3744,8 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                           child: TextField(
                             controller: amountController,
                             keyboardType: TextInputType.number,
-                            style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                            style: TextStyle(
+                                color: isDark ? Colors.white : Colors.black),
                             decoration: const InputDecoration(
                               hintText: 'Nominal bulanan',
                               border: InputBorder.none,
@@ -3709,7 +3753,6 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                           ),
                         ),
                         const SizedBox(height: 16),
-                        
                         Text(
                           'KATEGORI TAGIHAN',
                           style: TextStyle(
@@ -3722,27 +3765,39 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                         Container(
                           padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
-                            color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
+                            color: isDark
+                                ? Colors.white.withOpacity(0.05)
+                                : Colors.black.withOpacity(0.05),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Row(
-                            children: ['Tagihan', 'Hiburan', 'Lainnya'].map((cat) {
+                            children:
+                                ['Tagihan', 'Hiburan', 'Lainnya'].map((cat) {
                               final isSelected = category == cat;
                               return Expanded(
                                 child: GestureDetector(
-                                  onTap: () => setModalState(() => category = cat),
+                                  onTap: () =>
+                                      setModalState(() => category = cat),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 10),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 10),
                                     decoration: BoxDecoration(
-                                      color: isSelected ? (isDark ? const Color(0xFF636366) : Colors.white) : Colors.transparent,
+                                      color: isSelected
+                                          ? (isDark
+                                              ? const Color(0xFF636366)
+                                              : Colors.white)
+                                          : Colors.transparent,
                                       borderRadius: BorderRadius.circular(7),
-                                      boxShadow: isSelected ? [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.1),
-                                          blurRadius: 1,
-                                          offset: const Offset(0, 1),
-                                        )
-                                      ] : null,
+                                      boxShadow: isSelected
+                                          ? [
+                                              BoxShadow(
+                                                color: Colors.black
+                                                    .withOpacity(0.1),
+                                                blurRadius: 1,
+                                                offset: const Offset(0, 1),
+                                              )
+                                            ]
+                                          : null,
                                     ),
                                     child: Text(
                                       cat,
@@ -3750,7 +3805,11 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 13,
-                                        color: isSelected ? (isDark ? Colors.white : Colors.black) : Colors.grey,
+                                        color: isSelected
+                                            ? (isDark
+                                                ? Colors.white
+                                                : Colors.black)
+                                            : Colors.grey,
                                       ),
                                     ),
                                   ),
@@ -3760,7 +3819,6 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                           ),
                         ),
                         const SizedBox(height: 16),
-                        
                         Text(
                           'TANGGAL JATUH TEMPO (1 - 31)',
                           style: TextStyle(
@@ -3771,7 +3829,8 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                         ),
                         const SizedBox(height: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(
                             color: sectionColor,
                             borderRadius: BorderRadius.circular(12),
@@ -3780,7 +3839,8 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                             children: [
                               Text(
                                 'Jatuh tempo: Tanggal $dueDay',
-                                style: const TextStyle(fontWeight: FontWeight.w600),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w600),
                               ),
                               const Spacer(),
                               Expanded(
@@ -3802,7 +3862,6 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                           ),
                         ),
                         const SizedBox(height: 16),
-                        
                         Text(
                           'DOMPET DEFAULT',
                           style: TextStyle(
@@ -3817,17 +3876,18 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                           builder: (context, snapshot) {
                             final wallets = snapshot.data ?? [];
                             if (wallets.isEmpty) {
-                              return const Center(child: Text('Belum ada dompet'));
+                              return const Center(
+                                  child: Text('Belum ada dompet'));
                             }
                             if (selectedWalletId == null) {
                               selectedWalletId = wallets.first.id;
                             }
-                            
+
                             final activeWallet = wallets.firstWhere(
                               (w) => w.id == selectedWalletId,
                               orElse: () => wallets.first,
                             );
-                            
+
                             return GestureDetector(
                               onTap: () {
                                 _showWalletPickerDialog(
@@ -3842,27 +3902,34 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                                 );
                               },
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 12),
                                 decoration: BoxDecoration(
                                   color: sectionColor,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Row(
                                   children: [
-                                    Icon(CupertinoIcons.creditcard, color: primaryBlue, size: 20),
+                                    Icon(CupertinoIcons.creditcard,
+                                        color: primaryBlue, size: 20),
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: Text(
                                         activeWallet.walletName,
-                                        style: const TextStyle(fontWeight: FontWeight.bold),
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold),
                                       ),
                                     ),
                                     Text(
-                                      CurrencyFormatter.formatCurrency(activeWallet.balance),
-                                      style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.w500),
+                                      CurrencyFormatter.formatCurrency(
+                                          activeWallet.balance),
+                                      style: const TextStyle(
+                                          color: Colors.grey,
+                                          fontWeight: FontWeight.w500),
                                     ),
                                     const SizedBox(width: 8),
-                                    const Icon(CupertinoIcons.chevron_right, size: 16, color: Colors.grey),
+                                    const Icon(CupertinoIcons.chevron_right,
+                                        size: 16, color: Colors.grey),
                                   ],
                                 ),
                               ),
@@ -3883,11 +3950,12 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
 
   void _showEditSubscriptionDialog(SubscriptionModel sub) {
     final nameController = TextEditingController(text: sub.name);
-    final amountController = TextEditingController(text: sub.amount.toInt().toString());
+    final amountController =
+        TextEditingController(text: sub.amount.toInt().toString());
     int dueDay = sub.dueDay;
     String category = sub.category;
     String? selectedWalletId = sub.walletId.isNotEmpty ? sub.walletId : null;
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -3899,19 +3967,22 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
               isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7);
           final sectionColor = isDark ? const Color(0xFF2C2C2E) : Colors.white;
           final primaryBlue =
-              isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF);
-              
+              isDark ? const Color(0xFF6B64DB) : const Color(0xFF8B85F6);
+
           return Container(
             height: MediaQuery.of(sbCtx).size.height * 0.8,
             padding: EdgeInsets.only(
-              bottom: MediaQuery.of(sbCtx).viewInsets.bottom + MediaQuery.of(sbCtx).padding.bottom + 20,
+              bottom: MediaQuery.of(sbCtx).viewInsets.bottom +
+                  MediaQuery.of(sbCtx).padding.bottom +
+                  20,
               left: 20,
               right: 20,
               top: 10,
             ),
             decoration: BoxDecoration(
               color: backgroundColor,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(20)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -3953,16 +4024,20 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                         if (nameController.text.isEmpty ||
                             amountController.text.isEmpty ||
                             selectedWalletId == null) {
-                          UIHelper.showErrorSnackBar(sbCtx, 'Lengkapi semua data tagihan!');
+                          UIHelper.showErrorSnackBar(
+                              sbCtx, 'Lengkapi semua data tagihan!');
                           return;
                         }
-                        
-                        final amount = double.tryParse(amountController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+
+                        final amount = double.tryParse(amountController.text
+                                .replaceAll(RegExp(r'[^0-9]'), '')) ??
+                            0;
                         if (amount <= 0) {
-                          UIHelper.showErrorSnackBar(sbCtx, 'Jumlah nominal tidak valid!');
+                          UIHelper.showErrorSnackBar(
+                              sbCtx, 'Jumlah nominal tidak valid!');
                           return;
                         }
-                        
+
                         try {
                           await _subscriptionService.updateSubscription(
                             userId: _uid,
@@ -3973,13 +4048,15 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                             category: category,
                             walletId: selectedWalletId!,
                           );
-                          
+
                           if (!sbCtx.mounted) return;
                           Navigator.pop(sbCtx);
-                          UIHelper.showSuccessSnackBar(context, 'Berhasil memperbarui tagihan!');
+                          UIHelper.showSuccessSnackBar(
+                              context, 'Berhasil memperbarui tagihan!');
                         } catch (e) {
                           if (sbCtx.mounted) {
-                            UIHelper.showErrorSnackBar(sbCtx, 'Gagal memperbarui: $e');
+                            UIHelper.showErrorSnackBar(
+                                sbCtx, 'Gagal memperbarui: $e');
                           }
                         }
                       },
@@ -3995,7 +4072,6 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                   ],
                 ),
                 const SizedBox(height: 16),
-                
                 Expanded(
                   child: SingleChildScrollView(
                     child: Column(
@@ -4018,7 +4094,8 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                           ),
                           child: TextField(
                             controller: nameController,
-                            style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                            style: TextStyle(
+                                color: isDark ? Colors.white : Colors.black),
                             decoration: const InputDecoration(
                               hintText: 'Misal: Netflix, Listrik, Kosan',
                               border: InputBorder.none,
@@ -4026,7 +4103,6 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                           ),
                         ),
                         const SizedBox(height: 16),
-                        
                         Text(
                           'NOMINAL TAGIHAN (Rp)',
                           style: TextStyle(
@@ -4045,7 +4121,8 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                           child: TextField(
                             controller: amountController,
                             keyboardType: TextInputType.number,
-                            style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                            style: TextStyle(
+                                color: isDark ? Colors.white : Colors.black),
                             decoration: const InputDecoration(
                               hintText: 'Nominal bulanan',
                               border: InputBorder.none,
@@ -4053,7 +4130,6 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                           ),
                         ),
                         const SizedBox(height: 16),
-                        
                         Text(
                           'KATEGORI TAGIHAN',
                           style: TextStyle(
@@ -4066,27 +4142,39 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                         Container(
                           padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
-                            color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
+                            color: isDark
+                                ? Colors.white.withOpacity(0.05)
+                                : Colors.black.withOpacity(0.05),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Row(
-                            children: ['Tagihan', 'Hiburan', 'Lainnya'].map((cat) {
+                            children:
+                                ['Tagihan', 'Hiburan', 'Lainnya'].map((cat) {
                               final isSelected = category == cat;
                               return Expanded(
                                 child: GestureDetector(
-                                  onTap: () => setModalState(() => category = cat),
+                                  onTap: () =>
+                                      setModalState(() => category = cat),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 10),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 10),
                                     decoration: BoxDecoration(
-                                      color: isSelected ? (isDark ? const Color(0xFF636366) : Colors.white) : Colors.transparent,
+                                      color: isSelected
+                                          ? (isDark
+                                              ? const Color(0xFF636366)
+                                              : Colors.white)
+                                          : Colors.transparent,
                                       borderRadius: BorderRadius.circular(7),
-                                      boxShadow: isSelected ? [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.1),
-                                          blurRadius: 1,
-                                          offset: const Offset(0, 1),
-                                        )
-                                      ] : null,
+                                      boxShadow: isSelected
+                                          ? [
+                                              BoxShadow(
+                                                color: Colors.black
+                                                    .withOpacity(0.1),
+                                                blurRadius: 1,
+                                                offset: const Offset(0, 1),
+                                              )
+                                            ]
+                                          : null,
                                     ),
                                     child: Text(
                                       cat,
@@ -4094,7 +4182,11 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 13,
-                                        color: isSelected ? (isDark ? Colors.white : Colors.black) : Colors.grey,
+                                        color: isSelected
+                                            ? (isDark
+                                                ? Colors.white
+                                                : Colors.black)
+                                            : Colors.grey,
                                       ),
                                     ),
                                   ),
@@ -4104,7 +4196,6 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                           ),
                         ),
                         const SizedBox(height: 16),
-                        
                         Text(
                           'TANGGAL JATUH TEMPO (1 - 31)',
                           style: TextStyle(
@@ -4115,7 +4206,8 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                         ),
                         const SizedBox(height: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(
                             color: sectionColor,
                             borderRadius: BorderRadius.circular(12),
@@ -4124,7 +4216,8 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                             children: [
                               Text(
                                 'Jatuh tempo: Tanggal $dueDay',
-                                style: const TextStyle(fontWeight: FontWeight.w600),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w600),
                               ),
                               const Spacer(),
                               Expanded(
@@ -4146,7 +4239,6 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                           ),
                         ),
                         const SizedBox(height: 16),
-                        
                         Text(
                           'DOMPET DEFAULT',
                           style: TextStyle(
@@ -4161,17 +4253,18 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                           builder: (context, snapshot) {
                             final wallets = snapshot.data ?? [];
                             if (wallets.isEmpty) {
-                              return const Center(child: Text('Belum ada dompet'));
+                              return const Center(
+                                  child: Text('Belum ada dompet'));
                             }
                             if (selectedWalletId == null) {
                               selectedWalletId = wallets.first.id;
                             }
-                            
+
                             final activeWallet = wallets.firstWhere(
                               (w) => w.id == selectedWalletId,
                               orElse: () => wallets.first,
                             );
-                            
+
                             return GestureDetector(
                               onTap: () {
                                 _showWalletPickerDialog(
@@ -4186,27 +4279,34 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                                 );
                               },
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 12),
                                 decoration: BoxDecoration(
                                   color: sectionColor,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Row(
                                   children: [
-                                    Icon(CupertinoIcons.creditcard, color: primaryBlue, size: 20),
+                                    Icon(CupertinoIcons.creditcard,
+                                        color: primaryBlue, size: 20),
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: Text(
                                         activeWallet.walletName,
-                                        style: const TextStyle(fontWeight: FontWeight.bold),
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold),
                                       ),
                                     ),
                                     Text(
-                                      CurrencyFormatter.formatCurrency(activeWallet.balance),
-                                      style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.w500),
+                                      CurrencyFormatter.formatCurrency(
+                                          activeWallet.balance),
+                                      style: const TextStyle(
+                                          color: Colors.grey,
+                                          fontWeight: FontWeight.w500),
                                     ),
                                     const SizedBox(width: 8),
-                                    const Icon(CupertinoIcons.chevron_right, size: 16, color: Colors.grey),
+                                    const Icon(CupertinoIcons.chevron_right,
+                                        size: 16, color: Colors.grey),
                                   ],
                                 ),
                               ),
@@ -4232,8 +4332,18 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
         final year = parts[0];
         final monthInt = int.tryParse(parts[1]) ?? 1;
         const monthNames = [
-          'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-          'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+          'Januari',
+          'Februari',
+          'Maret',
+          'April',
+          'Mei',
+          'Juni',
+          'Juli',
+          'Agustus',
+          'September',
+          'Oktober',
+          'November',
+          'Desember'
         ];
         if (monthInt >= 1 && monthInt <= 12) {
           return '${monthNames[monthInt - 1]} $year';
@@ -4279,7 +4389,8 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
               ),
               decoration: BoxDecoration(
                 color: backgroundColor,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(24)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -4295,7 +4406,6 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -4354,7 +4464,6 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                     ],
                   ),
                   const SizedBox(height: 16),
-                  
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -4368,8 +4477,10 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                           children: [
                             const Text('Nominal Tagihan'),
                             Text(
-                              CurrencyFormatter.formatCurrency(activeSub.amount),
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              CurrencyFormatter.formatCurrency(
+                                  activeSub.amount),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
@@ -4393,14 +4504,14 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                     ),
                   ),
                   const SizedBox(height: 24),
-                  
                   const Row(
                     children: [
                       Icon(CupertinoIcons.list_bullet, size: 18),
                       SizedBox(width: 8),
                       Text(
                         'Riwayat Pembayaran',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                     ],
                   ),
@@ -4414,7 +4525,7 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                       ),
                       builder: (futCtx, futSnapshot) {
                         final txs = futSnapshot.data ?? [];
-                        
+
                         // Map each YYYY-MM month string to its transaction amount
                         final Map<String, double> paidAmounts = {};
                         for (var tx in txs) {
@@ -4433,12 +4544,15 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                                 Icon(
                                   CupertinoIcons.doc_text,
                                   size: 40,
-                                  color: Theme.of(modalCtx).hintColor.withOpacity(0.3),
+                                  color: Theme.of(modalCtx)
+                                      .hintColor
+                                      .withOpacity(0.3),
                                 ),
                                 const SizedBox(height: 16),
                                 Text(
                                   'Belum ada riwayat pembayaran',
-                                  style: TextStyle(color: Theme.of(modalCtx).hintColor),
+                                  style: TextStyle(
+                                      color: Theme.of(modalCtx).hintColor),
                                 ),
                               ],
                             ),
@@ -4451,7 +4565,8 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                           itemCount: activeSub.paidMonths.length,
                           itemBuilder: (context, idx) {
                             final m = activeSub.paidMonths[idx];
-                            final amountPaid = paidAmounts[m] ?? activeSub.amount;
+                            final amountPaid =
+                                paidAmounts[m] ?? activeSub.amount;
 
                             return Container(
                               margin: const EdgeInsets.only(bottom: 10),
@@ -4465,7 +4580,8 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                                 ),
                               ),
                               child: ListTile(
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 4),
                                 leading: Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
@@ -4496,7 +4612,8 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Text(
-                                      CurrencyFormatter.formatCurrency(amountPaid),
+                                      CurrencyFormatter.formatCurrency(
+                                          amountPaid),
                                       style: const TextStyle(
                                         fontWeight: FontWeight.w900,
                                         fontSize: 14,
@@ -4510,11 +4627,13 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                                       icon: Icon(
                                         CupertinoIcons.trash,
                                         size: 18,
-                                        color: AppColors.expense.withOpacity(0.8),
+                                        color:
+                                            AppColors.expense.withOpacity(0.8),
                                       ),
                                       onPressed: () {
                                         HapticFeedback.mediumImpact();
-                                        _showRollbackPaymentDialog(activeSub, m);
+                                        _showRollbackPaymentDialog(
+                                            activeSub, m);
                                       },
                                     ),
                                   ],
@@ -4554,7 +4673,8 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                 if (!mounted) return;
                 Navigator.pop(context);
                 Navigator.pop(context);
-                UIHelper.showSuccessSnackBar(context, 'Berhasil menghapus tagihan!');
+                UIHelper.showSuccessSnackBar(
+                    context, 'Berhasil menghapus tagihan!');
               } catch (e) {
                 if (!mounted) return;
                 Navigator.pop(context);
@@ -4588,9 +4708,10 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
               Navigator.pop(dialogCtx);
               // Close the details sheet too to prevent state mismatch
               Navigator.pop(context);
-              
+
               try {
-                UIHelper.showLoadingDialog(context, message: 'Membatalkan pembayaran...');
+                UIHelper.showLoadingDialog(context,
+                    message: 'Membatalkan pembayaran...');
                 await _subscriptionService.rollbackSubscriptionPayment(
                   userId: _uid,
                   subscription: sub,
@@ -4598,11 +4719,13 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                 );
                 if (!mounted) return;
                 Navigator.pop(context); // Close loading
-                UIHelper.showSuccessSnackBar(context, 'Pembayaran bulan $monthStr berhasil dibatalkan dan saldo dikembalikan!');
+                UIHelper.showSuccessSnackBar(context,
+                    'Pembayaran bulan $monthStr berhasil dibatalkan dan saldo dikembalikan!');
               } catch (e) {
                 if (!mounted) return;
                 Navigator.pop(context); // Close loading
-                UIHelper.showErrorSnackBar(context, 'Gagal membatalkan pembayaran: $e');
+                UIHelper.showErrorSnackBar(
+                    context, 'Gagal membatalkan pembayaran: $e');
               }
             },
             child: const Text('Ya, Batalkan'),
@@ -4619,7 +4742,7 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
     required ValueChanged<String> onSelected,
   }) {
     String searchQuery = '';
-    
+
     showDialog(
       context: context,
       builder: (dialogCtx) => StatefulBuilder(
@@ -4627,17 +4750,21 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
           final isDark = Theme.of(sbCtx).brightness == Brightness.dark;
           final backgroundColor =
               isDark ? const Color(0xFF2C2C2E) : Colors.white;
-          final sectionColor = isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7);
+          final sectionColor =
+              isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7);
           final primaryBlue =
-              isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF);
-              
+              isDark ? const Color(0xFF6B64DB) : const Color(0xFF8B85F6);
+
           final filteredWallets = wallets.where((w) {
-            return w.walletName.toLowerCase().contains(searchQuery.toLowerCase());
+            return w.walletName
+                .toLowerCase()
+                .contains(searchQuery.toLowerCase());
           }).toList();
 
           return Dialog(
             backgroundColor: backgroundColor,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             child: Container(
               width: MediaQuery.of(sbCtx).size.width * 0.85,
               height: 400,
@@ -4656,7 +4783,8 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(CupertinoIcons.clear_circled, size: 20),
+                        icon:
+                            const Icon(CupertinoIcons.clear_circled, size: 20),
                         onPressed: () => Navigator.pop(dialogCtx),
                       ),
                     ],
@@ -4664,7 +4792,8 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                   const SizedBox(height: 12),
                   CupertinoSearchTextField(
                     placeholder: 'Cari dompet...',
-                    style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                    style:
+                        TextStyle(color: isDark ? Colors.white : Colors.black),
                     onChanged: (val) {
                       setPickerState(() {
                         searchQuery = val;
@@ -4692,7 +4821,8 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: ListTile(
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 12),
                                   leading: Container(
                                     width: 36,
                                     height: 36,
@@ -4704,24 +4834,31 @@ class WalletScreenState extends State<WalletScreen> with SingleTickerProviderSta
                                     ),
                                     child: Icon(
                                       CupertinoIcons.creditcard_fill,
-                                      color: isSelected ? primaryBlue : Colors.grey,
+                                      color: isSelected
+                                          ? primaryBlue
+                                          : Colors.grey,
                                       size: 18,
                                     ),
                                   ),
                                   title: Text(
                                     w.walletName,
                                     style: TextStyle(
-                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                      fontWeight: isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
                                       fontSize: 14,
-                                      color: isDark ? Colors.white : Colors.black,
+                                      color:
+                                          isDark ? Colors.white : Colors.black,
                                     ),
                                   ),
                                   subtitle: Text(
                                     CurrencyFormatter.formatCurrency(w.balance),
-                                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                    style: const TextStyle(
+                                        fontSize: 12, color: Colors.grey),
                                   ),
                                   trailing: isSelected
-                                      ? Icon(CupertinoIcons.checkmark_seal_fill, color: primaryBlue, size: 18)
+                                      ? Icon(CupertinoIcons.checkmark_seal_fill,
+                                          color: primaryBlue, size: 18)
                                       : null,
                                   onTap: () {
                                     HapticFeedback.lightImpact();
@@ -4757,12 +4894,14 @@ class _SubscriptionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     // Check payment status for the current month
     final currentMonthStr = DateFormat('yyyy-MM').format(DateTime.now());
     final isPaid = subscription.isPaidForMonth(currentMonthStr);
-    
-    final accentColor = isPaid ? const Color(0xFF34C759) : const Color(0xFFFF9500); // Green if paid, Orange if unpaid
+
+    final accentColor = isPaid
+        ? const Color(0xFF34D399)
+        : const Color(0xFFFBBF24); // Green if paid, Orange if unpaid
 
     IconData getIcon() {
       switch (subscription.category) {
@@ -4787,7 +4926,8 @@ class _SubscriptionCard extends StatelessWidget {
           ),
         ],
         border: Border.all(
-          color: Theme.of(context).dividerColor.withOpacity(isDark ? 0.05 : 0.08),
+          color:
+              Theme.of(context).dividerColor.withOpacity(isDark ? 0.05 : 0.08),
           width: 0.5,
         ),
       ),
@@ -4877,7 +5017,8 @@ class _SubscriptionCard extends StatelessWidget {
                   children: [
                     // Status Badge
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
                         color: accentColor.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(20),
@@ -4903,14 +5044,14 @@ class _SubscriptionCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                    
+
                     // Quick Action button
                     if (!isPaid)
                       SizedBox(
                         height: 30,
                         child: CupertinoButton(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
-                          color: const Color(0xFF007AFF),
+                          color: const Color(0xFF8B85F6),
                           borderRadius: BorderRadius.circular(20),
                           onPressed: () {
                             HapticFeedback.mediumImpact();
@@ -4929,12 +5070,12 @@ class _SubscriptionCard extends StatelessWidget {
                   ],
                 ),
               ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }
 
 class _UnifiedWalletGroupCard extends StatelessWidget {
@@ -5553,14 +5694,14 @@ class _IconButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: (isDark ? const Color(0xFF0A84FF) : AppColors.primary)
+          color: (isDark ? const Color(0xFF6B64DB) : AppColors.primary)
               .withOpacity(0.1),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(
           icon,
           size: 24,
-          color: isDark ? const Color(0xFF0A84FF) : AppColors.primary,
+          color: isDark ? const Color(0xFF6B64DB) : AppColors.primary,
         ),
       ),
     );
@@ -5948,7 +6089,7 @@ class _DebtDetailsSheet extends StatelessWidget {
               isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7);
           final sectionColor = isDark ? const Color(0xFF2C2C2E) : Colors.white;
           final primaryBlue =
-              isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF);
+              isDark ? const Color(0xFF6B64DB) : const Color(0xFF8B85F6);
 
           return Container(
             padding: EdgeInsets.only(
@@ -6205,7 +6346,7 @@ class _DebtPaymentModalState extends State<_DebtPaymentModal> {
               isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7);
           final sectionColor = isDark ? const Color(0xFF2C2C2E) : Colors.white;
           final primaryBlue =
-              isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF);
+              isDark ? const Color(0xFF6B64DB) : const Color(0xFF8B85F6);
 
           final filtered = wallets.where((w) {
             return w.walletName.toLowerCase().contains(query.toLowerCase());
@@ -6330,7 +6471,7 @@ class _DebtPaymentModalState extends State<_DebtPaymentModal> {
         isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7);
     final sectionColor = isDark ? const Color(0xFF2C2C2E) : Colors.white;
     final primaryBlue =
-        isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF);
+        isDark ? const Color(0xFF6B64DB) : const Color(0xFF8B85F6);
     final accentColor =
         widget.debt.isUtang ? AppColors.expense : AppColors.income;
 
@@ -6682,7 +6823,7 @@ class _DebtPaymentModalState extends State<_DebtPaymentModal> {
                               radius: 18,
                               backgroundColor: (Theme.of(context).brightness ==
                                           Brightness.dark
-                                      ? const Color(0xFF0A84FF)
+                                      ? const Color(0xFF6B64DB)
                                       : Theme.of(context).primaryColor)
                                   .withOpacity(0.1),
                               child: Text(
@@ -6691,7 +6832,7 @@ class _DebtPaymentModalState extends State<_DebtPaymentModal> {
                                   fontWeight: FontWeight.bold,
                                   color: Theme.of(context).brightness ==
                                           Brightness.dark
-                                      ? const Color(0xFF0A84FF)
+                                      ? const Color(0xFF6B64DB)
                                       : Theme.of(context).primaryColor,
                                 ),
                               ),
@@ -6713,7 +6854,7 @@ class _DebtPaymentModalState extends State<_DebtPaymentModal> {
                                 decoration: BoxDecoration(
                                   color: (Theme.of(context).brightness ==
                                               Brightness.dark
-                                          ? const Color(0xFF0A84FF)
+                                          ? const Color(0xFF6B64DB)
                                           : Theme.of(context).primaryColor)
                                       .withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(6),
@@ -6725,7 +6866,7 @@ class _DebtPaymentModalState extends State<_DebtPaymentModal> {
                                     fontWeight: FontWeight.w800,
                                     color: Theme.of(context).brightness ==
                                             Brightness.dark
-                                        ? const Color(0xFF0A84FF)
+                                        ? const Color(0xFF6B64DB)
                                         : Theme.of(context).primaryColor,
                                   ),
                                 ),
@@ -6754,7 +6895,8 @@ class KeepAliveWrapper extends StatefulWidget {
   KeepAliveWrapperState createState() => KeepAliveWrapperState();
 }
 
-class KeepAliveWrapperState extends State<KeepAliveWrapper> with AutomaticKeepAliveClientMixin {
+class KeepAliveWrapperState extends State<KeepAliveWrapper>
+    with AutomaticKeepAliveClientMixin {
   @override
   Widget build(BuildContext context) {
     super.build(context);
