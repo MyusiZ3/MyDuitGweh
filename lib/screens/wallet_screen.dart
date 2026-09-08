@@ -481,10 +481,14 @@ class WalletScreenState extends State<WalletScreen>
         builder: (sbCtx, setModalState) {
           final isDark = Theme.of(sbCtx).brightness == Brightness.dark;
           final backgroundColor =
-              isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7);
-          final sectionColor = isDark ? const Color(0xFF2C2C2E) : Colors.white;
+              isDark ? const Color(0xFF18181B) : const Color(0xFFF4F4F5);
+          final sectionColor =
+              isDark ? const Color(0xFF27272A) : Colors.white;
           final primaryBlue =
               isDark ? const Color(0xFF6B64DB) : const Color(0xFF8B85F6);
+          final borderColor = isDark
+              ? Colors.white.withOpacity(0.06)
+              : Colors.black.withOpacity(0.05);
 
           return Container(
             height: MediaQuery.of(sbCtx).size.height * 0.85,
@@ -494,32 +498,32 @@ class WalletScreenState extends State<WalletScreen>
             decoration: BoxDecoration(
               color: backgroundColor,
               borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(20)),
+                  const BorderRadius.vertical(top: Radius.circular(24)),
             ),
             child: Column(
               children: [
                 // iOS Drag Handle
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 Center(
                   child: Container(
-                    width: 36,
-                    height: 5,
+                    width: 40,
+                    height: 4,
                     decoration: BoxDecoration(
                       color: isDark ? Colors.white24 : Colors.black12,
-                      borderRadius: BorderRadius.circular(2.5),
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
-                // iOS Action Bar
+                const SizedBox(height: 10),
+                // Action Bar
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   decoration: BoxDecoration(
                     border: Border(
                       bottom: BorderSide(
-                        color: isDark ? Colors.white10 : Colors.black12,
-                        width: 0.5,
+                        color: borderColor,
+                        width: 1,
                       ),
                     ),
                   ),
@@ -528,12 +532,17 @@ class WalletScreenState extends State<WalletScreen>
                     children: [
                       TextButton(
                         onPressed: () => Navigator.pop(sbCtx),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
                         child: Text(
                           'Batal',
                           style: TextStyle(
-                            color: primaryBlue,
-                            fontSize: 17,
-                            fontWeight: FontWeight.w400,
+                            color: isDark ? Colors.white60 : Colors.black54,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
@@ -541,7 +550,8 @@ class WalletScreenState extends State<WalletScreen>
                         'Dompet Baru',
                         style: TextStyle(
                           fontSize: 17,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.3,
                         ),
                       ),
                       TextButton(
@@ -646,12 +656,17 @@ class WalletScreenState extends State<WalletScreen>
                             }
                           }
                         },
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
                         child: Text(
                           'Simpan',
                           style: TextStyle(
                             color: primaryBlue,
-                            fontSize: 17,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),
@@ -662,20 +677,21 @@ class WalletScreenState extends State<WalletScreen>
                 Expanded(
                   child: SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Section 1: Type Selection
                         Padding(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 8),
+                              horizontal: 20, vertical: 6),
                           child: Text(
                             'TIPE DOMPET',
                             style: TextStyle(
-                              fontSize: 13,
-                              color: isDark ? Colors.white54 : Colors.black54,
-                              fontWeight: FontWeight.w400,
+                              fontSize: 12,
+                              color: isDark ? Colors.white38 : Colors.black45,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.8,
                             ),
                           ),
                         ),
@@ -686,8 +702,9 @@ class WalletScreenState extends State<WalletScreen>
                           decoration: BoxDecoration(
                             color: isDark
                                 ? Colors.white.withOpacity(0.05)
-                                : Colors.black.withOpacity(0.05),
-                            borderRadius: BorderRadius.circular(10),
+                                : Colors.black.withOpacity(0.04),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: borderColor),
                           ),
                           child: Row(
                             children: [
@@ -716,18 +733,19 @@ class WalletScreenState extends State<WalletScreen>
                           ),
                         ),
 
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 20),
 
                         // Section 2: Info Utama
                         Padding(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 8),
+                              horizontal: 20, vertical: 6),
                           child: Text(
                             'INFORMASI UTAMA',
                             style: TextStyle(
-                              fontSize: 13,
-                              color: isDark ? Colors.white54 : Colors.black54,
-                              fontWeight: FontWeight.w400,
+                              fontSize: 12,
+                              color: isDark ? Colors.white38 : Colors.black45,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.8,
                             ),
                           ),
                         ),
@@ -735,7 +753,8 @@ class WalletScreenState extends State<WalletScreen>
                           margin: const EdgeInsets.symmetric(horizontal: 16),
                           decoration: BoxDecoration(
                             color: sectionColor,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: borderColor),
                           ),
                           child: Column(
                             children: [
@@ -744,26 +763,42 @@ class WalletScreenState extends State<WalletScreen>
                                 // Debtor Name
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 4),
+                                      horizontal: 12, vertical: 4),
                                   child: TextField(
                                     controller: debtorNameController,
                                     textCapitalization:
                                         TextCapitalization.words,
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      color: isDark ? Colors.white : Colors.black87,
+                                    ),
                                     decoration: InputDecoration(
                                       hintText: 'Nama Teman / Pihak Lain',
                                       hintStyle: TextStyle(
+                                          fontSize: 15,
                                           color: isDark
                                               ? Colors.white38
                                               : Colors.black38),
                                       border: InputBorder.none,
-                                      prefixIcon: Icon(CupertinoIcons.person,
-                                          size: 20,
-                                          color: primaryBlue.withOpacity(0.7)),
+                                      prefixIcon: Container(
+                                        padding: const EdgeInsets.all(8),
+                                        margin: const EdgeInsets.only(right: 8),
+                                        decoration: BoxDecoration(
+                                          color: primaryBlue.withOpacity(0.12),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(CupertinoIcons.person_fill,
+                                            size: 16, color: primaryBlue),
+                                      ),
+                                      prefixIconConstraints: const BoxConstraints(
+                                        minWidth: 40,
+                                        minHeight: 40,
+                                      ),
                                       suffixIcon: IconButton(
                                         icon: Icon(
                                             CupertinoIcons
                                                 .person_crop_circle_fill_badge_plus,
-                                            size: 24,
+                                            size: 22,
                                             color: primaryBlue),
                                         onPressed: () async {
                                           var status =
@@ -816,25 +851,39 @@ class WalletScreenState extends State<WalletScreen>
                                 Divider(
                                     height: 1,
                                     indent: 52,
-                                    color: isDark
-                                        ? Colors.white10
-                                        : Colors.black12),
+                                    color: borderColor),
                                 // Phone Number
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 4),
+                                      horizontal: 12, vertical: 4),
                                   child: TextField(
                                     controller: debtorPhoneController,
                                     keyboardType: TextInputType.phone,
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      color: isDark ? Colors.white : Colors.black87,
+                                    ),
                                     decoration: InputDecoration(
                                       hintText: 'Nomor HP (Opsional)',
                                       hintStyle: TextStyle(
+                                          fontSize: 15,
                                           color: isDark
                                               ? Colors.white38
                                               : Colors.black38),
-                                      prefixIcon: Icon(CupertinoIcons.phone,
-                                          size: 20,
-                                          color: primaryBlue.withOpacity(0.7)),
+                                      prefixIcon: Container(
+                                        padding: const EdgeInsets.all(8),
+                                        margin: const EdgeInsets.only(right: 8),
+                                        decoration: BoxDecoration(
+                                          color: primaryBlue.withOpacity(0.12),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(CupertinoIcons.phone_fill,
+                                            size: 16, color: primaryBlue),
+                                      ),
+                                      prefixIconConstraints: const BoxConstraints(
+                                        minWidth: 40,
+                                        minHeight: 40,
+                                      ),
                                       border: InputBorder.none,
                                     ),
                                   ),
@@ -842,9 +891,7 @@ class WalletScreenState extends State<WalletScreen>
                                 Divider(
                                     height: 1,
                                     indent: 52,
-                                    color: isDark
-                                        ? Colors.white10
-                                        : Colors.black12),
+                                    color: borderColor),
                                 // Transaction Type (Radio)
                                 _buildIOSRadioTile(sbCtx, setModalState,
                                     'Saya Berhutang', 'payable', debtType, (v) {
@@ -856,10 +903,8 @@ class WalletScreenState extends State<WalletScreen>
                                 }),
                                 Divider(
                                     height: 1,
-                                    indent: 56,
-                                    color: isDark
-                                        ? Colors.white10
-                                        : Colors.black12),
+                                    indent: 52,
+                                    color: borderColor),
                                 _buildIOSRadioTile(
                                     sbCtx,
                                     setModalState,
@@ -875,18 +920,20 @@ class WalletScreenState extends State<WalletScreen>
                                 Divider(
                                     height: 1,
                                     indent: 16,
-                                    color: isDark
-                                        ? Colors.white10
-                                        : Colors.black12),
+                                    color: borderColor),
                               ],
 
                               // Main Name / Label Input
                               Padding(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 4),
+                                    horizontal: 12, vertical: 4),
                                 child: TextField(
                                   controller: nameController,
                                   textCapitalization: TextCapitalization.words,
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: isDark ? Colors.white : Colors.black87,
+                                  ),
                                   decoration: InputDecoration(
                                     hintText: selectedType == 'colab'
                                         ? 'Nama kelompok/tujuan'
@@ -894,18 +941,31 @@ class WalletScreenState extends State<WalletScreen>
                                             ? 'Label Catatan (Misal: Hutang Budi)'
                                             : 'Nama dompet (misal: Jajan)',
                                     hintStyle: TextStyle(
+                                        fontSize: 15,
                                         color: isDark
                                             ? Colors.white38
                                             : Colors.black38),
                                     border: InputBorder.none,
-                                    prefixIcon: Icon(
-                                      selectedType == 'colab'
-                                          ? CupertinoIcons.person_2
-                                          : selectedType == 'debt'
-                                              ? CupertinoIcons.doc_text
-                                              : CupertinoIcons.creditcard,
-                                      color: primaryBlue.withOpacity(0.7),
-                                      size: 20,
+                                    prefixIcon: Container(
+                                      padding: const EdgeInsets.all(8),
+                                      margin: const EdgeInsets.only(right: 8),
+                                      decoration: BoxDecoration(
+                                        color: primaryBlue.withOpacity(0.12),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        selectedType == 'colab'
+                                            ? CupertinoIcons.person_2_fill
+                                            : selectedType == 'debt'
+                                                ? CupertinoIcons.doc_text_fill
+                                                : CupertinoIcons.creditcard_fill,
+                                        color: primaryBlue,
+                                        size: 16,
+                                      ),
+                                    ),
+                                    prefixIconConstraints: const BoxConstraints(
+                                      minWidth: 40,
+                                      minHeight: 40,
                                     ),
                                   ),
                                 ),
@@ -915,17 +975,17 @@ class WalletScreenState extends State<WalletScreen>
                         ),
 
                         if (selectedType == 'debt') ...[
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 20),
                           Padding(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 8),
+                                horizontal: 20, vertical: 6),
                             child: Text(
                               'NOMINAL & SUMBER DANA',
                               style: TextStyle(
-                                fontSize: 13,
-                                color: isDark ? Colors.white54 : Colors.black54,
-                                fontWeight: FontWeight.w400,
-                                letterSpacing: 0.5,
+                                fontSize: 12,
+                                color: isDark ? Colors.white38 : Colors.black45,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.8,
                               ),
                             ),
                           ),
@@ -933,14 +993,15 @@ class WalletScreenState extends State<WalletScreen>
                             margin: const EdgeInsets.symmetric(horizontal: 16),
                             decoration: BoxDecoration(
                               color: sectionColor,
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: borderColor),
                             ),
                             child: Column(
                               children: [
                                 // Amount Input
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 4),
+                                      horizontal: 16, vertical: 8),
                                   child: TextField(
                                     controller: totalAmountController,
                                     keyboardType: TextInputType.number,
@@ -948,32 +1009,27 @@ class WalletScreenState extends State<WalletScreen>
                                       FilteringTextInputFormatter.digitsOnly
                                     ],
                                     style: TextStyle(
-                                      fontWeight: FontWeight.w600,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 18,
                                       color:
                                           isDark ? Colors.white : Colors.black,
                                     ),
                                     decoration: InputDecoration(
                                       hintText: '0',
+                                      hintStyle: TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 18,
+                                        color: isDark ? Colors.white38 : Colors.black38,
+                                      ),
                                       prefixIcon: Padding(
-                                        padding: const EdgeInsets.only(
-                                            left: 12, right: 8),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(CupertinoIcons.money_dollar,
-                                                size: 20,
-                                                color: primaryBlue
-                                                    .withOpacity(0.7)),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              'Rp ',
-                                              style: TextStyle(
-                                                color: primaryBlue,
-                                                fontWeight: FontWeight.w700,
-                                                fontSize: 16,
-                                              ),
-                                            ),
-                                          ],
+                                        padding: const EdgeInsets.only(right: 8),
+                                        child: Text(
+                                          'Rp ',
+                                          style: TextStyle(
+                                            color: primaryBlue,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 18,
+                                          ),
                                         ),
                                       ),
                                       prefixIconConstraints:
@@ -985,10 +1041,8 @@ class WalletScreenState extends State<WalletScreen>
                                 ),
                                 Divider(
                                     height: 1,
-                                    indent: 52,
-                                    color: isDark
-                                        ? Colors.white10
-                                        : Colors.black12),
+                                    indent: 16,
+                                    color: borderColor),
                                 // Wallet Selection
                                 StreamBuilder<List<WalletModel>>(
                                   stream:
@@ -1012,15 +1066,25 @@ class WalletScreenState extends State<WalletScreen>
                                         setModalState(
                                             () => selectedWalletId = wallet.id);
                                       }),
-                                      leading: Icon(CupertinoIcons.creditcard,
-                                          size: 20,
-                                          color: primaryBlue.withOpacity(0.7)),
+                                      leading: Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: primaryBlue.withOpacity(0.12),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(CupertinoIcons.creditcard_fill,
+                                            size: 16,
+                                            color: primaryBlue),
+                                      ),
                                       title: Text(
                                         selectedWallet != null
                                             ? selectedWallet.walletName
                                             : 'Pilih Dompet Sumber/Tujuan',
                                         style: TextStyle(
                                             fontSize: 15,
+                                            fontWeight: selectedWallet != null
+                                                ? FontWeight.w600
+                                                : FontWeight.w400,
                                             color: selectedWallet != null
                                                 ? (isDark
                                                     ? Colors.white
@@ -1033,8 +1097,8 @@ class WalletScreenState extends State<WalletScreen>
                                           CupertinoIcons.chevron_right,
                                           size: 14,
                                           color: isDark
-                                              ? Colors.white24
-                                              : Colors.black26),
+                                              ? Colors.white38
+                                              : Colors.black38),
                                     );
                                   },
                                 ),
@@ -1043,7 +1107,7 @@ class WalletScreenState extends State<WalletScreen>
                           ),
                         ],
 
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 28),
                         Center(
                           child: TextButton(
                             onPressed: () {
@@ -1055,12 +1119,12 @@ class WalletScreenState extends State<WalletScreen>
                               style: TextStyle(
                                 color: primaryBlue,
                                 fontWeight: FontWeight.w600,
-                                fontSize: 15,
+                                fontSize: 14,
                               ),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 48),
+                        const SizedBox(height: 40),
                       ],
                     ),
                   ),
@@ -1077,23 +1141,25 @@ class WalletScreenState extends State<WalletScreen>
       String type, String label, String current, Function(String) onSelect) {
     final isSelected = current == type;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryBlue =
+        isDark ? const Color(0xFF6B64DB) : const Color(0xFF8B85F6);
 
     return Expanded(
       child: GestureDetector(
         onTap: () => setState(() => onSelect(type)),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: 9),
           decoration: BoxDecoration(
             color: isSelected
-                ? (isDark ? const Color(0xFF636366) : Colors.white)
+                ? primaryBlue
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(10),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 4,
+                        color: primaryBlue.withOpacity(0.35),
+                        blurRadius: 8,
                         offset: const Offset(0, 2))
                   ]
                 : [],
@@ -1105,8 +1171,8 @@ class WalletScreenState extends State<WalletScreen>
               fontSize: 13,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
               color: isSelected
-                  ? (isDark ? Colors.white : Colors.black)
-                  : (isDark ? Colors.white38 : Colors.black38),
+                  ? Colors.white
+                  : (isDark ? Colors.white54 : Colors.black54),
             ),
           ),
         ),
@@ -1129,22 +1195,36 @@ class WalletScreenState extends State<WalletScreen>
     return InkWell(
       onTap: () => setState(() => onChanged(value)),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         child: Row(
           children: [
-            Icon(
-              isSelected
-                  ? CupertinoIcons.checkmark_circle_fill
-                  : CupertinoIcons.circle,
-              color: isSelected
-                  ? primaryBlue
-                  : (isDark ? Colors.white24 : Colors.black12),
-              size: 24,
+            Container(
+              padding: const EdgeInsets.all(8),
+              margin: const EdgeInsets.only(right: 8),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? primaryBlue.withOpacity(0.12)
+                    : (isDark ? Colors.white.withOpacity(0.04) : Colors.black.withOpacity(0.03)),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isSelected
+                    ? CupertinoIcons.checkmark_circle_fill
+                    : CupertinoIcons.circle,
+                color: isSelected
+                    ? primaryBlue
+                    : (isDark ? Colors.white38 : Colors.black38),
+                size: 16,
+              ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 4),
             Text(
               title,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
             ),
           ],
         ),
