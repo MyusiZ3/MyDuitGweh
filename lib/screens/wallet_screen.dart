@@ -775,7 +775,7 @@ class WalletScreenState extends State<WalletScreen>
                                         child: Icon(CupertinoIcons.person_fill,
                                             size: 16, color: primaryBlue),
                                       ),
-                                      const SizedBox(width: 12),
+                                      const SizedBox(width: 16),
                                       Expanded(
                                         child: TextField(
                                           controller: debtorNameController,
@@ -854,7 +854,7 @@ class WalletScreenState extends State<WalletScreen>
                                 ),
                                 Divider(
                                     height: 1,
-                                    indent: 56,
+                                    indent: 62,
                                     color: borderColor),
                                 // Phone Number
                                 Padding(
@@ -871,7 +871,7 @@ class WalletScreenState extends State<WalletScreen>
                                         child: Icon(CupertinoIcons.phone_fill,
                                             size: 16, color: primaryBlue),
                                       ),
-                                      const SizedBox(width: 12),
+                                      const SizedBox(width: 16),
                                       Expanded(
                                         child: TextField(
                                           controller: debtorPhoneController,
@@ -898,7 +898,7 @@ class WalletScreenState extends State<WalletScreen>
                                 ),
                                 Divider(
                                     height: 1,
-                                    indent: 56,
+                                    indent: 62,
                                     color: borderColor),
                                 // Transaction Type (Radio)
                                 _buildIOSRadioTile(sbCtx, setModalState,
@@ -911,7 +911,7 @@ class WalletScreenState extends State<WalletScreen>
                                 }),
                                 Divider(
                                     height: 1,
-                                    indent: 56,
+                                    indent: 62,
                                     color: borderColor),
                                 _buildIOSRadioTile(
                                     sbCtx,
@@ -953,7 +953,7 @@ class WalletScreenState extends State<WalletScreen>
                                         size: 16,
                                       ),
                                     ),
-                                    const SizedBox(width: 12),
+                                    const SizedBox(width: 16),
                                     Expanded(
                                       child: TextField(
                                         controller: nameController,
@@ -1024,7 +1024,7 @@ class WalletScreenState extends State<WalletScreen>
                                           fontSize: 18,
                                         ),
                                       ),
-                                      const SizedBox(width: 12),
+                                      const SizedBox(width: 16),
                                       Expanded(
                                         child: TextField(
                                           controller: totalAmountController,
@@ -1215,7 +1215,7 @@ class WalletScreenState extends State<WalletScreen>
           children: [
             Container(
               padding: const EdgeInsets.all(8),
-              margin: const EdgeInsets.only(right: 12),
+              margin: const EdgeInsets.only(right: 16),
               decoration: BoxDecoration(
                 color: isSelected
                     ? primaryBlue.withOpacity(0.12)
