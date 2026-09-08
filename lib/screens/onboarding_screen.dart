@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:math' as math;
 
 class OnboardingScreen extends StatefulWidget {
   final VoidCallback? onComplete;
@@ -161,10 +162,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Spacer(flex: 1),
-          // Center Graphic Illustration
+          // Center Graphic Vector Illustration
           Center(
             child: SizedBox(
-              height: 260,
+              height: 270,
+              width: 280,
               child: _buildHeroWidget(data.type, isDark, accentColor),
             ),
           ),
@@ -201,467 +203,432 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget _buildHeroWidget(OnboardingType type, bool isDark, Color accentColor) {
     switch (type) {
       case OnboardingType.balance:
-        return _buildMinimalBalanceHero(isDark, accentColor);
+        return _buildArtisticLedgerIllustration(isDark, accentColor);
       case OnboardingType.shared:
-        return _buildMinimalSharedHero(isDark, accentColor);
+        return _buildArtisticDoorwayIllustration(isDark, accentColor);
       case OnboardingType.report:
-        return _buildMinimalReportHero(isDark, accentColor);
+        return _buildArtisticReportIllustration(isDark, accentColor);
     }
   }
 
-  // --- HERO 1: Minimalist Balance Card with Floating Circles ---
-  Widget _buildMinimalBalanceHero(bool isDark, Color accentColor) {
-    final cardBg = isDark ? const Color(0xFF27272A) : Colors.white;
-    final borderColor = isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.06);
+  // --- ARTISTIC VECTOR 1: Isometric Ledger & Magnifying Glass ---
+  Widget _buildArtisticLedgerIllustration(bool isDark, Color accentColor) {
+    final outlineColor = isDark ? Colors.white : const Color(0xFF18181B);
+    final bookBg = isDark ? const Color(0xFF27272A) : const Color(0xFFFFFFFF);
 
     return Stack(
       alignment: Alignment.center,
       clipBehavior: Clip.none,
       children: [
-        // Floating Yellow Accent Circle (Background element like reference)
+        // Background Floating Accent Circle
         Positioned(
-          top: 15,
-          left: 15,
+          top: 35,
+          left: 20,
           child: Container(
-            width: 54,
-            height: 54,
+            width: 58,
+            height: 58,
             decoration: BoxDecoration(
               color: accentColor,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: accentColor.withOpacity(0.3),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
+                  color: accentColor.withOpacity(0.35),
+                  blurRadius: 18,
+                  offset: const Offset(0, 6),
                 ),
               ],
             ),
           ),
         ),
-        // Floating Grey Secondary Circle
+        // Secondary Floating Grey Sphere
         Positioned(
-          top: 5,
-          right: 25,
+          top: 25,
+          right: 35,
           child: Container(
-            width: 40,
-            height: 40,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE4E4E7),
               shape: BoxShape.circle,
             ),
           ),
         ),
-        // Main Card
-        Container(
-          width: 270,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: cardBg,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: borderColor),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(isDark ? 0.35 : 0.05),
-                blurRadius: 24,
-                offset: const Offset(0, 12),
+        // Main Isometric Open Book
+        Positioned(
+          top: 60,
+          child: Transform(
+            alignment: Alignment.center,
+            transform: Matrix4.identity()
+              ..setEntry(3, 2, 0.001)
+              ..rotateZ(-0.18)
+              ..rotateX(0.2),
+            child: Container(
+              width: 170,
+              height: 140,
+              decoration: BoxDecoration(
+                color: bookBg,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: outlineColor, width: 3),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isDark ? 0.4 : 0.08),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Stack(
                 children: [
-                  Text(
-                    'Total Saldo',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: isDark ? const Color(0xFFA1A1AA) : const Color(0xFF71717A),
+                  // Book spine line
+                  Center(
+                    child: Container(
+                      width: 2,
+                      height: double.infinity,
+                      color: outlineColor.withOpacity(0.3),
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: accentColor.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
+                  // Page lines left
+                  Positioned(
+                    top: 24,
+                    left: 18,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(CupertinoIcons.arrow_up_right, size: 10, color: accentColor),
-                        const SizedBox(width: 2),
-                        Text(
-                          '+12%',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: accentColor,
-                          ),
-                        ),
+                        Container(width: 45, height: 4, decoration: BoxDecoration(color: outlineColor, borderRadius: BorderRadius.circular(2))),
+                        const SizedBox(height: 8),
+                        Container(width: 35, height: 4, decoration: BoxDecoration(color: outlineColor.withOpacity(0.4), borderRadius: BorderRadius.circular(2))),
+                        const SizedBox(height: 8),
+                        Container(width: 40, height: 4, decoration: BoxDecoration(color: outlineColor.withOpacity(0.4), borderRadius: BorderRadius.circular(2))),
+                      ],
+                    ),
+                  ),
+                  // Page lines right
+                  Positioned(
+                    top: 24,
+                    right: 18,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Container(width: 40, height: 4, decoration: BoxDecoration(color: outlineColor.withOpacity(0.4), borderRadius: BorderRadius.circular(2))),
+                        const SizedBox(height: 8),
+                        Container(width: 48, height: 4, decoration: BoxDecoration(color: outlineColor, borderRadius: BorderRadius.circular(2))),
+                        const SizedBox(height: 8),
+                        Container(width: 30, height: 4, decoration: BoxDecoration(color: outlineColor.withOpacity(0.4), borderRadius: BorderRadius.circular(2))),
                       ],
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 6),
-              Text(
-                'Rp 24.500.000',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.6,
-                  color: isDark ? Colors.white : const Color(0xFF18181B),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Divider(color: borderColor, height: 1),
-              const SizedBox(height: 12),
-              _buildTransactionRow(
-                isDark,
-                icon: CupertinoIcons.arrow_down_left,
-                iconColor: const Color(0xFF10B981),
-                title: 'Gaji Bulanan',
-                amount: '+Rp 8.500.000',
-              ),
-              const SizedBox(height: 8),
-              _buildTransactionRow(
-                isDark,
-                icon: CupertinoIcons.arrow_up_right,
-                iconColor: const Color(0xFFEF4444),
-                title: 'Belanja Harian',
-                amount: '-Rp 125.000',
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTransactionRow(
-    bool isDark, {
-    required IconData icon,
-    required Color iconColor,
-    required String title,
-    required String amount,
-  }) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: iconColor.withOpacity(0.12),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, size: 12, color: iconColor),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            title,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: isDark ? Colors.white70 : const Color(0xFF3F3F46),
             ),
           ),
         ),
-        Text(
-          amount,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: isDark ? Colors.white : const Color(0xFF18181B),
+        // Leaning Wooden/White Ladder Vector Graphic
+        Positioned(
+          left: 45,
+          bottom: 25,
+          child: Transform.rotate(
+            angle: -0.15,
+            child: SizedBox(
+              width: 36,
+              height: 110,
+              child: CustomPaint(
+                painter: _LadderPainter(color: isDark ? Colors.white70 : const Color(0xFF27272A)),
+              ),
+            ),
           ),
         ),
-      ],
-    );
-  }
-
-  // --- HERO 2: Minimalist Shared Wallet ---
-  Widget _buildMinimalSharedHero(bool isDark, Color accentColor) {
-    final cardBg = isDark ? const Color(0xFF27272A) : Colors.white;
-    final borderColor = isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.06);
-
-    return Stack(
-      alignment: Alignment.center,
-      clipBehavior: Clip.none,
-      children: [
+        // Floating Magnifying Glass
         Positioned(
-          top: 10,
-          right: 20,
+          right: 45,
+          bottom: 40,
+          child: Transform.rotate(
+            angle: 0.35,
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF27272A) : Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(color: outlineColor, width: 3),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.15),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Icon(
+                  CupertinoIcons.search,
+                  size: 24,
+                  color: outlineColor,
+                ),
+              ),
+            ),
+          ),
+        ),
+        // Small Floating Sphere
+        Positioned(
+          bottom: 15,
+          left: 110,
           child: Container(
-            width: 48,
-            height: 48,
+            width: 18,
+            height: 18,
             decoration: BoxDecoration(
-              color: accentColor,
+              color: isDark ? const Color(0xFF52525B) : const Color(0xFF3F3F46),
               shape: BoxShape.circle,
             ),
           ),
         ),
-        Container(
-          width: 270,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: cardBg,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: borderColor),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(isDark ? 0.35 : 0.05),
-                blurRadius: 24,
-                offset: const Offset(0, 12),
-              ),
-            ],
+      ],
+    );
+  }
+
+  // --- ARTISTIC VECTOR 2: Doorway Portal & Winding Path ---
+  Widget _buildArtisticDoorwayIllustration(bool isDark, Color accentColor) {
+    final outlineColor = isDark ? Colors.white : const Color(0xFF18181B);
+    final doorBg = isDark ? const Color(0xFF27272A) : const Color(0xFF18181B);
+
+    return Stack(
+      alignment: Alignment.center,
+      clipBehavior: Clip.none,
+      children: [
+        // Floating Yellow Sun/Circle
+        Positioned(
+          top: 25,
+          right: 25,
+          child: Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: accentColor,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: accentColor.withOpacity(0.35),
+                  blurRadius: 18,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.white10 : const Color(0xFFF4F4F5),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      CupertinoIcons.person_3_fill,
-                      size: 16,
-                      color: isDark ? Colors.white : const Color(0xFF18181B),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Dompet Liburan ✈️',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: isDark ? Colors.white : const Color(0xFF18181B),
-                          ),
-                        ),
-                        Text(
-                          '3 Anggota',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: isDark ? const Color(0xFFA1A1AA) : const Color(0xFF71717A),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+        ),
+        // Winding Pathway Painter
+        Positioned(
+          bottom: 10,
+          child: SizedBox(
+            width: 220,
+            height: 130,
+            child: CustomPaint(
+              painter: _WindingPathPainter(
+                pathColor: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE4E4E7),
+                dashColor: outlineColor,
               ),
-              const SizedBox(height: 16),
-              Text(
-                'Rp 8.500.000',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.6,
-                  color: isDark ? Colors.white : const Color(0xFF18181B),
+            ),
+          ),
+        ),
+        // Main Portal Door (Book Portal Silhouette)
+        Positioned(
+          top: 35,
+          child: Container(
+            width: 120,
+            height: 160,
+            decoration: BoxDecoration(
+              color: doorBg,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: outlineColor, width: 3),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(isDark ? 0.4 : 0.15),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Container(
+                width: 44,
+                height: 70,
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF121214) : Colors.white,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+                  border: Border.all(color: outlineColor, width: 2),
                 ),
               ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  SizedBox(
-                    width: 60,
-                    height: 24,
-                    child: Stack(
-                      children: [
-                        _buildAvatarPill('A', const Color(0xFF3B82F6), 0),
-                        _buildAvatarPill('B', const Color(0xFF8B5CF6), 16),
-                        _buildAvatarPill('C', accentColor, 32),
-                      ],
-                    ),
-                  ),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFF4F4F5),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      'Aktif',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white70 : const Color(0xFF3F3F46),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+            ),
+          ),
+        ),
+        // Leaf Plant Silhouettes framing the door
+        Positioned(
+          left: 55,
+          bottom: 75,
+          child: Icon(
+            CupertinoIcons.leaf_arrow_circlepath,
+            size: 32,
+            color: isDark ? const Color(0xFFA1A1AA) : const Color(0xFF52525B),
+          ),
+        ),
+        Positioned(
+          right: 55,
+          bottom: 75,
+          child: Icon(
+            CupertinoIcons.sparkles,
+            size: 28,
+            color: accentColor,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildAvatarPill(String initial, Color color, double left) {
-    return Positioned(
-      left: left,
-      child: Container(
-        width: 24,
-        height: 24,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.white, width: 1.5),
-        ),
-        child: Center(
-          child: Text(
-            initial,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // --- HERO 3: Minimalist PDF Report ---
-  Widget _buildMinimalReportHero(bool isDark, Color accentColor) {
-    final cardBg = isDark ? const Color(0xFF27272A) : Colors.white;
-    final borderColor = isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.06);
+  // --- ARTISTIC VECTOR 3: Open Notebook & Floating PDF/File Tags ---
+  Widget _buildArtisticReportIllustration(bool isDark, Color accentColor) {
+    final outlineColor = isDark ? Colors.white : const Color(0xFF18181B);
+    final binderBg = isDark ? const Color(0xFF27272A) : const Color(0xFFFFFFFF);
 
     return Stack(
       alignment: Alignment.center,
       clipBehavior: Clip.none,
       children: [
+        // Floating Yellow Accent Circle
         Positioned(
-          top: 15,
+          top: 40,
           left: 20,
           child: Container(
-            width: 48,
-            height: 48,
+            width: 52,
+            height: 52,
             decoration: BoxDecoration(
               color: accentColor,
               shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: accentColor.withOpacity(0.35),
+                  blurRadius: 18,
+                  offset: const Offset(0, 6),
+                ),
+              ],
             ),
           ),
         ),
-        Container(
-          width: 250,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: cardBg,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: borderColor),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(isDark ? 0.35 : 0.05),
-                blurRadius: 24,
-                offset: const Offset(0, 12),
+        // Main Open Binder/Notebook
+        Positioned(
+          top: 50,
+          child: Transform(
+            alignment: Alignment.center,
+            transform: Matrix4.identity()
+              ..setEntry(3, 2, 0.001)
+              ..rotateZ(0.12)
+              ..rotateX(-0.15),
+            child: Container(
+              width: 170,
+              height: 150,
+              decoration: BoxDecoration(
+                color: binderBg,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: outlineColor, width: 3),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isDark ? 0.4 : 0.08),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
+              child: Stack(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.white10 : const Color(0xFFF4F4F5),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      CupertinoIcons.doc_text_fill,
-                      size: 16,
-                      color: isDark ? Colors.white : const Color(0xFF18181B),
+                  // Yellow Ribbon Bookmark
+                  Positioned(
+                    top: 0,
+                    right: 35,
+                    child: Container(
+                      width: 16,
+                      height: 45,
+                      decoration: BoxDecoration(
+                        color: accentColor,
+                        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(4)),
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Laporan_Mei.pdf',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: isDark ? Colors.white : const Color(0xFF18181B),
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          'Siap diunduh',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: isDark ? const Color(0xFFA1A1AA) : const Color(0xFF71717A),
-                          ),
-                        ),
-                      ],
+                  // Binder Center Ring Line
+                  Center(
+                    child: Container(
+                      width: 2,
+                      height: double.infinity,
+                      color: outlineColor.withOpacity(0.3),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF18181B) : const Color(0xFFF4F4F5),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Sisa Anggaran',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: isDark ? const Color(0xFFA1A1AA) : const Color(0xFF71717A),
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '78% Aman',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: isDark ? Colors.white : const Color(0xFF18181B),
-                          ),
-                        ),
-                      ],
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: accentColor,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        CupertinoIcons.checkmark,
-                        size: 12,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            ),
+          ),
+        ),
+        // Floating Document Badges (PDF, CSV, XLS)
+        Positioned(
+          top: 85,
+          left: 50,
+          child: Transform.rotate(
+            angle: -0.15,
+            child: _buildFileBadge('PDF', isDark, outlineColor),
+          ),
+        ),
+        Positioned(
+          bottom: 45,
+          left: 70,
+          child: Transform.rotate(
+            angle: 0.1,
+            child: _buildFileBadge('XLS', isDark, outlineColor),
+          ),
+        ),
+        Positioned(
+          bottom: 35,
+          right: 50,
+          child: Transform.rotate(
+            angle: -0.2,
+            child: _buildFileBadge('CSV', isDark, outlineColor),
+          ),
+        ),
+        // Floating Spheres
+        Positioned(
+          bottom: 20,
+          right: 25,
+          child: Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE4E4E7),
+              shape: BoxShape.circle,
+            ),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildFileBadge(String label, bool isDark, Color outlineColor) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF18181B) : Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: outlineColor, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.12),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w800,
+          color: isDark ? Colors.white : const Color(0xFF18181B),
+          letterSpacing: 0.5,
+        ),
+      ),
     );
   }
 
@@ -790,6 +757,86 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       ),
     );
   }
+}
+
+// --- CUSTOM VECTOR PAINTERS ---
+
+class _LadderPainter extends CustomPainter {
+  final Color color;
+  _LadderPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 3.0
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    // Side poles
+    canvas.drawLine(const Offset(4, 0), Offset(4, size.height), paint);
+    canvas.drawLine(Offset(size.width - 4, 0), Offset(size.width - 4, size.height), paint);
+
+    // Rungs
+    final stepCount = 4;
+    final stepGap = size.height / (stepCount + 1);
+    for (int i = 1; i <= stepCount; i++) {
+      final y = stepGap * i;
+      canvas.drawLine(Offset(4, y), Offset(size.width - 4, y), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _WindingPathPainter extends CustomPainter {
+  final Color pathColor;
+  final Color dashColor;
+  _WindingPathPainter({required this.pathColor, required this.dashColor});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final fillPaint = Paint()
+      ..color = pathColor
+      ..style = PaintingStyle.fill;
+
+    final path = Path();
+    path.moveTo(size.width * 0.2, size.height);
+    path.cubicTo(
+      size.width * 0.3, size.height * 0.6,
+      size.width * 0.7, size.height * 0.4,
+      size.width * 0.5, 0,
+    );
+    path.lineTo(size.width * 0.58, 0);
+    path.cubicTo(
+      size.width * 0.8, size.height * 0.4,
+      size.width * 0.4, size.height * 0.7,
+      size.width * 0.8, size.height,
+    );
+    path.close();
+
+    canvas.drawPath(path, fillPaint);
+
+    // Dashed center line
+    final dashPaint = Paint()
+      ..color = dashColor
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke;
+
+    final dashPath = Path();
+    dashPath.moveTo(size.width * 0.5, size.height);
+    dashPath.cubicTo(
+      size.width * 0.52, size.height * 0.6,
+      size.width * 0.72, size.height * 0.3,
+      size.width * 0.54, 0,
+    );
+
+    canvas.drawPath(dashPath, dashPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 enum OnboardingType { balance, shared, report }
