@@ -166,49 +166,47 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
             ],
           ),
           bottomNavigationBar: SafeArea(
+            bottom: true,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(28),
+                borderRadius: BorderRadius.circular(36),
                 child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
                   child: Container(
-                    height: 70,
+                    height: 64,
                     decoration: BoxDecoration(
-                      color: Theme.of(context).cardColor.withOpacity(
-                            Theme.of(context).brightness == Brightness.dark
-                                ? 0.82
-                                : 0.9,
-                          ),
-                      borderRadius: BorderRadius.circular(28),
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF1C1C1E).withOpacity(0.92)
+                          : Colors.white.withOpacity(0.95),
+                      borderRadius: BorderRadius.circular(36),
                       border: Border.all(
-                        color: Theme.of(context).dividerColor.withOpacity(
-                            Theme.of(context).brightness == Brightness.dark
-                                ? 0.1
-                                : 0.05),
-                        width: 0.5,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white.withOpacity(0.1)
+                            : Colors.black.withOpacity(0.05),
+                        width: 1,
                       ),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(
                               Theme.of(context).brightness == Brightness.dark
-                                  ? 0.3
-                                  : 0.06),
-                          blurRadius: 15,
-                          offset: const Offset(0, 5),
+                                  ? 0.35
+                                  : 0.08),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
                         ),
                       ],
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           _buildNavItem(0),
                           _buildNavItem(1),
                           _buildAddButton(),
-                          _buildNavItem(3),
                           _buildNavItem(4),
+                          _buildNavItem(3),
                         ],
                       ),
                     ),
@@ -225,72 +223,51 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
   }
 
   Widget _buildNavItem(int index) {
-    IconData icon;
-    String label;
+    IconData activeIcon;
+    IconData inactiveIcon;
 
     switch (index) {
       case 0:
-        icon = _currentIndex == 0
-            ? CupertinoIcons.house_fill
-            : CupertinoIcons.house;
-        label = ToneManager.t('nav_home');
+        activeIcon = CupertinoIcons.house_fill;
+        inactiveIcon = CupertinoIcons.house_fill;
         break;
       case 1:
-        icon = _currentIndex == 1
-            ? CupertinoIcons.creditcard_fill
-            : CupertinoIcons.creditcard;
-        label = ToneManager.t('nav_wallet');
+        activeIcon = CupertinoIcons.creditcard_fill;
+        inactiveIcon = CupertinoIcons.creditcard_fill;
         break;
       case 3:
-        icon = _currentIndex == 3
-            ? CupertinoIcons.person_2_fill
-            : CupertinoIcons.person_2;
-        label = ToneManager.t('nav_colab');
+        activeIcon = CupertinoIcons.person_2_fill;
+        inactiveIcon = CupertinoIcons.person_2_fill;
         break;
       case 4:
-        icon = _currentIndex == 4
-            ? CupertinoIcons.chart_pie_fill
-            : CupertinoIcons.chart_pie;
-        label = ToneManager.t('nav_report');
+        activeIcon = CupertinoIcons.chart_pie_fill;
+        inactiveIcon = CupertinoIcons.chart_pie_fill;
         break;
       default:
-        icon = CupertinoIcons.question;
-        label = '';
+        activeIcon = CupertinoIcons.question;
+        inactiveIcon = CupertinoIcons.question;
     }
 
     final isActive = _currentIndex == index;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final activeColor = isDark ? const Color(0xFF0A84FF) : AppColors.primary;
+
+    final activeColor = isDark ? Colors.white : const Color(0xFF111827);
+    final inactiveColor = isDark ? const Color(0xFF6B7280) : const Color(0xFF9CA3AF);
 
     return GestureDetector(
       onTap: () => _onTabTapped(index),
       behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        decoration: BoxDecoration(
-          color: isActive ? activeColor.withOpacity(0.12) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 22,
-              color: isActive ? activeColor : Theme.of(context).hintColor,
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                color: isActive ? activeColor : Theme.of(context).hintColor,
-                letterSpacing: 0.05,
-              ),
-            ),
-          ],
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: AnimatedScale(
+          scale: isActive ? 1.1 : 1.0,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutCubic,
+          child: Icon(
+            isActive ? activeIcon : inactiveIcon,
+            size: 24,
+            color: isActive ? activeColor : inactiveColor,
+          ),
         ),
       ),
     );
@@ -437,46 +414,28 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
         animation: _fabController,
         builder: (context, child) {
           return Container(
-            width: 52,
-            height: 52,
-            transform: Matrix4.translationValues(
-                0, -6, 0), // Lift slightly above nav bar edge
+            width: 50,
+            height: 50,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  (Theme.of(context).brightness == Brightness.dark
-                          ? const Color(0xFF0A84FF)
-                          : AppColors.primary)
-                      .withOpacity(0.85),
-                  (Theme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFF0A84FF)
-                      : AppColors.primary),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(20), // iOS squircle shape
+              color: const Color(0xFF7C75D9), // Soft desaturated periwinkle pastel
+              shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(
-                      Theme.of(context).brightness == Brightness.dark
-                          ? 0.4
-                          : 0.15),
-                  blurRadius: 12,
+                  color: const Color(0xFF7C75D9).withOpacity(0.35),
+                  blurRadius: 14,
                   spreadRadius: 0,
                   offset: const Offset(0, 4),
                 ),
               ],
             ),
             child: Transform.scale(
-              scale: 1.0 + (_fabController.value * 0.1), // Slight pulse
+              scale: 1.0 + (_fabController.value * 0.08),
               child: Transform.rotate(
-                angle: _expandAnimation.value *
-                    (3.14159 / 4), // Rotate to forms an 'X'
-                child: const Icon(
-                  CupertinoIcons.plus,
+                angle: _expandAnimation.value * (3.14159 / 4),
+                child: Icon(
+                  _isExpanded ? CupertinoIcons.xmark : CupertinoIcons.viewfinder,
                   color: Colors.white,
-                  size: 28,
+                  size: 24,
                 ),
               ),
             ),

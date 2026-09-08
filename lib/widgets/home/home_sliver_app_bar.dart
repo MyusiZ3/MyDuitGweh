@@ -41,130 +41,89 @@ class HomeSliverAppBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : const Color(0xFF18181B);
+    final subTextColor = isDark ? const Color(0xFFA1A1AA) : const Color(0xFF71717A);
+
     return SliverAppBar(
       pinned: true,
       stretch: true,
       elevation: 0,
       surfaceTintColor: Colors.transparent,
-      backgroundColor:
-          Colors.transparent, // Background handled by flexibleSpace
+      backgroundColor: isDark ? const Color(0xFF121214) : const Color(0xFFF3F1F7),
       expandedHeight: 140,
       collapsedHeight: 70,
       automaticallyImplyLeading: false,
-      flexibleSpace: LayoutBuilder(
-        builder: (context, constraints) {
-          final top = constraints.biggest.height;
-          final isDark = Theme.of(context).brightness == Brightness.dark;
-          final headerColor =
-              isDark ? Theme.of(context).scaffoldBackgroundColor : Colors.white;
-          final textColor = isDark ? Colors.white : const Color(0xFF1D1D1F);
-          final subTextColor = isDark ? Colors.white70 : Colors.black54;
-
-          final collapsePercent = ((140 - top) / (140 - 70)).clamp(0.0, 1.0);
-          final isCollapsed = collapsePercent > 0.3; 
-
-          return FlexibleSpaceBar(
-            stretchModes: const [
-              StretchMode.blurBackground,
-              StretchMode.zoomBackground,
-            ],
-            centerTitle: false,
-            titlePadding: EdgeInsets.zero,
-            background: Container(color: headerColor),
-            title: ClipRect(
-              child: BackdropFilter(
-                filter: ui.ImageFilter.blur(
-                  sigmaX: 10 * collapsePercent,
-                  sigmaY: 10 * collapsePercent,
-                ),
-                child: Container(
-                  width: double.infinity,
-                  height: top,
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  decoration: BoxDecoration(
-                    color: headerColor.withOpacity(collapsePercent * 0.8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(collapsePercent * 0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: SafeArea(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Greeting Row (Smaller when collapsed)
-                        AnimatedOpacity(
-                          duration: const Duration(milliseconds: 200),
-                          opacity: 1.0,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _getGreetingText(),
-                                style: TextStyle(
-                                  fontSize: 10 + (2 * (1 - collapsePercent)),
-                                  color: subTextColor,
-                                  fontWeight: FontWeight.w500,
-                                  letterSpacing: 0.0,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Flexible(
-                                    child: Text(
-                                      _getDisplayName(user, limit: isCollapsed ? 8 : 15),
-                                      style: TextStyle(
-                                        fontSize:
-                                            18 + (10 * (1 - collapsePercent)),
-                                        fontWeight: FontWeight.w800,
-                                        color: textColor,
-                                        letterSpacing: -0.5 -
-                                            (0.8 * (1 - collapsePercent)),
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                      maxLines: 1,
-                                    ),
-                                  ),
-                                  if (isAdmin) ...[
-                                    const SizedBox(width: 8),
-                                    _buildAdminBadge(),
-                                  ],
-                                ],
-                              ),
-                              // Spacing to keep title aligned at bottom
-                              SizedBox(
-                                  height: 12 + (8 * (1 - collapsePercent))),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
       actions: [
         Padding(
-          padding: const EdgeInsets.only(right: 12),
+          padding: const EdgeInsets.only(right: 16, top: 8),
           child: Row(
             children: [
-              _buildActionButtons(context),
-              const SizedBox(width: 8),
+              _buildActionButton(
+                context,
+                icon: CupertinoIcons.bell,
+                badgeCount: unreadBroadcasts,
+                onTap: onNotificationsTap,
+              ),
+              const SizedBox(width: 10),
               _buildProfileAvatar(context),
             ],
           ),
         ),
       ],
+      flexibleSpace: FlexibleSpaceBar(
+        stretchModes: const [
+          StretchMode.blurBackground,
+        ],
+        centerTitle: false,
+        titlePadding: EdgeInsets.zero,
+        background: Container(
+          color: isDark ? const Color(0xFF121214) : const Color(0xFFF3F1F7),
+        ),
+        title: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: SafeArea(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _getGreetingText(),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: subTextColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        _getDisplayName(user),
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          color: textColor,
+                          letterSpacing: -0.8,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+                    ),
+                    if (isAdmin) ...[
+                      const SizedBox(width: 10),
+                      _buildAdminBadge(),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 12),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -219,46 +178,61 @@ class HomeSliverAppBar extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButtons(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            IconButton(
-              onPressed: onNotificationsTap,
-              icon: Icon(
-                CupertinoIcons.bell,
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.white
-                    : const Color(0xFF1D1D1F),
-                size: 26,
-              ),
+  Widget _buildActionButton(
+    BuildContext context, {
+    required IconData icon,
+    required int badgeCount,
+    required VoidCallback onTap,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E1E22) : Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-            if (unreadBroadcasts > 0)
-              Positioned(
-                top: 8,
-                right: 8,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                    color: AppColors.expense,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Text(
-                    unreadBroadcasts > 9 ? '9+' : '$unreadBroadcasts',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 8,
-                      fontWeight: FontWeight.bold,
-                    ),
+            child: Icon(
+              icon,
+              color: isDark ? Colors.white : const Color(0xFF18181B),
+              size: 20,
+            ),
+          ),
+          if (badgeCount > 0)
+            Positioned(
+              top: 2,
+              right: 2,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFEF4444),
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  badgeCount > 9 ? '9+' : '$badgeCount',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
-          ],
-        ),
-      ],
+            ),
+        ],
+      ),
     );
   }
 

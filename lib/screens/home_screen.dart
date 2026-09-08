@@ -12,10 +12,8 @@ import '../services/auth_service.dart';
 import '../services/connectivity_service.dart';
 import '../services/security_service.dart';
 import '../services/notification_service.dart';
-import '../models/transaction_model.dart';
 import '../models/wallet_model.dart';
 import '../widgets/shimmer_loading.dart';
-import '../widgets/connection_badge.dart';
 import '../models/debt_model.dart';
 import '../services/debt_service.dart';
 import '../utils/app_theme.dart';
@@ -23,6 +21,7 @@ import '../utils/currency_formatter.dart';
 import '../utils/ui_helper.dart';
 import '../utils/tone_dictionary.dart';
 import 'main_nav.dart';
+import 'add_transaction_screen.dart';
 import 'edit_profile_screen.dart';
 import 'help_screen.dart';
 import 'about_screen.dart';
@@ -35,7 +34,6 @@ import '../utils/theme_manager.dart';
 
 import '../widgets/home/home_sliver_app_bar.dart';
 import '../widgets/home/home_balance_card.dart';
-import '../widgets/home/home_budget_tracker.dart';
 import '../widgets/home/home_wallet_list.dart';
 import '../widgets/home/home_recent_transactions.dart';
 import '../widgets/home/home_recent_transactions_header.dart';
@@ -722,24 +720,45 @@ class _HomeScreenState extends State<HomeScreen> {
                           onNotificationsTap: _handleNotificationsTap,
                         ),
 
+                        // 1.5 BROADCAST & MAINTENANCE BANNERS
+                        SliverToBoxAdapter(
+                          child: _buildBroadcastAndMaintenanceBanners(),
+                        ),
+
                         // 2. MAIN BALANCE CARD
                         SliverPadding(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
                           sliver: SliverToBoxAdapter(
-                            child: HomeBalanceCard(
-                              totalBalance: totalBalance,
-                              netWorth: netWorth,
-                              isBalanceVisible: _isBalanceVisible,
-                              onToggleVisibility: () {
-                                setState(() {
-                                  _isBalanceVisible = !_isBalanceVisible;
-                                });
-                                SharedPreferences.getInstance().then((prefs) {
-                                  prefs.setBool(
-                                      'show_balance', _isBalanceVisible);
-                                });
+                            child: StreamBuilder<double>(
+                              stream: _firestoreService.getTodayExpenseStream(_uid),
+                              builder: (context, todayExpenseSnapshot) {
+                                final todayExpense = todayExpenseSnapshot.data ?? 0.0;
+
+                                return HomeBalanceCard(
+                                  totalBalance: totalBalance,
+                                  netWorth: netWorth,
+                                  todayExpense: todayExpense,
+                                  isBalanceVisible: _isBalanceVisible,
+                                  onToggleVisibility: () {
+                                    setState(() {
+                                      _isBalanceVisible = !_isBalanceVisible;
+                                    });
+                                    SharedPreferences.getInstance().then((prefs) {
+                                      prefs.setBool(
+                                          'show_balance', _isBalanceVisible);
+                                    });
+                                  },
+                                );
                               },
                             ),
+                          ),
+                        ),
+
+                        // 2.5 QUICK ACTIONS ROW (Send, Request, TopUp, More)
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                            child: _buildQuickActionsRow(context),
                           ),
                         ),
 
@@ -778,7 +797,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         SliverPadding(
                           padding: const EdgeInsets.only(bottom: 8),
                           sliver: SliverToBoxAdapter(
-                            child: HomeWalletList(wallets: wallets),
+                            child: HomeWalletList(
+                              wallets: wallets,
+                              isBalanceVisible: _isBalanceVisible,
+                            ),
                           ),
                         ),
 
@@ -1838,6 +1860,124 @@ class _HomeScreenState extends State<HomeScreen> {
               CurvedAnimation(parent: anim1, curve: Curves.easeOutBack)),
           child: child,
         ),
+      ),
+    );
+  }
+
+  Widget _buildQuickActionsRow(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1C1C22) : Colors.white;
+    final textColor = isDark ? Colors.white70 : const Color(0xFF4B5563);
+    final circleBgColor = isDark ? const Color(0xFF27272A) : const Color(0xFFF4F4F5);
+    final iconColor = isDark ? Colors.white : const Color(0xFF18181B);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.04),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.25 : 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _quickActionItem(
+            context,
+            icon: CupertinoIcons.arrow_up_right,
+            label: ToneManager.t('nav_manual'),
+            circleBgColor: circleBgColor,
+            iconColor: iconColor,
+            textColor: textColor,
+            onTap: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (_) => const AddTransactionScreen(),
+              );
+            },
+          ),
+          _quickActionItem(
+            context,
+            icon: CupertinoIcons.arrow_down_left,
+            label: ToneManager.t('nav_colab'),
+            circleBgColor: circleBgColor,
+            iconColor: iconColor,
+            textColor: textColor,
+            onTap: () => MainNav.of(context)?.setTab(3),
+          ),
+          _quickActionItem(
+            context,
+            icon: CupertinoIcons.creditcard,
+            label: ToneManager.t('nav_wallet'),
+            circleBgColor: circleBgColor,
+            iconColor: iconColor,
+            textColor: textColor,
+            onTap: () => MainNav.of(context)?.setTab(1),
+          ),
+          _quickActionItem(
+            context,
+            icon: CupertinoIcons.ellipsis,
+            label: ToneManager.t('nav_report'),
+            circleBgColor: circleBgColor,
+            iconColor: iconColor,
+            textColor: textColor,
+            onTap: () => MainNav.of(context)?.setTab(4),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _quickActionItem(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required Color circleBgColor,
+    required Color iconColor,
+    required Color textColor,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: circleBgColor,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              color: iconColor,
+              size: 20,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: textColor,
+              letterSpacing: -0.1,
+            ),
+          ),
+        ],
       ),
     );
   }

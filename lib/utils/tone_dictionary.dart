@@ -121,6 +121,20 @@ class ToneManager {
       AppTone.boomer: 'Wallets',
       AppTone.pasangan: 'Wallets',
     },
+    'add_card': {
+      AppTone.normal: 'Add Card',
+      AppTone.genZ: 'Add Card',
+      AppTone.milenial: 'Add Card',
+      AppTone.boomer: 'Add Card',
+      AppTone.pasangan: 'Add Card',
+    },
+    'add_wallet': {
+      AppTone.normal: 'Add Wallet',
+      AppTone.genZ: 'Add Wallet',
+      AppTone.milenial: 'Add Wallet',
+      AppTone.boomer: 'Add Wallet',
+      AppTone.pasangan: 'Add Wallet',
+    },
     'nav_colab': {
       AppTone.normal: 'Collab',
       AppTone.genZ: 'Collab',
