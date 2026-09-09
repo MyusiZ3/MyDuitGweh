@@ -1200,10 +1200,8 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                         );
                         if (confirmed == true) {
                           await widget.firestoreService.deleteTransaction(txn);
-                          if (context.mounted) {
-                            UIHelper.showSuccessSnackBar(
-                                context, 'Transaksi dihapus');
-                          }
+                          UIHelper.showSuccessSnackBar(
+                              context, 'Transaksi berhasil dihapus');
                         }
                       },
                       child: Container(

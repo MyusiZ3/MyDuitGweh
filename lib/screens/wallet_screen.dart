@@ -27,6 +27,7 @@ import '../widgets/wallet/slidable_delete_tile.dart';
 import '../widgets/wallet/expandable_transaction_tile.dart';
 import '../widgets/wallet/unified_wallet_group_card.dart';
 import '../widgets/wallet/debt_card.dart';
+import '../widgets/notched_section_card.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -385,6 +386,11 @@ class WalletScreenState extends State<WalletScreen>
                       w.walletName.toLowerCase().contains(_searchQuery) &&
                       w.isPersonal)
                   .toList();
+              filtered.sort((a, b) {
+                final cmp = b.balance.compareTo(a.balance);
+                if (cmp != 0) return cmp;
+                return b.createdAt.compareTo(a.createdAt);
+              });
               return _buildWalletSliverList(filtered, isColab: false);
             },
           ),
@@ -427,6 +433,11 @@ class WalletScreenState extends State<WalletScreen>
                       w.walletName.toLowerCase().contains(_searchQuery) &&
                       w.isColab)
                   .toList();
+              filtered.sort((a, b) {
+                final cmp = b.balance.compareTo(a.balance);
+                if (cmp != 0) return cmp;
+                return b.createdAt.compareTo(a.createdAt);
+              });
               return _buildWalletSliverList(filtered, isColab: true);
             },
           ),
@@ -1473,16 +1484,13 @@ class WalletScreenState extends State<WalletScreen>
     );
 
     if (confirmed == true) {
-      if (!context.mounted) return;
       try {
         await _debtService.deleteDebt(_uid, debt.id);
-        if (!context.mounted) return;
         UIHelper.showSuccessSnackBar(
             context,
             ToneManager.t('debt_success_delete')
                 .replaceAll('{type}', typeLabel));
       } catch (e) {
-        if (!context.mounted) return;
         UIHelper.showErrorSnackBar(context, 'Gagal menghapus: $e');
       }
     }
@@ -1497,12 +1505,14 @@ class WalletScreenState extends State<WalletScreen>
         initialChildSize: 0.7,
         minChildSize: 0.5,
         maxChildSize: 0.95,
-        builder: (_, scrollController) => Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          ),
-          child: Column(
+        builder: (_, scrollController) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          return Container(
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF09090B) : const Color(0xFFF4F4F5),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            ),
+            child: Column(
             children: [
               const SizedBox(height: 12),
               Container(
@@ -1998,37 +2008,85 @@ class WalletScreenState extends State<WalletScreen>
                       );
                     }
 
+                    final isDark =
+                        Theme.of(context).brightness == Brightness.dark;
+                    final grouped = _groupWalletTransactions(txns);
+
                     return ListView.builder(
                       controller: scrollController,
-                      padding: const EdgeInsets.all(20),
-                      itemCount: txns.length,
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                      itemCount: grouped.length,
                       itemBuilder: (context, index) {
-                        final t = txns[index];
-                        return SlidableDeleteTile(
-                          key: Key(t.id),
-                          onDelete: () async {
-                            if (t.createdBy != _uid) {
-                              UIHelper.showErrorSnackBar(context,
-                                  ToneManager.t('error_not_creator_delete'));
-                              return;
-                            }
-                            final confirmed = await UIHelper.showConfirmDialog(
-                              context: context,
-                              title: ToneManager.t('dialog_del_tx_title'),
-                              message: ToneManager.t('dialog_del_tx_msg'),
-                            );
-                            if (confirmed == true) {
-                              await _firestoreService.deleteTransaction(t);
-                              if (!context.mounted) return;
-                              UIHelper.showSuccessSnackBar(
-                                  context, 'Transaksi berhasil dihapus');
-                            }
-                          },
-                          child: ExpandableTransactionTile(
-                            t: t,
-                            wallet: wallet,
+                        final group = grouped[index];
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
+                              child: Text(
+                                _getWalletTxDateLabel(group.date).toUpperCase(),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.8,
+                                  color: isDark
+                                      ? const Color(0xFF71717A)
+                                      : const Color(0xFF9CA3AF),
+                                ),
+                              ),
+                            ),
+                            NotchedSectionCard(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              padding: EdgeInsets.zero,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(20),
+                                child: Column(
+                                children: [
+                                  for (int i = 0;
+                                      i < group.transactions.length;
+                                      i++) ...[
+                                    if (i > 0)
+                                      Divider(
+                                        height: 1,
+                                        thickness: 1,
+                                        indent: 64,
+                                        color: isDark
+                                            ? Colors.white.withOpacity(0.06)
+                                            : Colors.black.withOpacity(0.05),
+                                      ),
+                                    SlidableDeleteTile(
+                                      key: Key(group.transactions[i].id),
+                                      onDelete: () async {
+                                        final t = group.transactions[i];
+                                        if (t.createdBy != _uid) {
+                                          UIHelper.showErrorSnackBar(context,
+                                              ToneManager.t('error_not_creator_delete'));
+                                          return;
+                                        }
+                                        final confirmed = await UIHelper.showConfirmDialog(
+                                          context: context,
+                                          title: ToneManager.t('dialog_del_tx_title'),
+                                          message: ToneManager.t('dialog_del_tx_msg'),
+                                        );
+                                        if (confirmed == true) {
+                                          await _firestoreService.deleteTransaction(t);
+                                          UIHelper.showSuccessSnackBar(
+                                              context, 'Transaksi berhasil dihapus');
+                                        }
+                                      },
+                                      child: ExpandableTransactionTile(
+                                        t: group.transactions[i],
+                                        wallet: wallet,
+                                        isFlat: true,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
                           ),
-                        );
+                        ],
+                      );
                       },
                     );
                   },
@@ -2036,9 +2094,39 @@ class WalletScreenState extends State<WalletScreen>
               ),
             ],
           ),
-        ),
-      ),
-    );
+        );
+      },
+    ),
+  );
+}
+
+  List<_WalletTxGroup> _groupWalletTransactions(List<TransactionModel> txns) {
+    final Map<DateTime, List<TransactionModel>> grouped = {};
+
+    for (var tx in txns) {
+      final date = DateTime(tx.date.year, tx.date.month, tx.date.day);
+      if (grouped[date] == null) {
+        grouped[date] = [];
+      }
+      grouped[date]!.add(tx);
+    }
+
+    final sortedDates = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
+
+    return sortedDates
+        .map((date) => _WalletTxGroup(date, grouped[date]!))
+        .toList();
+  }
+
+  String _getWalletTxDateLabel(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+
+    if (date == today) return ToneManager.t('date_today');
+    if (date == yesterday) return ToneManager.t('date_yesterday');
+
+    return DateFormat('dd MMMM yyyy').format(date);
   }
 
   void _showAllMembersDialog(BuildContext context, WalletModel wallet) {
@@ -4949,14 +5037,10 @@ class _DebtDetailsSheet extends StatelessWidget {
           transaction: tx,
           debt: debt,
         );
-        if (context.mounted) {
-          UIHelper.showSuccessSnackBar(
-              context, ToneManager.t('debt_tx_success_delete'));
-        }
+        UIHelper.showSuccessSnackBar(
+            context, ToneManager.t('debt_tx_success_delete'));
       } catch (e) {
-        if (context.mounted) {
-          UIHelper.showErrorSnackBar(context, 'Gagal menghapus: $e');
-        }
+        UIHelper.showErrorSnackBar(context, 'Gagal menghapus: $e');
       }
     }
   }
@@ -5547,5 +5631,12 @@ class _DebtPaymentModalState extends State<_DebtPaymentModal> {
       ),
     );
   }
+}
+
+class _WalletTxGroup {
+  final DateTime date;
+  final List<TransactionModel> transactions;
+
+  _WalletTxGroup(this.date, this.transactions);
 }
 

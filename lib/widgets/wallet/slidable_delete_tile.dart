@@ -67,49 +67,52 @@ class _SlidableDeleteTileState extends State<SlidableDeleteTile>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final showDeleteBtn = _dragOffset < 0 || _controller.isAnimating;
+    final cardBgColor = isDark ? const Color(0xFF1C1C22) : Colors.white;
 
     return Stack(
       clipBehavior: Clip.none,
       children: [
         // Trash Can Action Button Layer (revealed on the right)
-        Positioned.fill(
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: GestureDetector(
-                onTap: () {
-                  _close();
-                  widget.onDelete();
-                },
-                child: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF27272A) : const Color(0xFFFFF7ED),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: const Color(0xFFF97316).withOpacity(0.5),
-                      width: 1.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFF97316).withOpacity(0.18),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
+        if (showDeleteBtn)
+          Positioned.fill(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: GestureDetector(
+                  onTap: () {
+                    _close();
+                    widget.onDelete();
+                  },
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF27272A) : const Color(0xFFFFF7ED),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: const Color(0xFFF97316).withOpacity(0.5),
+                        width: 1.5,
                       ),
-                    ],
-                  ),
-                  child: const Icon(
-                    CupertinoIcons.trash,
-                    color: Color(0xFFF97316),
-                    size: 20,
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFF97316).withOpacity(0.18),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      CupertinoIcons.trash,
+                      color: Color(0xFFF97316),
+                      size: 20,
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
 
         // Sliding Front Card
         AnimatedBuilder(
@@ -118,7 +121,10 @@ class _SlidableDeleteTileState extends State<SlidableDeleteTile>
             final offset = _controller.isAnimating ? _animation.value : _dragOffset;
             return Transform.translate(
               offset: Offset(offset, 0),
-              child: child,
+              child: Container(
+                color: offset < 0 ? cardBgColor : Colors.transparent,
+                child: child,
+              ),
             );
           },
           child: GestureDetector(

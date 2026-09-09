@@ -25,7 +25,11 @@ class FirestoreService {
           final list = snapshot.docs
               .map((doc) => WalletModel.fromJson(doc.data(), docId: doc.id))
               .toList();
-          list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          list.sort((a, b) {
+            final cmp = b.balance.compareTo(a.balance);
+            if (cmp != 0) return cmp;
+            return b.createdAt.compareTo(a.createdAt);
+          });
           return list;
         });
   }
@@ -36,9 +40,17 @@ class FirestoreService {
         .where('members', arrayContains: uid)
         .where('type', isEqualTo: 'personal')
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => WalletModel.fromJson(doc.data(), docId: doc.id))
-            .toList());
+        .map((snapshot) {
+          final list = snapshot.docs
+              .map((doc) => WalletModel.fromJson(doc.data(), docId: doc.id))
+              .toList();
+          list.sort((a, b) {
+            final cmp = b.balance.compareTo(a.balance);
+            if (cmp != 0) return cmp;
+            return b.createdAt.compareTo(a.createdAt);
+          });
+          return list;
+        });
   }
 
   Stream<List<WalletModel>> getColabWalletsStream(String uid) {
@@ -47,9 +59,17 @@ class FirestoreService {
         .where('members', arrayContains: uid)
         .where('type', isEqualTo: 'colab')
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => WalletModel.fromJson(doc.data(), docId: doc.id))
-            .toList());
+        .map((snapshot) {
+          final list = snapshot.docs
+              .map((doc) => WalletModel.fromJson(doc.data(), docId: doc.id))
+              .toList();
+          list.sort((a, b) {
+            final cmp = b.balance.compareTo(a.balance);
+            if (cmp != 0) return cmp;
+            return b.createdAt.compareTo(a.createdAt);
+          });
+          return list;
+        });
   }
 
   Future<String> createWallet(WalletModel wallet) async {

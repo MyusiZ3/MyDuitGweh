@@ -10,11 +10,13 @@ import '../../utils/currency_formatter.dart';
 class ExpandableTransactionTile extends StatefulWidget {
   final TransactionModel t;
   final WalletModel wallet;
+  final bool isFlat;
 
   const ExpandableTransactionTile({
     super.key,
     required this.t,
     required this.wallet,
+    this.isFlat = false,
   });
 
   @override
@@ -61,20 +63,25 @@ class _ExpandableTransactionTileState
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeInOut,
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF27272A) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: _isExpanded
-                ? (isDark ? Colors.white24 : Colors.black26)
-                : (isDark
-                    ? Colors.white.withOpacity(0.06)
-                    : Colors.black.withOpacity(0.04)),
-            width: _isExpanded ? 1.5 : 1.0,
-          ),
+        margin: widget.isFlat ? EdgeInsets.zero : const EdgeInsets.only(bottom: 8),
+        padding: EdgeInsets.symmetric(
+          horizontal: widget.isFlat ? 16 : 14,
+          vertical: 12,
         ),
+        decoration: widget.isFlat
+            ? null
+            : BoxDecoration(
+                color: isDark ? const Color(0xFF27272A) : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: _isExpanded
+                      ? (isDark ? Colors.white24 : Colors.black26)
+                      : (isDark
+                          ? Colors.white.withOpacity(0.06)
+                          : Colors.black.withOpacity(0.04)),
+                  width: _isExpanded ? 1.5 : 1.0,
+                ),
+              ),
         child: Column(
           children: [
             Row(

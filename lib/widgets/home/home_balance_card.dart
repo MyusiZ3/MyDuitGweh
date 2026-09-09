@@ -221,10 +221,8 @@ class HomeBalanceCard extends StatelessWidget {
                                   todayExpense > 0
                                       ? '- ${CurrencyFormatter.formatCurrency(todayExpense)}'
                                       : CurrencyFormatter.formatCurrency(0),
-                                  style: TextStyle(
-                                    color: todayExpense > 0
-                                        ? const Color(0xFFFFB4AB)
-                                        : Colors.white,
+                                  style: const TextStyle(
+                                    color: Colors.white,
                                     fontSize: 15,
                                     fontWeight: FontWeight.w800,
                                     letterSpacing: -0.3,

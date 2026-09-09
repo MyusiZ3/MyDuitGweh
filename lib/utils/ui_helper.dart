@@ -10,8 +10,8 @@ class UIHelper {
   static OverlayEntry? _connectivityOverlayEntry;
 
   static void showSuccessSnackBar(BuildContext context, String message) {
-    _showTopToast(context, message, AppColors.income,
-        CupertinoIcons.check_mark_circled_solid);
+    _showTopToast(
+        context, message, AppColors.income, CupertinoIcons.check_mark_circled_solid);
   }
 
   static void showErrorSnackBar(BuildContext context, String message) {
@@ -25,84 +25,120 @@ class UIHelper {
   static void showGlobalInfoToast(String message,
       {Color color = Colors.blueGrey,
       IconData icon = CupertinoIcons.shield_fill}) {
-    final context = navigatorKey.currentContext;
-    if (context != null) {
-      _showTopToast(context, message, color, icon);
-    } else {
-      debugPrint(
-          '--- UIHelper: GLOBAL TOAST FAILED - Context is NULL. Message: $message');
+    final ctx = navigatorKey.currentContext;
+    if (ctx != null) {
+      _showTopToast(ctx, message, color, icon);
+    } else if (navigatorKey.currentState?.overlay != null) {
+      _showTopToast(navigatorKey.currentContext ?? ctx!, message, color, icon);
     }
   }
 
   static void _showTopToast(
       BuildContext context, String message, Color color, IconData icon) {
     try {
-      final overlay = Overlay.maybeOf(context);
+      OverlayState? overlay;
+      if (context.mounted) {
+        overlay = Overlay.maybeOf(context);
+      }
+      overlay ??= navigatorKey.currentState?.overlay;
+
       if (overlay == null) {
         debugPrint(
-            '--- UIHelper: Overlay.of(context) is NULL. Cannot show toast: $message');
+            '--- UIHelper: Overlay is NULL. Cannot show toast: $message');
         return;
       }
 
-      final overlayEntry = OverlayEntry(
-        builder: (context) => Positioned(
-          top: MediaQuery.of(context).padding.top + 16,
-          left: 20,
-          right: 20,
-          child: Material(
-            color: Colors.transparent,
-            child: TweenAnimationBuilder<double>(
-              duration: const Duration(milliseconds: 400),
-              curve: Curves.easeOutBack,
-              tween: Tween(begin: 0.0, end: 1.0),
-              builder: (context, value, child) {
-                return Transform.translate(
-                  offset: Offset(0, -50 * (1 - value)),
-                  child: Opacity(
-                    opacity: value.clamp(0.0, 1.0),
-                    child: child,
-                  ),
-                );
-              },
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? const Color(0xF22C2C2E) // 0.95 opacity
-                        : const Color(0xF21C1C1E), // 0.95 opacity
-                    borderRadius: BorderRadius.circular(100),
-                    border: Border.all(
-                        color: const Color(0x26FFFFFF), width: 0.5),
-                    boxShadow: const [
-                      BoxShadow(
-                          color: Color(0x33000000),
-                          blurRadius: 10,
-                          offset: Offset(0, 5)),
-                    ],
-                  ),
-                  child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                                color: color.withOpacity(0.15),
-                                shape: BoxShape.circle),
-                            child: Icon(icon, color: color, size: 18),
+      HapticFeedback.lightImpact();
+
+      late OverlayEntry overlayEntry;
+
+      overlayEntry = OverlayEntry(
+        builder: (context) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final toastBg =
+              isDark ? const Color(0xCC1C1C1E) : const Color(0xEEF8F9FA);
+          final textColor = isDark ? Colors.white : const Color(0xFF18181B);
+          final borderColor = isDark
+              ? Colors.white.withOpacity(0.14)
+              : Colors.black.withOpacity(0.08);
+
+          return Positioned(
+            top: MediaQuery.of(context).padding.top + 18,
+            left: 20,
+            right: 20,
+            child: Material(
+              color: Colors.transparent,
+              child: TweenAnimationBuilder<double>(
+                duration: const Duration(milliseconds: 380),
+                curve: Curves.easeOutBack,
+                tween: Tween(begin: 0.0, end: 1.0),
+                builder: (context, value, child) {
+                  return Transform.translate(
+                    offset: Offset(0, -40 * (1 - value)),
+                    child: Transform.scale(
+                      scale: 0.92 + (0.08 * value),
+                      child: Opacity(
+                        opacity: value.clamp(0.0, 1.0),
+                        child: child,
+                      ),
+                    ),
+                  );
+                },
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: GestureDetector(
+                    onTap: () {
+                      if (overlayEntry.mounted) {
+                        overlayEntry.remove();
+                      }
+                    },
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(100),
+                      child: BackdropFilter(
+                        filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: toastBg,
+                            borderRadius: BorderRadius.circular(100),
+                            border: Border.all(color: borderColor, width: 1.0),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black
+                                    .withOpacity(isDark ? 0.35 : 0.08),
+                                blurRadius: 16,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 12),
-                          Flexible(
-                            child: Text(message,
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 14,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: color.withOpacity(0.15),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(icon, color: color, size: 14),
+                              ),
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: Text(
+                                  message,
+                                  style: TextStyle(
+                                    color: textColor,
+                                    fontSize: 12.5,
                                     fontWeight: FontWeight.w600,
-                                    letterSpacing: -0.2)),
+                                    letterSpacing: -0.2,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
@@ -110,6 +146,8 @@ class UIHelper {
               ),
             ),
           );
+        },
+      );
 
       overlay.insert(overlayEntry);
       Future.delayed(const Duration(seconds: 3), () {
@@ -148,13 +186,11 @@ class UIHelper {
               );
             },
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               decoration: BoxDecoration(
                 color: const Color(0xF2D32F2F), // 0.95 opacity red
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                    color: const Color(0x33FFFFFF), width: 1),
+                border: Border.all(color: const Color(0x33FFFFFF), width: 1),
                 boxShadow: const [
                   BoxShadow(
                     color: Color(0x4D000000),
@@ -164,49 +200,49 @@ class UIHelper {
                 ],
               ),
               child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: const BoxDecoration(
-                          color: Colors.white24,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(CupertinoIcons.wifi_exclamationmark,
-                            color: Colors.white, size: 20),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              ToneManager.t('offline_mode_title'),
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: -0.5,
-                              ),
-                            ),
-                            Text(
-                              ToneManager.t('offline_mode_msg'),
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: const BoxDecoration(
+                      color: Colors.white24,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(CupertinoIcons.wifi_exclamationmark,
+                        color: Colors.white, size: 20),
                   ),
-                ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          ToneManager.t('offline_mode_title'),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        Text(
+                          ToneManager.t('offline_mode_msg'),
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-        );
+        ),
+      ),
+    );
 
     overlay.insert(_connectivityOverlayEntry!);
   }
@@ -401,7 +437,8 @@ class UIHelper {
                                   ),
                                   child: Center(
                                     child: Text(
-                                      confirmText ?? ToneManager.t('dialog_yes'),
+                                      confirmText ??
+                                          ToneManager.t('dialog_yes'),
                                       style: TextStyle(
                                         color: isDangerous
                                             ? Colors.white
@@ -836,10 +873,10 @@ class UIHelper {
                                           color: isSelected
                                               ? activeColor.withOpacity(0.2)
                                               : isDark
-                                                  ? Colors.white.withOpacity(
-                                                      0.05)
-                                                  : Colors.grey.withOpacity(
-                                                      0.08),
+                                                  ? Colors.white
+                                                      .withOpacity(0.05)
+                                                  : Colors.grey
+                                                      .withOpacity(0.08),
                                           shape: BoxShape.circle,
                                         ),
                                         alignment: Alignment.center,
