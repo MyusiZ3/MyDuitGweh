@@ -107,28 +107,23 @@ class WalletScreenState extends State<WalletScreen>
                 elevation: 0,
                 scrolledUnderElevation: 0,
                 backgroundColor: isDark
-                    ? Colors.black.withOpacity(0.7)
-                    : Colors.white.withOpacity(0.7),
+                    ? const Color(0xB3000000) // 0.7 opacity black
+                    : const Color(0xB3FFFFFF), // 0.7 opacity white
                 surfaceTintColor: Colors.transparent,
-                flexibleSpace: ClipRect(
-                  child: BackdropFilter(
-                    filter: ui.ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                    child: FlexibleSpaceBar(
-                      titlePadding: const EdgeInsets.only(
-                          left: 24, bottom: 155, right: 60),
-                      centerTitle: false,
-                      title: Text(
-                        ToneManager.t('wallet_list_title'),
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 28,
-                          letterSpacing: -1.0,
-                          color: isDark ? Colors.white : Colors.black,
-                        ),
-                      ),
-                      background: Container(color: Colors.transparent),
+                flexibleSpace: FlexibleSpaceBar(
+                  titlePadding: const EdgeInsets.only(
+                      left: 24, bottom: 155, right: 60),
+                  centerTitle: false,
+                  title: Text(
+                    ToneManager.t('wallet_list_title'),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 28,
+                      letterSpacing: -1.0,
+                      color: isDark ? Colors.white : Colors.black,
                     ),
                   ),
+                  background: Container(color: Colors.transparent),
                 ),
                 actions: [
                   _buildHeaderActions(context, isDark),

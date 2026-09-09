@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -241,31 +240,24 @@ class _HomeScreenState extends State<HomeScreen> {
       pageBuilder: (ctx, anim1, anim2) => Center(
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 24),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 40,
-                  offset: const Offset(0, 15)),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(28),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-              child: Container(
-                padding: const EdgeInsets.all(28),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFF1C1C1E).withOpacity(0.9)
-                      : Colors.white.withOpacity(0.85),
-                  borderRadius: BorderRadius.circular(28),
-                  border: Border.all(
-                      color: Theme.of(context).dividerColor.withOpacity(0.1),
-                      width: 1),
-                ),
-                child: Column(
+          child: Container(
+            padding: const EdgeInsets.all(28),
+            decoration: BoxDecoration(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xE61C1C1E) // 0.9 opacity
+                  : const Color(0xD9FFFFFF), // 0.85 opacity
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(
+                  color: Theme.of(context).dividerColor.withOpacity(0.1),
+                  width: 1),
+              boxShadow: const [
+                BoxShadow(
+                    color: Color(0x1A000000), // 0.1 opacity
+                    blurRadius: 10,
+                    offset: Offset(0, 10)),
+              ],
+            ),
+            child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
@@ -322,8 +314,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-        ),
-      ),
       transitionBuilder: (ctx, anim1, anim2, child) => FadeTransition(
         opacity: anim1,
         child: SlideTransition(
@@ -1310,28 +1300,22 @@ class _HomeScreenState extends State<HomeScreen> {
                 bottom: MediaQuery.of(context).viewInsets.bottom),
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 32),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(32),
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 40,
-                      offset: const Offset(0, 10))
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(32),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                  child: Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).cardColor.withOpacity(0.9),
-                      border: Border.all(
-                          color:
-                              Theme.of(context).dividerColor.withOpacity(0.1)),
-                    ),
-                    child: Column(
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor.withOpacity(0.95),
+                  borderRadius: BorderRadius.circular(32),
+                  border: Border.all(
+                      color:
+                          Theme.of(context).dividerColor.withOpacity(0.1)),
+                  boxShadow: const [
+                    BoxShadow(
+                        color: Color(0x1A000000),
+                        blurRadius: 10,
+                        offset: Offset(0, 8))
+                  ],
+                ),
+                child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Container(
@@ -1461,8 +1445,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-        ),
-      ),
     );
   }
 
@@ -1739,32 +1721,25 @@ class _HomeScreenState extends State<HomeScreen> {
       pageBuilder: (ctx, anim1, anim2) => Center(
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 32),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(32),
-            boxShadow: [
-              BoxShadow(
-                  color: (isUrgent ? Colors.red : AppColors.primary)
-                      .withOpacity(0.2),
-                  blurRadius: 40,
-                  offset: const Offset(0, 20)),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(32),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-              child: Container(
-                padding: const EdgeInsets.all(32),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFF1C1C1E).withOpacity(0.9)
-                      : Colors.white.withOpacity(0.9),
-                  borderRadius: BorderRadius.circular(32),
-                  border: Border.all(
-                      color: Theme.of(context).dividerColor.withOpacity(0.1),
-                      width: 1.5),
-                ),
-                child: Column(
+          child: Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xE61C1C1E) // 0.9 opacity
+                  : const Color(0xE6FFFFFF), // 0.9 opacity
+              borderRadius: BorderRadius.circular(32),
+              border: Border.all(
+                  color: Theme.of(context).dividerColor.withOpacity(0.1),
+                  width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                    color: (isUrgent ? Colors.red : AppColors.primary)
+                        .withOpacity(0.15),
+                    blurRadius: 10,
+                    offset: const Offset(0, 10)),
+              ],
+            ),
+            child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
@@ -1851,8 +1826,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-        ),
-      ),
       transitionBuilder: (ctx, anim1, anim2, child) => FadeTransition(
         opacity: anim1,
         child: ScaleTransition(
@@ -1941,12 +1914,12 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           _quickActionItem(
             context,
-            icon: CupertinoIcons.creditcard,
-            label: ToneManager.t('quick_wallet'),
+            icon: CupertinoIcons.viewfinder,
+            label: 'Scan',
             circleBgColor: circleBgColor,
             iconColor: iconColor,
             textColor: textColor,
-            onTap: () => MainNav.of(context)?.setTab(1),
+            onTap: () => MainNav.of(context)?.startOCRScan(),
           ),
         ],
       ),

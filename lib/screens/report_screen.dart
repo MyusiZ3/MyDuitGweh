@@ -34,7 +34,7 @@ class ReportScreen extends StatefulWidget {
 
 class _ReportScreenState extends State<ReportScreen> {
   final FirestoreService _firestoreService = FirestoreService();
-  final String _uid = FirebaseAuth.instance.currentUser!.uid;
+  String get _uid => FirebaseAuth.instance.currentUser?.uid ?? '';
   DateTimeRange selectedDateRange = DateTimeRange(
     start: DateTime.now().subtract(const Duration(days: 30)),
     end: DateTime.now(),
@@ -85,7 +85,10 @@ class _ReportScreenState extends State<ReportScreen> {
   @override
   void initState() {
     super.initState();
-    _walletStream = _firestoreService.getWalletsStream(_uid);
+    final uid = _uid;
+    _walletStream = uid.isNotEmpty
+        ? _firestoreService.getWalletsStream(uid)
+        : Stream.value([]);
     _loadAIKey();
     _checkNotifStatus();
   }
@@ -290,8 +293,8 @@ class _ReportScreenState extends State<ReportScreen> {
         headerSliverBuilder: (context, innerBoxIsScrolled) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
           final headerColor = isDark
-              ? Colors.black.withOpacity(0.7)
-              : Colors.white.withOpacity(0.7);
+              ? const Color(0xB3000000) // 0.7 opacity black
+              : const Color(0xB3FFFFFF); // 0.7 opacity white
 
           return [
             SliverAppBar(
@@ -318,29 +321,23 @@ class _ReportScreenState extends State<ReportScreen> {
                 ),
                 const SizedBox(width: 8),
               ],
-              flexibleSpace: ClipRect(
-                child: BackdropFilter(
-                  filter: ui.ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                  child: FlexibleSpaceBar(
-                    stretchModes: const [
-                      StretchMode.blurBackground,
-                      StretchMode.zoomBackground,
-                    ],
-                    titlePadding: const EdgeInsets.only(left: 24, bottom: 16),
-                    centerTitle: false,
-                    title: Text(
-                      ToneManager.t('report_title'),
-                      style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 28,
-                        letterSpacing: -1.0,
-                        color: isDark ? Colors.white : Colors.black,
-                      ),
+              flexibleSpace: FlexibleSpaceBar(
+                  stretchModes: const [
+                    StretchMode.zoomBackground,
+                  ],
+                  titlePadding: const EdgeInsets.only(left: 24, bottom: 16),
+                  centerTitle: false,
+                  title: Text(
+                    ToneManager.t('report_title'),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 28,
+                      letterSpacing: -1.0,
+                      color: isDark ? Colors.white : Colors.black,
                     ),
-                    background: Container(color: headerColor),
                   ),
+                  background: Container(color: headerColor),
                 ),
-              ),
             ),
           ];
         },
