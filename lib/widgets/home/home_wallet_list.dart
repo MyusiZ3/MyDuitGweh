@@ -271,10 +271,10 @@ class HomeWalletList extends StatelessWidget {
           color: iconColor,
         );
       default:
-        return CardSlotIcon(
+        return Icon(
+          Icons.wallet_rounded,
           size: 19,
           color: iconColor,
-          strokeWidth: 1.8,
         );
     }
   }

@@ -4,6 +4,9 @@ import '../../utils/currency_formatter.dart';
 import '../../utils/tone_dictionary.dart';
 import '../bottom_sheets/create_wallet_sheet.dart';
 
+
+import '../../utils/app_theme.dart';
+
 class HomeBalanceCard extends StatelessWidget {
   final double totalBalance;
   final double netWorth;
@@ -101,10 +104,10 @@ class HomeBalanceCard extends StatelessWidget {
                     painter: NotchedCardPainter(
                       color: isDark
                           ? const Color(0xFF6B64DB)
-                          : const Color(0xFF8B85F6),
+                          : AppColors.primary,
                       shadowColor: (isDark
                               ? const Color(0xFF6B64DB)
-                              : const Color(0xFF8B85F6))
+                              : AppColors.primary)
                           .withOpacity(isDark ? 0.4 : 0.3),
                       radius: 28,
                       notchWidth: 140,
@@ -130,7 +133,7 @@ class HomeBalanceCard extends StatelessWidget {
                                 Row(
                                   children: [
                                     const Icon(
-                                      CupertinoIcons.creditcard_fill,
+                                      Icons.wallet_rounded,
                                       color: Colors.white,
                                       size: 20,
                                     ),

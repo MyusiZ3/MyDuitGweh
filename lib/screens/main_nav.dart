@@ -47,15 +47,17 @@ class _MainNavState extends State<MainNav> {
     });
   }
 
-  late final List<Widget> _screens = [
-    const HomeScreen(),
-    WalletScreen(key: _walletKey),
-    const ReportScreen(),
-    ColabScreen(key: _colabKey),
+  final Set<int> _activatedIndices = {0};
+
+  late final List<WidgetBuilder> _screenBuilders = [
+    (ctx) => const HomeScreen(),
+    (ctx) => WalletScreen(key: _walletKey),
+    (ctx) => const ReportScreen(),
+    (ctx) => ColabScreen(key: _colabKey),
   ];
 
   void _onTabTapped(int index) {
-    if (index < 0 || index >= _screens.length) return;
+    if (index < 0 || index >= _screenBuilders.length) return;
 
     // Reset screen search if we are leaving them
     if (_currentIndex == 1 && index != 1) {
@@ -66,6 +68,7 @@ class _MainNavState extends State<MainNav> {
     }
 
     setState(() {
+      _activatedIndices.add(index);
       _currentIndex = index;
     });
   }
@@ -104,51 +107,62 @@ class _MainNavState extends State<MainNav> {
 
   @override
   Widget build(BuildContext context) {
+    final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
+
     return Stack(
       children: [
         Scaffold(
+          resizeToAvoidBottomInset: false,
           extendBody: true, // Content flows behind the floating navbar
           body: Stack(
             children: [
               IndexedStack(
                 index: _currentIndex,
-                children: _screens,
+                children: List.generate(
+                  _screenBuilders.length,
+                  (index) => _activatedIndices.contains(index)
+                      ? _screenBuilders[index](context)
+                      : const SizedBox.shrink(),
+                ),
               ),
 
               // Bottom Gradient Fade (Modern Polish)
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: 150,
-                child: IgnorePointer(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Theme.of(context)
-                              .scaffoldBackgroundColor
-                              .withOpacity(0.0),
-                          Theme.of(context)
-                              .scaffoldBackgroundColor
-                              .withOpacity(0.8),
-                          Theme.of(context).scaffoldBackgroundColor,
-                        ],
-                        stops: const [0.0, 0.6, 1.0],
+              if (!isKeyboardOpen)
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: 150,
+                  child: IgnorePointer(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Theme.of(context)
+                                .scaffoldBackgroundColor
+                                .withOpacity(0.0),
+                            Theme.of(context)
+                                .scaffoldBackgroundColor
+                                .withOpacity(0.8),
+                            Theme.of(context).scaffoldBackgroundColor,
+                          ],
+                          stops: const [0.0, 0.6, 1.0],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
             ],
           ),
-          bottomNavigationBar: SafeArea(
-            bottom: true,
-            child: RepaintBoundary(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+          bottomNavigationBar: isKeyboardOpen
+              ? const SizedBox.shrink()
+              : SafeArea(
+                  bottom: true,
+                  child: RepaintBoundary(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
                 child: Align(
                   alignment: Alignment.bottomCenter,
                   child: Container(
