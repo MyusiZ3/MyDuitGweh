@@ -26,7 +26,7 @@ class HomeRecentTransactionsHeader extends StatelessWidget {
                 ),
               ),
               GestureDetector(
-                onTap: () => MainNav.of(context)?.setTab(4),
+                onTap: () => MainNav.of(context)?.setTab(2),
                 child: Text(
                   'Lihat Semua',
                   style: TextStyle(

@@ -25,73 +25,37 @@ class MainNav extends StatefulWidget {
   State<MainNav> createState() => _MainNavState();
 }
 
-class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
+class _MainNavState extends State<MainNav> {
   int _currentIndex = 0;
-  bool _isExpanded = false;
-  late AnimationController _fabController;
-  late Animation<double> _expandAnimation;
 
   // Keys to communicate with Screens
   final GlobalKey<WalletScreenState> _walletKey =
       GlobalKey<WalletScreenState>();
   final GlobalKey<ColabScreenState> _colabKey = GlobalKey<ColabScreenState>();
 
-  @override
-  void initState() {
-    super.initState();
-    _fabController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 450),
-    );
-    _expandAnimation = CurvedAnimation(
-      parent: _fabController,
-      curve: Curves.elasticOut, // Bouncier, premium feel
-      reverseCurve: Curves.easeInBack,
-    );
-  }
-
-  @override
-  void dispose() {
-    _fabController.dispose();
-    super.dispose();
-  }
-
-  void _toggleFAB() {
-    setState(() {
-      _isExpanded = !_isExpanded;
-      if (_isExpanded) {
-        _fabController.forward();
-      } else {
-        _fabController.reverse();
-      }
-    });
+  void startOCRScan() {
+    _startOCRScan();
   }
 
   void setTab(int index) {
     if (index == 2) {
-      _toggleFAB();
+      _showAddTransaction();
       return;
     }
     setState(() {
       _currentIndex = index;
-      _isExpanded = false;
-      _fabController.reverse();
     });
   }
 
   late final List<Widget> _screens = [
     const HomeScreen(),
     WalletScreen(key: _walletKey),
-    const SizedBox(), // placeholder for Add button
-    ColabScreen(key: _colabKey),
     const ReportScreen(),
+    ColabScreen(key: _colabKey),
   ];
 
   void _onTabTapped(int index) {
-    if (index == 2) {
-      _toggleFAB();
-      return;
-    }
+    if (index < 0 || index >= _screens.length) return;
 
     // Reset screen search if we are leaving them
     if (_currentIndex == 1 && index != 1) {
@@ -103,8 +67,6 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
 
     setState(() {
       _currentIndex = index;
-      _isExpanded = false;
-      _fabController.reverse();
     });
   }
 
@@ -116,6 +78,29 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
       builder: (_) => const AddTransactionScreen(),
     );
   }
+
+  static const List<_NavItemData> _navItems = [
+    _NavItemData(
+      label: 'Home',
+      activeIcon: Icons.home_rounded,
+      inactiveIcon: Icons.home_rounded,
+    ),
+    _NavItemData(
+      label: 'Wallet',
+      activeIcon: Icons.wallet_rounded,
+      inactiveIcon: Icons.wallet_outlined,
+    ),
+    _NavItemData(
+      label: 'Report',
+      activeIcon: Icons.bar_chart_rounded,
+      inactiveIcon: Icons.bar_chart_rounded,
+    ),
+    _NavItemData(
+      label: 'Collab',
+      activeIcon: CupertinoIcons.person_2_fill,
+      inactiveIcon: CupertinoIcons.person_2_fill,
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -129,12 +114,6 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
                 index: _currentIndex,
                 children: _screens,
               ),
-
-              // Action Buttons (Speed Dial Overlay)
-              if (_isExpanded) ...[
-                _buildSpeedDialBackdrop(),
-                _buildSpeedDialMenu(),
-              ],
 
               // Bottom Gradient Fade (Modern Polish)
               Positioned(
@@ -167,47 +146,38 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
           ),
           bottomNavigationBar: SafeArea(
             bottom: true,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(36),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+            child: RepaintBoundary(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                child: Align(
+                  alignment: Alignment.bottomCenter,
                   child: Container(
-                    height: 64,
+                    height: 58,
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? const Color(0xFF1C1C1E).withOpacity(0.92)
-                          : Colors.white.withOpacity(0.95),
-                      borderRadius: BorderRadius.circular(36),
+                      color: const Color(0xF218181B), // 0.95 opacity solid
+                      borderRadius: BorderRadius.circular(40),
                       border: Border.all(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.white.withOpacity(0.1)
-                            : Colors.black.withOpacity(0.05),
+                        color: const Color(0x1FFFFFFF), // 0.12 opacity white
                         width: 1,
                       ),
-                      boxShadow: [
+                      boxShadow: const [
                         BoxShadow(
-                          color: Colors.black.withOpacity(
-                              Theme.of(context).brightness == Brightness.dark
-                                  ? 0.35
-                                  : 0.08),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
+                          color: Color(0x59000000), // 0.35 opacity black
+                          blurRadius: 10,
+                          offset: Offset(0, 6),
                         ),
                       ],
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          _buildNavItem(0),
-                          _buildNavItem(1),
-                          _buildAddButton(),
-                          _buildNavItem(4),
-                          _buildNavItem(3),
-                        ],
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        _navItems.length,
+                        (index) => Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 2),
+                          child: _buildNavItem(index),
+                        ),
                       ),
                     ),
                   ),
@@ -223,186 +193,54 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
   }
 
   Widget _buildNavItem(int index) {
-    IconData activeIcon;
-    IconData inactiveIcon;
-
-    switch (index) {
-      case 0:
-        activeIcon = CupertinoIcons.house_fill;
-        inactiveIcon = CupertinoIcons.house_fill;
-        break;
-      case 1:
-        activeIcon = CupertinoIcons.creditcard_fill;
-        inactiveIcon = CupertinoIcons.creditcard_fill;
-        break;
-      case 3:
-        activeIcon = CupertinoIcons.person_2_fill;
-        inactiveIcon = CupertinoIcons.person_2_fill;
-        break;
-      case 4:
-        activeIcon = CupertinoIcons.chart_pie_fill;
-        inactiveIcon = CupertinoIcons.chart_pie_fill;
-        break;
-      default:
-        activeIcon = CupertinoIcons.question;
-        inactiveIcon = CupertinoIcons.question;
-    }
-
+    final item = _navItems[index];
     final isActive = _currentIndex == index;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final iconColor = isActive ? const Color(0xFF09090B) : const Color(0xFFA1A1AA);
 
-    final activeColor = isDark ? Colors.white : const Color(0xFF111827);
-    final inactiveColor = isDark ? const Color(0xFF6B7280) : const Color(0xFF9CA3AF);
+    Widget iconWidget;
+    if (index == 0) {
+      iconWidget = CustomHomeIcon(
+        size: 22,
+        color: iconColor,
+      );
+    } else {
+      iconWidget = Icon(
+        isActive ? item.activeIcon : item.inactiveIcon,
+        size: 22,
+        color: iconColor,
+      );
+    }
 
     return GestureDetector(
       onTap: () => _onTabTapped(index),
       behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        child: AnimatedScale(
-          scale: isActive ? 1.1 : 1.0,
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOutCubic,
-          child: Icon(
-            isActive ? activeIcon : inactiveIcon,
-            size: 24,
-            color: isActive ? activeColor : inactiveColor,
-          ),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+        padding: isActive
+            ? const EdgeInsets.symmetric(horizontal: 16, vertical: 8)
+            : const EdgeInsets.all(9),
+        decoration: BoxDecoration(
+          color: isActive ? Colors.white : const Color(0xFF27272A),
+          borderRadius: BorderRadius.circular(30),
         ),
-      ),
-    );
-  }
-
-  Widget _buildSpeedDialBackdrop() {
-    return Positioned.fill(
-      child: GestureDetector(
-        onTap: _toggleFAB,
-        child: ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-            child: Container(
-              color: (Theme.of(context).brightness == Brightness.dark
-                      ? Colors.black
-                      : Colors.black)
-                  .withOpacity(0.4),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSpeedDialMenu() {
-    final safeBottom = MediaQuery.of(context).padding.bottom;
-    return Positioned(
-      bottom: 104 + safeBottom, // Dynamically clears the floating navbar on all devices
-      left: 0,
-      right: 0,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          _buildSpeedDialItem(
-            icon: CupertinoIcons.viewfinder,
-            label: ToneManager.t('nav_scan'),
-            color: const Color(0xFF5856D6), // iOS Purple
-            onTap: () {
-              _toggleFAB();
-              _startOCRScan();
-            },
-            index: 1,
-          ),
-          const SizedBox(height: 16),
-          _buildSpeedDialItem(
-            icon: CupertinoIcons.pencil_ellipsis_rectangle,
-            label: ToneManager.t('nav_manual'),
-            color: const Color(0xFF007AFF), // iOS Blue
-            onTap: () {
-              _toggleFAB();
-              _showAddTransaction();
-            },
-            index: 0,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSpeedDialItem({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-    required int index,
-  }) {
-    final step = 1.0 / 2;
-    final start = index * step * 0.2; // Slight delay for staggered effect
-
-    final slideAnim = Tween<Offset>(
-      begin: const Offset(0, 0.5),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _fabController,
-      curve: Interval(start, 1.0, curve: Curves.easeOutCubic),
-    ));
-
-    final opacityAnim = CurvedAnimation(
-      parent: _fabController,
-      curve: Interval(start, 0.8, curve: Curves.easeIn),
-    );
-
-    return FadeTransition(
-      opacity: opacityAnim,
-      child: SlideTransition(
-        position: slideAnim,
-        child: ScaleTransition(
-          scale: opacityAnim,
-          child: GestureDetector(
-            onTap: onTap,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardColor.withOpacity(0.95),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                    color: Theme.of(context).dividerColor.withOpacity(0.5),
-                    width: 1.5),
-                boxShadow: [
-                  BoxShadow(
-                    color: color.withOpacity(
-                        Theme.of(context).brightness == Brightness.dark
-                            ? 0.4
-                            : 0.2),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            iconWidget,
+            if (isActive) ...[
+              const SizedBox(width: 6),
+              Text(
+                item.label,
+                style: const TextStyle(
+                  color: Color(0xFF09090B),
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.3,
+                ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Icon(icon, color: color, size: 24),
-                  ),
-                  const SizedBox(width: 16),
-                  Text(
-                    label,
-                    style: TextStyle(
-                      color: Theme.of(context).textTheme.titleMedium?.color,
-                      fontWeight: FontWeight.w600, // Semibold iOS Style
-                      fontSize: 17, // iOS Body Standard
-                      letterSpacing: -0.4,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+            ],
+          ],
         ),
       ),
     );
@@ -410,38 +248,27 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
 
   Widget _buildAddButton() {
     return GestureDetector(
-      onTap: _toggleFAB,
-      child: AnimatedBuilder(
-        animation: _fabController,
-        builder: (context, child) {
-          return Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: const Color(0xFF7C75D9), // Soft desaturated periwinkle pastel
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF7C75D9).withOpacity(0.35),
-                  blurRadius: 14,
-                  spreadRadius: 0,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+      onTap: _showAddTransaction,
+      child: Container(
+        width: 50,
+        height: 50,
+        decoration: BoxDecoration(
+          color: const Color(0xFF7C75D9), // Soft desaturated periwinkle pastel
+          shape: BoxShape.circle,
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x597C75D9), // 0.35 opacity
+              blurRadius: 10,
+              spreadRadius: 0,
+              offset: Offset(0, 4),
             ),
-            child: Transform.scale(
-              scale: 1.0 + (_fabController.value * 0.08),
-              child: Transform.rotate(
-                angle: _expandAnimation.value * (3.14159 / 4),
-                child: Icon(
-                  _isExpanded ? CupertinoIcons.xmark : CupertinoIcons.viewfinder,
-                  color: Colors.white,
-                  size: 24,
-                ),
-              ),
-            ),
-          );
-        },
+          ],
+        ),
+        child: const Icon(
+          CupertinoIcons.add,
+          color: Colors.white,
+          size: 26,
+        ),
       ),
     );
   }
@@ -581,3 +408,97 @@ class _MainNavState extends State<MainNav> with SingleTickerProviderStateMixin {
     }
   }
 }
+
+class _NavItemData {
+  final String label;
+  final IconData activeIcon;
+  final IconData inactiveIcon;
+
+  const _NavItemData({
+    required this.label,
+    required this.activeIcon,
+    required this.inactiveIcon,
+  });
+}
+
+class CustomHomeIcon extends StatelessWidget {
+  final double size;
+  final Color color;
+
+  const CustomHomeIcon({
+    super.key,
+    this.size = 22,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: CustomPaint(
+        painter: _HomeIconPainter(color: color),
+      ),
+    );
+  }
+}
+
+class _HomeIconPainter extends CustomPainter {
+  final Color color;
+
+  _HomeIconPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
+
+    final w = size.width;
+    final h = size.height;
+
+    final path = Path();
+    // Rounded top roof peak
+    path.moveTo(w * 0.40, h * 0.13);
+    path.quadraticBezierTo(w * 0.50, h * 0.04, w * 0.60, h * 0.13);
+
+    // Right roof slope & rounded eave
+    path.lineTo(w * 0.90, h * 0.38);
+    path.quadraticBezierTo(w * 0.96, h * 0.43, w * 0.96, h * 0.50);
+
+    // Right wall & rounded bottom right corner
+    path.lineTo(w * 0.96, h * 0.88);
+    path.quadraticBezierTo(w * 0.96, h * 0.95, w * 0.88, h * 0.95);
+
+    // Bottom right to door
+    path.lineTo(w * 0.63, h * 0.95);
+
+    // Shorter door cutout
+    path.lineTo(w * 0.63, h * 0.65);
+    path.arcToPoint(
+      Offset(w * 0.37, h * 0.65),
+      radius: Radius.circular(w * 0.13),
+      clockwise: false,
+    );
+    path.lineTo(w * 0.37, h * 0.95);
+
+    // Bottom left corner & wall
+    path.lineTo(w * 0.12, h * 0.95);
+    path.quadraticBezierTo(w * 0.04, h * 0.95, w * 0.04, h * 0.88);
+
+    // Left wall & rounded left eave
+    path.lineTo(w * 0.04, h * 0.50);
+    path.quadraticBezierTo(w * 0.04, h * 0.43, w * 0.10, h * 0.38);
+
+    path.close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _HomeIconPainter oldDelegate) =>
+      oldDelegate.color != color;
+}
+
+

@@ -5,7 +5,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/firestore_service.dart';
-import '../utils/app_theme.dart';
 import '../utils/ui_helper.dart';
 import '../widgets/empty_state_widget.dart';
 import '../widgets/loading_widget.dart';
@@ -173,18 +172,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.only(right: 20),
         decoration: BoxDecoration(
-          color: AppColors.expense.withOpacity(0.12),
+          color: const Color(0xFFF87171).withOpacity(0.12),
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Column(
+        child: const Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(CupertinoIcons.delete,
-                color: AppColors.expense, size: 22),
-            const SizedBox(height: 2),
+                color: Color(0xFFF87171), size: 22),
+            SizedBox(height: 2),
             Text('Hapus',
                 style: TextStyle(
-                    color: AppColors.expense,
+                    color: Color(0xFFF87171),
                     fontSize: 9,
                     fontWeight: FontWeight.w800)),
           ],
@@ -196,19 +195,21 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Widget _buildGlobalNotificationCard(
       BuildContext context, String id, Map<String, dynamic> data) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final type = data['type'] ?? 'info';
     final timestamp =
         (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
-    Color accentColor = AppColors.primary;
-    if (type == 'urgent') accentColor = Colors.orange[800]!;
-    if (type == 'news') accentColor = Colors.deepPurple;
+
+    Color accentColor = const Color(0xFF6366F1); // Brand Periwinkle
+    if (type == 'urgent') accentColor = const Color(0xFFF87171); // Pastel Coral
+    if (type == 'news') accentColor = const Color(0xFF818CF8); // Pastel Indigo
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: accentColor.withOpacity(0.05),
+        color: accentColor.withOpacity(isDark ? 0.12 : 0.08),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: accentColor.withOpacity(0.1)),
+        border: Border.all(color: accentColor.withOpacity(0.2)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -218,7 +219,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: accentColor.withOpacity(0.1),
+                color: accentColor.withOpacity(0.15),
                 shape: BoxShape.circle,
               ),
               child: Icon(CupertinoIcons.speaker_2_fill, color: accentColor, size: 20),
@@ -247,7 +248,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: accentColor.withOpacity(0.1),
+                          color: accentColor.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -290,22 +291,28 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Widget _buildNotificationCard(
       BuildContext context, String docId, Map<String, dynamic> data) {
-    final type = data['type'] ?? 'info'; // 'invite', 'transaction', 'info'
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final type = data['type'] ?? 'info';
     final isRead = data['isRead'] ?? false;
     final timestamp =
         (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
 
+    final cardBg = isDark ? const Color(0xFF1C1C22) : Colors.white;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: isRead
-            ? Theme.of(context).cardColor.withOpacity(0.6)
-            : Theme.of(context).cardColor,
+        color: isRead ? cardBg.withOpacity(0.6) : cardBg,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withOpacity(0.06)
+              : Colors.black.withOpacity(0.04),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
+            color: Colors.black.withOpacity(isDark ? 0.25 : 0.04),
+            blurRadius: 12,
             offset: const Offset(0, 4),
           )
         ],
@@ -366,7 +373,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     width: 8,
                     height: 8,
                     decoration: const BoxDecoration(
-                        color: AppColors.primary, shape: BoxShape.circle),
+                        color: Color(0xFF6366F1), shape: BoxShape.circle),
                   )
               ],
             ),
@@ -383,21 +390,21 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     switch (type) {
       case 'invite':
         icon = CupertinoIcons.person_add_solid;
-        color = AppColors.deepBlue;
+        color = const Color(0xFF6366F1); // Pastel Periwinkle
         break;
       case 'transaction':
         icon = CupertinoIcons.doc_text_fill;
-        color = AppColors.income;
+        color = const Color(0xFF34D399); // Pastel Mint
         break;
       default:
         icon = CupertinoIcons.bell_fill;
-        color = AppColors.primary;
+        color = const Color(0xFF6366F1);
     }
 
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withOpacity(0.12),
         shape: BoxShape.circle,
       ),
       child: Icon(icon, color: color, size: 20),
@@ -406,13 +413,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Widget _buildActionButtons(
       BuildContext context, String docId, Map<String, dynamic> data) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Row(
       children: [
         Expanded(
           child: ElevatedButton(
             onPressed: () => _respondToInvite(context, docId, data, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
+              backgroundColor: const Color(0xFF6366F1),
               foregroundColor: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
@@ -428,8 +436,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           child: OutlinedButton(
             onPressed: () => _respondToInvite(context, docId, data, false),
             style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: AppColors.expense),
-              foregroundColor: AppColors.expense,
+              side: BorderSide(
+                  color: isDark ? Colors.white.withOpacity(0.12) : Colors.black.withOpacity(0.12)),
+              foregroundColor: isDark ? const Color(0xFFA1A1AA) : const Color(0xFF71717A),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
               padding: const EdgeInsets.symmetric(vertical: 10),

@@ -84,8 +84,7 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
 
       await _controller!.initialize();
       try {
-        // Continuous focus helps keep the receipt sharp while moving
-        await _controller!.setFocusMode(FocusMode.locked);
+        await _controller!.setFlashMode(FlashMode.off);
         await _controller!.setFocusMode(FocusMode.auto);
       } catch (e) {
         debugPrint('Focus Mode Error: $e');
