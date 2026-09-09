@@ -468,58 +468,65 @@ class _ReportScreenState extends State<ReportScreen> {
                   padding: const EdgeInsets.only(
                       left: 20, right: 20, top: 20, bottom: 140),
                   children: [
-                    _buildQuickPresets(),
+                    _StaggeredReveal(index: 0, child: _buildQuickPresets()),
                     const SizedBox(height: 16),
-                    _buildDateFilter(),
+                    _StaggeredReveal(index: 1, child: _buildDateFilter()),
                     const SizedBox(height: 20),
-                    _buildSummaryCard(
-                        totalIncome - totalExpense, totalIncome, totalExpense),
+                    _StaggeredReveal(
+                      index: 2,
+                      child: _buildSummaryCard(
+                          totalIncome - totalExpense, totalIncome, totalExpense),
+                    ),
                     const SizedBox(height: 16),
-                    _buildAiAdvisorBanner(),
+                    _StaggeredReveal(index: 3, child: _buildAiAdvisorBanner()),
                     const SizedBox(height: 24),
                     if (_monthlyBudget > 0) ...[
-                      _buildBudgetRings(),
+                      _StaggeredReveal(index: 4, child: _buildBudgetRings()),
                       const SizedBox(height: 24),
                     ],
-                    NotchedSectionCard(
-                      radius: 28,
-                      padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
-                      child: Column(
-                        children: [
-                          _buildInsightToggle(),
-                          const SizedBox(height: 20),
-                          if (_isCategoryMode)
-                            if (totalExpense > 0)
-                              _buildInteractivePieChart(
-                                  sortedCategoryTotals, totalExpense)
+                    _StaggeredReveal(
+                      index: 5,
+                      child: NotchedSectionCard(
+                        radius: 28,
+                        padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
+                        child: Column(
+                          children: [
+                            _buildInsightToggle(),
+                            const SizedBox(height: 20),
+                            if (_isCategoryMode)
+                              if (totalExpense > 0)
+                                _buildInteractivePieChart(
+                                    sortedCategoryTotals, totalExpense)
+                              else
+                                const EmptyStateWidget(
+                                  title: 'Belum Ada Pengeluaran',
+                                  subtitle:
+                                      'Grafik kategori akan tampil setelah kamu mencatat transaksi pengeluaran.',
+                                  icon: CupertinoIcons.chart_pie_fill,
+                                  paddingVertical: 24,
+                                )
                             else
-                              const EmptyStateWidget(
-                                title: 'Belum Ada Pengeluaran',
-                                subtitle:
-                                    'Grafik kategori akan tampil setelah kamu mencatat transaksi pengeluaran.',
-                                icon: CupertinoIcons.chart_pie_fill,
-                                paddingVertical: 24,
-                              )
-                          else
-                            _buildWeeklyTrendChart(data),
-                          if (_isCategoryMode && totalExpense > 0) ...[
-                            const SizedBox(height: 20),
-                            const Divider(height: 1),
-                            const SizedBox(height: 20),
-                            _buildCategoryList(
-                                sortedCategoryTotals, totalExpense),
+                              _buildWeeklyTrendChart(data),
+                            if (_isCategoryMode && totalExpense > 0) ...[
+                              const SizedBox(height: 20),
+                              const Divider(height: 1),
+                              const SizedBox(height: 20),
+                              _buildCategoryList(
+                                  sortedCategoryTotals, totalExpense),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
-                    _buildActivityHeatmap(data),
+                    _StaggeredReveal(index: 6, child: _buildActivityHeatmap(data)),
                     const SizedBox(height: 32),
                     if (totalExpense > 0) ...[
-                      _buildStackedCategoryTimeline(data),
+                      _StaggeredReveal(
+                          index: 7, child: _buildStackedCategoryTimeline(data)),
                       const SizedBox(height: 32),
                     ],
-                    _buildNotifSettingsCard(),
+                    _StaggeredReveal(index: 8, child: _buildNotifSettingsCard()),
                     const SizedBox(height: 20),
                   ],
                 );
@@ -580,124 +587,120 @@ class _ReportScreenState extends State<ReportScreen> {
   Widget _buildAiAdvisorBanner() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: const Color(0xFF60A5FA),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF60A5FA).withOpacity(isDark ? 0.3 : 0.25),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: _openAiAdvisor,
-            borderRadius: BorderRadius.circular(24),
-            child: Padding(
-              padding: const EdgeInsets.all(18),
-              child: Row(
-                children: [
-                  Container(
-                    width: 46,
-                    height: 46,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: const Center(
-                      child: Icon(
-                        CupertinoIcons.sparkles,
-                        color: Color(0xFF2563EB),
-                        size: 22,
+    return _BouncingScaleButton(
+      onTap: _openAiAdvisor,
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: const Color(0xFF60A5FA),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF60A5FA).withOpacity(isDark ? 0.3 : 0.25),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Row(
+              children: [
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
                       ),
+                    ],
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      CupertinoIcons.sparkles,
+                      color: Color(0xFF2563EB),
+                      size: 22,
                     ),
                   ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              ToneManager.t('arch_ai_button'),
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                letterSpacing: -0.3,
-                              ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            ToneManager.t('arch_ai_button'),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              letterSpacing: -0.3,
                             ),
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.25),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: const Text(
-                                'AI',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          'Dapatkan analisa hemat & insight otomatis dari AI',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.white.withOpacity(0.92),
-                            height: 1.25,
                           ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.25),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text(
+                              'AI',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        'Dapatkan analisa hemat & insight otomatis dari AI',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white.withOpacity(0.92),
+                          height: 1.25,
                         ),
-                      ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                if (_isCheckingAi)
+                  const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                else
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      CupertinoIcons.chevron_right,
+                      size: 16,
+                      color: Colors.white,
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  if (_isCheckingAi)
-                    const SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                  else
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        CupertinoIcons.chevron_right,
-                        size: 16,
-                        color: Colors.white,
-                      ),
-                    ),
-                ],
-              ),
+              ],
             ),
           ),
         ),
@@ -5956,6 +5959,108 @@ class _AIAdvisorSheetState extends State<_AIAdvisorSheet> {
         );
       }
     });
+  }
+}
+
+class _StaggeredReveal extends StatefulWidget {
+  final Widget child;
+  final int index;
+  final Duration delayStep;
+
+  const _StaggeredReveal({
+    super.key,
+    required this.child,
+    required this.index,
+    this.delayStep = const Duration(milliseconds: 65),
+  });
+
+  @override
+  State<_StaggeredReveal> createState() => _StaggeredRevealState();
+}
+
+class _StaggeredRevealState extends State<_StaggeredReveal>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 550),
+    );
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutCubic,
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.12),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutCubic,
+    ));
+
+    Future.delayed(widget.delayStep * widget.index, () {
+      if (mounted) {
+        _controller.forward();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: widget.child,
+      ),
+    );
+  }
+}
+
+class _BouncingScaleButton extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onTap;
+
+  const _BouncingScaleButton({
+    super.key,
+    required this.child,
+    required this.onTap,
+  });
+
+  @override
+  State<_BouncingScaleButton> createState() => _BouncingScaleButtonState();
+}
+
+class _BouncingScaleButtonState extends State<_BouncingScaleButton> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
+      onTap: widget.onTap,
+      child: AnimatedScale(
+        scale: _isPressed ? 0.96 : 1.0,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOutCubic,
+        child: widget.child,
+      ),
+    );
   }
 }
 
