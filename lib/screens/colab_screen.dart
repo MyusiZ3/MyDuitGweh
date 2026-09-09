@@ -1,4 +1,3 @@
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
@@ -26,10 +25,15 @@ class ColabScreenState extends State<ColabScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
 
+  bool _isSearchOpen = false;
+
   void resetSearch() {
     if (mounted) {
       _searchController.clear();
-      setState(() => _searchQuery = "");
+      setState(() {
+        _searchQuery = "";
+        _isSearchOpen = false;
+      });
     }
   }
 
@@ -42,156 +46,226 @@ class ColabScreenState extends State<ColabScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: NestedScrollView(
-        physics: const ClampingScrollPhysics(),
-        headerSliverBuilder: (context, innerBoxIsScrolled) {
-          return [
-            SliverOverlapAbsorber(
-              handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
-              sliver: SliverAppBar(
-                pinned: true,
-                floating: false,
-                centerTitle: true,
-                expandedHeight: 115,
-                collapsedHeight: 70,
-                elevation: 0,
-                scrolledUnderElevation: 0,
-                backgroundColor: isDark
-                    ? const Color(0xB3000000) // 0.7 opacity black
-                    : const Color(0xB3FFFFFF), // 0.7 opacity white
-                surfaceTintColor: Colors.transparent,
-                flexibleSpace: FlexibleSpaceBar(
-                  titlePadding: const EdgeInsets.only(
-                      left: 24, bottom: 90, right: 60),
-                  centerTitle: false,
-                  title: Text(
-                    'Kolaborasi',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 28,
-                      letterSpacing: -1.0,
-                      color: isDark ? Colors.white : Colors.black,
-                    ),
-                  ),
-                  background: Container(color: Colors.transparent),
-                ),
-                actions: [
-                  Padding(
-                    padding: const EdgeInsets.only(right: 16),
-                    child: _IconButton(
-                      icon: CupertinoIcons.person_badge_plus,
-                      onPressed: _showJoinWalletDialog,
-                      isDark: isDark,
-                    ),
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            _buildHeader(context, isDark),
+            Expanded(
+              child: CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                  StreamBuilder<List<WalletModel>>(
+                    stream: _firestoreService.getColabWalletsStream(_uid),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting &&
+                          !snapshot.hasData) {
+                        return SliverPadding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 8),
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) => const Padding(
+                                padding: EdgeInsets.only(bottom: 10),
+                                child: ShimmerWalletCard(),
+                              ),
+                              childCount: 4,
+                            ),
+                          ),
+                        );
+                      }
+
+                      final wallets = snapshot.data ?? [];
+                      final filteredWallets = wallets.where((w) {
+                        return w.walletName.toLowerCase().contains(_searchQuery);
+                      }).toList();
+
+                      if (filteredWallets.isEmpty) {
+                        return SliverFillRemaining(
+                          hasScrollBody: false,
+                          child: _buildEmptyState(),
+                        );
+                      }
+
+                      return SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(20, 4, 20, 130),
+                        sliver: SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              final wallet = filteredWallets[index];
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child: _ColabWalletCard(
+                                  key: ValueKey(wallet.id),
+                                  wallet: wallet,
+                                  firestoreService: _firestoreService,
+                                  currentUid: _uid,
+                                ),
+                              );
+                            },
+                            childCount: filteredWallets.length,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ],
-                bottom: PreferredSize(
-                  preferredSize: const Size.fromHeight(65),
-                  child: Column(
-                    children: [
-                      _buildSearchBar(context, isDark),
-                      const SizedBox(height: 20),
-                    ],
-                  ),
-                ),
               ),
             ),
-          ];
-        },
-        body: Builder(
-          builder: (context) => CustomScrollView(
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              SliverOverlapInjector(
-                handle:
-                    NestedScrollView.sliverOverlapAbsorberHandleFor(context),
-              ),
-              StreamBuilder<List<WalletModel>>(
-                stream: _firestoreService.getColabWalletsStream(_uid),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting &&
-                      !snapshot.hasData) {
-                    return SliverPadding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 8),
-                      sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) => const Padding(
-                            padding: EdgeInsets.only(bottom: 10),
-                            child: ShimmerWalletCard(),
-                          ),
-                          childCount: 4,
-                        ),
-                      ),
-                    );
-                  }
-
-                  final wallets = snapshot.data ?? [];
-                  final filteredWallets = wallets.where((w) {
-                    return w.walletName.toLowerCase().contains(_searchQuery);
-                  }).toList();
-
-                  if (filteredWallets.isEmpty) {
-                    return SliverFillRemaining(
-                      hasScrollBody: false,
-                      child: _buildEmptyState(),
-                    );
-                  }
-
-                  return SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 120),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final wallet = filteredWallets[index];
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: _ColabWalletCard(
-                              key: ValueKey(wallet.id),
-                              wallet: wallet,
-                              firestoreService: _firestoreService,
-                              currentUid: _uid,
-                            ),
-                          );
-                        },
-                        childCount: filteredWallets.length,
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildSearchBar(BuildContext context, bool isDark) {
+  Widget _buildHeader(BuildContext context, bool isDark) {
+    return Container(
+      color: isDark
+          ? const Color(0xFF000000)
+          : Theme.of(context).scaffoldBackgroundColor,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 16, 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Kolaborasi',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 24,
+                      letterSpacing: -0.8,
+                      color: isDark ? Colors.white : Colors.black,
+                    ),
+                  ),
+                ),
+                _buildHeaderActions(context, isDark),
+              ],
+            ),
+          ),
+          if (_isSearchOpen) ...[
+            _buildSearchBar(context, isDark),
+            const SizedBox(height: 8),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeaderActions(BuildContext context, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Container(
-        height: 44,
-        decoration: BoxDecoration(
+      padding: const EdgeInsets.only(right: 4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildCircularIconButton(
+            icon: _isSearchOpen ? CupertinoIcons.xmark : CupertinoIcons.search,
+            onPressed: () {
+              setState(() {
+                _isSearchOpen = !_isSearchOpen;
+                if (!_isSearchOpen) {
+                  _searchController.clear();
+                  _searchQuery = "";
+                }
+              });
+            },
+            isDark: isDark,
+            isActive: _isSearchOpen,
+          ),
+          _buildCircularIconButton(
+            icon: CupertinoIcons.person_badge_plus,
+            onPressed: _showJoinWalletDialog,
+            isDark: isDark,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCircularIconButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+    required bool isDark,
+    bool isActive = false,
+  }) {
+    final bg = isActive
+        ? (isDark ? Colors.white : const Color(0xFF18181B))
+        : (isDark ? const Color(0xFF1C1C22) : const Color(0xFFF4F4F5));
+    final iconColor = isActive
+        ? (isDark ? const Color(0xFF18181B) : Colors.white)
+        : (isDark ? Colors.white : const Color(0xFF18181B));
+
+    return Container(
+      margin: const EdgeInsets.only(left: 8),
+      decoration: BoxDecoration(
+        color: bg,
+        shape: BoxShape.circle,
+        border: Border.all(
           color: isDark
-              ? const Color(0xFF2C2C2E)
-              : const Color(0xFF767680).withOpacity(0.12),
-          borderRadius: BorderRadius.circular(12),
+              ? Colors.white.withOpacity(0.08)
+              : Colors.black.withOpacity(0.05),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.25 : 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: IconButton(
+        icon: Icon(icon, size: 18),
+        color: iconColor,
+        onPressed: onPressed,
+        constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+        padding: EdgeInsets.zero,
+      ),
+    );
+  }
+
+  Widget _buildSearchBar(BuildContext context, bool isDark) {
+    final bg = isDark ? const Color(0xFF1C1C22) : const Color(0xFFF4F4F5);
+    final borderColor = isDark
+        ? Colors.white.withOpacity(0.06)
+        : Colors.black.withOpacity(0.04);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Container(
+        height: 40,
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: borderColor, width: 1),
         ),
         child: TextField(
           controller: _searchController,
+          scrollPadding: EdgeInsets.zero,
+          style: TextStyle(
+            fontSize: 13.5,
+            color: isDark ? Colors.white : const Color(0xFF18181B),
+          ),
           onChanged: (val) => setState(() => _searchQuery = val.toLowerCase()),
-          style: const TextStyle(fontSize: 16),
           decoration: InputDecoration(
             hintText: 'Cari dompet kolaborasi...',
             hintStyle: TextStyle(
-              color: Theme.of(context).hintColor.withOpacity(0.5),
-              fontSize: 15,
+              color: isDark ? Colors.white38 : const Color(0xFF9CA3AF),
+              fontSize: 13.5,
             ),
-            prefixIcon: Icon(CupertinoIcons.search,
-                color: Theme.of(context).hintColor.withOpacity(0.5), size: 18),
+            prefixIcon: Icon(
+              CupertinoIcons.search,
+              color: isDark ? Colors.white38 : const Color(0xFF9CA3AF),
+              size: 16,
+            ),
             suffixIcon: _searchQuery.isEmpty
                 ? null
                 : GestureDetector(
@@ -199,12 +273,14 @@ class ColabScreenState extends State<ColabScreen> {
                       _searchController.clear();
                       setState(() => _searchQuery = "");
                     },
-                    child: Icon(CupertinoIcons.xmark_circle_fill,
-                        color: Theme.of(context).hintColor.withOpacity(0.5),
-                        size: 18),
+                    child: Icon(
+                      CupertinoIcons.xmark_circle_fill,
+                      color: isDark ? Colors.white38 : const Color(0xFF9CA3AF),
+                      size: 16,
+                    ),
                   ),
             border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(vertical: 11),
+            contentPadding: const EdgeInsets.symmetric(vertical: 10),
           ),
         ),
       ),
@@ -1357,42 +1433,6 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _IconButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onPressed;
-  final bool isDark;
-
-  const _IconButton({
-    required this.icon,
-    required this.onPressed,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () {
-        HapticFeedback.mediumImpact();
-        onPressed();
-      },
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: (isDark ? const Color(0xFF0A84FF) : AppColors.primary)
-              .withOpacity(0.1),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(
-          icon,
-          size: 24,
-          color: isDark ? const Color(0xFF0A84FF) : AppColors.primary,
         ),
       ),
     );
