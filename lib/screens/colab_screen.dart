@@ -126,9 +126,7 @@ class ColabScreenState extends State<ColabScreen> {
 
   Widget _buildHeader(BuildContext context, bool isDark) {
     return Container(
-      color: isDark
-          ? const Color(0xFF000000)
-          : Theme.of(context).scaffoldBackgroundColor,
+      color: Theme.of(context).scaffoldBackgroundColor,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -199,7 +197,7 @@ class ColabScreenState extends State<ColabScreen> {
   }) {
     final bg = isActive
         ? (isDark ? Colors.white : const Color(0xFF18181B))
-        : (isDark ? const Color(0xFF1C1C22) : const Color(0xFFF4F4F5));
+        : (isDark ? const Color(0xFF18181B) : const Color(0xFFF4F4F5));
     final iconColor = isActive
         ? (isDark ? const Color(0xFF18181B) : Colors.white)
         : (isDark ? Colors.white : const Color(0xFF18181B));
@@ -211,13 +209,13 @@ class ColabScreenState extends State<ColabScreen> {
         shape: BoxShape.circle,
         border: Border.all(
           color: isDark
-              ? Colors.white.withOpacity(0.08)
+              ? Colors.white.withOpacity(0.1)
               : Colors.black.withOpacity(0.05),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.25 : 0.04),
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -234,10 +232,10 @@ class ColabScreenState extends State<ColabScreen> {
   }
 
   Widget _buildSearchBar(BuildContext context, bool isDark) {
-    final bg = isDark ? const Color(0xFF1C1C22) : const Color(0xFFF4F4F5);
+    final bg = isDark ? const Color(0xFF18181B) : const Color(0xFFF4F4F5);
     final borderColor = isDark
-        ? Colors.white.withOpacity(0.06)
-        : Colors.black.withOpacity(0.04);
+        ? Colors.white.withOpacity(0.1)
+        : Colors.black.withOpacity(0.05);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -355,10 +353,10 @@ class ColabScreenState extends State<ColabScreen> {
         builder: (sbCtx, setModalState) {
           final isDark = Theme.of(sbCtx).brightness == Brightness.dark;
           final backgroundColor =
-              isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7);
-          final sectionColor = isDark ? const Color(0xFF2C2C2E) : Colors.white;
+              isDark ? const Color(0xFF18181B) : const Color(0xFFF2F2F7);
+          final sectionColor = isDark ? const Color(0xFF27272A) : Colors.white;
           final primaryBlue =
-              isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF);
+              isDark ? const Color(0xFF38BDF8) : const Color(0xFF007AFF);
 
           return Container(
             padding: EdgeInsets.only(
@@ -599,21 +597,23 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF18181B) : Theme.of(context).cardColor;
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
+        color: cardBg,
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.1 : 0.04),
-            blurRadius: 12,
+            color: Colors.black.withOpacity(isDark ? 0.25 : 0.04),
+            blurRadius: 14,
             offset: const Offset(0, 4),
           ),
         ],
         border: Border.all(
-          color:
-              Theme.of(context).dividerColor.withOpacity(isDark ? 0.05 : 0.08),
-          width: 0.5,
+          color: isDark
+              ? Colors.white.withOpacity(0.08)
+              : Colors.black.withOpacity(0.05),
+          width: 0.8,
         ),
       ),
       child: ClipRRect(
@@ -638,7 +638,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                         builder: (context, unreadSnap) {
                           final unreadCount = unreadSnap.data ?? 0;
                           final accentColor = isDark
-                              ? const Color(0xFF0A84FF)
+                              ? const Color(0xFF38BDF8)
                               : AppColors.deepBlue;
 
                           return Stack(
@@ -789,7 +789,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
 
   Widget _buildExpandedContent() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accentColor = isDark ? const Color(0xFF0A84FF) : AppColors.primary;
+    final accentColor = isDark ? const Color(0xFF38BDF8) : AppColors.primary;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
@@ -969,7 +969,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
           final isMe = uid == widget.currentUid;
           final canKick = widget.wallet.owner == widget.currentUid && !isOwner;
           final accentColor =
-              isDark ? const Color(0xFF0A84FF) : AppColors.primary;
+              isDark ? const Color(0xFF38BDF8) : AppColors.primary;
 
           return Container(
             padding: EdgeInsets.fromLTRB(10, 6, canKick ? 5 : 12, 6),
@@ -1288,123 +1288,143 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setModalState) => Container(
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 24,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 32,
-          ),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-          ),
-          child: SingleChildScrollView(
-            padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).padding.bottom),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
+        builder: (ctx, setModalState) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final accentColor =
+              isDark ? const Color(0xFF38BDF8) : AppColors.primary;
+          final sheetBg =
+              isDark ? const Color(0xFF18181B) : Theme.of(context).cardColor;
+          final inputBg =
+              isDark ? const Color(0xFF27272A) : const Color(0xFFF4F4F5);
+
+          return Container(
+            padding: EdgeInsets.only(
+              left: 24,
+              right: 24,
+              top: 24,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 32,
+            ),
+            decoration: BoxDecoration(
+              color: sheetBg,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(32)),
+            ),
+            child: SingleChildScrollView(
+              padding:
+                  EdgeInsets.only(bottom: MediaQuery.of(ctx).padding.bottom),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white24 : Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.white24
-                          : Colors.grey[300],
-                      borderRadius: BorderRadius.circular(2),
+                      color: accentColor.withOpacity(0.12),
+                      shape: BoxShape.circle,
                     ),
+                    child: Icon(CupertinoIcons.person_add_solid,
+                        color: accentColor, size: 36),
                   ),
-                ),
-                const SizedBox(height: 24),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.08),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(CupertinoIcons.person_add_solid,
-                      color: AppColors.primary, size: 36),
-                ),
-                const SizedBox(height: 20),
-                Text('Undang Anggota',
+                  const SizedBox(height: 20),
+                  Text('Undang Anggota',
+                      style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          color: isDark
+                              ? Colors.white
+                              : Theme.of(context).textTheme.titleLarge?.color)),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Masukkan email akun teman yang sudah\nterdaftar di MyDuitGweh.',
+                    textAlign: TextAlign.center,
                     style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                        color: Theme.of(context).textTheme.titleLarge?.color)),
-                const SizedBox(height: 8),
-                Text(
-                  'Masukkan email akun teman yang sudah\nterdaftar di MyDuitGweh.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      color: Theme.of(context).hintColor,
-                      fontSize: 13,
-                      height: 1.5),
-                ),
-                const SizedBox(height: 24),
-                TextField(
-                  controller: emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    hintText: 'contoh@email.com',
-                    prefixIcon: const Icon(CupertinoIcons.mail,
-                        color: AppColors.primary),
-                    filled: true,
-                    fillColor: Theme.of(context).canvasColor,
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide.none),
-                    focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(
-                            color: AppColors.primary, width: 2)),
+                        color: isDark
+                            ? Colors.white60
+                            : Theme.of(context).hintColor,
+                        fontSize: 13,
+                        height: 1.5),
                   ),
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: isSending
-                        ? null
-                        : () async {
-                            final email = emailController.text.trim();
-                            if (email.isEmpty) {
-                              UIHelper.showErrorSnackBar(
-                                  ctx, 'Email tidak boleh kosong! ✉️');
-                              return;
-                            }
-                            if (!email.contains('@') || !email.contains('.')) {
-                              UIHelper.showErrorSnackBar(
-                                  ctx, 'Format email tidak valid 😕');
-                              return;
-                            }
-                            setModalState(() => isSending = true);
-                            final success =
-                                await widget.firestoreService.addMemberByEmail(
-                              widget.wallet.id,
-                              email,
-                            );
-                            if (!ctx.mounted) return;
-                            Navigator.pop(ctx);
-                            if (success) {
-                              if (mounted) {
-                                UIHelper.showSuccessSnackBar(
-                                    context, 'Undangan berhasil dikirim!');
-                              }
-                            } else {
-                              if (mounted) {
-                                UIHelper.showErrorSnackBar(context,
-                                    'Email tidak ditemukan atau sudah bergabung');
-                              }
-                            }
-                          },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16)),
+                  const SizedBox(height: 24),
+                  TextField(
+                    controller: emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDark ? Colors.white : Colors.black87,
                     ),
+                    decoration: InputDecoration(
+                      hintText: 'contoh@email.com',
+                      hintStyle: TextStyle(
+                        color: isDark ? Colors.white38 : Colors.grey,
+                      ),
+                      prefixIcon: Icon(CupertinoIcons.mail, color: accentColor),
+                      filled: true,
+                      fillColor: inputBg,
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none),
+                      focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide:
+                              BorderSide(color: accentColor, width: 2)),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: isSending
+                          ? null
+                          : () async {
+                              final email = emailController.text.trim();
+                              if (email.isEmpty) {
+                                UIHelper.showErrorSnackBar(
+                                    ctx, 'Email tidak boleh kosong! ✉️');
+                                return;
+                              }
+                              if (!email.contains('@') ||
+                                  !email.contains('.')) {
+                                UIHelper.showErrorSnackBar(
+                                    ctx, 'Format email tidak valid 😕');
+                                return;
+                              }
+                              setModalState(() => isSending = true);
+                              final success = await widget.firestoreService
+                                  .addMemberByEmail(
+                                widget.wallet.id,
+                                email,
+                              );
+                              if (!ctx.mounted) return;
+                              Navigator.pop(ctx);
+                              if (success) {
+                                if (mounted) {
+                                  UIHelper.showSuccessSnackBar(
+                                      context, 'Undangan berhasil dikirim!');
+                                }
+                              } else {
+                                if (mounted) {
+                                  UIHelper.showErrorSnackBar(context,
+                                      'Email tidak ditemukan atau sudah bergabung');
+                                }
+                              }
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: accentColor,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16)),
+                      ),
                     child: isSending
                         ? const SizedBox(
                             width: 22,
@@ -1421,8 +1441,8 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
               ],
             ),
           ),
-        ),
-      ),
+        );
+      }),
     );
   }
 }
