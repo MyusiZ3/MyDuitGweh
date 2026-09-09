@@ -23,6 +23,7 @@ import '../widgets/bottom_sheets/create_wallet_sheet.dart';
 import '../widgets/empty_state_widget.dart';
 import '../widgets/wallet/subscription_card.dart';
 import '../widgets/wallet/keep_alive_wrapper.dart';
+import '../widgets/wallet/slidable_delete_tile.dart';
 import '../widgets/wallet/expandable_transaction_tile.dart';
 import '../widgets/wallet/unified_wallet_group_card.dart';
 import '../widgets/wallet/debt_card.dart';
@@ -204,7 +205,7 @@ class WalletScreenState extends State<WalletScreen>
 
   Widget _buildHeaderActions(BuildContext context, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.only(right: 16),
+      padding: const EdgeInsets.only(right: 4),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -2003,41 +2004,26 @@ class WalletScreenState extends State<WalletScreen>
                       itemCount: txns.length,
                       itemBuilder: (context, index) {
                         final t = txns[index];
-                        return Dismissible(
+                        return SlidableDeleteTile(
                           key: Key(t.id),
-                          direction: DismissDirection.endToStart,
-                          confirmDismiss: (direction) async {
-                            // Restriction: only the creator can delete their transaction
+                          onDelete: () async {
                             if (t.createdBy != _uid) {
                               UIHelper.showErrorSnackBar(context,
                                   ToneManager.t('error_not_creator_delete'));
-                              return false;
+                              return;
                             }
-                            return await UIHelper.showConfirmDialog(
+                            final confirmed = await UIHelper.showConfirmDialog(
                               context: context,
                               title: ToneManager.t('dialog_del_tx_title'),
                               message: ToneManager.t('dialog_del_tx_msg'),
                             );
-                          },
-                          onDismissed: (direction) async {
-                            if (t.createdBy == _uid) {
+                            if (confirmed == true) {
                               await _firestoreService.deleteTransaction(t);
                               if (!context.mounted) return;
                               UIHelper.showSuccessSnackBar(
                                   context, 'Transaksi berhasil dihapus');
                             }
                           },
-                          background: Container(
-                            alignment: Alignment.centerRight,
-                            padding: const EdgeInsets.only(right: 20),
-                            margin: const EdgeInsets.symmetric(vertical: 4),
-                            decoration: BoxDecoration(
-                              color: AppColors.expense.withOpacity(0.9),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child:
-                                Icon(CupertinoIcons.trash, color: Colors.white),
-                          ),
                           child: ExpandableTransactionTile(
                             t: t,
                             wallet: wallet,

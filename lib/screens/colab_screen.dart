@@ -10,6 +10,7 @@ import '../utils/app_theme.dart';
 import '../utils/currency_formatter.dart';
 import '../utils/ui_helper.dart';
 import '../utils/tone_dictionary.dart';
+import '../widgets/wallet/slidable_delete_tile.dart';
 import 'wallet_chat_screen.dart';
 
 class ColabScreen extends StatefulWidget {
@@ -1184,38 +1185,27 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                     final color =
                         isIncome ? AppColors.income : AppColors.expense;
 
-                    return Dismissible(
+                    return SlidableDeleteTile(
                       key: Key(txn.id),
-                      direction: DismissDirection.endToStart,
-                      confirmDismiss: (direction) async {
+                      onDelete: () async {
                         if (txn.createdBy != widget.currentUid) {
                           UIHelper.showErrorSnackBar(context,
                               ToneManager.t('error_not_creator_delete'));
-                          return false;
+                          return;
                         }
-                        return await UIHelper.showConfirmDialog(
+                        final confirmed = await UIHelper.showConfirmDialog(
                           context: context,
                           title: ToneManager.t('dialog_del_tx_title'),
                           message: ToneManager.t('dialog_del_tx_msg'),
                         );
-                      },
-                      onDismissed: (direction) async {
-                        await widget.firestoreService.deleteTransaction(txn);
-                        if (context.mounted) {
-                          UIHelper.showSuccessSnackBar(
-                              context, 'Transaksi dihapus');
+                        if (confirmed == true) {
+                          await widget.firestoreService.deleteTransaction(txn);
+                          if (context.mounted) {
+                            UIHelper.showSuccessSnackBar(
+                                context, 'Transaksi dihapus');
+                          }
                         }
                       },
-                      background: Container(
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.only(right: 20),
-                        decoration: BoxDecoration(
-                          color: AppColors.expense,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: const Icon(CupertinoIcons.trash,
-                            color: Colors.white, size: 20),
-                      ),
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         decoration: const BoxDecoration(
