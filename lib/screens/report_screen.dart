@@ -345,7 +345,8 @@ class _ReportScreenState extends State<ReportScreen> {
         body: StreamBuilder<List<WalletModel>>(
           stream: _walletStream,
           builder: (context, walletSnapshot) {
-            if (walletSnapshot.connectionState == ConnectionState.waiting) {
+            if (walletSnapshot.connectionState == ConnectionState.waiting &&
+                !walletSnapshot.hasData) {
               return const Padding(
                   padding: EdgeInsets.fromLTRB(24, 24, 24, 0),
                   child: ShimmerTransactionList());

@@ -24,7 +24,8 @@ class HomeRecentTransactions extends StatelessWidget {
     return StreamBuilder<List<TransactionModel>>(
       stream: firestoreService.getAllTransactionsStream(walletIds),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
           return const SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),

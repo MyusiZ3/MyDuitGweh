@@ -47,7 +47,7 @@ class _MainNavState extends State<MainNav> {
     });
   }
 
-  final Set<int> _activatedIndices = {0};
+  final Set<int> _activatedIndices = {0, 1, 2, 3};
 
   late final List<WidgetBuilder> _screenBuilders = [
     (ctx) => const HomeScreen(),
