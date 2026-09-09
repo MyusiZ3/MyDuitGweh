@@ -7,6 +7,8 @@ import '../../models/debt_model.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/currency_formatter.dart';
 
+import '../notched_section_card.dart';
+
 class DebtCard extends StatelessWidget {
   final DebtModel debt;
   final VoidCallback onTap;
@@ -59,23 +61,8 @@ class DebtCard extends StatelessWidget {
     final accentColor =
         debt.type == 'utang' ? AppColors.expense : AppColors.income;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.1 : 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-        border: Border.all(
-          color:
-              Theme.of(context).dividerColor.withOpacity(isDark ? 0.05 : 0.08),
-          width: 0.5,
-        ),
-      ),
+    return NotchedSectionCard(
+      padding: EdgeInsets.zero,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -83,9 +70,9 @@ class DebtCard extends StatelessWidget {
             HapticFeedback.lightImpact();
             onTap();
           },
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(24),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
             child: Column(
               children: [
                 Row(

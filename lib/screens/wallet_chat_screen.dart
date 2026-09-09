@@ -5,7 +5,6 @@ import '../services/firestore_service.dart';
 import '../models/chat_message_model.dart';
 import '../utils/app_theme.dart';
 import '../utils/ui_helper.dart';
-import '../services/ai_service.dart';
 import 'package:intl/intl.dart';
 
 class WalletChatScreen extends StatefulWidget {
@@ -256,28 +255,37 @@ class _WalletChatScreenState extends State<WalletChatScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final navBgColor = isDark ? const Color(0xFF1C1C1E) : Colors.white;
+    final dividerColor = isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.06);
+
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: isDark ? const Color(0xFF121214) : const Color(0xFFF4F4F7),
       appBar: AppBar(
-        backgroundColor: Theme.of(context).cardColor,
-        elevation: 0.5,
-        centerTitle: true,
-        leading: IconButton(
-          icon: Icon(CupertinoIcons.chevron_left,
-              size: 22, color: Theme.of(context).textTheme.titleLarge?.color),
-          onPressed: () => Navigator.pop(context),
+        backgroundColor: navBgColor,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: false,
+        leadingWidth: 40,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 8),
+          child: IconButton(
+            icon: Icon(CupertinoIcons.chevron_left,
+                size: 22, color: isDark ? Colors.white : AppColors.textPrimary),
+            onPressed: () => Navigator.pop(context),
+          ),
         ),
         title: Row(
           children: [
             Container(
-              width: 36,
-              height: 36,
+              width: 38,
+              height: 38,
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primary.withOpacity(0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(CupertinoIcons.person_2_fill,
-                  color: AppColors.primary, size: 18),
+                  color: AppColors.primary, size: 19),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -287,22 +295,32 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                   Text(
                     widget.walletName,
                     style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: Theme.of(context).textTheme.titleLarge?.color),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : AppColors.textPrimary,
+                      letterSpacing: -0.3,
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const Text(
+                  Text(
                     'Chat Grup',
                     style: TextStyle(
-                        fontSize: 11,
-                        color: AppColors.textHint,
-                        fontWeight: FontWeight.w400),
+                      fontSize: 11,
+                      color: isDark ? Colors.white54 : AppColors.textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
               ),
             ),
           ],
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            height: 0.5,
+            color: dividerColor,
+          ),
         ),
       ),
       body: Column(
@@ -312,12 +330,11 @@ class _WalletChatScreenState extends State<WalletChatScreen>
             child: StreamBuilder<List<ChatMessage>>(
               stream: _messagesStream,
               builder: (context, snapshot) {
-                // If new messages found, update our read-receipt
+                // If new messages found, update read-receipt
                 if (snapshot.hasData && snapshot.data!.isNotEmpty) {
                   final latestMsg = snapshot.data!.first;
                   if (latestMsg.id != _lastSeenMsgId) {
                     _lastSeenMsgId = latestMsg.id;
-                    // Trigger markAsRead without blocking current build
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       _firestoreService.markChatAsRead(
                           widget.walletId, _currentUser.uid,
@@ -327,7 +344,9 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                 }
 
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const Center(
+                    child: CupertinoActivityIndicator(radius: 12),
+                  );
                 }
 
                 final messages = snapshot.data ?? [];
@@ -338,27 +357,29 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(24),
+                          padding: const EdgeInsets.all(22),
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.05),
+                            color: AppColors.primary.withOpacity(0.08),
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(CupertinoIcons.chat_bubble_2,
-                              size: 48,
-                              color: AppColors.primary.withOpacity(0.4)),
+                          child: Icon(CupertinoIcons.chat_bubble_2_fill,
+                              size: 42,
+                              color: AppColors.primary.withOpacity(0.5)),
                         ),
-                        const SizedBox(height: 20),
-                        const Text('Belum ada pesan',
+                        const SizedBox(height: 16),
+                        Text('Belum ada pesan',
                             style: TextStyle(
                                 fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textSecondary)),
-                        const SizedBox(height: 8),
-                        const Text(
+                                fontWeight: FontWeight.w700,
+                                color: isDark ? Colors.white : AppColors.textPrimary)),
+                        const SizedBox(height: 6),
+                        Text(
                             'Mulai obrolan dengan anggota\ndompet kolaborasi ini!',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                                color: AppColors.textHint, fontSize: 13)),
+                                color: isDark ? Colors.white54 : AppColors.textHint,
+                                fontSize: 13,
+                                height: 1.3)),
                       ],
                     ),
                   );
@@ -368,18 +389,36 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                   controller: _scrollController,
                   reverse: true,
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
                     final msg = messages[index];
                     final isMe = msg.senderUid == _currentUser.uid;
 
-                    final showAvatar = index == messages.length - 1 ||
-                        messages[index + 1].senderUid != msg.senderUid;
+                    // Show avatar logic when grouping consecutive messages from same user
+                    final showAvatar = index == 0 ||
+                        messages[index - 1].senderUid != msg.senderUid;
 
-                    return GestureDetector(
-                      onLongPress: () => _showMessageActions(msg),
-                      child: _buildMessageBubble(msg, isMe, showAvatar),
+                    // Date header logic (since reverse: true, index + 1 is the older message)
+                    bool showDateHeader = false;
+                    if (index == messages.length - 1) {
+                      showDateHeader = true;
+                    } else {
+                      final currentMsgDate = msg.timestamp;
+                      final olderMsgDate = messages[index + 1].timestamp;
+                      if (!_isSameDay(currentMsgDate, olderMsgDate)) {
+                        showDateHeader = true;
+                      }
+                    }
+
+                    return Column(
+                      children: [
+                        if (showDateHeader) _buildDateHeader(msg.timestamp),
+                        GestureDetector(
+                          onLongPress: () => _showMessageActions(msg),
+                          child: _buildMessageBubble(msg, isMe, showAvatar, isDark),
+                        ),
+                      ],
                     );
                   },
                 );
@@ -391,28 +430,31 @@ class _WalletChatScreenState extends State<WalletChatScreen>
           if (_isEditing)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              color: AppColors.primary.withOpacity(0.06),
+              color: isDark
+                  ? Colors.orange.withOpacity(0.15)
+                  : Colors.orange.withOpacity(0.08),
               child: Row(
                 children: [
                   Container(
-                      width: 3,
+                      width: 3.5,
                       height: 28,
                       decoration: BoxDecoration(
-                          color: AppColors.primary,
+                          color: Colors.orange,
                           borderRadius: BorderRadius.circular(2))),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Mengedit pesan',
+                        const Text('Mengedit pesan',
                             style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
-                                color: AppColors.primary)),
-                        Text('Tekan untuk membatalkan',
+                                color: Colors.orange)),
+                        Text('Tekan silang untuk membatalkan',
                             style: TextStyle(
-                                fontSize: 11, color: AppColors.textHint)),
+                                fontSize: 11,
+                                color: isDark ? Colors.white54 : AppColors.textHint)),
                       ],
                     ),
                   ),
@@ -421,11 +463,14 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                     child: Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: AppColors.textHint.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(6),
+                        color: isDark
+                            ? Colors.white.withOpacity(0.15)
+                            : Colors.black.withOpacity(0.08),
+                        shape: BoxShape.circle,
                       ),
-                      child: const Icon(CupertinoIcons.xmark,
-                          size: 16, color: AppColors.textSecondary),
+                      child: Icon(CupertinoIcons.xmark,
+                          size: 14,
+                          color: isDark ? Colors.white70 : AppColors.textSecondary),
                     ),
                   ),
                 ],
@@ -433,18 +478,49 @@ class _WalletChatScreenState extends State<WalletChatScreen>
             ),
 
           // Input Bar
-          _buildInputBar(),
+          _buildInputBar(isDark),
         ],
       ),
     );
   }
 
-  Widget _buildMessageBubble(ChatMessage msg, bool isMe, bool showAvatar) {
+  Widget _buildDateHeader(DateTime date) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.white.withOpacity(0.08)
+                : Colors.black.withOpacity(0.06),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            _formatDateHeader(date),
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white70 : AppColors.textSecondary,
+              letterSpacing: -0.2,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMessageBubble(
+      ChatMessage msg, bool isMe, bool showAvatar, bool isDark) {
+    final avatarColor = _getAvatarColor(msg.senderName);
+    final senderNameColor = _getSenderNameColor(msg.senderName, isDark);
+
     return Padding(
       padding: EdgeInsets.only(
-        bottom: showAvatar ? 12 : 4,
-        left: isMe ? 48 : 0,
-        right: isMe ? 0 : 48,
+        bottom: showAvatar ? 8 : 3,
+        left: isMe ? 52 : 0,
+        right: isMe ? 0 : 52,
       ),
       child: Row(
         mainAxisAlignment:
@@ -454,12 +530,19 @@ class _WalletChatScreenState extends State<WalletChatScreen>
           // Avatar (only for others)
           if (!isMe && showAvatar)
             Container(
-              width: 32,
-              height: 32,
+              width: 30,
+              height: 30,
               margin: const EdgeInsets.only(right: 8),
               decoration: BoxDecoration(
-                color: _getAvatarColor(msg.senderName),
-                borderRadius: BorderRadius.circular(10),
+                color: avatarColor,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: avatarColor.withOpacity(0.3),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
               ),
               child: Center(
                 child: Text(
@@ -468,13 +551,13 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                       : '?',
                   style: const TextStyle(
                       color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13),
                 ),
               ),
             )
           else if (!isMe)
-            const SizedBox(width: 40),
+            const SizedBox(width: 38),
 
           // Bubble
           Flexible(
@@ -484,43 +567,62 @@ class _WalletChatScreenState extends State<WalletChatScreen>
               children: [
                 if (!isMe && showAvatar)
                   Padding(
-                    padding: const EdgeInsets.only(left: 4, bottom: 4),
+                    padding: const EdgeInsets.only(left: 4, bottom: 3),
                     child: Text(
                       msg.senderName,
                       style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: _getAvatarColor(msg.senderName)),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: senderNameColor,
+                        letterSpacing: -0.2,
+                      ),
                     ),
                   ),
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
                   decoration: BoxDecoration(
+                    gradient: msg.isDeleted
+                        ? null
+                        : (isMe
+                            ? const LinearGradient(
+                                colors: [Color(0xFF007AFF), Color(0xFF0056D6)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              )
+                            : null),
                     color: msg.isDeleted
                         ? (isMe
-                            ? (Theme.of(context).brightness == Brightness.dark
-                                ? Colors.grey[800]
-                                : Colors.grey[300])
-                            : (Theme.of(context).brightness == Brightness.dark
-                                ? Colors.grey[900]
-                                : Colors.grey[100]))
+                            ? (isDark ? Colors.grey[850] : Colors.grey[300])
+                            : (isDark ? Colors.grey[900] : Colors.grey[200]))
                         : (isMe
-                            ? AppColors.primary
-                            : Theme.of(context).cardColor),
+                            ? null
+                            : (isDark
+                                ? const Color(0xFF242428)
+                                : const Color(0xFFE9E9EB))),
                     borderRadius: BorderRadius.only(
-                      topLeft: const Radius.circular(20),
-                      topRight: const Radius.circular(20),
+                      topLeft: const Radius.circular(18),
+                      topRight: const Radius.circular(18),
                       bottomLeft:
-                          Radius.circular(isMe ? 20 : (showAvatar ? 4 : 20)),
+                          Radius.circular(isMe ? 18 : (showAvatar ? 4 : 18)),
                       bottomRight:
-                          Radius.circular(isMe ? (showAvatar ? 4 : 20) : 20),
+                          Radius.circular(isMe ? (showAvatar ? 4 : 18) : 18),
                     ),
+                    border: (!isMe && isDark && !msg.isDeleted)
+                        ? Border.all(
+                            color: Colors.white.withOpacity(0.08), width: 0.5)
+                        : null,
                     boxShadow: [
-                      if (!isMe)
+                      if (isMe && !msg.isDeleted)
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
-                          blurRadius: 4,
+                          color: const Color(0xFF007AFF).withOpacity(0.2),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        )
+                      else if (!isMe && !isDark)
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 3,
                           offset: const Offset(0, 1),
                         ),
                     ],
@@ -555,14 +657,15 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                         Text(
                           msg.message,
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 14.5,
                             color: isMe
                                 ? Colors.white
-                                : Theme.of(context).textTheme.bodyLarge?.color,
-                            height: 1.4,
+                                : (isDark ? Colors.white : const Color(0xFF1C1C1E)),
+                            height: 1.35,
+                            letterSpacing: -0.2,
                           ),
                         ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 3),
                       // Timestamp + edited label
                       Row(
                         mainAxisSize: MainAxisSize.min,
@@ -574,17 +677,22 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                                 fontSize: 10,
                                 fontStyle: FontStyle.italic,
                                 color: isMe
-                                    ? Colors.white.withOpacity(0.5)
-                                    : AppColors.textHint,
+                                    ? Colors.white.withOpacity(0.6)
+                                    : (isDark
+                                        ? Colors.white38
+                                        : AppColors.textHint),
                               ),
                             ),
                           Text(
                             DateFormat('HH:mm').format(msg.timestamp),
                             style: TextStyle(
                               fontSize: 10,
+                              fontWeight: FontWeight.w500,
                               color: isMe
-                                  ? Colors.white.withOpacity(0.6)
-                                  : AppColors.textHint,
+                                  ? Colors.white.withOpacity(0.7)
+                                  : (isDark
+                                      ? Colors.white38
+                                      : AppColors.textHint),
                             ),
                           ),
                         ],
@@ -600,52 +708,71 @@ class _WalletChatScreenState extends State<WalletChatScreen>
     );
   }
 
-  Widget _buildInputBar() {
+  Widget _buildInputBar(bool isDark) {
+    final barBg = isDark ? const Color(0xFF1C1C1E) : Colors.white;
+    final fieldBg = isDark ? const Color(0xFF2C2C2E) : const Color(0xFFF2F2F7);
+    final borderCol = isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.06);
+
     return Container(
       padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 14,
-        bottom: MediaQuery.of(context).padding.bottom + 14,
+        left: 14,
+        right: 14,
+        top: 10,
+        bottom: MediaQuery.of(context).padding.bottom + 10,
       ),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
+        color: barBg,
         border: Border(
-          top: BorderSide(
-              color: Theme.of(context).dividerColor.withOpacity(0.1),
-              width: 0.5),
+          top: BorderSide(color: borderCol, width: 0.5),
         ),
       ),
       child: Row(
         children: [
           Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              decoration: BoxDecoration(
-                color: Theme.of(context).canvasColor,
-                borderRadius: BorderRadius.circular(22),
-              ),
-              child: TextField(
-                controller: _messageController,
-                textCapitalization: TextCapitalization.sentences,
-                maxLines: 4,
-                minLines: 1,
-                style:
-                    const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-                decoration: InputDecoration(
-                  hintText: _isEditing ? 'Ubah pesan...' : 'Masukkan pesan...',
-                  hintStyle: TextStyle(
-                      color: Theme.of(context).hintColor, fontSize: 15),
-                  border: InputBorder.none,
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  isDense: true,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: fieldBg,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                      color: isDark
+                          ? Colors.white.withOpacity(0.05)
+                          : Colors.transparent),
                 ),
-                onSubmitted: (_) => _sendMessage(),
+                child: TextField(
+                  controller: _messageController,
+                  textCapitalization: TextCapitalization.sentences,
+                  maxLines: 4,
+                  minLines: 1,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w400,
+                    color: isDark ? Colors.white : AppColors.textPrimary,
+                  ),
+                  decoration: InputDecoration(
+                    filled: false,
+                    fillColor: Colors.transparent,
+                    hintText: _isEditing ? 'Ubah pesan...' : 'Masukkan pesan...',
+                    hintStyle: TextStyle(
+                      color: isDark ? Colors.white38 : AppColors.textHint,
+                      fontSize: 14.5,
+                    ),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    errorBorder: InputBorder.none,
+                    disabledBorder: InputBorder.none,
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    isDense: true,
+                  ),
+                  onSubmitted: (_) => _sendMessage(),
+                ),
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           GestureDetector(
             onTap: _sendMessage,
             child: AnimatedContainer(
@@ -653,21 +780,30 @@ class _WalletChatScreenState extends State<WalletChatScreen>
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                  color: _isEditing ? Colors.orange : AppColors.primary,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                        color: (_isEditing ? Colors.orange : AppColors.primary)
-                            .withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3))
-                  ]),
+                gradient: _isEditing
+                    ? null
+                    : const LinearGradient(
+                        colors: [Color(0xFF007AFF), Color(0xFF0056D6)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                color: _isEditing ? Colors.orange : null,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: (_isEditing ? Colors.orange : AppColors.primary)
+                        .withOpacity(0.3),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
               child: Icon(
                 _isEditing
                     ? CupertinoIcons.check_mark
                     : CupertinoIcons.arrow_up,
                 color: Colors.white,
-                size: 20,
+                size: 19,
               ),
             ),
           ),
@@ -677,17 +813,60 @@ class _WalletChatScreenState extends State<WalletChatScreen>
   }
 
   Color _getAvatarColor(String name) {
-    final colors = [
-      const Color(0xFF007AFF),
-      const Color(0xFF34C759),
-      const Color(0xFFFF9500),
-      const Color(0xFFFF2D55),
-      const Color(0xFF5856D6),
-      const Color(0xFFAF52DE),
-      const Color(0xFF00C7BE),
-      const Color(0xFFFF6482),
+    const colors = [
+      Color(0xFF0A84FF),
+      Color(0xFF30D158),
+      Color(0xFFFF9F0A),
+      Color(0xFFBF5AF2),
+      Color(0xFFFF453A),
+      Color(0xFF64D2FF),
+      Color(0xFFFFD60A),
+      Color(0xFFFF375F),
     ];
     final index = name.hashCode.abs() % colors.length;
     return colors[index];
   }
+
+  Color _getSenderNameColor(String name, bool isDark) {
+    const lightColors = [
+      Color(0xFF0056D6),
+      Color(0xFF1B8A3E),
+      Color(0xFFC76A00),
+      Color(0xFF8E24AA),
+      Color(0xFFD32F2F),
+      Color(0xFF00838F),
+    ];
+    const darkColors = [
+      Color(0xFF64B5F6),
+      Color(0xFF81C784),
+      Color(0xFFFFB74D),
+      Color(0xFFBA68C8),
+      Color(0xFFE57373),
+      Color(0xFF4DD0E1),
+    ];
+    final colors = isDark ? darkColors : lightColors;
+    return colors[name.hashCode.abs() % colors.length];
+  }
+
+  String _formatDateHeader(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final msgDate = DateTime(date.year, date.month, date.day);
+
+    if (msgDate == today) {
+      return 'Hari ini';
+    } else if (msgDate == yesterday) {
+      return 'Kemarin';
+    } else if (date.year == now.year) {
+      return DateFormat('d MMMM').format(date);
+    } else {
+      return DateFormat('d MMMM yyyy').format(date);
+    }
+  }
+
+  bool _isSameDay(DateTime d1, DateTime d2) {
+    return d1.year == d2.year && d1.month == d2.month && d1.day == d2.day;
+  }
 }
+

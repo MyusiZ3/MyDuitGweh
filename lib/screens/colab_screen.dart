@@ -11,6 +11,7 @@ import '../utils/currency_formatter.dart';
 import '../utils/ui_helper.dart';
 import '../utils/tone_dictionary.dart';
 import '../widgets/wallet/slidable_delete_tile.dart';
+import '../widgets/notched_section_card.dart';
 import 'wallet_chat_screen.dart';
 
 class ColabScreen extends StatefulWidget {
@@ -597,27 +598,10 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? const Color(0xFF18181B) : Theme.of(context).cardColor;
-    return Container(
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.25 : 0.04),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
-          ),
-        ],
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withOpacity(0.08)
-              : Colors.black.withOpacity(0.05),
-          width: 0.8,
-        ),
-      ),
+    return NotchedSectionCard(
+      padding: EdgeInsets.zero,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(24),
         child: Column(
           children: [
             // Header
@@ -630,7 +614,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                 },
                 child: Padding(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      const EdgeInsets.fromLTRB(16, 20, 16, 16),
                   child: Row(
                     children: [
                       StreamBuilder<int>(

@@ -268,208 +268,61 @@ class UIHelper {
     String? cancelText,
     bool isDangerous = true,
   }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? const Color(0xFF1C1C22) : Colors.white;
-    final borderColor = isDark
-        ? Colors.white.withOpacity(0.08)
-        : Colors.black.withOpacity(0.06);
-
-    return showGeneralDialog<bool>(
+    return showCupertinoDialog<bool>(
       context: context,
       barrierDismissible: true,
-      barrierLabel: '',
-      barrierColor: Colors.black.withOpacity(isDark ? 0.6 : 0.4),
-      transitionDuration: const Duration(milliseconds: 250),
-      pageBuilder: (context, anim1, anim2) {
-        return Center(
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 32),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(24),
-              child: BackdropFilter(
-                filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                child: Container(
-                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
-                  decoration: BoxDecoration(
-                    color: cardBg.withOpacity(isDark ? 0.92 : 0.95),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: borderColor, width: 1),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(isDark ? 0.4 : 0.12),
-                        blurRadius: 24,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Icon Header Badge
-                        Container(
-                          width: 52,
-                          height: 52,
-                          decoration: BoxDecoration(
-                            color: isDangerous
-                                ? (isDark
-                                    ? const Color(0xFFEF4444).withOpacity(0.15)
-                                    : const Color(0xFFFEE2E2))
-                                : (isDark
-                                    ? Colors.white.withOpacity(0.1)
-                                    : const Color(0xFFF4F4F5)),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: Icon(
-                              isDangerous
-                                  ? CupertinoIcons.trash_fill
-                                  : CupertinoIcons.info_circle_fill,
-                              color: isDangerous
-                                  ? (isDark
-                                      ? const Color(0xFFF87171)
-                                      : const Color(0xFFDC2626))
-                                  : (isDark
-                                      ? Colors.white
-                                      : const Color(0xFF18181B)),
-                              size: 24,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                        // Title
-                        Text(
-                          title,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.5,
-                            color:
-                                isDark ? Colors.white : const Color(0xFF18181B),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        // Message
-                        Text(
-                          message,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: isDark
-                                ? Colors.white60
-                                : const Color(0xFF71717A),
-                            fontSize: 13.5,
-                            height: 1.4,
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        // Action Buttons Row
-                        Row(
-                          children: [
-                            // Cancel Button
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () {
-                                  HapticFeedback.selectionClick();
-                                  Navigator.pop(context, false);
-                                },
-                                child: Container(
-                                  height: 44,
-                                  decoration: BoxDecoration(
-                                    color: isDark
-                                        ? const Color(0xFF27272A)
-                                        : const Color(0xFFF4F4F5),
-                                    borderRadius: BorderRadius.circular(14),
-                                    border: Border.all(
-                                      color: isDark
-                                          ? Colors.white.withOpacity(0.06)
-                                          : Colors.black.withOpacity(0.04),
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      cancelText ?? ToneManager.t('dialog_no'),
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        color: isDark
-                                            ? Colors.white70
-                                            : const Color(0xFF3F3F46),
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            // Confirm Button
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () {
-                                  HapticFeedback.lightImpact();
-                                  Navigator.pop(context, true);
-                                },
-                                child: Container(
-                                  height: 44,
-                                  decoration: BoxDecoration(
-                                    color: isDangerous
-                                        ? (isDark
-                                            ? const Color(0xFFEF4444)
-                                            : const Color(0xFFDC2626))
-                                        : (isDark
-                                            ? Colors.white
-                                            : const Color(0xFF18181B)),
-                                    borderRadius: BorderRadius.circular(14),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: (isDangerous
-                                                ? const Color(0xFFEF4444)
-                                                : (isDark
-                                                    ? Colors.white
-                                                    : Colors.black))
-                                            .withOpacity(0.25),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      confirmText ??
-                                          ToneManager.t('dialog_yes'),
-                                      style: TextStyle(
-                                        color: isDangerous
-                                            ? Colors.white
-                                            : (isDark
-                                                ? const Color(0xFF18181B)
-                                                : Colors.white),
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+      builder: (context) => CupertinoAlertDialog(
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.4,
+          ),
+        ),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Text(
+            message,
+            style: const TextStyle(
+              fontSize: 13,
+              height: 1.35,
+              letterSpacing: -0.2,
+            ),
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () {
+              HapticFeedback.selectionClick();
+              Navigator.pop(context, false);
+            },
+            child: Text(
+              cancelText ?? ToneManager.t('dialog_no'),
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                color: Color(0xFF007AFF),
               ),
             ),
           ),
-        );
-      },
-      transitionBuilder: (context, anim1, anim2, child) {
-        return ScaleTransition(
-          scale: CurvedAnimation(parent: anim1, curve: Curves.easeOutBack),
-          child: FadeTransition(opacity: anim1, child: child),
-        );
-      },
+          CupertinoDialogAction(
+            isDestructiveAction: isDangerous,
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              Navigator.pop(context, true);
+            },
+            child: Text(
+              confirmText ?? ToneManager.t('dialog_yes'),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: isDangerous ? null : AppColors.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -529,85 +382,47 @@ class UIHelper {
 
   static Future<void> showInfoDialog(
       BuildContext context, String title, String message) {
-    return showPremiumDialog(
-        context: context,
-        child: Builder(builder: (dialogContext) {
-          final isDark = Theme.of(dialogContext).brightness == Brightness.dark;
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? Colors.white.withOpacity(0.1)
-                      : const Color(0xFFF4F4F5),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Icon(
-                    CupertinoIcons.doc_text_fill,
-                    color: isDark ? Colors.white : const Color(0xFF18181B),
-                    size: 24,
-                  ),
-                ),
+    return showCupertinoDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.4,
+          ),
+        ),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Text(
+            message,
+            style: const TextStyle(
+              fontSize: 13,
+              height: 1.35,
+              letterSpacing: -0.2,
+            ),
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () {
+              HapticFeedback.selectionClick();
+              Navigator.pop(context);
+            },
+            child: Text(
+              ToneManager.t('info_button'),
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF007AFF),
               ),
-              const SizedBox(height: 20),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.5,
-                  color: isDark ? Colors.white : const Color(0xFF18181B),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: isDark ? Colors.white60 : const Color(0xFF71717A),
-                  fontSize: 13.5,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 24),
-              GestureDetector(
-                onTap: () =>
-                    Navigator.of(dialogContext, rootNavigator: true).pop(),
-                child: Container(
-                  width: double.infinity,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.white : const Color(0xFF18181B),
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: (isDark ? Colors.white : Colors.black)
-                            .withOpacity(0.2),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Text(
-                      ToneManager.t('info_button'),
-                      style: TextStyle(
-                        color: isDark ? const Color(0xFF18181B) : Colors.white,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          );
-        }));
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   static void showLoadingDialog(BuildContext context, {String? message}) {

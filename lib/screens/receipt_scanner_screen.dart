@@ -605,44 +605,15 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
                           return;
                         }
 
-                        final bool? confirm = await showDialog<bool>(
-                            context: context,
-                            builder: (ctx) => AlertDialog(
-                                    backgroundColor: Colors.grey[900],
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(16)),
-                                    title: const Text('Gunakan AI Mode?',
-                                        style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold)),
-                                    content: const Text(
-                                        'Analisis struk ini akan menggunakan API Key pribadi Anda yang telah disetel.\n\nProses ini dapat memotong limit kuota API pihak ketiga Anda. Lanjutkan?',
-                                        style:
-                                            TextStyle(color: Colors.white70)),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.pop(ctx, false),
-                                        child: Text('Batal',
-                                            style: TextStyle(
-                                                color: Colors.grey[400])),
-                                      ),
-                                      ElevatedButton(
-                                        onPressed: () =>
-                                            Navigator.pop(ctx, true),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: AppColors.primary,
-                                          shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(8)),
-                                        ),
-                                        child: const Text('Lanjutkan',
-                                            style: TextStyle(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.bold)),
-                                      )
-                                    ]));
+                        final bool? confirm = await UIHelper.showConfirmDialog(
+                          context: context,
+                          title: 'Gunakan AI Mode?',
+                          message:
+                              'Analisis struk ini akan menggunakan API Key pribadi Anda yang telah disetel. Proses ini dapat memotong limit kuota API pihak ketiga Anda. Lanjutkan?',
+                          confirmText: 'Lanjutkan',
+                          cancelText: 'Batal',
+                          isDangerous: false,
+                        );
 
                         if (confirm == true && mounted) {
                           setState(() => _useAiAnalysis = true);
