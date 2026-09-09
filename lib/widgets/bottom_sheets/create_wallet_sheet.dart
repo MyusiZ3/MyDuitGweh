@@ -678,9 +678,249 @@ void showCreateWalletSheet(BuildContext context) {
                         ),
                       ],
 
+                      const SizedBox(height: 16),
+                      Center(
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.pop(sbCtx);
+                            showJoinWalletSheet(modalCtx);
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                            child: Text.rich(
+                              TextSpan(
+                                text: 'Punya kode undangan? ',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: isDark ? Colors.white60 : Colors.black54,
+                                ),
+                                children: const [
+                                  TextSpan(
+                                    text: 'Gabung Dompet',
+                                    style: TextStyle(
+                                      color: Color(0xFF60A5FA),
+                                      fontWeight: FontWeight.bold,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                       const SizedBox(height: 28),
                     ],
                   ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    ),
+  );
+}
+
+/// Public helper function to open Join Wallet Modal Overlay directly from anywhere
+void showJoinWalletSheet(BuildContext context) {
+  final codeController = TextEditingController();
+  final uid = FirebaseAuth.instance.currentUser?.uid;
+  if (uid == null) return;
+  final firestoreService = FirestoreService();
+  bool isChecking = false;
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    useSafeArea: true,
+    backgroundColor: Colors.transparent,
+    builder: (modalCtx) => StatefulBuilder(
+      builder: (sbCtx, setModalState) {
+        final isDark = Theme.of(sbCtx).brightness == Brightness.dark;
+        final backgroundColor =
+            isDark ? const Color(0xFF18181B) : const Color(0xFFF2F2F7);
+        final sectionColor = isDark ? const Color(0xFF27272A) : Colors.white;
+        const primaryBlue = Color(0xFF60A5FA);
+
+        final safeBottom = MediaQuery.of(sbCtx).padding.bottom;
+        return Container(
+          margin: const EdgeInsets.only(top: 12),
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(sbCtx).viewInsets.bottom +
+                (safeBottom > 0 ? safeBottom + 12 : 24),
+          ),
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 10),
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white24 : Colors.black12,
+                    borderRadius: BorderRadius.circular(2.5),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: isDark ? Colors.white10 : Colors.black12,
+                      width: 0.5,
+                    ),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(sbCtx),
+                      child: Text(
+                        'Batal',
+                        style: TextStyle(
+                          color: primaryBlue,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ),
+                    const Text(
+                      'Gabung Dompet',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: isChecking
+                          ? null
+                          : () async {
+                              if (codeController.text.length < 6) {
+                                UIHelper.showErrorSnackBar(
+                                    sbCtx, 'Kode harus 6 digit ya!');
+                                return;
+                              }
+                              setModalState(() => isChecking = true);
+                              try {
+                                final success =
+                                    await firestoreService.joinWalletByCode(
+                                        codeController.text.toUpperCase(),
+                                        uid);
+                                if (!sbCtx.mounted) return;
+                                if (success) {
+                                  Navigator.pop(sbCtx);
+                                  UIHelper.showSuccessSnackBar(sbCtx,
+                                      'Berhasil bergabung! Selamat berkolaborasi');
+                                } else {
+                                  UIHelper.showErrorSnackBar(sbCtx,
+                                      'Kode tidak valid atau kamu sudah bergabung');
+                                  setModalState(() => isChecking = false);
+                                }
+                              } catch (e) {
+                                if (sbCtx.mounted) {
+                                  UIHelper.showErrorSnackBar(
+                                      sbCtx, 'Gagal bergabung: $e');
+                                  setModalState(() => isChecking = false);
+                                }
+                              }
+                            },
+                      child: isChecking
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child:
+                                  CircularProgressIndicator(strokeWidth: 2))
+                          : Text(
+                              'Gabung',
+                              style: TextStyle(
+                                color: primaryBlue,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: primaryBlue.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        CupertinoIcons.person_badge_plus,
+                        color: primaryBlue,
+                        size: 40,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Masukkan Kode Undangan',
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white : Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Minta temanmu untuk membagikan kode undangan dari pengaturan dompet mereka.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDark ? Colors.white54 : Colors.black54,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: sectionColor,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: TextField(
+                        controller: codeController,
+                        maxLength: 6,
+                        textCapitalization: TextCapitalization.characters,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 8,
+                          color: isDark ? Colors.white : Colors.black,
+                        ),
+                        cursorColor: primaryBlue,
+                        decoration: InputDecoration(
+                          hintText: '• • • • • •',
+                          counterText: '',
+                          hintStyle: TextStyle(
+                            color: isDark ? Colors.white24 : Colors.black26,
+                            fontSize: 28,
+                            letterSpacing: 8,
+                          ),
+                          border: InputBorder.none,
+                          contentPadding:
+                              const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 48),
+                  ],
                 ),
               ),
             ],

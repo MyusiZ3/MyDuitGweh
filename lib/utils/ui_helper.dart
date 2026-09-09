@@ -302,7 +302,7 @@ class UIHelper {
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w400,
-                color: Color(0xFF007AFF),
+                color: Color(0xFF60A5FA),
               ),
             ),
           ),
@@ -317,7 +317,7 @@ class UIHelper {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: isDangerous ? null : AppColors.primary,
+                color: isDangerous ? const Color(0xFFFF746C) : const Color(0xFF60A5FA),
               ),
             ),
           ),

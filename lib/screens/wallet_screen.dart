@@ -535,8 +535,7 @@ class WalletScreenState extends State<WalletScreen>
       String type, String label, String current, Function(String) onSelect) {
     final isSelected = current == type;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryBlue =
-        isDark ? Colors.white : AppColors.primary;
+    const primaryBlue = Color(0xFF60A5FA);
 
     return Expanded(
       child: GestureDetector(
@@ -583,8 +582,7 @@ class WalletScreenState extends State<WalletScreen>
       Function(String) onChanged) {
     final isSelected = value == groupValue;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryBlue =
-        isDark ? Colors.white : AppColors.primary;
+    const primaryBlue = Color(0xFF60A5FA);
 
     return InkWell(
       onTap: () => setState(() => onChanged(value)),
@@ -716,6 +714,7 @@ class WalletScreenState extends State<WalletScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (modalCtx) => StatefulBuilder(
         builder: (sbCtx, setModalState) {
@@ -723,11 +722,11 @@ class WalletScreenState extends State<WalletScreen>
           final backgroundColor =
               isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7);
           final sectionColor = isDark ? const Color(0xFF2C2C2E) : Colors.white;
-          final primaryBlue =
-              isDark ? Colors.white : AppColors.primary;
+          const primaryBlue = Color(0xFF60A5FA);
 
           final safeBottom = MediaQuery.of(sbCtx).padding.bottom;
           return Container(
+            margin: const EdgeInsets.only(top: 12),
             padding: EdgeInsets.only(
               bottom: MediaQuery.of(sbCtx).viewInsets.bottom +
                   (safeBottom > 0 ? safeBottom + 12 : 24),

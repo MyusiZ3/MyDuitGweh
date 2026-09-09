@@ -161,11 +161,11 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
+                  color: const Color(0xFF60A5FA).withOpacity(0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(CupertinoIcons.pencil,
-                    color: Colors.blue, size: 20),
+                    color: Color(0xFF60A5FA), size: 20),
               ),
               title: const Text('Edit Pesan',
                   style: TextStyle(
@@ -281,11 +281,11 @@ class _WalletChatScreenState extends State<WalletChatScreen>
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.12),
+                color: const Color(0xFF60A5FA).withOpacity(0.15),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(CupertinoIcons.person_2_fill,
-                  color: AppColors.primary, size: 19),
+                  color: Color(0xFF60A5FA), size: 19),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -359,12 +359,12 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                         Container(
                           padding: const EdgeInsets.all(22),
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.08),
+                            color: const Color(0xFF60A5FA).withOpacity(0.12),
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(CupertinoIcons.chat_bubble_2_fill,
+                          child: const Icon(CupertinoIcons.chat_bubble_2_fill,
                               size: 42,
-                              color: AppColors.primary.withOpacity(0.5)),
+                              color: Color(0xFF60A5FA)),
                         ),
                         const SizedBox(height: 16),
                         Text('Belum ada pesan',
@@ -586,7 +586,7 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                         ? null
                         : (isMe
                             ? const LinearGradient(
-                                colors: [Color(0xFF007AFF), Color(0xFF0056D6)],
+                                colors: [Color(0xFF60A5FA), Color(0xFF3B82F6)],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               )
@@ -615,7 +615,7 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                     boxShadow: [
                       if (isMe && !msg.isDeleted)
                         BoxShadow(
-                          color: const Color(0xFF007AFF).withOpacity(0.2),
+                          color: const Color(0xFF60A5FA).withOpacity(0.3),
                           blurRadius: 6,
                           offset: const Offset(0, 2),
                         )
@@ -783,7 +783,7 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                 gradient: _isEditing
                     ? null
                     : const LinearGradient(
-                        colors: [Color(0xFF007AFF), Color(0xFF0056D6)],
+                        colors: [Color(0xFF60A5FA), Color(0xFF3B82F6)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -791,8 +791,8 @@ class _WalletChatScreenState extends State<WalletChatScreen>
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: (_isEditing ? Colors.orange : AppColors.primary)
-                        .withOpacity(0.3),
+                    color: (_isEditing ? Colors.orange : const Color(0xFF60A5FA))
+                        .withOpacity(0.35),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
@@ -814,14 +814,14 @@ class _WalletChatScreenState extends State<WalletChatScreen>
 
   Color _getAvatarColor(String name) {
     const colors = [
-      Color(0xFF0A84FF),
-      Color(0xFF30D158),
-      Color(0xFFFF9F0A),
-      Color(0xFFBF5AF2),
-      Color(0xFFFF453A),
-      Color(0xFF64D2FF),
-      Color(0xFFFFD60A),
-      Color(0xFFFF375F),
+      Color(0xFF60A5FA), // Pastel Blue
+      Color(0xFF80EF80), // Pastel Green
+      Color(0xFFFFC067), // Pastel Orange
+      Color(0xFFC084FC), // Pastel Purple
+      Color(0xFFFF746C), // Pastel Red
+      Color(0xFF38BDF8), // Pastel Sky
+      Color(0xFFFFEE8C), // Pastel Yellow
+      Color(0xFFF472B6), // Pastel Pink
     ];
     final index = name.hashCode.abs() % colors.length;
     return colors[index];

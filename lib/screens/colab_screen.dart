@@ -299,19 +299,13 @@ class ColabScreenState extends State<ColabScreen> {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: (Theme.of(context).brightness == Brightness.dark
-                          ? const Color(0xFF0A84FF)
-                          : AppColors.primary)
-                      .withOpacity(0.08),
+                  color: const Color(0xFF60A5FA).withOpacity(0.12),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
+                child: const Icon(
                   CupertinoIcons.group_solid,
                   size: 64,
-                  color: (Theme.of(context).brightness == Brightness.dark
-                          ? const Color(0xFF0A84FF)
-                          : AppColors.primary)
-                      .withOpacity(0.6),
+                  color: Color(0xFF60A5FA),
                 ),
               ),
               const SizedBox(height: 32),
@@ -349,6 +343,7 @@ class ColabScreenState extends State<ColabScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (modalCtx) => StatefulBuilder(
         builder: (sbCtx, setModalState) {
@@ -356,10 +351,10 @@ class ColabScreenState extends State<ColabScreen> {
           final backgroundColor =
               isDark ? const Color(0xFF18181B) : const Color(0xFFF2F2F7);
           final sectionColor = isDark ? const Color(0xFF27272A) : Colors.white;
-          final primaryBlue =
-              isDark ? const Color(0xFF38BDF8) : const Color(0xFF007AFF);
+          const primaryBlue = Color(0xFF60A5FA);
 
           return Container(
+            margin: const EdgeInsets.only(top: 12),
             padding: EdgeInsets.only(
               bottom: MediaQuery.of(sbCtx).viewInsets.bottom + 20,
             ),
@@ -597,7 +592,6 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return NotchedSectionCard(
       padding: EdgeInsets.zero,
       child: ClipRRect(
@@ -621,9 +615,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                         stream: _unreadStream,
                         builder: (context, unreadSnap) {
                           final unreadCount = unreadSnap.data ?? 0;
-                          final accentColor = isDark
-                              ? const Color(0xFF38BDF8)
-                              : AppColors.deepBlue;
+                          const accentColor = Color(0xFF60A5FA);
 
                           return Stack(
                             clipBehavior: Clip.none,
@@ -773,7 +765,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
 
   Widget _buildExpandedContent() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accentColor = isDark ? const Color(0xFF38BDF8) : AppColors.primary;
+    const accentColor = Color(0xFF60A5FA);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
@@ -952,8 +944,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
           final isOwner = uid == widget.wallet.owner;
           final isMe = uid == widget.currentUid;
           final canKick = widget.wallet.owner == widget.currentUid && !isOwner;
-          final accentColor =
-              isDark ? const Color(0xFF38BDF8) : AppColors.primary;
+          const accentColor = Color(0xFF60A5FA);
 
           return Container(
             padding: EdgeInsets.fromLTRB(10, 6, canKick ? 5 : 12, 6),
@@ -980,7 +971,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                 if (isOwner) ...[
                   Icon(CupertinoIcons.star_fill,
                       size: 10,
-                      color: isDark ? accentColor : AppColors.primary),
+                      color: accentColor),
                   const SizedBox(width: 5),
                 ],
                 Flexible(
@@ -993,7 +984,7 @@ class _ColabWalletCardState extends State<_ColabWalletCard> {
                       fontWeight:
                           isOwner || isMe ? FontWeight.w800 : FontWeight.w600,
                       color: isOwner
-                          ? (isDark ? accentColor : AppColors.primary)
+                          ? accentColor
                           : Theme.of(context)
                               .textTheme
                               .bodyMedium
