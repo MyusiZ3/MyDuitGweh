@@ -65,28 +65,24 @@ class UIHelper {
               },
               child: Align(
                 alignment: Alignment.topCenter,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(100),
-                  child: BackdropFilter(
-                    filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? const Color(0xFF2C2C2E).withOpacity(0.9)
-                            : const Color(0xFF1C1C1E).withOpacity(0.85),
-                        borderRadius: BorderRadius.circular(100),
-                        border: Border.all(
-                            color: Colors.white.withOpacity(0.15), width: 0.5),
-                        boxShadow: [
-                          BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 20,
-                              offset: const Offset(0, 10)),
-                        ],
-                      ),
-                      child: Row(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xF22C2C2E) // 0.95 opacity
+                        : const Color(0xF21C1C1E), // 0.95 opacity
+                    borderRadius: BorderRadius.circular(100),
+                    border: Border.all(
+                        color: const Color(0x26FFFFFF), width: 0.5),
+                    boxShadow: const [
+                      BoxShadow(
+                          color: Color(0x33000000),
+                          blurRadius: 10,
+                          offset: Offset(0, 5)),
+                    ],
+                  ),
+                  child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Container(
@@ -112,9 +108,7 @@ class UIHelper {
                 ),
               ),
             ),
-          ),
-        ),
-      );
+          );
 
       overlay.insert(overlayEntry);
       Future.delayed(const Duration(seconds: 3), () {
@@ -152,27 +146,23 @@ class UIHelper {
                 ),
               );
             },
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(24),
-              child: BackdropFilter(
-                filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.85),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                        color: Colors.white.withOpacity(0.2), width: 1),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              decoration: BoxDecoration(
+                color: const Color(0xF2D32F2F), // 0.95 opacity red
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                    color: const Color(0x33FFFFFF), width: 1),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x4D000000),
+                    blurRadius: 10,
+                    offset: Offset(0, 5),
                   ),
-                  child: Row(
+                ],
+              ),
+              child: Row(
                     children: [
                       Container(
                         padding: const EdgeInsets.all(8),
@@ -215,9 +205,7 @@ class UIHelper {
               ),
             ),
           ),
-        ),
-      ),
-    );
+        );
 
     overlay.insert(_connectivityOverlayEntry!);
   }
@@ -250,31 +238,22 @@ class UIHelper {
       barrierColor: Colors.black.withOpacity(0.5),
       transitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (context, anim1, anim2) => Center(
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 40),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(32),
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 30,
-                  offset: const Offset(0, 10)),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(32),
-            child: BackdropFilter(
-              filter: ui.ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-              child: Container(
-                padding: const EdgeInsets.all(32),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor.withOpacity(0.9),
-                  borderRadius: BorderRadius.circular(32),
-                  border: Border.all(
-                      color: Theme.of(context).dividerColor.withOpacity(0.1),
-                      width: 1),
-                ),
-                child: Material(
+          child: Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(32),
+              border: Border.all(
+                  color: Theme.of(context).dividerColor.withOpacity(0.1),
+                  width: 1),
+              boxShadow: const [
+                BoxShadow(
+                    color: Color(0x1A000000),
+                    blurRadius: 12,
+                    offset: Offset(0, 6)),
+              ],
+            ),
+            child: Material(
                   color: Colors.transparent,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -384,9 +363,6 @@ class UIHelper {
                 ),
               ),
             ),
-          ),
-        ),
-      ),
       transitionBuilder: (context, anim1, anim2, child) => ScaleTransition(
         scale: CurvedAnimation(parent: anim1, curve: Curves.easeOutBack),
         child: FadeTransition(opacity: anim1, child: child),
@@ -406,39 +382,27 @@ class UIHelper {
       barrierColor: Colors.black.withOpacity(0.5),
       transitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (context, anim1, anim2) => Center(
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 32),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(32),
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 30,
-                  offset: const Offset(0, 10)),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(32),
-            child: BackdropFilter(
-              filter: ui.ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-              child: Container(
-                padding: const EdgeInsets.all(28),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor.withOpacity(0.92),
-                  borderRadius: BorderRadius.circular(32),
-                  border: Border.all(
-                      color: Theme.of(context).dividerColor.withOpacity(0.1),
-                      width: 1),
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: child,
-                ),
-              ),
+          child: Container(
+            padding: const EdgeInsets.all(28),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(32),
+              border: Border.all(
+                  color: Theme.of(context).dividerColor.withOpacity(0.1),
+                  width: 1),
+              boxShadow: const [
+                BoxShadow(
+                    color: Color(0x1A000000),
+                    blurRadius: 12,
+                    offset: Offset(0, 6)),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: child,
             ),
           ),
         ),
-      ),
       transitionBuilder: (context, anim1, anim2, child) => ScaleTransition(
         scale: CurvedAnimation(parent: anim1, curve: Curves.easeOutBack),
         child: FadeTransition(opacity: anim1, child: child),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import '../utils/app_theme.dart';
 
 class EmptyStateWidget extends StatelessWidget {
   final String title;
@@ -22,7 +23,7 @@ class EmptyStateWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accentPastel = const Color(0xFF6366F1); // Brand Periwinkle Blue
+    final accentPastel = isDark ? Colors.white : AppColors.primary;
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: paddingVertical),

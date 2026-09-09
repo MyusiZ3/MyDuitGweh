@@ -991,7 +991,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                                 : _targetWalletId == wallet.id;
                             final activeColor = isSource
                                 ? const Color(0xFF34D399)
-                                : const Color(0xFF8B85F6);
+                                : AppColors.primary;
 
                             final isMostUsed = index == 0 &&
                                 (_usageMap[wallet.id] ?? 0) > 0;
