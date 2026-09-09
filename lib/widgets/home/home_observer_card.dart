@@ -5,11 +5,13 @@ import '../../utils/financial_logic.dart';
 class HomeObserverCard extends StatelessWidget {
   final double netWorth;
   final double monthlyIncome;
+  final bool isEmbedded;
 
   const HomeObserverCard({
     super.key,
     required this.netWorth,
     required this.monthlyIncome,
+    this.isEmbedded = false,
   });
 
   @override
@@ -23,6 +25,55 @@ class HomeObserverCard extends StatelessWidget {
     final zakatStatusColor = reachesNisab
         ? (isDark ? const Color(0xFF34D399) : const Color(0xFF059669))
         : (isDark ? Colors.white38 : const Color(0xFF9CA3AF));
+
+    final content = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Kewajiban Finansial',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.2,
+            color: isDark ? Colors.white : const Color(0xFF18181B),
+          ),
+        ),
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            Expanded(
+              child: _buildMetricItem(
+                context,
+                title: 'Zakat',
+                amount: zakatAmount,
+                statusText: reachesNisab ? 'Wajib Zakat' : 'Belum Nisab',
+                statusColor: zakatStatusColor,
+              ),
+            ),
+            Container(
+              width: 1,
+              height: 42,
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              color: isDark
+                  ? Colors.white.withOpacity(0.08)
+                  : Colors.black.withOpacity(0.06),
+            ),
+            Expanded(
+              child: _buildMetricItem(
+                context,
+                title: 'Pajak',
+                amount: taxAmount,
+                statusText: 'Estimasi PPh',
+                statusColor:
+                    isDark ? const Color(0xFFFBBF24) : const Color(0xFFD97706),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+
+    if (isEmbedded) return content;
 
     return Container(
       width: double.infinity,
@@ -44,52 +95,7 @@ class HomeObserverCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Kewajiban Finansial',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.2,
-              color: isDark ? Colors.white : const Color(0xFF18181B),
-            ),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: _buildMetricItem(
-                  context,
-                  title: 'Zakat',
-                  amount: zakatAmount,
-                  statusText: reachesNisab ? 'Wajib Zakat' : 'Belum Nisab',
-                  statusColor: zakatStatusColor,
-                ),
-              ),
-              Container(
-                width: 1,
-                height: 42,
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                color: isDark
-                    ? Colors.white.withOpacity(0.08)
-                    : Colors.black.withOpacity(0.06),
-              ),
-              Expanded(
-                child: _buildMetricItem(
-                  context,
-                  title: 'Pajak',
-                  amount: taxAmount,
-                  statusText: 'Estimasi PPh',
-                  statusColor:
-                      isDark ? const Color(0xFFFBBF24) : const Color(0xFFD97706),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+      child: content,
     );
   }
 

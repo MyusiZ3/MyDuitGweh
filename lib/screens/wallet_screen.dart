@@ -2306,50 +2306,13 @@ class WalletScreenState extends State<WalletScreen>
     required IconData icon,
     required VoidCallback onPressed,
   }) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon,
-                size: 80, color: Theme.of(context).hintColor.withOpacity(0.3)),
-            const SizedBox(height: 20),
-            Text(
-              ToneManager.t(titleKey),
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              ToneManager.t(msgKey),
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Theme.of(context).hintColor),
-            ),
-            const SizedBox(height: 32),
-            SizedBox(
-              width: 220,
-              height: 52,
-              child: ElevatedButton(
-                onPressed: onPressed,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      Theme.of(context).brightness == Brightness.dark
-                          ? const Color(0xFF6B64DB)
-                          : Theme.of(context).primaryColor,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20)),
-                ),
-                child: Text(btnText,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w800, fontSize: 16)),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return EmptyStateWidget(
+      title: ToneManager.t(titleKey),
+      subtitle: ToneManager.t(msgKey),
+      icon: icon,
+      actionLabel: btnText,
+      onAction: onPressed,
+      paddingVertical: 40.0,
     );
   }
 
@@ -5395,14 +5358,21 @@ class _IconButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: (isDark ? const Color(0xFF6B64DB) : AppColors.primary)
-              .withOpacity(0.1),
-          borderRadius: BorderRadius.circular(10),
+          color: isDark
+              ? Colors.white.withOpacity(0.08)
+              : Colors.black.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withOpacity(0.08)
+                : Colors.black.withOpacity(0.06),
+            width: 1,
+          ),
         ),
         child: Icon(
           icon,
-          size: 24,
-          color: isDark ? const Color(0xFF6B64DB) : AppColors.primary,
+          size: 20,
+          color: isDark ? Colors.white : const Color(0xFF18181B),
         ),
       ),
     );

@@ -6,7 +6,6 @@ import '../../models/transaction_model.dart';
 import '../../widgets/shimmer_loading.dart';
 import '../../widgets/transaction_card.dart';
 import '../../utils/tone_dictionary.dart';
-import '../../utils/app_theme.dart';
 import '../empty_state_widget.dart';
 
 class HomeRecentTransactions extends StatelessWidget {
@@ -34,40 +33,80 @@ class HomeRecentTransactions extends StatelessWidget {
         }
 
         final txns = snapshot.data ?? [];
-        if (txns.isEmpty) {
+        final grouped = _groupTransactions(txns);
+        if (grouped.isEmpty) {
           return _buildEmptyState(context);
         }
 
-        final grouped = _groupTransactions(txns);
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final cardBg = isDark ? const Color(0xFF1C1C22) : Colors.white;
 
         return SliverList(
           delegate: SliverChildBuilderDelegate(
             (context, index) {
               final group = grouped[index];
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      padding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
                       child: Text(
                         _getDateLabel(group.date).toUpperCase(),
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 0.8,
-                          color: Theme.of(context).hintColor.withOpacity(0.5),
+                          color: isDark
+                              ? const Color(0xFF71717A)
+                              : const Color(0xFF9CA3AF),
                         ),
                       ),
                     ),
-                    ...group.transactions.map((tx) => Padding(
-                          padding: const EdgeInsets.only(bottom: 8.0),
-                          child: TransactionCard(
-                            transaction: tx,
-                            walletId: tx.walletId,
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: cardBg,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: isDark
+                              ? Colors.white.withOpacity(0.06)
+                              : Colors.black.withOpacity(0.04),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black
+                                .withOpacity(isDark ? 0.25 : 0.04),
+                            blurRadius: 16,
+                            offset: const Offset(0, 6),
                           ),
-                        )),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          for (int i = 0;
+                              i < group.transactions.length;
+                              i++) ...[
+                            if (i > 0)
+                              Divider(
+                                height: 1,
+                                thickness: 1,
+                                indent: 64,
+                                color: isDark
+                                    ? Colors.white.withOpacity(0.06)
+                                    : Colors.black.withOpacity(0.05),
+                              ),
+                            TransactionCard(
+                              transaction: group.transactions[i],
+                              walletId: group.transactions[i].walletId,
+                              isFlat: true,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               );
@@ -102,7 +141,10 @@ class HomeRecentTransactions extends StatelessWidget {
     }
 
     final sortedDates = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
-    return sortedDates
+    // Limit to max 7 active transaction dates (dates that actually contain transactions)
+    final recent7Dates = sortedDates.take(7);
+
+    return recent7Dates
         .map((date) => _TransactionGroup(date, grouped[date]!))
         .toList();
   }

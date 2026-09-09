@@ -33,8 +33,8 @@ class HomeRecentTransactionsHeader extends StatelessWidget {
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: Theme.of(context).brightness == Brightness.dark
-                        ? const Color(0xFFA1A1AA)
-                        : const Color(0xFF71717A),
+                        ? const Color(0xFF6366F1)
+                        : const Color(0xFF4F46E5),
                   ),
                 ),
               ),

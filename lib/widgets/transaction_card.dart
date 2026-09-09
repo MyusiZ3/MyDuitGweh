@@ -39,8 +39,11 @@ class TransactionCard extends StatelessWidget {
     }
 
     return Container(
-      constraints: const BoxConstraints(minHeight: 74),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      constraints: const BoxConstraints(minHeight: 68),
+      padding: EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: isFlat ? 12 : 8,
+      ),
       decoration: isFlat
           ? null
           : BoxDecoration(

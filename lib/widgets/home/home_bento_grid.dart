@@ -19,6 +19,9 @@ class HomeBentoGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1C1C22) : Colors.white;
+
     return StreamBuilder<double>(
       stream: firestoreService.getMonthlyExpenseStream(uid),
       builder: (context, monthlySnapshot) {
@@ -28,26 +31,55 @@ class HomeBentoGrid extends StatelessWidget {
           stream: firestoreService.getMonthlyIncomeStream(uid),
           builder: (context, incomeSnapshot) {
             final totalMonthlyIncome = incomeSnapshot.data ?? 0.0;
+            final hasBudget = monthlyBudget > 0;
 
-            return Column(
-              children: [
-                if (monthlyBudget > 0)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: HomeBudgetTracker(
-                      monthlyBudget: monthlyBudget,
-                      totalExpense: totalMonthlySpent,
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                decoration: BoxDecoration(
+                  color: cardBg,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withOpacity(0.06)
+                        : Colors.black.withOpacity(0.04),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(isDark ? 0.25 : 0.04),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
                     ),
-                  ),
-                if (monthlyBudget > 0) const SizedBox(height: 12),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: HomeObserverCard(
-                    netWorth: netWorth,
-                    monthlyIncome: totalMonthlyIncome,
-                  ),
+                  ],
                 ),
-              ],
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (hasBudget) ...[
+                      HomeBudgetTracker(
+                        monthlyBudget: monthlyBudget,
+                        totalExpense: totalMonthlySpent,
+                        isEmbedded: true,
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        height: 1,
+                        color: isDark
+                            ? Colors.white.withOpacity(0.06)
+                            : Colors.black.withOpacity(0.05),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    HomeObserverCard(
+                      netWorth: netWorth,
+                      monthlyIncome: totalMonthlyIncome,
+                      isEmbedded: true,
+                    ),
+                  ],
+                ),
+              ),
             );
           },
         );
