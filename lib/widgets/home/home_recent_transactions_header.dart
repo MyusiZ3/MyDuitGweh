@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../utils/tone_dictionary.dart';
+import '../../utils/app_theme.dart';
 import '../../screens/main_nav.dart';
 
 class HomeRecentTransactionsHeader extends StatelessWidget {
@@ -27,14 +28,12 @@ class HomeRecentTransactionsHeader extends StatelessWidget {
               ),
               GestureDetector(
                 onTap: () => MainNav.of(context)?.setTab(2),
-                child: Text(
+                child: const Text(
                   'Lihat Semua',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? const Color(0xFF6366F1)
-                        : const Color(0xFF4F46E5),
+                    color: AppColors.primary,
                   ),
                 ),
               ),

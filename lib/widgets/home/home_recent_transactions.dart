@@ -7,6 +7,7 @@ import '../../widgets/shimmer_loading.dart';
 import '../../widgets/transaction_card.dart';
 import '../../utils/tone_dictionary.dart';
 import '../empty_state_widget.dart';
+import '../notched_section_card.dart';
 
 class HomeRecentTransactions extends StatelessWidget {
   final List<String> walletIds;
@@ -39,7 +40,6 @@ class HomeRecentTransactions extends StatelessWidget {
         }
 
         final isDark = Theme.of(context).brightness == Brightness.dark;
-        final cardBg = isDark ? const Color(0xFF1C1C22) : Colors.white;
 
         return SliverList(
           delegate: SliverChildBuilderDelegate(
@@ -64,26 +64,9 @@ class HomeRecentTransactions extends StatelessWidget {
                         ),
                       ),
                     ),
-                    Container(
+                    NotchedSectionCard(
                       margin: const EdgeInsets.only(bottom: 12),
-                      decoration: BoxDecoration(
-                        color: cardBg,
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(
-                          color: isDark
-                              ? Colors.white.withOpacity(0.06)
-                              : Colors.black.withOpacity(0.04),
-                          width: 1,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black
-                                .withOpacity(isDark ? 0.25 : 0.04),
-                            blurRadius: 16,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
-                      ),
+                      padding: EdgeInsets.zero,
                       child: Column(
                         children: [
                           for (int i = 0;

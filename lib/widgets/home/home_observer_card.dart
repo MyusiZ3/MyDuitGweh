@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../utils/currency_formatter.dart';
 import '../../utils/financial_logic.dart';
 
+import '../notched_section_card.dart';
+
 class HomeObserverCard extends StatelessWidget {
   final double netWorth;
   final double monthlyIncome;
@@ -21,7 +23,6 @@ class HomeObserverCard extends StatelessWidget {
     final taxAmount = FinancialLogic.calculateTax(monthlyIncome);
     final reachesNisab = FinancialLogic.reachesNisab(netWorth);
 
-    final cardBg = isDark ? const Color(0xFF1C1C22) : Colors.white;
     final zakatStatusColor = reachesNisab
         ? (isDark ? const Color(0xFF34D399) : const Color(0xFF059669))
         : (isDark ? Colors.white38 : const Color(0xFF9CA3AF));
@@ -75,26 +76,8 @@ class HomeObserverCard extends StatelessWidget {
 
     if (isEmbedded) return content;
 
-    return Container(
-      width: double.infinity,
+    return NotchedSectionCard(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withOpacity(0.06)
-              : Colors.black.withOpacity(0.04),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.25 : 0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
       child: content,
     );
   }
