@@ -24,7 +24,23 @@ import '../services/notif_listener_bridge.dart';
 import '../services/debt_service.dart';
 import '../widgets/empty_state_widget.dart';
 import '../widgets/report/animated_heartbeat.dart';
-// import '../models/debt_model.dart';
+import '../widgets/notched_section_card.dart';
+
+class _SummaryChartItemData {
+  final String label;
+  final double value;
+  final String formattedValue;
+  final Color color;
+  final double radius;
+
+  _SummaryChartItemData({
+    required this.label,
+    required this.value,
+    required this.formattedValue,
+    required this.color,
+    required this.radius,
+  });
+}
 
 class ReportScreen extends StatefulWidget {
   const ReportScreen({super.key});
@@ -47,6 +63,8 @@ class _ReportScreenState extends State<ReportScreen> {
   DateTimeRange? _lastDateRange;
 
   int _touchedPieIndex = -1;
+  int _touchedTrendIndex = -1;
+  int _summaryTouchedIndex = -1;
   bool _isCategoryMode = true;
   bool _showLineChart = false;
   bool _isCheckingAi = false;
@@ -284,65 +302,83 @@ class _ReportScreenState extends State<ReportScreen> {
     }
   }
 
+  Widget _buildHeader(BuildContext context, bool isDark) {
+    return Container(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                ToneManager.t('report_title'),
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 24,
+                  letterSpacing: -0.8,
+                  color: isDark ? Colors.white : Colors.black,
+                ),
+              ),
+            ),
+            _buildCircularIconButton(
+              icon: CupertinoIcons.share,
+              onPressed: _showExportDialog,
+              isDark: isDark,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCircularIconButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+    required bool isDark,
+  }) {
+    final bg = isDark ? const Color(0xFF1C1C22) : const Color(0xFFF4F4F5);
+    final iconColor = isDark ? Colors.white : const Color(0xFF18181B);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: bg,
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withOpacity(0.08)
+              : Colors.black.withOpacity(0.05),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.25 : 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: IconButton(
+        icon: Icon(icon, size: 18),
+        color: iconColor,
+        onPressed: onPressed,
+        constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+        padding: EdgeInsets.zero,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: NestedScrollView(
-        physics: const BouncingScrollPhysics(),
-        headerSliverBuilder: (context, innerBoxIsScrolled) {
-          final isDark = Theme.of(context).brightness == Brightness.dark;
-          final headerColor = isDark
-              ? const Color(0xB3000000) // 0.7 opacity black
-              : const Color(0xB3FFFFFF); // 0.7 opacity white
-
-          return [
-            SliverAppBar(
-              pinned: true,
-              stretch: true,
-              centerTitle: false,
-              expandedHeight: 140,
-              collapsedHeight: 70,
-              elevation: 0,
-              scrolledUnderElevation: 0,
-              surfaceTintColor: Colors.transparent,
-              backgroundColor: Colors.transparent,
-              actions: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: IconButton(
-                    onPressed: _showExportDialog,
-                    icon: Icon(
-                      CupertinoIcons.share,
-                      size: 22,
-                      color: isDark ? Colors.white : AppColors.primary,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ],
-              flexibleSpace: FlexibleSpaceBar(
-                  stretchModes: const [
-                    StretchMode.zoomBackground,
-                  ],
-                  titlePadding: const EdgeInsets.only(left: 24, bottom: 16),
-                  centerTitle: false,
-                  title: Text(
-                    ToneManager.t('report_title'),
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 28,
-                      letterSpacing: -1.0,
-                      color: isDark ? Colors.white : Colors.black,
-                    ),
-                  ),
-                  background: Container(color: headerColor),
-                ),
-            ),
-          ];
-        },
-        body: StreamBuilder<List<WalletModel>>(
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            _buildHeader(context, isDark),
+            Expanded(
+              child: StreamBuilder<List<WalletModel>>(
           stream: _walletStream,
           builder: (context, walletSnapshot) {
             if (walletSnapshot.connectionState == ConnectionState.waiting &&
@@ -421,6 +457,12 @@ class _ReportScreenState extends State<ReportScreen> {
                   }
                 }
 
+                // Sort category totals by amount descending (largest to smallest)
+                final sortedCategoryEntries = categoryTotals.entries.toList()
+                  ..sort((a, b) => b.value.compareTo(a.value));
+                final sortedCategoryTotals =
+                    Map.fromEntries(sortedCategoryEntries);
+
                 return ListView(
                   physics: const BouncingScrollPhysics(),
                   padding: const EdgeInsets.only(
@@ -432,49 +474,40 @@ class _ReportScreenState extends State<ReportScreen> {
                     const SizedBox(height: 20),
                     _buildSummaryCard(
                         totalIncome - totalExpense, totalIncome, totalExpense),
+                    const SizedBox(height: 16),
+                    _buildAiAdvisorBanner(),
                     const SizedBox(height: 24),
                     if (_monthlyBudget > 0) ...[
-                      _buildBudgetRings(totalExpense),
+                      _buildBudgetRings(),
                       const SizedBox(height: 24),
                     ],
-                    _buildInsightToggle(),
-                    const SizedBox(height: 24),
-                    // Grouped Content Container
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color:
-                                Colors.black.withOpacity(isDark ? 0.1 : 0.03),
-                            blurRadius: 15,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
-                      ),
+                    NotchedSectionCard(
+                      radius: 28,
+                      padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
                       child: Column(
                         children: [
+                          _buildInsightToggle(),
+                          const SizedBox(height: 20),
                           if (_isCategoryMode)
                             if (totalExpense > 0)
                               _buildInteractivePieChart(
-                                  categoryTotals, totalExpense)
+                                  sortedCategoryTotals, totalExpense)
                             else
                               const EmptyStateWidget(
                                 title: 'Belum Ada Pengeluaran',
-                                subtitle: 'Grafik kategori akan tampil setelah kamu mencatat transaksi pengeluaran.',
+                                subtitle:
+                                    'Grafik kategori akan tampil setelah kamu mencatat transaksi pengeluaran.',
                                 icon: CupertinoIcons.chart_pie_fill,
                                 paddingVertical: 24,
                               )
                           else
                             _buildWeeklyTrendChart(data),
                           if (_isCategoryMode && totalExpense > 0) ...[
-                            const SizedBox(height: 24),
+                            const SizedBox(height: 20),
                             const Divider(height: 1),
-                            const SizedBox(height: 24),
-                            _buildCategoryList(categoryTotals, totalExpense),
+                            const SizedBox(height: 20),
+                            _buildCategoryList(
+                                sortedCategoryTotals, totalExpense),
                           ],
                         ],
                       ),
@@ -494,72 +527,179 @@ class _ReportScreenState extends State<ReportScreen> {
             );
           },
         ),
+            ),
+          ],
+        ),
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(
-            bottom: 150), // Elevated to stay above bottom nav
-        child: FloatingActionButton.extended(
-          onPressed: () async {
-            if (_isCheckingAi) return;
+    );
+  }
 
-            setState(() {
-              _isCheckingAi = true;
-            });
+  void _openAiAdvisor() async {
+    if (_isCheckingAi) return;
 
-            // Check if AI is globally enabled
-            final isEnabled = await AIService.isGlobalAiEnabled();
+    setState(() {
+      _isCheckingAi = true;
+    });
 
-            if (!context.mounted) return;
-            setState(() {
-              _isCheckingAi = false;
-            });
+    // Check if AI is globally enabled
+    final isEnabled = await AIService.isGlobalAiEnabled();
 
-            if (isEnabled) {
-              if (context.mounted) {
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (context) => _AIAdvisorSheet(
-                    apiKey: _aiApiKey,
-                    apiPlatform: _aiApiPlatform,
-                    allApiKeys: _allApiKeys,
-                    onSaveKey: _saveAIKey,
-                    onDeleteKey: _deleteStoredKey,
-                    onRemoveKey: _removeAIKey,
-                    selectedDateRange: selectedDateRange,
-                    uid: _uid,
-                    firestoreService: _firestoreService,
-                    walletIds: _currentWalletIds,
-                    wallets: _allWallets,
+    if (!context.mounted) return;
+    setState(() {
+      _isCheckingAi = false;
+    });
+
+    if (isEnabled) {
+      if (context.mounted) {
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) => _AIAdvisorSheet(
+            apiKey: _aiApiKey,
+            apiPlatform: _aiApiPlatform,
+            allApiKeys: _allApiKeys,
+            onSaveKey: _saveAIKey,
+            onDeleteKey: _deleteStoredKey,
+            onRemoveKey: _removeAIKey,
+            selectedDateRange: selectedDateRange,
+            uid: _uid,
+            firestoreService: _firestoreService,
+            walletIds: _currentWalletIds,
+            wallets: _allWallets,
+          ),
+        );
+      }
+    } else {
+      if (context.mounted) {
+        UIHelper.showAiMaintenanceDialog(context);
+      }
+    }
+  }
+
+  Widget _buildAiAdvisorBanner() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: const Color(0xFF60A5FA),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF60A5FA).withOpacity(isDark ? 0.3 : 0.25),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: _openAiAdvisor,
+            borderRadius: BorderRadius.circular(24),
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Row(
+                children: [
+                  Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        CupertinoIcons.sparkles,
+                        color: Color(0xFF2563EB),
+                        size: 22,
+                      ),
+                    ),
                   ),
-                );
-              }
-            } else {
-              if (context.mounted) {
-                UIHelper.showAiMaintenanceDialog(context);
-              }
-            }
-          },
-          label: _isCheckingAi
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2,
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              ToneManager.t('arch_ai_button'),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                letterSpacing: -0.3,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.25),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Text(
+                                'AI',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          'Dapatkan analisa hemat & insight otomatis dari AI',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.white.withOpacity(0.92),
+                            height: 1.25,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                )
-              : Text(ToneManager.t('arch_ai_button'),
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.white)),
-          icon: _isCheckingAi
-              ? const SizedBox.shrink()
-              : Icon(CupertinoIcons.sparkles, color: Colors.white),
-          backgroundColor: isDark
-              ? CupertinoColors.activeBlue
-              : Theme.of(context).primaryColor,
-          elevation: 4,
+                  const SizedBox(width: 10),
+                  if (_isCheckingAi)
+                    const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  else
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        CupertinoIcons.chevron_right,
+                        size: 16,
+                        color: Colors.white,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -594,13 +734,12 @@ class _ReportScreenState extends State<ReportScreen> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: (isDark ? Colors.blueAccent : AppColors.primary)
-                    .withOpacity(0.1),
+                color: const Color(0xFF60A5FA).withOpacity(0.15),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
+              child: const Icon(
                 CupertinoIcons.calendar,
-                color: isDark ? Colors.blueAccent : AppColors.primary,
+                color: Color(0xFF60A5FA),
                 size: 20,
               ),
             ),
@@ -639,143 +778,590 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Future<void> _selectDateRange() async {
-    final range = await showDateRangePicker(
+    DateTime tempStart = selectedDateRange.start;
+    DateTime? tempEnd = selectedDateRange.end;
+    DateTime displayMonth = DateTime(tempStart.year, tempStart.month, 1);
+    bool isTextInputMode = false;
+    String? inputError;
+
+    final startController = TextEditingController(
+      text: DateFormat('dd/MM/yyyy').format(tempStart),
+    );
+    final endController = TextEditingController(
+      text: DateFormat('dd/MM/yyyy').format(tempEnd),
+    );
+
+    final newRange = await showDialog<DateTimeRange>(
       context: context,
-      initialDateRange: selectedDateRange,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: Theme.of(context).brightness == Brightness.dark
-                ? const ColorScheme.dark(
-                    primary: CupertinoColors.activeBlue,
-                    onPrimary: Colors.white,
-                    surface: Color(0xFF1C1C1E),
-                    onSurface: Colors.white,
-                  )
-                : ColorScheme.light(
-                    primary: AppColors.primary,
-                    onPrimary: Colors.white,
-                    surface: Colors.white,
-                    onSurface: Colors.black,
+      barrierDismissible: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final isDarkDialog = Theme.of(context).brightness == Brightness.dark;
+            final cardBg = isDarkDialog ? const Color(0xFF242429) : Colors.white;
+            final textColor = isDarkDialog ? Colors.white : const Color(0xFF18181B);
+            final hintColor = isDarkDialog ? Colors.white54 : const Color(0xFF71717A);
+
+            const primaryAccent = Color(0xFF60A5FA); // Soft Pastel Blue
+            final rangeBg = primaryAccent.withOpacity(isDarkDialog ? 0.25 : 0.18);
+            final rangeText = isDarkDialog ? const Color(0xFF93C5FD) : const Color(0xFF1E40AF);
+
+            final daysInMonth = DateTime(displayMonth.year, displayMonth.month + 1, 0).day;
+            final firstWeekday = DateTime(displayMonth.year, displayMonth.month, 1).weekday % 7;
+
+            final weekdays = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+            final endVal = tempEnd;
+
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              child: Container(
+                width: 340,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: cardBg,
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(isDarkDialog ? 0.5 : 0.15),
+                      blurRadius: 30,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                  border: Border.all(
+                    color: isDarkDialog
+                        ? Colors.white.withOpacity(0.08)
+                        : Colors.black.withOpacity(0.05),
+                    width: 1,
                   ),
-          ),
-          child: child!,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Dialog Header with Title & Pencil Toggle Button
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Pilih Periode',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            color: textColor,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(
+                            isTextInputMode ? CupertinoIcons.calendar : CupertinoIcons.pencil,
+                            size: 20,
+                            color: primaryAccent,
+                          ),
+                          tooltip: isTextInputMode ? 'Mode Kalender' : 'Ketik Manual',
+                          onPressed: () {
+                            setDialogState(() {
+                              if (!isTextInputMode) {
+                                // Switching to Text Input Mode
+                                startController.text = DateFormat('dd/MM/yyyy').format(tempStart);
+                                endController.text = DateFormat('dd/MM/yyyy').format(tempEnd ?? tempStart);
+                              } else {
+                                // Switching back to Calendar Grid Mode
+                                try {
+                                  final pStart = DateFormat('dd/MM/yyyy').parseStrict(startController.text.trim());
+                                  final pEnd = DateFormat('dd/MM/yyyy').parseStrict(endController.text.trim());
+                                  if (pEnd.isBefore(pStart)) {
+                                    tempStart = pEnd;
+                                    tempEnd = pStart;
+                                  } else {
+                                    tempStart = pStart;
+                                    tempEnd = pEnd;
+                                  }
+                                  displayMonth = DateTime(tempStart.year, tempStart.month, 1);
+                                  inputError = null;
+                                } catch (_) {
+                                  inputError = 'Format tgl salah (Gunakan: DD/MM/YYYY)';
+                                }
+                              }
+                              if (inputError == null) {
+                                isTextInputMode = !isTextInputMode;
+                              }
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    if (isTextInputMode) ...[
+                      // Manual Text Input Mode Body
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Ketik tanggal manual (Format: DD/MM/YYYY)',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: hintColor,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'TANGGAL AWAL',
+                                      style: TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w900,
+                                        color: primaryAccent,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    TextField(
+                                      controller: startController,
+                                      keyboardType: TextInputType.datetime,
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: textColor,
+                                      ),
+                                      decoration: InputDecoration(
+                                        hintText: '05/08/2026',
+                                        hintStyle: TextStyle(color: hintColor.withOpacity(0.5)),
+                                        isDense: true,
+                                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                        filled: true,
+                                        fillColor: isDarkDialog
+                                            ? Colors.white.withOpacity(0.05)
+                                            : Colors.black.withOpacity(0.03),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                          borderSide: BorderSide.none,
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                          borderSide: const BorderSide(color: primaryAccent, width: 1.5),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'TANGGAL AKHIR',
+                                      style: TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w900,
+                                        color: primaryAccent,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    TextField(
+                                      controller: endController,
+                                      keyboardType: TextInputType.datetime,
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: textColor,
+                                      ),
+                                      decoration: InputDecoration(
+                                        hintText: '12/08/2026',
+                                        hintStyle: TextStyle(color: hintColor.withOpacity(0.5)),
+                                        isDense: true,
+                                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                        filled: true,
+                                        fillColor: isDarkDialog
+                                            ? Colors.white.withOpacity(0.05)
+                                            : Colors.black.withOpacity(0.03),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                          borderSide: BorderSide.none,
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                          borderSide: const BorderSide(color: primaryAccent, width: 1.5),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (inputError != null) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              inputError!,
+                              style: const TextStyle(fontSize: 11, color: Colors.redAccent, fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                    ] else ...[
+                      // Calendar Grid Mode Body
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          IconButton(
+                            icon: const Icon(CupertinoIcons.chevron_left, size: 18),
+                            color: textColor,
+                            onPressed: () {
+                              setDialogState(() {
+                                displayMonth = DateTime(displayMonth.year, displayMonth.month - 1, 1);
+                              });
+                            },
+                          ),
+                          Text(
+                            DateFormat('MMMM yyyy').format(displayMonth),
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: textColor,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(CupertinoIcons.chevron_right, size: 18),
+                            color: textColor,
+                            onPressed: () {
+                              setDialogState(() {
+                                displayMonth = DateTime(displayMonth.year, displayMonth.month + 1, 1);
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      // Weekday Labels Row
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: weekdays.map((w) {
+                          return SizedBox(
+                            width: 38,
+                            child: Center(
+                              child: Text(
+                                w,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: hintColor,
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 6),
+                      // Calendar Day Grid
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: firstWeekday + daysInMonth,
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 7,
+                          mainAxisSpacing: 4,
+                          crossAxisSpacing: 2,
+                          childAspectRatio: 1.0,
+                        ),
+                        itemBuilder: (context, index) {
+                          if (index < firstWeekday) {
+                            return const SizedBox.shrink();
+                          }
+                          final dayNumber = index - firstWeekday + 1;
+                          final cellDate = DateTime(displayMonth.year, displayMonth.month, dayNumber);
+
+                          final isStart = cellDate.year == tempStart.year &&
+                              cellDate.month == tempStart.month &&
+                              cellDate.day == tempStart.day;
+
+                          final isEnd = endVal != null &&
+                              cellDate.year == endVal.year &&
+                              cellDate.month == endVal.month &&
+                              cellDate.day == endVal.day;
+
+                          final isInRange = endVal != null &&
+                              cellDate.isAfter(tempStart) &&
+                              cellDate.isBefore(endVal);
+
+                          final isSelectedBoundary = isStart || isEnd;
+
+                          Color? cellBg;
+                          BorderRadius? cellRadius;
+
+                          if (isSelectedBoundary) {
+                            cellBg = primaryAccent;
+                            cellRadius = BorderRadius.circular(20);
+                          } else if (isInRange) {
+                            cellBg = rangeBg;
+                          }
+
+                          return GestureDetector(
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              setDialogState(() {
+                                if (tempEnd == null) {
+                                  if (cellDate.isBefore(tempStart)) {
+                                    tempStart = cellDate;
+                                  } else {
+                                    tempEnd = cellDate;
+                                  }
+                                } else {
+                                  tempStart = cellDate;
+                                  tempEnd = null;
+                                }
+                              });
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: cellBg,
+                                borderRadius: cellRadius,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  '$dayNumber',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: isSelectedBoundary
+                                        ? FontWeight.w900
+                                        : (isInRange ? FontWeight.bold : FontWeight.w500),
+                                    color: isSelectedBoundary
+                                        ? Colors.white
+                                        : (isInRange
+                                            ? rangeText
+                                            : textColor),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+
+                    const SizedBox(height: 16),
+                    // Action Buttons Footer
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            !isTextInputMode
+                                ? (endVal != null
+                                    ? '${DateFormat('dd MMM').format(tempStart)} - ${DateFormat('dd MMM yyyy').format(endVal)}'
+                                    : DateFormat('dd MMM yyyy').format(tempStart))
+                                : '',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: Text(
+                                'Batal',
+                                style: TextStyle(color: hintColor, fontSize: 13, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            ElevatedButton(
+                              onPressed: () {
+                                if (isTextInputMode) {
+                                  try {
+                                    final pStart = DateFormat('dd/MM/yyyy').parseStrict(startController.text.trim());
+                                    final pEnd = DateFormat('dd/MM/yyyy').parseStrict(endController.text.trim());
+                                    DateTime finalS = pStart;
+                                    DateTime finalE = pEnd;
+                                    if (pEnd.isBefore(pStart)) {
+                                      finalS = pEnd;
+                                      finalE = pStart;
+                                    }
+                                    Navigator.pop(
+                                      context,
+                                      DateTimeRange(start: finalS, end: finalE),
+                                    );
+                                  } catch (_) {
+                                    setDialogState(() {
+                                      inputError = 'Format tgl salah (Gunakan: DD/MM/YYYY)';
+                                    });
+                                  }
+                                } else {
+                                  final finalEnd = tempEnd ?? tempStart;
+                                  Navigator.pop(
+                                    context,
+                                    DateTimeRange(start: tempStart, end: finalEnd),
+                                  );
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primaryAccent,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                              ),
+                              child: const Text(
+                                'Terapkan',
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
     );
 
-    if (range != null) {
+    startController.dispose();
+    endController.dispose();
+
+    if (newRange != null) {
       setState(() {
-        selectedDateRange = range;
+        selectedDateRange = newRange;
         _activePreset = 'Custom';
       });
       _calculatePreviousPeriodData();
     }
   }
 
-  Widget _buildBudgetRings(double currentExpense) {
+  Widget _buildBudgetRings() {
     if (_monthlyBudget == 0) return const SizedBox.shrink();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final percent = (currentExpense / _monthlyBudget).clamp(0.0, 1.0);
-    final isOverBudget = currentExpense > _monthlyBudget;
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1C1C1E) : Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.3 : 0.04),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-        border: isDark
-            ? Border.all(color: Colors.white.withOpacity(0.05), width: 1)
-            : null,
-      ),
-      child: Row(
-        children: [
-          Stack(
-            alignment: Alignment.center,
+    return StreamBuilder<double>(
+      stream: _firestoreService.getMonthlyExpenseStream(_uid),
+      builder: (context, snapshot) {
+        final currentExpense = snapshot.data ?? 0.0;
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final percent = (_monthlyBudget > 0 ? currentExpense / _monthlyBudget : 0.0).clamp(0.0, 1.0);
+        final isOverBudget = currentExpense > _monthlyBudget;
+
+        // Soft pastel color palette matching the Analytics card above
+        final Color ringColor = isOverBudget
+            ? const Color(0xFFFF8C94) // Soft Coral Pink from reference image
+            : (percent > 0.8
+                ? const Color(0xFFFFB347) // Soft Warm Orange
+                : const Color(0xFF4ECDC4)); // Soft Mint Teal from reference image
+
+        final cardBg = isDark ? const Color(0xFF1C1C22) : Colors.white;
+        final textColor = isDark ? Colors.white : const Color(0xFF18181B);
+        final hintColor = isDark ? Colors.white60 : const Color(0xFF71717A);
+
+        return NotchedSectionCard(
+          radius: 24,
+          backgroundColor: cardBg,
+          padding: const EdgeInsets.all(18),
+          child: Row(
             children: [
-              SizedBox(
-                width: 80,
-                height: 80,
-                child: CircularProgressIndicator(
-                  value: percent,
-                  strokeWidth: 10,
-                  backgroundColor: isDark
-                      ? Colors.white.withOpacity(0.05)
-                      : Colors.black.withOpacity(0.05),
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    isOverBudget
-                        ? const Color(0xFFFF453A) // iOS Red
-                        : (percent > 0.8
-                            ? const Color(0xFFFF9F0A)
-                            : (isDark
-                                ? CupertinoColors.activeBlue
-                                : AppColors.primary)),
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  SizedBox(
+                    width: 76,
+                    height: 76,
+                    child: CircularProgressIndicator(
+                      value: percent,
+                      strokeWidth: 9,
+                      backgroundColor: isDark
+                          ? Colors.white.withOpacity(0.08)
+                          : Colors.black.withOpacity(0.06),
+                      valueColor: AlwaysStoppedAnimation<Color>(ringColor),
+                      strokeCap: StrokeCap.round,
+                    ),
                   ),
-                  strokeCap: StrokeCap.round,
-                ),
+                  Text(
+                    '${(percent * 100).toStringAsFixed(0)}%',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 15,
+                      color: textColor,
+                    ),
+                  ),
+                ],
               ),
-              Text(
-                '${(percent * 100).toStringAsFixed(0)}%',
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 16,
-                  color: isDark ? Colors.white : Colors.black87,
+              const SizedBox(width: 18),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 7,
+                          height: 7,
+                          decoration: BoxDecoration(
+                            color: ringColor,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Anggaran Bulan Ini',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: hintColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        '${CurrencyFormatter.formatCurrency(currentExpense)} / ${CurrencyFormatter.formatCurrency(_monthlyBudget)}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16,
+                          letterSpacing: -0.4,
+                          color: textColor,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      isOverBudget
+                          ? 'Wah, kamu sudah melebihi anggaran!'
+                          : 'Sisa: ${CurrencyFormatter.formatCurrency(_monthlyBudget - currentExpense)}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: isOverBudget
+                            ? const Color(0xFFFF8C94)
+                            : (isDark ? Colors.white54 : const Color(0xFF71717A)),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Anggaran Bulanan',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).hintColor,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    '${CurrencyFormatter.formatCurrency(currentExpense)} / ${CurrencyFormatter.formatCurrency(_monthlyBudget)}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 17,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  isOverBudget
-                      ? 'Wah, kamu sudah melebihi anggaran!'
-                      : 'Sisa: ${CurrencyFormatter.formatCurrency(_monthlyBudget - currentExpense)}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: isOverBudget
-                        ? const Color(0xFFFF453A)
-                        : (isDark ? Colors.white38 : Colors.black45),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -808,203 +1394,254 @@ class _ReportScreenState extends State<ReportScreen> {
     final sortedDates = dailyData.keys.toList()..sort();
     final colors = _getChartColors(isDark);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              'Timeline Pengeluaran',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: isDark ? Colors.white : Colors.black87,
-                letterSpacing: -0.5,
-              ),
-            ),
-            const Spacer(),
-            Icon(CupertinoIcons.layers_alt_fill,
-                size: 16, color: isDark ? Colors.white38 : Colors.black26),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Distribusi kategori per hari',
-          style: TextStyle(
-            fontSize: 13,
-            color: isDark ? Colors.white38 : Colors.black45,
-          ),
-        ),
-        const SizedBox(height: 24),
-        Container(
-          height: 250,
-          padding: const EdgeInsets.only(right: 16, top: 16),
-          child: BarChart(
-            BarChartData(
-              alignment: BarChartAlignment.spaceAround,
-              maxY: dailyData.values.isEmpty ? 100 : dailyData.values
-                      .map((e) =>
-                          e.values.fold(0.0, (prev, curr) => prev + curr))
-                      .reduce((a, b) => a > b ? a : b) *
-                  1.1,
-              barTouchData: BarTouchData(
-                enabled: true,
-                touchTooltipData: BarTouchTooltipData(
-                  tooltipBgColor: isDark ? const Color(0xFF2C2C2E) : Colors.white,
-                  getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                    final date = sortedDates[groupIndex];
-                    final total = rod.toY;
-                    return BarTooltipItem(
-                      '$date\n',
-                      TextStyle(
-                        color: isDark ? Colors.white : Colors.black,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
+    return NotchedSectionCard(
+      radius: 28,
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Timeline Pengeluaran',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? Colors.white : Colors.black87,
+                        letterSpacing: -0.5,
                       ),
-                      children: [
-                        TextSpan(
-                          text: CurrencyFormatter.formatCurrency(total),
-                          style: TextStyle(
-                            color: isDark ? Colors.white70 : Colors.black54,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ),
-              titlesData: FlTitlesData(
-                show: true,
-                bottomTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    getTitlesWidget: (value, meta) {
-                      if (value.toInt() >= 0 &&
-                          value.toInt() < sortedDates.length) {
-                        final dateStr = sortedDates[value.toInt()];
-                        final day = dateStr.split('-').last;
-                        // Only show labels occasionally to avoid crowding
-                        bool showLabel = true;
-                        if (sortedDates.length > 7) {
-                          showLabel = value.toInt() % (sortedDates.length ~/ 4 + 1) == 0;
-                        }
-                        
-                        if (!showLabel) return const SizedBox.shrink();
-
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(
-                            day,
-                            style: TextStyle(
-                              color: isDark ? Colors.white38 : Colors.black38,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        );
-                      }
-                      return const SizedBox.shrink();
-                    },
-                    reservedSize: 24,
-                  ),
-                ),
-                leftTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    getTitlesWidget: (value, meta) {
-                      if (value == 0) return const SizedBox.shrink();
-                      return Text(
-                        CurrencyFormatter.formatCompact(value),
-                        style: TextStyle(
-                          color: isDark ? Colors.white24 : Colors.black26,
-                          fontSize: 9,
-                        ),
-                      );
-                    },
-                    reservedSize: 32,
-                  ),
-                ),
-                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              ),
-              gridData: FlGridData(
-                show: true,
-                drawVerticalLine: false,
-                getDrawingHorizontalLine: (value) => FlLine(
-                  color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
-                  strokeWidth: 1,
-                ),
-              ),
-              borderData: FlBorderData(show: false),
-              barGroups: sortedDates.asMap().entries.map((entry) {
-                final index = entry.key;
-                final dateKey = entry.value;
-                final catAmounts = dailyData[dateKey]!;
-
-                double currentY = 0;
-                List<BarChartRodStackItem> stackItems = [];
-                
-                // We need to maintain category order for consistency
-                for (int i = 0; i < categories.length; i++) {
-                  final cat = categories[i];
-                  final amount = catAmounts[cat] ?? 0;
-                  if (amount > 0) {
-                    stackItems.add(BarChartRodStackItem(
-                      currentY,
-                      currentY + amount,
-                      colors[i % colors.length],
-                    ));
-                    currentY += amount;
-                  }
-                }
-
-                return BarChartGroupData(
-                  x: index,
-                  barRods: [
-                    BarChartRodData(
-                      toY: currentY,
-                      width: sortedDates.length > 10 ? 8 : 16,
-                      borderRadius: BorderRadius.circular(4),
-                      rodStackItems: stackItems,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Distribusi kategori per hari',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: isDark ? Colors.white54 : Colors.black54,
+                      ),
                     ),
                   ],
-                );
-              }).toList(),
+                ),
+              ),
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withOpacity(0.08)
+                      : Colors.black.withOpacity(0.05),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  CupertinoIcons.layers_alt_fill,
+                  size: 16,
+                  color: isDark ? Colors.white70 : Colors.black87,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            height: 220,
+            child: BarChart(
+              BarChartData(
+                alignment: BarChartAlignment.spaceAround,
+                maxY: dailyData.values.isEmpty
+                    ? 100
+                    : dailyData.values
+                            .map((e) =>
+                                e.values.fold(0.0, (prev, curr) => prev + curr))
+                            .reduce((a, b) => a > b ? a : b) *
+                        1.1,
+                barTouchData: BarTouchData(
+                  enabled: true,
+                  touchTooltipData: BarTouchTooltipData(
+                    tooltipBgColor: const Color(0xFFFFEE8C), // Pastel Yellow background
+                    tooltipRoundedRadius: 10,
+                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                      final date = sortedDates[groupIndex];
+                      final total = rod.toY;
+                      return BarTooltipItem(
+                        '$date\n',
+                        const TextStyle(
+                          color: Color(0xFF18181B), // Crisp Dark Black text
+                          fontWeight: FontWeight.w900,
+                          fontSize: 12,
+                        ),
+                        children: [
+                          TextSpan(
+                            text: CurrencyFormatter.formatCurrency(total),
+                            style: const TextStyle(
+                              color: Color(0xFF27272A),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+                titlesData: FlTitlesData(
+                  show: true,
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, meta) {
+                        if (value.toInt() >= 0 &&
+                            value.toInt() < sortedDates.length) {
+                          final dateStr = sortedDates[value.toInt()];
+                          final day = dateStr.split('-').last;
+                          bool showLabel = true;
+                          if (sortedDates.length > 7) {
+                            showLabel =
+                                value.toInt() % (sortedDates.length ~/ 4 + 1) ==
+                                    0;
+                          }
+
+                          if (!showLabel) return const SizedBox.shrink();
+
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: Text(
+                              day,
+                              style: TextStyle(
+                                color: isDark ? Colors.white38 : Colors.black38,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      },
+                      reservedSize: 24,
+                    ),
+                  ),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, meta) {
+                        if (value == 0) return const SizedBox.shrink();
+                        return Text(
+                          CurrencyFormatter.formatCompact(value),
+                          style: TextStyle(
+                            color: isDark ? Colors.white24 : Colors.black26,
+                            fontSize: 9,
+                          ),
+                        );
+                      },
+                      reservedSize: 32,
+                    ),
+                  ),
+                  topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                ),
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  getDrawingHorizontalLine: (value) => FlLine(
+                    color: isDark
+                        ? Colors.white.withOpacity(0.06)
+                        : Colors.black.withOpacity(0.05),
+                    strokeWidth: 1,
+                    dashArray: [4, 4],
+                  ),
+                ),
+                borderData: FlBorderData(show: false),
+                barGroups: sortedDates.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final dateKey = entry.value;
+                  final catAmounts = dailyData[dateKey]!;
+
+                  double currentY = 0;
+                  List<BarChartRodStackItem> stackItems = [];
+
+                  for (int i = 0; i < categories.length; i++) {
+                    final cat = categories[i];
+                    final amount = catAmounts[cat] ?? 0;
+                    if (amount > 0) {
+                      stackItems.add(BarChartRodStackItem(
+                        currentY,
+                        currentY + amount,
+                        colors[i % colors.length],
+                      ));
+                      currentY += amount;
+                    }
+                  }
+
+                  return BarChartGroupData(
+                    x: index,
+                    barRods: [
+                      BarChartRodData(
+                        toY: currentY,
+                        width: sortedDates.length > 10 ? 8 : 16,
+                        borderRadius: BorderRadius.circular(4),
+                        rodStackItems: stackItems,
+                      ),
+                    ],
+                  );
+                }).toList(),
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 16),
-        // Legend
-        Wrap(
-          spacing: 12,
-          runSpacing: 8,
-          children: categories.asMap().entries.map((e) {
-            return Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: colors[e.key % colors.length],
-                    shape: BoxShape.circle,
-                  ),
+          const SizedBox(height: 16),
+          // Solid Full Pastel Legend Pills (No Outline & No Transparency)
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: categories.asMap().entries.map((e) {
+              final color = colors[e.key % colors.length];
+              final isLight = color.computeLuminance() > 0.6;
+              final textColor = isLight ? const Color(0xFF18181B) : Colors.white;
+
+              return Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: color, // Full solid pastel color, no transparency
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withOpacity(0.25),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 4),
-                Text(
-                  e.value,
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: isDark ? Colors.white54 : Colors.black54,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: textColor.withOpacity(0.75),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      e.value,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: textColor,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            );
-          }).toList(),
-        ),
-      ],
+              );
+            }).toList(),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1071,16 +1708,11 @@ class _ReportScreenState extends State<ReportScreen> {
                       ? Colors.white.withOpacity(0.05)
                       : Colors.black.withOpacity(0.03);
                 } else if (count <= 2) {
-                  cellColor =
-                      (isDark ? CupertinoColors.activeBlue : AppColors.primary)
-                          .withOpacity(0.3);
+                  cellColor = const Color(0xFF60A5FA).withOpacity(0.3);
                 } else if (count <= 5) {
-                  cellColor =
-                      (isDark ? CupertinoColors.activeBlue : AppColors.primary)
-                          .withOpacity(0.6);
+                  cellColor = const Color(0xFF60A5FA).withOpacity(0.6);
                 } else {
-                  cellColor =
-                      isDark ? CupertinoColors.activeBlue : AppColors.primary;
+                  cellColor = const Color(0xFF60A5FA);
                 }
 
                 return Container(
@@ -1134,8 +1766,7 @@ class _ReportScreenState extends State<ReportScreen> {
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
-              selectedColor:
-                  isDark ? CupertinoColors.activeBlue : AppColors.primary,
+              selectedColor: const Color(0xFF60A5FA),
               backgroundColor: isDark
                   ? Colors.white.withOpacity(0.05)
                   : Colors.black.withOpacity(0.05),
@@ -1153,7 +1784,7 @@ class _ReportScreenState extends State<ReportScreen> {
 
   Widget _buildNotifSettingsCard() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accentColor = isDark ? CupertinoColors.activeBlue : AppColors.primary;
+    const accentColor = Color(0xFF60A5FA);
 
     return StreamBuilder<bool>(
       stream: NotifListenerBridge.globalConfigStream,
@@ -1356,111 +1987,403 @@ class _ReportScreenState extends State<ReportScreen> {
 
   Widget _buildSummaryCard(double balance, double income, double expense) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-        gradient: LinearGradient(
-          colors: isDark
-              ? [const Color(0xFF1C1C1E), const Color(0xFF2C2C2E)]
-              : [AppColors.primary, AppColors.primary.withOpacity(0.8)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    final cardBg = isDark ? const Color(0xFF1C1C22) : Colors.white;
+    final hintColor = isDark ? Colors.white54 : Colors.black45;
+    final textColor = isDark ? Colors.white : const Color(0xFF18181B);
+
+    final days = selectedDateRange.duration.inDays > 0 ? selectedDateRange.duration.inDays : 1;
+    final dailyAvg = expense / days;
+
+    final double safeIncome = income > 0 ? income : 0;
+    final double safeExpense = expense > 0 ? expense : 0;
+    final double safeBalance = balance > 0 ? balance : 0;
+
+    // Define chart items with exact reference image pastel colors & organic staggered radii
+    final List<_SummaryChartItemData> items = [
+      if (safeIncome > 0)
+        _SummaryChartItemData(
+          label: 'Pemasukan',
+          value: safeIncome,
+          formattedValue: CurrencyFormatter.formatCurrency(income),
+          color: const Color(0xFFFFD8A8), // Warm Peach Cream from reference image
+          radius: 24,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: (isDark ? Colors.black : AppColors.primary).withOpacity(0.2),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
+      if (safeExpense > 0)
+        _SummaryChartItemData(
+          label: 'Pengeluaran',
+          value: safeExpense,
+          formattedValue: CurrencyFormatter.formatCurrency(expense),
+          color: const Color(0xFFFF8C94), // Soft Pink Coral from reference image
+          radius: 18,
+        ),
+      if (safeBalance > 0)
+        _SummaryChartItemData(
+          label: 'Total Saldo',
+          value: safeBalance,
+          formattedValue: CurrencyFormatter.formatCurrency(balance),
+          color: const Color(0xFF7B78FF), // Soft Indigo Violet from reference image
+          radius: 22,
+        ),
+      if (dailyAvg > 0)
+        _SummaryChartItemData(
+          label: 'Rata2/Hari',
+          value: dailyAvg,
+          formattedValue: CurrencyFormatter.formatCurrency(dailyAvg),
+          color: const Color(0xFF4ECDC4), // Soft Mint Teal from reference image
+          radius: 16,
+        ),
+    ];
+
+    final bool isTouched = _summaryTouchedIndex >= 0 && _summaryTouchedIndex < items.length;
+    final _SummaryChartItemData? activeItem = isTouched ? items[_summaryTouchedIndex] : null;
+
+    final String centerLabel = activeItem?.label ?? 'Total Saldo';
+    final String centerValue = activeItem?.formattedValue ?? CurrencyFormatter.formatCurrency(balance);
+    final Color centerColor = activeItem?.color ?? const Color(0xFF6C5CE7); // Solid purple/indigo like reference image
+
+    return NotchedSectionCard(
+      radius: 28,
+      backgroundColor: cardBg,
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header Row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'RINGKASAN BERSIH',
-                style: TextStyle(
-                  color: isDark ? Colors.white54 : Colors.white70,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.2,
-                ),
-              ),
-              Icon(
-                CupertinoIcons.info_circle,
-                size: 16,
-                color: isDark ? Colors.white24 : Colors.white38,
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              CurrencyFormatter.formatCurrency(balance),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 34,
-                fontWeight: FontWeight.w900,
-                letterSpacing: -0.5,
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
               Expanded(
-                child: _buildStatItem(
-                  'Pemasukan',
-                  income,
-                  CupertinoIcons.arrow_down_circle_fill,
-                  isDark ? Colors.greenAccent : Colors.white.withOpacity(0.9),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Analytics',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5,
+                        color: textColor,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 180),
+                      child: activeItem != null
+                          ? Row(
+                              key: ValueKey(activeItem.label),
+                              children: [
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: activeItem.color,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    '${activeItem.label} (${activeItem.formattedValue})',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: isDark ? activeItem.color : const Color(0xFF4C1D95),
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            )
+                          : Text(
+                              'Ketuk/tahan grafik untuk detail',
+                              key: const ValueKey('default_subtitle'),
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                                color: hintColor,
+                              ),
+                            ),
+                    ),
+                  ],
                 ),
               ),
+              const SizedBox(width: 8),
               Container(
-                height: 30,
-                width: 1,
-                color: Colors.white.withOpacity(0.2),
-              ),
-              Expanded(
-                child: _buildStatItem(
-                  'Pengeluaran',
-                  expense,
-                  CupertinoIcons.arrow_up_circle_fill,
-                  isDark ? Colors.redAccent : Colors.white.withOpacity(0.9),
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF2C2C2E) : const Color(0xFFF4F4F5),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  CupertinoIcons.arrow_up_right,
+                  size: 16,
+                  color: isDark ? Colors.white70 : const Color(0xFF27272A),
                 ),
               ),
             ],
           ),
-          if (!_isLoadingPrev) ...[
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(16),
+          const SizedBox(height: 16),
+          // Main Body Row
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Left: Organic Donut Chart with Solid Purple Badge in Center
+              SizedBox(
+                width: 115,
+                height: 115,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    PieChart(
+                      PieChartData(
+                        sectionsSpace: 5,
+                        centerSpaceRadius: 35,
+                        startDegreeOffset: -90,
+                        pieTouchData: PieTouchData(
+                          touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                            if (!event.isInterestedForInteractions ||
+                                pieTouchResponse == null ||
+                                pieTouchResponse.touchedSection == null) {
+                              if (_summaryTouchedIndex != -1) {
+                                setState(() => _summaryTouchedIndex = -1);
+                              }
+                              return;
+                            }
+                            final newIndex =
+                                pieTouchResponse.touchedSection!.touchedSectionIndex;
+                            if (newIndex >= 0 &&
+                                newIndex < items.length &&
+                                newIndex != _summaryTouchedIndex) {
+                              HapticFeedback.selectionClick();
+                              setState(() => _summaryTouchedIndex = newIndex);
+                            }
+                          },
+                        ),
+                        sections: items.isEmpty
+                            ? [
+                                PieChartSectionData(
+                                  color: isDark
+                                      ? Colors.white.withOpacity(0.08)
+                                      : Colors.black.withOpacity(0.08),
+                                  value: 1,
+                                  title: '',
+                                  radius: 14,
+                                )
+                              ]
+                            : items.asMap().entries.map((entry) {
+                                final idx = entry.key;
+                                final item = entry.value;
+                                final isSelected = idx == _summaryTouchedIndex;
+                                return PieChartSectionData(
+                                  color: item.color,
+                                  value: item.value,
+                                  title: '',
+                                  radius: isSelected ? item.radius + 5 : item.radius,
+                                );
+                              }).toList(),
+                      ),
+                    ),
+                    // Solid Central Circle (matching reference image)
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: 66,
+                      height: 66,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: centerColor,
+                        boxShadow: [
+                          BoxShadow(
+                            color: centerColor.withOpacity(0.35),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(4.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  centerValue,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w900,
+                                    color: activeItem != null && activeItem.color.computeLuminance() > 0.6
+                                        ? Colors.black87
+                                        : Colors.white,
+                                    letterSpacing: -0.3,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 1),
+                              Text(
+                                centerLabel,
+                                style: TextStyle(
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.w600,
+                                  color: activeItem != null && activeItem.color.computeLuminance() > 0.6
+                                      ? Colors.black54
+                                      : Colors.white70,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              child: Column(
-                children: [
-                  _buildComparisonRow(income, _prevIncome, 'Pemasukan',
-                      isInverse: false),
-                  const SizedBox(height: 12),
-                  _buildComparisonRow(expense, _prevExpense, 'Pengeluaran',
-                      isInverse: true),
-                ],
+              const SizedBox(width: 12),
+              // Right: 2x2 Grid Legend matching reference image colors
+              Expanded(
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildMetricTile(
+                            color: const Color(0xFFFFD8A8), // Warm Peach
+                            label: 'Pemasukan',
+                            value: CurrencyFormatter.formatCurrency(income),
+                            isDark: isDark,
+                            isSelected: activeItem?.label == 'Pemasukan',
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: _buildMetricTile(
+                            color: const Color(0xFFFF8C94), // Soft Pink
+                            label: 'Pengeluaran',
+                            value: CurrencyFormatter.formatCurrency(expense),
+                            isDark: isDark,
+                            isSelected: activeItem?.label == 'Pengeluaran',
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildMetricTile(
+                            color: const Color(0xFF60A5FA), // Pastel Blue
+                            label: 'Total Saldo',
+                            value: CurrencyFormatter.formatCurrency(balance),
+                            isDark: isDark,
+                            isSelected: activeItem?.label == 'Total Saldo',
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: _buildMetricTile(
+                            color: const Color(0xFF4ECDC4), // Soft Teal
+                            label: 'Rata2/Hari',
+                            value: CurrencyFormatter.formatCurrency(dailyAvg),
+                            isDark: isDark,
+                            isSelected: activeItem?.label == 'Rata2/Hari',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
+            ],
+          ),
+          if (!_isLoadingPrev && (_prevIncome > 0 || _prevExpense > 0)) ...[
+            const SizedBox(height: 16),
+            Divider(
+              height: 1,
+              color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.06),
             ),
+            const SizedBox(height: 12),
+            _buildComparisonRow(income, _prevIncome, 'Pemasukan', isInverse: false),
+            const SizedBox(height: 8),
+            _buildComparisonRow(expense, _prevExpense, 'Pengeluaran', isInverse: true),
           ],
         ],
       ),
     );
   }
 
+  Widget _buildMetricTile({
+    required Color color,
+    required String label,
+    required String value,
+    required bool isDark,
+    bool isSelected = false,
+  }) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 150),
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
+      decoration: BoxDecoration(
+        color: isSelected
+            ? color.withOpacity(isDark ? 0.25 : 0.2)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+        border: isSelected
+            ? Border.all(color: color.withOpacity(0.5), width: 1)
+            : Border.all(color: Colors.transparent, width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 7,
+                height: 7,
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                      color: isSelected
+                          ? (isDark ? Colors.white : Colors.black)
+                          : (isDark ? Colors.white70 : const Color(0xFF52525B)),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 3),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: isDark ? Colors.white : const Color(0xFF18181B),
+                letterSpacing: -0.3,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildComparisonRow(double current, double previous, String label,
       {bool isInverse = false}) {
@@ -1469,9 +2392,10 @@ class _ReportScreenState extends State<ReportScreen> {
     final difference = current - previous;
     final percentChange = ((difference / previous) * 100).abs();
 
-    // For expenses (isInverse: true), lower is better. For income, higher is better.
     final isImprovement = isInverse ? difference < 0 : difference > 0;
-    final trendColor = isImprovement ? Colors.greenAccent : Colors.orangeAccent;
+    final trendColor = isImprovement
+        ? (isDark ? Colors.greenAccent : const Color(0xFF16A34A))
+        : (isDark ? Colors.orangeAccent : const Color(0xFFEA580C));
 
     return Row(
       children: [
@@ -1481,7 +2405,7 @@ class _ReportScreenState extends State<ReportScreen> {
             Text(
               label,
               style: TextStyle(
-                color: Colors.white.withOpacity(0.5),
+                color: isDark ? Colors.white60 : const Color(0xFF71717A),
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
               ),
@@ -1489,7 +2413,7 @@ class _ReportScreenState extends State<ReportScreen> {
             Text(
               'vs Periode Sebelumnya',
               style: TextStyle(
-                color: Colors.white.withOpacity(0.3),
+                color: isDark ? Colors.white38 : const Color(0xFFA1A1AA),
                 fontSize: 9,
               ),
             ),
@@ -1532,40 +2456,138 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
 
-  Widget _buildStatItem(
-      String label, double amount, IconData icon, Color color) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+
+
+  Widget _buildInsightToggle() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      height: 44,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.black.withOpacity(0.35)
+            : const Color(0xFFF4F4F5),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withOpacity(0.06)
+              : Colors.black.withOpacity(0.04),
+        ),
+      ),
+      child: Row(
         children: [
-          Row(
-            children: [
-              Icon(icon, size: 14, color: color.withOpacity(0.7)),
-              const SizedBox(width: 6),
-              Flexible(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.6),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
+          Expanded(
+            child: GestureDetector(
+              onTap: () {
+                if (!_isCategoryMode) {
+                  HapticFeedback.selectionClick();
+                  setState(() => _isCategoryMode = true);
+                }
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeInOut,
+                decoration: BoxDecoration(
+                  color: _isCategoryMode
+                      ? (isDark ? const Color(0xFF2C2C34) : Colors.white)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: _isCategoryMode
+                      ? [
+                          BoxShadow(
+                            color: Colors.black
+                                .withOpacity(isDark ? 0.35 : 0.08),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : [],
+                ),
+                child: Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        CupertinoIcons.chart_pie_fill,
+                        size: 15,
+                        color: _isCategoryMode
+                            ? (isDark ? const Color(0xFF60A5FA) : AppColors.primary)
+                            : (isDark ? Colors.white54 : Colors.black54),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Kategori',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: _isCategoryMode
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: _isCategoryMode
+                              ? (isDark ? Colors.white : Colors.black87)
+                              : (isDark ? Colors.white54 : Colors.black54),
+                        ),
+                      ),
+                    ],
                   ),
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-            ],
+            ),
           ),
-          const SizedBox(height: 4),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              CurrencyFormatter.formatCurrency(amount),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.2,
+          Expanded(
+            child: GestureDetector(
+              onTap: () {
+                if (_isCategoryMode) {
+                  HapticFeedback.selectionClick();
+                  setState(() => _isCategoryMode = false);
+                }
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeInOut,
+                decoration: BoxDecoration(
+                  color: !_isCategoryMode
+                      ? (isDark ? const Color(0xFF2C2C34) : Colors.white)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: !_isCategoryMode
+                      ? [
+                          BoxShadow(
+                            color: Colors.black
+                                .withOpacity(isDark ? 0.35 : 0.08),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : [],
+                ),
+                child: Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        CupertinoIcons.chart_bar_square_fill,
+                        size: 15,
+                        color: !_isCategoryMode
+                            ? (isDark ? const Color(0xFF60A5FA) : AppColors.primary)
+                            : (isDark ? Colors.white54 : Colors.black54),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Tren Mingguan',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: !_isCategoryMode
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: !_isCategoryMode
+                              ? (isDark ? Colors.white : Colors.black87)
+                              : (isDark ? Colors.white54 : Colors.black54),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -1574,74 +2596,31 @@ class _ReportScreenState extends State<ReportScreen> {
     );
   }
 
-  Widget _buildInsightToggle() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return SizedBox(
-      width: double.infinity,
-      child: CupertinoSlidingSegmentedControl<bool>(
-        groupValue: _isCategoryMode,
-        backgroundColor:
-            isDark ? const Color(0xFF1C1C1E) : Colors.black.withOpacity(0.05),
-        thumbColor: isDark ? const Color(0xFF3A3A3C) : Colors.white,
-        padding: const EdgeInsets.all(4),
-        children: {
-          true: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            child: Text(
-              'Kategori',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: _isCategoryMode ? FontWeight.w700 : FontWeight.w500,
-                color: isDark ? Colors.white : Colors.black,
-              ),
-            ),
-          ),
-          false: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            child: Text(
-              'Tren Mingguan',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight:
-                    !_isCategoryMode ? FontWeight.w700 : FontWeight.w500,
-                color: isDark ? Colors.white : Colors.black,
-              ),
-            ),
-          ),
-        },
-        onValueChanged: (value) {
-          if (value != null) {
-            HapticFeedback.selectionClick();
-            setState(() => _isCategoryMode = value);
-          }
-        },
-      ),
-    );
-  }
-
   List<Color> _getChartColors(bool isDark) {
     return isDark
         ? [
-            const Color(0xFF0A84FF), // iOS System Blue (Dark)
-            const Color(0xFF30D158), // iOS System Green (Dark)
-            const Color(0xFF5E5CE6), // iOS System Indigo (Dark)
-            const Color(0xFFFF9F0A), // iOS System Orange (Dark)
-            const Color(0xFFFF375F), // iOS System Pink (Dark)
-            const Color(0xFFBF5AF2), // iOS System Purple (Dark)
-            const Color(0xFF64D2FF), // iOS System Teal (Dark)
-            const Color(0xFFAC8E68), // iOS System Brown (Dark)
-            const Color(0xFF8E8E93), // iOS System Gray (Dark)
+            const Color(0xFF60A5FA), // Soft Pastel Blue
+            const Color(0xFF80EF80), // Soft Pastel Green
+            const Color(0xFFC4B5FD), // Soft Pastel Lavender
+            const Color(0xFFFFC067), // Soft Pastel Orange
+            const Color(0xFFFF746C), // Soft Pastel Red / Coral
+            const Color(0xFFFFEE8C), // Soft Pastel Yellow
+            const Color(0xFF4ECDC4), // Soft Pastel Mint
+            const Color(0xFFF472B6), // Soft Pastel Pink
+            const Color(0xFF38BDF8), // Soft Pastel Sky
+            const Color(0xFFFCA5A5), // Soft Pastel Rose
           ]
         : [
-            const Color(0xFF007AFF), // iOS System Blue (Light)
-            const Color(0xFF34C759), // iOS System Green (Light)
-            const Color(0xFF5856D6), // iOS System Indigo (Light)
-            const Color(0xFFFF9500), // iOS System Orange (Light)
-            const Color(0xFFFF2D55), // iOS System Pink (Light)
-            const Color(0xFFAF52DE), // iOS System Purple (Light)
-            const Color(0xFF5AC8FA), // iOS System Teal (Light)
-            const Color(0xFFA2845E), // iOS System Brown (Light)
-            const Color(0xFF8E8E93), // iOS System Gray (Light)
+            const Color(0xFF3B82F6), // Soft Pastel Blue
+            const Color(0xFF4ADE80), // Soft Pastel Green
+            const Color(0xFFA78BFA), // Soft Pastel Purple
+            const Color(0xFFFBBF24), // Soft Pastel Amber
+            const Color(0xFFF87171), // Soft Pastel Red
+            const Color(0xFFFACC15), // Soft Pastel Yellow
+            const Color(0xFF2DD4BF), // Soft Pastel Teal
+            const Color(0xFFF472B6), // Soft Pastel Pink
+            const Color(0xFF60A5FA), // Soft Pastel Sky
+            const Color(0xFFFB923C), // Soft Pastel Coral
           ];
   }
 
@@ -1652,78 +2631,138 @@ class _ReportScreenState extends State<ReportScreen> {
         List<PieChartSectionData> sections = [];
         final isDark = Theme.of(context).brightness == Brightness.dark;
         final colors = _getChartColors(isDark);
+        final entries = categoryTotals.entries.toList()
+          ..sort((a, b) => b.value.compareTo(a.value));
         int i = 0;
 
-        categoryTotals.forEach((cat, amount) {
-          final isTouched = i == _touchedPieIndex;
-          final radius = isTouched ? 65.0 : 55.0;
-          final fontSize = isTouched ? 16.0 : 12.0;
+        final isTouched =
+            _touchedPieIndex >= 0 && _touchedPieIndex < entries.length;
+        final touchedEntry = isTouched ? entries[_touchedPieIndex] : null;
+
+        for (var entry in entries) {
+          final isSelected = i == _touchedPieIndex;
+          final color = colors[i % colors.length];
 
           sections.add(PieChartSectionData(
-            color: colors[i % colors.length],
-            value: amount,
-            title: isTouched
-                ? cat
-                : '${((amount / total) * 100).toStringAsFixed(0)}%',
-            radius: radius,
-            titleStyle: TextStyle(
-              fontSize: fontSize,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              shadows: const [Shadow(color: Colors.black26, blurRadius: 2)],
-            ),
+            color: color,
+            value: entry.value,
+            title: '', // Keep pie slices clean without overlapping text
+            radius: isSelected ? 34.0 : 26.0,
           ));
           i++;
-        });
+        }
+
+        final activeColor = isTouched && touchedEntry != null
+            ? colors[_touchedPieIndex % colors.length]
+            : (isDark ? Colors.white70 : Colors.black54);
+
+        final cardBg = Theme.of(context).cardColor;
 
         return SizedBox(
-          height: 240,
+          height: 220,
           child: Stack(
             alignment: Alignment.center,
             children: [
-              PieChart(PieChartData(
-                pieTouchData: PieTouchData(
-                  touchCallback: (FlTouchEvent event, pieTouchResponse) {
-                    setChartState(() {
-                      if (!event.isInterestedForInteractions ||
-                          pieTouchResponse == null ||
-                          pieTouchResponse.touchedSection == null) {
-                        _touchedPieIndex = -1;
-                        return;
-                      }
-                      _touchedPieIndex =
-                          pieTouchResponse.touchedSection!.touchedSectionIndex;
-                    });
-                  },
+              PieChart(
+                PieChartData(
+                  pieTouchData: PieTouchData(
+                    touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                      setChartState(() {
+                        if (!event.isInterestedForInteractions ||
+                            pieTouchResponse == null ||
+                            pieTouchResponse.touchedSection == null) {
+                          _touchedPieIndex = -1;
+                          return;
+                        }
+                        final newIndex = pieTouchResponse
+                            .touchedSection!.touchedSectionIndex;
+                        if (newIndex >= 0 &&
+                            newIndex < entries.length &&
+                            newIndex != _touchedPieIndex) {
+                          HapticFeedback.selectionClick();
+                          _touchedPieIndex = newIndex;
+                        }
+                      });
+                    },
+                  ),
+                  sections: sections,
+                  centerSpaceRadius: 52,
+                  sectionsSpace: 4,
+                  startDegreeOffset: -90,
                 ),
-                sections: sections,
-                centerSpaceRadius: 60,
-                sectionsSpace: 3,
-                startDegreeOffset: 270,
-              )),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Total',
-                    style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.white70
-                            : Theme.of(context).hintColor),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    CurrencyFormatter.formatCurrency(total),
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                      color: isDark ? Colors.white : Colors.black,
-                      letterSpacing: -0.5,
+              ),
+              // Clean Unfilled Center Circle Badge with Separator Border
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 102,
+                height: 102,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: cardBg, // Keep center background clean & unfilled
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(isDark ? 0.2 : 0.06),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
                     ),
+                  ],
+                  border: Border.all(
+                    color: isTouched
+                        ? activeColor.withOpacity(0.85)
+                        : (isDark
+                            ? Colors.white.withOpacity(0.15)
+                            : Colors.black.withOpacity(0.12)),
+                    width: 2.0,
                   ),
-                ],
+                ),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        isTouched ? touchedEntry!.key : 'Total Pengeluaran',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: isTouched
+                              ? activeColor
+                              : (isDark ? Colors.white70 : Colors.black54),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 2),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          CurrencyFormatter.formatCurrency(
+                              isTouched ? touchedEntry!.value : total),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.4,
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                      ),
+                      if (isTouched && touchedEntry != null) ...[
+                        const SizedBox(height: 1),
+                        Text(
+                          '${((touchedEntry.value / total) * 100).toStringAsFixed(1)}%',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: activeColor,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
@@ -1734,195 +2773,285 @@ class _ReportScreenState extends State<ReportScreen> {
 
 
   Widget _buildWeeklyTrendChart(List<TransactionModel> transactions) {
-    // Group by day for the last 7 days
-    Map<String, double> incomeByDay = {};
-    Map<String, double> expenseByDay = {};
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final now = DateTime.now();
-    final days =
-        List.generate(7, (index) => now.subtract(Duration(days: 6 - index)));
 
-    for (var day in days) {
-      final key = DateFormat('dd/MM').format(day);
-      incomeByDay[key] = 0;
-      expenseByDay[key] = 0;
+    // Generate 7 days (Mon-Sun)
+    List<DateTime> days =
+        List.generate(7, (index) => now.subtract(Duration(days: 6 - index)));
+    Map<int, double> expenseByDayIndex = {};
+    Map<int, String> dayLabels = {};
+
+    double totalWeeklyExpense = 0;
+    int maxExpenseIndex = 0;
+    double maxExpense = 0;
+
+    const shortDays = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+
+    for (int i = 0; i < 7; i++) {
+      final d = days[i];
+      expenseByDayIndex[i] = 0;
+      // Map DateTime weekday (1=Mon ... 7=Sun) to short name
+      dayLabels[i] = shortDays[d.weekday - 1];
     }
 
     for (var txn in transactions) {
-      final dayKey = DateFormat('dd/MM').format(txn.date);
-      if (incomeByDay.containsKey(dayKey)) {
-        if (txn.isIncome) {
-          incomeByDay[dayKey] = (incomeByDay[dayKey] ?? 0) + txn.amount;
-        } else if (txn.isExpense) {
-          expenseByDay[dayKey] = (expenseByDay[dayKey] ?? 0) + txn.amount;
+      if (txn.isExpense) {
+        for (int i = 0; i < 7; i++) {
+          final d = days[i];
+          if (txn.date.year == d.year &&
+              txn.date.month == d.month &&
+              txn.date.day == d.day) {
+            expenseByDayIndex[i] = (expenseByDayIndex[i] ?? 0) + txn.amount;
+            totalWeeklyExpense += txn.amount;
+          }
         }
       }
     }
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Find index of highest expense day
+    expenseByDayIndex.forEach((idx, val) {
+      if (val > maxExpense) {
+        maxExpense = val;
+        maxExpenseIndex = idx;
+      }
+    });
 
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            CupertinoButton(
-              padding: EdgeInsets.zero,
-              onPressed: () => setState(() => _showLineChart = !_showLineChart),
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.white.withOpacity(0.05)
-                      : Colors.black.withOpacity(0.03),
-                  borderRadius: BorderRadius.circular(10),
+    return StatefulBuilder(
+      builder: (context, setTrendState) {
+        int activeIndex = _touchedTrendIndex >= 0 && _touchedTrendIndex < 7
+            ? _touchedTrendIndex
+            : maxExpenseIndex;
+
+        double maxY = maxExpense > 0 ? maxExpense * 1.3 : 100000;
+
+        List<BarChartGroupData> groups = [];
+        for (int i = 0; i < 7; i++) {
+          final val = expenseByDayIndex[i] ?? 0;
+          final isSelected = i == activeIndex;
+
+          final rodColor = isSelected
+              ? (isDark ? Colors.white : const Color(0xFF18181B))
+              : (isDark
+                  ? Colors.white.withOpacity(0.08)
+                  : Colors.black.withOpacity(0.06));
+
+          groups.add(
+            BarChartGroupData(
+              x: i,
+              barRods: [
+                BarChartRodData(
+                  toY: val == 0 ? maxY * 0.04 : val,
+                  color: rodColor,
+                  width: 28,
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+              ],
+            ),
+          );
+        }
+
+        final activeValue = expenseByDayIndex[activeIndex] ?? 0;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header Row inside card (matching Gambar 1)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
+                    Text(
+                      'Total Pengeluaran',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white54 : Colors.black54,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      CurrencyFormatter.formatCurrency(totalWeeklyExpense),
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+                GestureDetector(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() => _showLineChart = !_showLineChart);
+                  },
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Colors.white.withOpacity(0.08)
+                          : Colors.black.withOpacity(0.05),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
                       _showLineChart
                           ? CupertinoIcons.graph_square_fill
-                          : CupertinoIcons.chart_bar_fill,
-                      size: 14,
-                      color: isDark
-                          ? Colors.white
-                          : Theme.of(context).primaryColor,
+                          : CupertinoIcons.arrow_up_right,
+                      size: 16,
+                      color: isDark ? Colors.white70 : Colors.black87,
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      _showLineChart ? 'Tampilan Garis' : 'Tampilan Batang',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.white70
-                            : Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (_showLineChart)
+              _buildLineChart(expenseByDayIndex, dayLabels)
+            else
+              // Capsule Bar Chart Container with Floating Tooltip & Dots (Gambar 1 style)
+              SizedBox(
+                height: 210,
+                child: Stack(
+                  children: [
+                    BarChart(
+                      BarChartData(
+                        maxY: maxY,
+                        barGroups: groups,
+                        gridData: FlGridData(
+                          show: true,
+                          drawVerticalLine: false,
+                          horizontalInterval: maxY / 3,
+                          getDrawingHorizontalLine: (val) => FlLine(
+                            color: isDark
+                                ? Colors.white.withOpacity(0.06)
+                                : Colors.black.withOpacity(0.05),
+                            strokeWidth: 1,
+                            dashArray: [4, 4],
+                          ),
+                        ),
+                        borderData: FlBorderData(show: false),
+                        titlesData: FlTitlesData(
+                          topTitles: const AxisTitles(
+                              sideTitles: SideTitles(showTitles: false)),
+                          rightTitles: const AxisTitles(
+                              sideTitles: SideTitles(showTitles: false)),
+                          leftTitles: const AxisTitles(
+                              sideTitles: SideTitles(showTitles: false)),
+                          bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 28,
+                              getTitlesWidget: (value, meta) {
+                                final idx = value.toInt();
+                                if (idx < 0 || idx >= 7)
+                                  return const SizedBox();
+                                final dayName = dayLabels[idx] ?? '';
+                                final isSelected = idx == activeIndex;
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 8.0),
+                                  child: Text(
+                                    dayName,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: isSelected
+                                          ? FontWeight.w900
+                                          : FontWeight.w600,
+                                      color: isSelected
+                                          ? (isDark
+                                              ? Colors.white
+                                              : Colors.black87)
+                                          : (isDark
+                                              ? Colors.white38
+                                              : Colors.black38),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                        barTouchData: BarTouchData(
+                          enabled: true,
+                          touchCallback: (event, response) {
+                            setTrendState(() {
+                              if (!event.isInterestedForInteractions ||
+                                  response == null ||
+                                  response.spot == null) {
+                                return;
+                              }
+                              final idx = response
+                                  .spot!.touchedBarGroupIndex;
+                              if (idx >= 0 &&
+                                  idx < 7 &&
+                                  idx != _touchedTrendIndex) {
+                                HapticFeedback.selectionClick();
+                                _touchedTrendIndex = idx;
+                              }
+                            });
+                          },
+                          touchTooltipData: BarTouchTooltipData(
+                            tooltipBgColor: const Color(0xFFFFEE8C), // Pastel Yellow background
+                            tooltipRoundedRadius: 10,
+                            getTooltipItem:
+                                (group, groupIndex, rod, rodIndex) {
+                              // Custom Floating Yellow Tooltip Bubble (Gambar 1 style)
+                              return BarTooltipItem(
+                                CurrencyFormatter.formatCurrency(activeValue),
+                                const TextStyle(
+                                  color: Color(0xFF18181B), // Crisp Dark Black text
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 12,
+                                ),
+                              );
+                            },
+                            tooltipMargin: 6,
+                            tooltipBorder: BorderSide.none,
+                            tooltipPadding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            fitInsideHorizontally: true,
+                            fitInsideVertically: true,
+                          ),
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-            ),
           ],
-        ),
-        const SizedBox(height: 8),
-        _showLineChart
-            ? _buildLineChart(incomeByDay, expenseByDay)
-            : _buildBarChart(incomeByDay, expenseByDay),
-      ],
-    );
-  }
-
-  Widget _buildBarChart(
-      Map<String, double> incomeByDay, Map<String, double> expenseByDay) {
-    List<BarChartGroupData> groups = [];
-    int i = 0;
-    incomeByDay.forEach((day, income) {
-      final expense = expenseByDay[day] ?? 0;
-      groups.add(BarChartGroupData(
-        x: i,
-        barRods: [
-          BarChartRodData(
-            toY: income,
-            color: AppColors.income,
-            width: 8,
-            borderRadius: BorderRadius.circular(4),
-          ),
-          BarChartRodData(
-            toY: expense,
-            color: AppColors.expense,
-            width: 8,
-            borderRadius: BorderRadius.circular(4),
-          ),
-        ],
-      ));
-      i++;
-    });
-
-    return Container(
-      height: 240,
-      padding: const EdgeInsets.only(top: 20, right: 10, left: 10),
-      child: BarChart(BarChartData(
-        barGroups: groups,
-        gridData: const FlGridData(show: false),
-        borderData: FlBorderData(show: false),
-        titlesData: FlTitlesData(
-          topTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          leftTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              getTitlesWidget: (value, meta) {
-                final day = incomeByDay.keys.elementAt(value.toInt());
-                return Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Text(day,
-                      style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.color
-                              ?.withOpacity(0.7))),
-                );
-              },
-            ),
-          ),
-        ),
-        barTouchData: BarTouchData(
-          touchTooltipData: BarTouchTooltipData(
-            getTooltipItem: (group, groupIndex, rod, rodIndex) {
-              final type = rodIndex == 0 ? 'Pemasukan' : 'Pengeluaran';
-              return BarTooltipItem(
-                '$type\n${CurrencyFormatter.formatCurrency(rod.toY)}',
-                const TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.bold),
-              );
-            },
-          ),
-        ),
-      )),
+        );
+      },
     );
   }
 
   Widget _buildLineChart(
-      Map<String, double> incomeByDay, Map<String, double> expenseByDay) {
-    List<FlSpot> incomeSpots = [];
+      Map<int, double> expenseByDayIndex, Map<int, String> dayLabels) {
     List<FlSpot> expenseSpots = [];
 
-    int i = 0;
-    incomeByDay.forEach((day, value) {
-      incomeSpots.add(FlSpot(i.toDouble(), value));
-      i++;
-    });
+    for (int i = 0; i < 7; i++) {
+      expenseSpots.add(FlSpot(i.toDouble(), expenseByDayIndex[i] ?? 0));
+    }
 
-    i = 0;
-    expenseByDay.forEach((day, value) {
-      expenseSpots.add(FlSpot(i.toDouble(), value));
-      i++;
-    });
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      height: 240,
-      padding: const EdgeInsets.only(top: 20, right: 20, left: 10),
+      height: 200,
+      padding: const EdgeInsets.only(top: 10, right: 10, left: 10),
       child: LineChart(
         LineChartData(
           gridData: FlGridData(
             show: true,
             drawVerticalLine: false,
-            horizontalInterval: 1000000,
             getDrawingHorizontalLine: (value) => FlLine(
-              color: Theme.of(context).brightness == Brightness.dark
+              color: isDark
                   ? Colors.white.withOpacity(0.05)
                   : Colors.black.withOpacity(0.03),
               strokeWidth: 1,
+              dashArray: [4, 4],
             ),
           ),
           titlesData: FlTitlesData(
@@ -1936,20 +3065,16 @@ class _ReportScreenState extends State<ReportScreen> {
               sideTitles: SideTitles(
                 showTitles: true,
                 getTitlesWidget: (value, meta) {
-                  if (value.toInt() >= incomeByDay.length)
-                    return const SizedBox.shrink();
-                  final day = incomeByDay.keys.elementAt(value.toInt());
+                  final idx = value.toInt();
+                  if (idx < 0 || idx >= 7) return const SizedBox.shrink();
+                  final day = dayLabels[idx] ?? '';
                   return Padding(
                     padding: const EdgeInsets.only(top: 8.0),
                     child: Text(day,
                         style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.color
-                                ?.withOpacity(0.7))),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white54 : Colors.black54)),
                   );
                 },
               ),
@@ -1958,39 +3083,37 @@ class _ReportScreenState extends State<ReportScreen> {
           borderData: FlBorderData(show: false),
           lineBarsData: [
             LineChartBarData(
-              spots: incomeSpots,
-              isCurved: true,
-              color: AppColors.income,
-              barWidth: 4,
-              isStrokeCapRound: true,
-              dotData: const FlDotData(show: false),
-              belowBarData: BarAreaData(
-                show: true,
-                color: AppColors.income.withOpacity(0.1),
-              ),
-            ),
-            LineChartBarData(
               spots: expenseSpots,
               isCurved: true,
-              color: AppColors.expense,
-              barWidth: 4,
+              color: const Color(0xFF60A5FA),
+              barWidth: 3.5,
               isStrokeCapRound: true,
-              dotData: const FlDotData(show: false),
+              dotData: FlDotData(
+                show: true,
+                getDotPainter: (spot, percent, barData, index) =>
+                    FlDotCirclePainter(
+                  radius: 4,
+                  color: isDark ? Colors.white : Colors.black87,
+                  strokeWidth: 2,
+                  strokeColor: const Color(0xFF60A5FA),
+                ),
+              ),
               belowBarData: BarAreaData(
                 show: true,
-                color: AppColors.expense.withOpacity(0.1),
+                color: const Color(0xFF60A5FA).withOpacity(0.12),
               ),
             ),
           ],
           lineTouchData: LineTouchData(
             touchTooltipData: LineTouchTooltipData(
+              tooltipBgColor: const Color(0xFFFFEE8C),
+              tooltipRoundedRadius: 10,
               getTooltipItems: (touchedSpots) {
                 return touchedSpots.map((spot) {
-                  final type = spot.barIndex == 0 ? 'Pemasukan' : 'Pengeluaran';
                   return LineTooltipItem(
-                    '$type\n${CurrencyFormatter.formatCurrency(spot.y)}',
+                    CurrencyFormatter.formatCurrency(spot.y),
                     const TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.bold),
+                        color: Color(0xFF18181B), fontWeight: FontWeight.w900),
                   );
                 }).toList();
               },
@@ -2002,27 +3125,10 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Widget _buildCategoryList(Map<String, double> categoryTotals, double total) {
-    final categoryEntries = categoryTotals.entries.toList();
+    final categoryEntries = categoryTotals.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final colors = isDark
-        ? [
-            const Color(0xFF0A84FF), // iOS System Blue (Dark)
-            const Color(0xFF30D158), // iOS System Green (Dark)
-            const Color(0xFF5E5CE6), // iOS System Indigo (Dark)
-            const Color(0xFFFF9F0A), // iOS System Orange (Dark)
-            const Color(0xFFFF375F), // iOS System Pink (Dark)
-            const Color(0xFFBF5AF2), // iOS System Purple (Dark)
-            const Color(0xFF64D2FF), // iOS System Teal (Dark)
-          ]
-        : [
-            const Color(0xFF007AFF), // iOS System Blue (Light)
-            const Color(0xFF34C759), // iOS System Green (Light)
-            const Color(0xFF5856D6), // iOS System Indigo (Light)
-            const Color(0xFFFF9500), // iOS System Orange (Light)
-            const Color(0xFFFF2D55), // iOS System Pink (Light)
-            const Color(0xFFAF52DE), // iOS System Purple (Light)
-            const Color(0xFF5AC8FA), // iOS System Teal (Light)
-          ];
+    final colors = _getChartColors(isDark);
 
     return Column(
       children: List.generate(categoryEntries.length, (i) {
@@ -2031,37 +3137,73 @@ class _ReportScreenState extends State<ReportScreen> {
         final color = colors[i % colors.length];
 
         return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(16),
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(16)),
+            color: isDark
+                ? Colors.white.withOpacity(0.04)
+                : Colors.black.withOpacity(0.02),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withOpacity(0.06)
+                  : Colors.black.withOpacity(0.04),
+            ),
+          ),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                width: 38,
+                height: 38,
                 decoration: BoxDecoration(
-                    color: color.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(20)),
-                child: Icon(TransactionCategory.getIconForCategory(e.key),
-                    color: color, size: 20),
+                  color: color.withOpacity(isDark ? 0.22 : 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Center(
+                  child: Icon(
+                    TransactionCategory.getIconForCategory(e.key),
+                    color: color,
+                    size: 18,
+                  ),
+                ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(e.key,
-                        style: const TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 4),
-                    LinearProgressIndicator(
-                      value: percentage,
-                      backgroundColor: isDark
-                          ? Colors.white.withOpacity(0.1)
-                          : Theme.of(context).scaffoldBackgroundColor,
-                      valueColor: AlwaysStoppedAnimation<Color>(color),
-                      minHeight: 8,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          e.key,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                        Text(
+                          '${(percentage * 100).toStringAsFixed(1)}%',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white54 : Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    ClipRRect(
                       borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: percentage,
+                        backgroundColor: isDark
+                            ? Colors.white.withOpacity(0.08)
+                            : Colors.black.withOpacity(0.05),
+                        valueColor: AlwaysStoppedAnimation<Color>(color),
+                        minHeight: 6,
+                      ),
                     ),
                   ],
                 ),
@@ -2069,8 +3211,14 @@ class _ReportScreenState extends State<ReportScreen> {
               const SizedBox(width: 12),
               FittedBox(
                 fit: BoxFit.scaleDown,
-                child: Text(CurrencyFormatter.formatCurrency(e.value),
-                    style: TextStyle(fontWeight: FontWeight.w900)),
+                child: Text(
+                  CurrencyFormatter.formatCurrency(e.value),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
               ),
             ],
           ),
@@ -2127,17 +3275,13 @@ class _ReportScreenState extends State<ReportScreen> {
         backgroundColor: Colors.transparent,
         builder: (ctx) => StatefulBuilder(builder: (context, setSheetState) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
-          final accentColor =
-              isDark ? CupertinoColors.activeBlue : AppColors.primary;
+          final accentColor = const Color(0xFF60A5FA); // Soft Pastel Blue
 
           return Container(
             decoration: BoxDecoration(
-              color: isDark
-                  ? CupertinoColors.systemBackground.resolveFrom(context)
-                  : CupertinoColors.secondarySystemBackground
-                      .resolveFrom(context),
+              color: Theme.of(context).cardColor,
               borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(20)),
+                  const BorderRadius.vertical(top: Radius.circular(28)),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -2146,11 +3290,11 @@ class _ReportScreenState extends State<ReportScreen> {
                 Center(
                   child: Container(
                     width: 36,
-                    height: 5,
-                    margin: const EdgeInsets.symmetric(vertical: 10),
+                    height: 4,
+                    margin: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
                       color: isDark ? Colors.white24 : Colors.black12,
-                      borderRadius: BorderRadius.circular(2.5),
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                 ),
@@ -2158,17 +3302,17 @@ class _ReportScreenState extends State<ReportScreen> {
                 // Header
                 Padding(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         'Pilih Kategori',
                         style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: -0.5,
-                          color: isDark ? Colors.white : Colors.black,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.4,
+                          color: isDark ? Colors.white : AppColors.textPrimary,
                         ),
                       ),
                       CupertinoButton(
@@ -2179,7 +3323,8 @@ class _ReportScreenState extends State<ReportScreen> {
                               ? 'Bersihkan'
                               : 'Pilih Semua',
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
                             color: accentColor,
                           ),
                         ),
@@ -2203,12 +3348,12 @@ class _ReportScreenState extends State<ReportScreen> {
                 // Category List
                 ConstrainedBox(
                   constraints: BoxConstraints(
-                    maxHeight: MediaQuery.of(context).size.height * 0.6,
+                    maxHeight: MediaQuery.of(context).size.height * 0.55,
                   ),
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
                     child: CupertinoListSection.insetGrouped(
-                      margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                      margin: const EdgeInsets.fromLTRB(20, 4, 20, 20),
                       backgroundColor: Colors.transparent,
                       children: availableCategories.map((cat) {
                         final isSelected = selectedCategories.contains(cat);
@@ -2227,7 +3372,7 @@ class _ReportScreenState extends State<ReportScreen> {
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? accentColor.withOpacity(0.1)
+                                  ? accentColor.withOpacity(0.18)
                                   : (isDark
                                       ? Colors.white10
                                       : Colors.black.withOpacity(0.05)),
@@ -2235,7 +3380,7 @@ class _ReportScreenState extends State<ReportScreen> {
                             ),
                             child: Icon(
                               TransactionCategory.getIconForCategory(cat),
-                              size: 20,
+                              size: 19,
                               color: isSelected
                                   ? accentColor
                                   : (isDark ? Colors.white70 : Colors.black54),
@@ -2244,15 +3389,16 @@ class _ReportScreenState extends State<ReportScreen> {
                           title: Text(
                             cat,
                             style: TextStyle(
-                              fontSize: 17,
-                              color: isDark ? Colors.white : Colors.black,
+                              fontSize: 15.5,
+                              fontWeight: FontWeight.w500,
+                              color: isDark ? Colors.white : AppColors.textPrimary,
                             ),
                           ),
                           trailing: isSelected
                               ? Icon(
                                   CupertinoIcons.checkmark_alt,
                                   color: accentColor,
-                                  size: 24,
+                                  size: 22,
                                 )
                               : null,
                         );
@@ -2264,16 +3410,16 @@ class _ReportScreenState extends State<ReportScreen> {
                 // Export Buttons
                 Padding(
                   padding: EdgeInsets.fromLTRB(
-                      20, 0, 20, MediaQuery.of(context).padding.bottom + 20),
+                      20, 4, 20, MediaQuery.of(context).padding.bottom + 20),
                   child: Row(
                     children: [
                       Expanded(
                         child: _buildExportButton(
                           label: 'PDF',
                           icon: CupertinoIcons.doc_text_fill,
-                          color: isDark
-                              ? CupertinoColors.systemRed.darkColor
-                              : CupertinoColors.systemRed,
+                          iconColor: const Color(0xFFFF746C), // Pastel Red
+                          iconBgColor: const Color(0xFFFF746C).withOpacity(0.18),
+                          isDark: isDark,
                           onPressed: selectedCategories.isEmpty
                               ? null
                               : () {
@@ -2288,9 +3434,9 @@ class _ReportScreenState extends State<ReportScreen> {
                         child: _buildExportButton(
                           label: 'CSV',
                           icon: CupertinoIcons.table,
-                          color: isDark
-                              ? CupertinoColors.systemGreen.darkColor
-                              : CupertinoColors.systemGreen,
+                          iconColor: const Color(0xFF4ADE80), // Pastel Green
+                          iconBgColor: const Color(0xFF4ADE80).withOpacity(0.18),
+                          isDark: isDark,
                           onPressed: selectedCategories.isEmpty
                               ? null
                               : () {
@@ -2316,42 +3462,74 @@ class _ReportScreenState extends State<ReportScreen> {
     }
   }
 
-  Widget _buildExportButton(
-      {required String label,
-      required IconData icon,
-      required Color color,
-      VoidCallback? onPressed}) {
+  Widget _buildExportButton({
+    required String label,
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBgColor,
+    required bool isDark,
+    VoidCallback? onPressed,
+  }) {
     final isEnabled = onPressed != null;
+    final cardBg = isDark ? const Color(0xFF2C2C2E) : const Color(0xFFF2F2F7);
+    final borderCol = isDark
+        ? Colors.white.withOpacity(0.08)
+        : Colors.black.withOpacity(0.06);
 
     return CupertinoButton(
       padding: EdgeInsets.zero,
       onPressed: onPressed,
-      child: Container(
-        height: 54,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        height: 48,
         decoration: BoxDecoration(
-          color: isEnabled ? color : color.withOpacity(0.3),
-          borderRadius: BorderRadius.circular(14),
+          color: isEnabled
+              ? cardBg
+              : (isDark
+                  ? Colors.white.withOpacity(0.04)
+                  : Colors.black.withOpacity(0.03)),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isEnabled ? borderCol : Colors.transparent,
+            width: 1,
+          ),
           boxShadow: [
             if (isEnabled)
               BoxShadow(
-                color: color.withOpacity(0.2),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
+                color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
               ),
           ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: Colors.white, size: 20),
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: isEnabled ? iconBgColor : iconBgColor.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                color: isEnabled
+                    ? iconColor
+                    : (isDark ? Colors.white30 : Colors.black26),
+                size: 15,
+              ),
+            ),
             const SizedBox(width: 10),
             Text(
               label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.5,
+              style: TextStyle(
+                color: isEnabled
+                    ? (isDark ? Colors.white : AppColors.textPrimary)
+                    : (isDark ? Colors.white38 : AppColors.textHint),
+                fontSize: 14.5,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.2,
               ),
             ),
           ],
