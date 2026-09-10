@@ -391,7 +391,7 @@ class PdfService {
       alignment: pw.Alignment.centerRight,
       child: pw.Text(
         'Dicetak otomatis pada: $nowStr WIB',
-        style: pw.TextStyle(fontSize: 8, color: PdfColors.grey600, italic: true),
+        style: pw.TextStyle(fontSize: 8, color: PdfColors.grey600, fontStyle: pw.FontStyle.italic),
       ),
     );
   }
@@ -400,7 +400,9 @@ class PdfService {
     return pw.Container(
       margin: const pw.EdgeInsets.only(top: 8),
       padding: const pw.EdgeInsets.only(top: 4),
-      border: const pw.Border(top: pw.BorderSide(color: PdfColors.grey300, width: 0.5)),
+      decoration: const pw.BoxDecoration(
+        border: pw.Border(top: pw.BorderSide(color: PdfColors.grey300, width: 0.5)),
+      ),
       child: pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         children: [
