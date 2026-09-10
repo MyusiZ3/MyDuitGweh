@@ -99,23 +99,19 @@ class _SlidableDeleteTileState extends State<SlidableDeleteTile>
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF27272A) : const Color(0xFFFFF7ED),
+                      color: const Color(0xFFFF746C),
                       shape: BoxShape.circle,
-                      border: Border.all(
-                        color: const Color(0xFFF97316).withOpacity(0.5),
-                        width: 1.5,
-                      ),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFF97316).withOpacity(0.18),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
+                          color: const Color(0xFFFF746C).withOpacity(isDark ? 0.4 : 0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
                         ),
                       ],
                     ),
                     child: const Icon(
-                      CupertinoIcons.trash,
-                      color: Color(0xFFF97316),
+                      CupertinoIcons.trash_fill,
+                      color: Colors.white,
                       size: 20,
                     ),
                   ),
