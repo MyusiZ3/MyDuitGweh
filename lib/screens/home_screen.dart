@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -876,11 +877,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       decoration: BoxDecoration(
                         color: _isSuperAdmin
                             ? Colors.amber.withOpacity(0.15)
-                            : AppColors.primary.withOpacity(0.1),
+                            : const Color(0xFF60A5FA).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color:
-                              _isSuperAdmin ? Colors.amber : AppColors.primary,
+                              _isSuperAdmin ? Colors.amber : const Color(0xFF60A5FA),
                           width: 1,
                         ),
                       ),
@@ -897,7 +898,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         Brightness.dark
                                     ? Colors.amber[300]
                                     : Colors.amber[900])
-                                : AppColors.primary,
+                                : const Color(0xFF60A5FA),
                           ),
                           const SizedBox(width: 4),
                           Text(
@@ -910,7 +911,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                           Brightness.dark
                                       ? Colors.amber[300]
                                       : Colors.amber[900])
-                                  : AppColors.primary,
+                                  : const Color(0xFF60A5FA),
                               letterSpacing: 0.5,
                             ),
                           ),
@@ -938,8 +939,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 MaterialPageRoute(
                                     builder: (_) => const AdminToolsScreen()));
                           },
-                          trailing: Icon(CupertinoIcons.chevron_forward,
-                              size: 16, color: AppColors.primary),
+                          trailing: const Icon(CupertinoIcons.chevron_forward,
+                              size: 16, color: Color(0xFF60A5FA)),
                         ),
                       _buildProfileMenuItem(
                         icon: CupertinoIcons.shield,
@@ -971,8 +972,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               setState(() => _isBiometricEnabled = val);
                             }
                           },
-                          activeColor: AppColors.primary,
-                          activeTrackColor: AppColors.primary.withOpacity(0.4),
+                          activeColor: const Color(0xFF60A5FA),
+                          activeTrackColor: const Color(0xFF60A5FA).withOpacity(0.4),
                         ),
                       ),
                       _buildProfileMenuItem(
@@ -987,8 +988,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ? CurrencyFormatter.formatCurrency(
                                     _monthlyBudget)
                                 : 'Atur',
-                            style: TextStyle(
-                                color: AppColors.primary,
+                            style: const TextStyle(
+                                color: Color(0xFF60A5FA),
                                 fontWeight: FontWeight.bold)),
                       ),
                       _buildProfileMenuItem(
@@ -1002,8 +1003,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           value: _isNotificationEnabled,
                           onChanged: (_) =>
                               _handleDailyReminderToggle(setModalState),
-                          activeColor: AppColors.primary,
-                          activeTrackColor: AppColors.primary.withOpacity(0.3),
+                          activeColor: const Color(0xFF60A5FA),
+                          activeTrackColor: const Color(0xFF60A5FA).withOpacity(0.3),
                         ),
                       ),
                       _buildProfileMenuItem(
@@ -1015,8 +1016,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           Navigator.pop(context);
                           _showThemeSelector();
                         },
-                        trailing: Icon(CupertinoIcons.chevron_forward,
-                            size: 16, color: AppColors.primary),
+                        trailing: const Icon(CupertinoIcons.chevron_forward,
+                            size: 16, color: Color(0xFF60A5FA)),
                       ),
                       const Divider(),
                       _buildProfileMenuItem(
@@ -1028,8 +1029,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         },
                         trailing: Text(
                             ToneManager.notifier.value.name.toUpperCase(),
-                            style: TextStyle(
-                                color: AppColors.primary,
+                            style: const TextStyle(
+                                color: Color(0xFF60A5FA),
                                 fontWeight: FontWeight.bold)),
                       ),
                       _buildProfileMenuItem(
@@ -1064,8 +1065,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       _buildProfileMenuItem(
                           icon: CupertinoIcons.power,
                           label: ToneManager.t('profile_logout'),
-                          iconColor: AppColors.expense,
-                          textColor: AppColors.expense,
+                          iconColor: const Color(0xFFFF746C),
+                          textColor: const Color(0xFFFF746C),
                           onTap: () async {
                             final confirm = await UIHelper.showConfirmDialog(
                               context: context,
@@ -1196,24 +1197,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final prefs = await SharedPreferences.getInstance();
 
     if (!_isNotificationEnabled) {
-      // Step 1: Open time picker
-      final TimeOfDay? pickedTime = await showTimePicker(
-        context: context,
-        initialTime: _reminderTime,
-        helpText: 'Pilih Waktu Pengingat',
-        builder: (context, child) {
-          return Theme(
-            data: Theme.of(context).copyWith(
-              colorScheme: ColorScheme.light(
-                primary: AppColors.primary,
-                onPrimary: Colors.white,
-                onSurface: Colors.black,
-              ),
-            ),
-            child: child!,
-          );
-        },
-      );
+      // Step 1: Open iOS style time picker modal
+      final TimeOfDay? pickedTime = await _showIOSTimePicker(context, _reminderTime);
 
       if (pickedTime != null) {
         // Step 2: Optimistic UI Update
@@ -1252,8 +1237,9 @@ class _HomeScreenState extends State<HomeScreen> {
             _isNotificationEnabled = oldState;
             _reminderTime = oldTime;
           });
-          if (mounted)
+          if (mounted) {
             UIHelper.showErrorSnackBar(context, 'Gagal menjadwalkan: $e');
+          }
         }
       }
     } else {
@@ -1264,12 +1250,187 @@ class _HomeScreenState extends State<HomeScreen> {
       try {
         await prefs.setBool('use_notifications', false);
         await _notificationService.cancelAll();
-        if (mounted)
+        if (mounted) {
           UIHelper.showInfoSnackBar(context, 'Pengingat harian dinonaktifkan.');
+        }
       } catch (e) {
         debugPrint('--- Daily Reminder Cancel Fail: $e');
       }
     }
+  }
+
+  Future<TimeOfDay?> _showIOSTimePicker(
+      BuildContext context, TimeOfDay initialTime) async {
+    TimeOfDay tempTime = initialTime;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    const Color pastelBlue = Color(0xFF60A5FA);
+
+    return await showGeneralDialog<TimeOfDay>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: '',
+      barrierColor: Colors.black.withOpacity(0.55),
+      transitionDuration: const Duration(milliseconds: 250),
+      pageBuilder: (ctx, anim1, anim2) => BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: Center(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 28),
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? const Color(0xFF1C1C1E).withOpacity(0.92)
+                    : Colors.white.withOpacity(0.95),
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withOpacity(0.08)
+                      : Colors.black.withOpacity(0.06),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isDark ? 0.35 : 0.08),
+                    blurRadius: 24,
+                    offset: const Offset(0, 10),
+                  )
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: pastelBlue.withOpacity(0.14),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      CupertinoIcons.bell_fill,
+                      color: pastelBlue,
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Pengingat Harian',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.4,
+                      color: Theme.of(context).textTheme.titleLarge?.color,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Pilih waktu untuk menerima notifikasi pengingat pencatatan transaksi.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Theme.of(context).hintColor,
+                      height: 1.3,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Container(
+                    height: 180,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Colors.white.withOpacity(0.04)
+                          : Colors.grey.withOpacity(0.06),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: CupertinoDatePicker(
+                      mode: CupertinoDatePickerMode.time,
+                      initialDateTime: DateTime(
+                        2026,
+                        1,
+                        1,
+                        initialTime.hour,
+                        initialTime.minute,
+                      ),
+                      use24hFormat: true,
+                      onDateTimeChanged: (DateTime newDateTime) {
+                        tempTime = TimeOfDay(
+                          hour: newDateTime.hour,
+                          minute: newDateTime.minute,
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 48,
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(ctx, null),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Theme.of(context).hintColor,
+                              side: BorderSide(
+                                color: isDark
+                                    ? Colors.white.withOpacity(0.12)
+                                    : Colors.black.withOpacity(0.1),
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            child: const Text(
+                              'Batal',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: SizedBox(
+                          height: 48,
+                          child: ElevatedButton(
+                            onPressed: () => Navigator.pop(ctx, tempTime),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: pastelBlue,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            child: const Text(
+                              'Simpan',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+      transitionBuilder: (ctx, anim1, anim2, child) => FadeTransition(
+        opacity: anim1,
+        child: ScaleTransition(
+          scale: Tween<double>(begin: 0.92, end: 1.0).animate(
+            CurvedAnimation(parent: anim1, curve: Curves.easeOutCubic),
+          ),
+          child: child,
+        ),
+      ),
+    );
   }
 
   void _showSurveySheet() {
@@ -1287,122 +1448,161 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showBudgetDialog() {
     final controller = TextEditingController(
         text: _monthlyBudget == 0 ? '' : _monthlyBudget.toStringAsFixed(0));
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    const Color pastelBlue = Color(0xFF60A5FA);
+
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
       barrierLabel: '',
-      barrierColor: Colors.black.withOpacity(0.5),
-      transitionDuration: const Duration(milliseconds: 300),
-      pageBuilder: (ctx, anim1, anim2) => Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Center(
-          child: Padding(
-            padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom),
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 32),
-              child: Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor.withOpacity(0.95),
-                  borderRadius: BorderRadius.circular(32),
-                  border: Border.all(
-                      color:
-                          Theme.of(context).dividerColor.withOpacity(0.1)),
-                  boxShadow: const [
-                    BoxShadow(
-                        color: Color(0x1A000000),
-                        blurRadius: 10,
-                        offset: Offset(0, 8))
-                  ],
-                ),
-                child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(CupertinoIcons.flag,
-                              color: AppColors.primary, size: 32),
+      barrierColor: Colors.black.withOpacity(0.55),
+      transitionDuration: const Duration(milliseconds: 250),
+      pageBuilder: (ctx, anim1, anim2) => BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: Center(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).viewInsets.bottom + 20),
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 28),
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? const Color(0xFF1C1C1E).withOpacity(0.92)
+                        : Colors.white.withOpacity(0.95),
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(
+                      color: isDark
+                          ? Colors.white.withOpacity(0.08)
+                          : Colors.black.withOpacity(0.06),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(isDark ? 0.35 : 0.08),
+                        blurRadius: 24,
+                        offset: const Offset(0, 10),
+                      )
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: pastelBlue.withOpacity(0.14),
+                          shape: BoxShape.circle,
                         ),
-                        const SizedBox(height: 20),
-                        Text(ToneManager.t('budget_title'),
-                            style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: -0.5)),
-                        const SizedBox(height: 8),
-                        Text(ToneManager.t('budget_subtitle'),
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                                fontSize: 13,
-                                color: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.color)),
-                        const SizedBox(height: 24),
-                        Container(
-                          decoration: BoxDecoration(
-                            color:
-                                Theme.of(context).brightness == Brightness.dark
-                                    ? const Color(0xFF2C2C2E)
-                                    : Colors.grey[100],
-                            borderRadius: BorderRadius.circular(20),
+                        child: const Icon(
+                          CupertinoIcons.flag_fill,
+                          color: pastelBlue,
+                          size: 28,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        ToneManager.t('budget_title'),
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.4,
+                          color: Theme.of(context).textTheme.titleLarge?.color,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        ToneManager.t('budget_subtitle'),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Theme.of(context).hintColor,
+                          height: 1.3,
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white.withOpacity(0.06)
+                              : Colors.grey.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isDark
+                                ? Colors.white.withOpacity(0.08)
+                                : Colors.black.withOpacity(0.06),
                           ),
-                          child: TextField(
-                            controller: controller,
-                            keyboardType: TextInputType.number,
-                            style: TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.w800),
-                            decoration: InputDecoration(
-                              prefixText: 'Rp ',
-                              prefixStyle: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w800,
-                                  color: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.color),
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 16),
-                              hintText: '0',
-                              hintStyle:
-                                  TextStyle(color: Theme.of(context).hintColor),
+                        ),
+                        child: TextField(
+                          controller: controller,
+                          keyboardType: TextInputType.number,
+                          autofocus: true,
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: Theme.of(context).textTheme.titleLarge?.color,
+                          ),
+                          decoration: InputDecoration(
+                            prefixText: 'Rp ',
+                            prefixStyle: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              color: pastelBlue,
+                            ),
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: const BorderSide(
+                                  color: pastelBlue, width: 1.5),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 18, vertical: 14),
+                            hintText: '0',
+                            hintStyle: TextStyle(
+                              color: Theme.of(context).hintColor.withOpacity(0.4),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 32),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: InkWell(
-                                onTap: () => Navigator.pop(ctx),
-                                borderRadius: BorderRadius.circular(16),
-                                child: Container(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 16),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(
-                                        color: Theme.of(context).dividerColor),
+                      ),
+                      const SizedBox(height: 26),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: SizedBox(
+                              height: 48,
+                              child: OutlinedButton(
+                                onPressed: () => Navigator.pop(ctx),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Theme.of(context).hintColor,
+                                  side: BorderSide(
+                                    color: isDark
+                                        ? Colors.white.withOpacity(0.12)
+                                        : Colors.black.withOpacity(0.1),
                                   ),
-                                  child: const Center(
-                                    child: Text('Batal',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14)),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Batal',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: InkWell(
-                                onTap: () async {
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: SizedBox(
+                              height: 48,
+                              child: ElevatedButton(
+                                onPressed: () async {
                                   final budget =
                                       double.tryParse(controller.text) ?? 0.0;
                                   final prefs =
@@ -1412,40 +1612,43 @@ class _HomeScreenState extends State<HomeScreen> {
                                   setState(() => _monthlyBudget = budget);
                                   if (ctx.mounted) Navigator.pop(ctx);
                                 },
-                                borderRadius: BorderRadius.circular(16),
-                                child: Container(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 16),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary,
-                                    borderRadius: BorderRadius.circular(16),
-                                    boxShadow: [
-                                      BoxShadow(
-                                          color: AppColors.primary
-                                              .withOpacity(0.3),
-                                          blurRadius: 10,
-                                          offset: const Offset(0, 4))
-                                    ],
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: pastelBlue,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
                                   ),
-                                  child: const Center(
-                                    child: Text('Simpan',
-                                        style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14)),
+                                ),
+                                child: const Text(
+                                  'Simpan',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
                               ),
                             ),
-                          ],
-                        ),
-                      ],
-                    ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
           ),
+        ),
+      ),
+      transitionBuilder: (ctx, anim1, anim2, child) => FadeTransition(
+        opacity: anim1,
+        child: ScaleTransition(
+          scale: Tween<double>(begin: 0.92, end: 1.0).animate(
+            CurvedAnimation(parent: anim1, curve: Curves.easeOutCubic),
+          ),
+          child: child,
+        ),
+      ),
     );
   }
 
@@ -1454,7 +1657,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required String label,
     String? subtitle,
     required VoidCallback onTap,
-    Color iconColor = AppColors.primary,
+    Color iconColor = const Color(0xFF60A5FA),
     Color? textColor,
     Widget? trailing,
   }) {

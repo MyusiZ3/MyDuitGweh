@@ -123,8 +123,7 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
     if (mounted) {
       setState(() {
         _hasApiKey = key != null && key.isNotEmpty;
-        final savedState =
-            prefs.getBool('receipt_scanner_use_ai_mode') ?? true;
+        final savedState = prefs.getBool('receipt_scanner_use_ai_mode') ?? true;
         _useAiAnalysis = savedState;
       });
     }
@@ -206,7 +205,8 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
           // 1. Camera Preview with Tap-to-Focus
           GestureDetector(
             onTapDown: (TapDownDetails details) async {
-              if (_controller == null || !_controller!.value.isInitialized) return;
+              if (_controller == null || !_controller!.value.isInitialized)
+                return;
               final screenSize = MediaQuery.of(context).size;
               final x = details.localPosition.dx / screenSize.width;
               final y = details.localPosition.dy / screenSize.height;
@@ -239,11 +239,13 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 28, vertical: 24),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.white.withOpacity(0.2)),
+                        border:
+                            Border.all(color: Colors.white.withOpacity(0.2)),
                       ),
                       child: const Column(
                         mainAxisSize: MainAxisSize.min,
@@ -308,7 +310,9 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
         children: [
           // Flash Action
           _buildCircleAction(
-            icon: _isFlashOn ? CupertinoIcons.bolt_fill : CupertinoIcons.bolt_slash_fill,
+            icon: _isFlashOn
+                ? CupertinoIcons.bolt_fill
+                : CupertinoIcons.bolt_slash_fill,
             onTap: _toggleFlash,
             color: _isFlashOn ? _pastelPrimary : Colors.black.withOpacity(0.4),
             iconColor: Colors.white,
@@ -321,7 +325,8 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
                   color: Colors.black.withOpacity(0.35),
                   borderRadius: BorderRadius.circular(20),
@@ -330,7 +335,8 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(CupertinoIcons.doc_text_viewfinder, color: _pastelPrimary, size: 16),
+                    Icon(CupertinoIcons.doc_text_viewfinder,
+                        color: _pastelPrimary, size: 16),
                     SizedBox(width: 8),
                     Text(
                       'Scan Struk',
@@ -460,7 +466,8 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.4),
                     borderRadius: BorderRadius.circular(20),
@@ -469,7 +476,8 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(CupertinoIcons.viewfinder, color: _pastelPrimary, size: 16),
+                      Icon(CupertinoIcons.viewfinder,
+                          color: _pastelPrimary, size: 16),
                       SizedBox(width: 8),
                       Text(
                         "Posisikan struk di dalam kotak",
@@ -516,7 +524,8 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
                 padding: const EdgeInsets.all(5),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white.withOpacity(0.85), width: 3.5),
+                  border: Border.all(
+                      color: Colors.white.withOpacity(0.85), width: 3.5),
                   boxShadow: [
                     BoxShadow(
                       color: _pastelPrimary.withOpacity(0.25),
@@ -567,7 +576,8 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
                         color: Colors.black.withOpacity(0.35),
                         borderRadius: BorderRadius.circular(24),
@@ -580,20 +590,16 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
-                            CupertinoIcons.sparkles,
-                            size: 13,
-                            color: _useAiAnalysis ? _pastelPrimary : Colors.white60,
-                          ),
-                          const SizedBox(width: 4),
                           Column(
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "AI Mode",
+                                "AI",
                                 style: TextStyle(
-                                  color: _useAiAnalysis ? Colors.white : Colors.white60,
+                                  color: _useAiAnalysis
+                                      ? Colors.white
+                                      : Colors.white60,
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -700,7 +706,9 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
                   decoration: BoxDecoration(
                     color: _hasApiKey
                         ? _pastelPrimary.withOpacity(0.12)
-                        : (isDark ? Colors.white.withOpacity(0.05) : Colors.grey[100]),
+                        : (isDark
+                            ? Colors.white.withOpacity(0.05)
+                            : Colors.grey[100]),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: _hasApiKey ? _pastelPrimary : Colors.transparent,
@@ -780,7 +788,9 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[100],
+                    color: isDark
+                        ? Colors.white.withOpacity(0.05)
+                        : Colors.grey[100],
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Row(
@@ -958,8 +968,8 @@ class ScannerMaskPainter extends CustomPainter {
     // Bottom Left Corner
     path.moveTo(rectLeft + cornerLength, rectTop + rectHeight);
     path.lineTo(rectLeft + radius, rectTop + rectHeight);
-    path.quadraticBezierTo(
-        rectLeft, rectTop + rectHeight, rectLeft, rectTop + rectHeight - radius);
+    path.quadraticBezierTo(rectLeft, rectTop + rectHeight, rectLeft,
+        rectTop + rectHeight - radius);
     path.lineTo(rectLeft, rectTop + rectHeight - cornerLength);
 
     canvas.drawPath(path, borderPaint);

@@ -50,6 +50,7 @@ dependencies:
   sqflite: ^2.3.3
   path: ^1.9.0
   workmanager: ^0.5.2
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:

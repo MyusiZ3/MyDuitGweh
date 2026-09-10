@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
-import '../utils/app_theme.dart';
 import '../utils/ui_helper.dart';
 import '../services/firestore_service.dart';
 import '../utils/tone_dictionary.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
+
+  static const Color pastelBlue = Color(0xFF60A5FA);
 
   @override
   State<EditProfileScreen> createState() => _EditProfileScreenState();
@@ -70,8 +71,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Future<void> _pickDateOfBirth() async {
     if (!_isEditing) return;
 
-    // Gunakan cupertino date picker style widget kalau mau full iOS feel,
-    // tapi Material showDatePicker yg dimodifikasi warnanya juga cukup iOS-ish untuk fungsi.
     final picked = await showDatePicker(
       context: context,
       initialDate: _dateOfBirth ??
@@ -83,7 +82,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           data: ThemeData(
             brightness: Theme.of(context).brightness,
             colorScheme: Theme.of(context).colorScheme.copyWith(
-                  primary: AppColors.primary,
+                  primary: EditProfileScreen.pastelBlue,
                   onPrimary: Colors.white,
                 ),
           ),
@@ -146,45 +145,49 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     required IconData icon,
     required String title,
     required Widget child,
-    Color iconColor = AppColors.primary,
+    Color iconColor = EditProfileScreen.pastelBlue,
     bool showBorder = true,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       decoration: BoxDecoration(
         border: showBorder
             ? Border(
                 bottom: BorderSide(
-                  color: Colors.grey.withOpacity(0.2),
-                  width: 0.5,
+                  color: isDark
+                      ? Colors.white.withOpacity(0.06)
+                      : Colors.black.withOpacity(0.05),
+                  width: 0.8,
                 ),
               )
             : null,
       ),
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
+              color: iconColor.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: iconColor, size: 20),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            flex: 2,
+          const SizedBox(width: 14),
+          SizedBox(
+            width: 105, // Fixed width for clean label alignment
             child: Text(
               title,
               style: TextStyle(
                 fontSize: 15,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w600,
                 color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
           ),
+          const SizedBox(width: 12),
           Expanded(
-            flex: 3,
             child: Align(
               alignment: Alignment.centerRight,
               child: child,
@@ -196,30 +199,53 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Widget _buildFormField(TextEditingController controller, String hint) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return TextFormField(
       controller: controller,
       readOnly: !_isEditing,
       textAlign: TextAlign.right,
       style: TextStyle(
         fontSize: 15,
+        fontWeight: FontWeight.w500,
         color: _isEditing
-            ? Theme.of(context).textTheme.bodyLarge?.color
-            : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
+            ? (isDark ? Colors.white : Colors.black87)
+            : Theme.of(context).hintColor,
       ),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: AppColors.textHint),
-        border: InputBorder.none,
+        hintStyle: TextStyle(color: Theme.of(context).hintColor.withOpacity(0.5)),
+        filled: _isEditing,
+        fillColor: _isEditing
+            ? (isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05))
+            : Colors.transparent,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: EditProfileScreen.pastelBlue, width: 1.5),
+        ),
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(vertical: 8),
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: _isEditing ? 12 : 0,
+          vertical: _isEditing ? 8 : 4,
+        ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
+      backgroundColor: isDark
           ? const Color(0xFF000000)
           : const Color(0xFFF2F2F7),
       appBar: AppBar(
@@ -227,6 +253,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ToneManager.t('profile_title'),
           style: TextStyle(
             fontWeight: FontWeight.w700,
+            fontSize: 18,
             letterSpacing: -0.5,
             color: Theme.of(context).textTheme.titleLarge?.color,
           ),
@@ -235,7 +262,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(CupertinoIcons.back, color: AppColors.primary),
+          icon: const Icon(CupertinoIcons.back, color: EditProfileScreen.pastelBlue),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
@@ -243,8 +270,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             CupertinoButton(
               padding: const EdgeInsets.only(right: 16),
               onPressed: () => setState(() => _isEditing = true),
-              child: Text(ToneManager.t('profile_edit_btn'),
-                  style: const TextStyle(fontWeight: FontWeight.w600)),
+              child: Text(
+                ToneManager.t('profile_edit_btn'),
+                style: const TextStyle(
+                  color: EditProfileScreen.pastelBlue,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           if (_isEditing)
             CupertinoButton(
@@ -253,15 +285,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 setState(() => _isEditing = false);
                 _loadUserProfile(); // Revert
               },
-              child: Text(ToneManager.t('profile_cancel_btn'),
-                  style: const TextStyle(
-                      color: Colors.red, fontWeight: FontWeight.w500)),
+              child: Text(
+                ToneManager.t('profile_cancel_btn'),
+                style: const TextStyle(
+                  color: Color(0xFFFF746C),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
         ],
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: AppColors.primary))
+              child: CircularProgressIndicator(color: EditProfileScreen.pastelBlue))
           : SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               child: Padding(
@@ -274,15 +310,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       child: Column(
                         children: [
                           Container(
-                            width: 90,
-                            height: 90,
+                            width: 92,
+                            height: 92,
                             decoration: BoxDecoration(
-                              color: AppColors.primary.withOpacity(0.1),
+                              color: EditProfileScreen.pastelBlue.withOpacity(0.12),
                               shape: BoxShape.circle,
                               border: Border.all(
-                                  color: AppColors.primary.withOpacity(0.3),
-                                  width: 2),
-                              // Use Google photoURL if signed in via Google, otherwise null
+                                color: EditProfileScreen.pastelBlue.withOpacity(0.4),
+                                width: 2,
+                              ),
                               image:
                                   FirebaseAuth.instance.currentUser?.photoURL !=
                                           null
@@ -293,36 +329,34 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                         )
                                       : null,
                             ),
-                            // Show icon only if there is no profile photo
                             child:
                                 FirebaseAuth.instance.currentUser?.photoURL ==
                                         null
-                                    ? const Icon(CupertinoIcons.person_solid,
-                                        size: 45, color: AppColors.primary)
+                                    ? const Icon(CupertinoIcons.person_fill,
+                                        size: 44, color: EditProfileScreen.pastelBlue)
                                     : null,
                           ),
-                          const SizedBox(
-                              height:
-                                  24), // Spacing diperbesar agar teks tidak terlalu mepet dengan border biru
+                          const SizedBox(height: 18),
                           Text(
                             _nameController.text.isNotEmpty
                                 ? _nameController.text
                                 : ToneManager.t('nav_profile'),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 22,
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w800,
                               letterSpacing: -0.5,
+                              color: Theme.of(context).textTheme.titleLarge?.color,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             FirebaseAuth.instance.currentUser?.email ?? '',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
-                              color: AppColors.textHint,
+                              color: Theme.of(context).hintColor,
                             ),
                           ),
-                          const SizedBox(height: 32),
+                          const SizedBox(height: 28),
                         ],
                       ),
                     ),
@@ -330,83 +364,107 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     // Information Card
                     Container(
                       decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
-                        borderRadius: BorderRadius.circular(20),
+                        color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: isDark
+                              ? Colors.white.withOpacity(0.06)
+                              : Colors.black.withOpacity(0.04),
+                          width: 1,
+                        ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.02),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          )
+                            color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
+                            blurRadius: 16,
+                            offset: const Offset(0, 6),
+                          ),
                         ],
                       ),
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           _buildCupertinoTile(
                             icon: CupertinoIcons.person_fill,
                             title: ToneManager.t('profile_label_name'),
+                            iconColor: EditProfileScreen.pastelBlue,
                             child: _buildFormField(_nameController,
                                 ToneManager.t('profile_hint_name')),
                           ),
                           _buildCupertinoTile(
-                            icon: CupertinoIcons.person_3_fill,
+                            icon: CupertinoIcons.person_2_fill,
                             title: ToneManager.t('profile_label_gender'),
-                            iconColor: Colors.purple,
+                            iconColor: const Color(0xFFA78BFA),
                             child: _isEditing
                                 ? DropdownButtonHideUnderline(
                                     child: DropdownButton<String>(
                                       value: _gender,
-                                      isExpanded: true,
+                                      isExpanded: false,
                                       alignment: Alignment.centerRight,
                                       icon: const Icon(
-                                          CupertinoIcons.chevron_down,
-                                          size: 16),
+                                        CupertinoIcons.chevron_down,
+                                        size: 14,
+                                        color: EditProfileScreen.pastelBlue,
+                                      ),
                                       style: TextStyle(
-                                          fontSize: 15,
-                                          color: Theme.of(context)
-                                              .textTheme
-                                              .bodyLarge
-                                              ?.color),
-                                      items: [
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w500,
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.color,
+                                      ),
+                                      dropdownColor: isDark
+                                          ? const Color(0xFF2C2C2E)
+                                          : Colors.white,
+                                      borderRadius: BorderRadius.circular(14),
+                                      items: const [
                                         DropdownMenuItem(
-                                            value: 'Prefer not to say',
-                                            child: Text('Prefer not to say')),
+                                          value: 'Prefer not to say',
+                                          child: Text('Tidak ditentukan'),
+                                        ),
                                         DropdownMenuItem(
-                                            value: 'Laki-laki',
-                                            child: Text('Laki-laki')),
+                                          value: 'Laki-laki',
+                                          child: Text('Laki-laki'),
+                                        ),
                                         DropdownMenuItem(
-                                            value: 'Perempuan',
-                                            child: Text('Perempuan')),
+                                          value: 'Perempuan',
+                                          child: Text('Perempuan'),
+                                        ),
                                       ],
                                       onChanged: (val) {
-                                        if (val != null)
+                                        if (val != null) {
                                           setState(() => _gender = val);
+                                        }
                                       },
                                     ),
                                   )
                                 : Padding(
                                     padding: const EdgeInsets.symmetric(
-                                        vertical: 12),
+                                        vertical: 8),
                                     child: Text(
-                                      _gender,
+                                      _gender == 'Prefer not to say' ? 'Tidak ditentukan' : _gender,
                                       textAlign: TextAlign.right,
                                       style: TextStyle(
-                                          fontSize: 15,
-                                          color: Colors.grey.shade600),
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w500,
+                                        color: Theme.of(context).hintColor,
+                                      ),
                                     ),
                                   ),
                           ),
                           _buildCupertinoTile(
                             icon: CupertinoIcons.calendar,
                             title: ToneManager.t('profile_label_dob'),
-                            iconColor: Colors.orange,
+                            iconColor: const Color(0xFFFBBF24),
                             child: InkWell(
                               onTap: _pickDateOfBirth,
+                              borderRadius: BorderRadius.circular(8),
                               child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 12),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: _isEditing ? 12 : 0,
+                                  vertical: _isEditing ? 8 : 8,
+                                ),
                                 child: Text(
                                   _dateOfBirth != null
                                       ? DateFormat('dd MMM yyyy')
@@ -415,11 +473,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                   textAlign: TextAlign.right,
                                   style: TextStyle(
                                     fontSize: 15,
+                                    fontWeight: FontWeight.w500,
                                     color: _dateOfBirth == null
-                                        ? AppColors.textHint
+                                        ? Theme.of(context).hintColor.withOpacity(0.5)
                                         : (_isEditing
-                                            ? AppColors.primary
-                                            : Colors.grey.shade600),
+                                            ? EditProfileScreen.pastelBlue
+                                            : Theme.of(context).hintColor),
                                   ),
                                 ),
                               ),
@@ -428,7 +487,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           _buildCupertinoTile(
                             icon: CupertinoIcons.briefcase_fill,
                             title: ToneManager.t('profile_label_job'),
-                            iconColor: Colors.teal,
+                            iconColor: const Color(0xFF34D399),
                             showBorder: false,
                             child: _buildFormField(_occupationController,
                                 ToneManager.t('profile_hint_job')),
@@ -442,10 +501,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     if (_isEditing)
                       SizedBox(
                         width: double.infinity,
-                        height: 56,
+                        height: 54,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
+                            backgroundColor: EditProfileScreen.pastelBlue,
+                            foregroundColor: Colors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
@@ -458,9 +518,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               : Text(
                                   ToneManager.t('profile_save_btn'),
                                   style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: -0.3),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: -0.2,
+                                  ),
                                 ),
                         ),
                       ),

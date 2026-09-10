@@ -617,157 +617,181 @@ class UIHelper {
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: GridView.count(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 0.9,
-                  children: AppTone.values.map((t) {
-                    final isSelected = currentTone == t;
-                    final isMyBini = t == AppTone.pasangan;
-                    final activeColor = isMyBini
-                        ? const Color(0xFFFF2D55)
-                        : (isDark ? Colors.indigoAccent : AppColors.primary);
+                child: Container(
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isDark
+                          ? Colors.white.withOpacity(0.08)
+                          : Colors.black.withOpacity(0.06),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: AppTone.values.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final t = entry.value;
+                      final isSelected = currentTone == t;
+                      final activeColor = _getToneColor(t);
+                      final isLast = index == AppTone.values.length - 1;
 
-                    return Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () async {
-                          await ToneManager.setTone(t);
-                          if (context.mounted) {
-                            Future.delayed(const Duration(milliseconds: 150),
-                                () => Navigator.pop(context));
-                          }
-                        },
-                        borderRadius: BorderRadius.circular(24),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 250),
-                          curve: Curves.easeInOut,
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? activeColor.withOpacity(isDark ? 0.2 : 0.1)
-                                : isDark
-                                    ? Colors.white.withOpacity(0.04)
-                                    : Colors.white.withOpacity(0.6),
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(
-                              color: isSelected
-                                  ? activeColor.withOpacity(0.5)
-                                  : isDark
-                                      ? Colors.white.withOpacity(0.05)
-                                      : Colors.black.withOpacity(0.05),
-                              width: isSelected ? 2.0 : 1.0,
-                            ),
-                            boxShadow: isSelected
-                                ? [
-                                    BoxShadow(
-                                      color: activeColor.withOpacity(0.15),
-                                      blurRadius: 12,
-                                      offset: const Offset(0, 4),
-                                    )
-                                  ]
-                                : [],
-                          ),
-                          child: Stack(
-                            children: [
-                              Positioned.fill(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Container(
-                                        width: 56,
-                                        height: 56,
-                                        decoration: BoxDecoration(
-                                          color: isSelected
-                                              ? activeColor.withOpacity(0.2)
-                                              : isDark
-                                                  ? Colors.white
-                                                      .withOpacity(0.05)
-                                                  : Colors.grey
-                                                      .withOpacity(0.08),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        alignment: Alignment.center,
-                                        child: Text(
-                                          t == AppTone.genZ
-                                              ? '🤘'
-                                              : t == AppTone.milenial
-                                                  ? '☕'
-                                                  : t == AppTone.boomer
-                                                      ? '👴'
-                                                      : t == AppTone.pasangan
-                                                          ? '❤️'
-                                                          : '👔',
-                                          style: const TextStyle(fontSize: 28),
-                                        ),
+                      return Column(
+                        children: [
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () async {
+                                await ToneManager.setTone(t);
+                                if (context.mounted) {
+                                  Future.delayed(
+                                      const Duration(milliseconds: 150),
+                                      () => Navigator.pop(context));
+                                }
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 14),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 34,
+                                      height: 34,
+                                      decoration: BoxDecoration(
+                                        color: activeColor.withOpacity(0.18),
+                                        borderRadius: BorderRadius.circular(8),
                                       ),
-                                      const SizedBox(height: 12),
-                                      Text(
-                                        isMyBini
-                                            ? 'PASANGAN'
-                                            : t.name.toUpperCase(),
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w900,
-                                          fontSize: 14,
-                                          letterSpacing: 0.5,
-                                          color: isSelected
-                                              ? activeColor
-                                              : Theme.of(context)
-                                                  .textTheme
-                                                  .bodyLarge
-                                                  ?.color,
-                                        ),
+                                      child: Icon(
+                                        _getToneIcon(t),
+                                        color: activeColor,
+                                        size: 18,
                                       ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        _getToneDescription(t),
-                                        textAlign: TextAlign.center,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: isSelected
-                                              ? activeColor.withOpacity(0.8)
-                                              : Theme.of(context).hintColor,
-                                          fontWeight: FontWeight.w600,
-                                        ),
+                                    ),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            _getToneTitle(t),
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 15,
+                                              letterSpacing: -0.2,
+                                              color: isSelected
+                                                  ? (isDark
+                                                      ? Colors.white
+                                                      : Colors.black)
+                                                  : Theme.of(context)
+                                                      .textTheme
+                                                      .bodyLarge
+                                                      ?.color,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            _getToneDescription(t),
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color:
+                                                  Theme.of(context).hintColor,
+                                              fontWeight: FontWeight.w400,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    if (isSelected) ...[
+                                      const SizedBox(width: 8),
+                                      const Icon(
+                                        CupertinoIcons.checkmark,
+                                        color: Color(0xFF60A5FA),
+                                        size: 20,
                                       ),
                                     ],
-                                  ),
+                                  ],
                                 ),
                               ),
-                              if (isSelected)
-                                Positioned(
-                                  top: 10,
-                                  right: 10,
-                                  child: Icon(
-                                    CupertinoIcons.checkmark_circle_fill,
-                                    color: activeColor,
-                                    size: 20,
-                                  ),
-                                ),
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
+                          if (!isLast)
+                            Divider(
+                              height: 1,
+                              thickness: 0.8,
+                              indent: 64,
+                              color: isDark
+                                  ? Colors.white.withOpacity(0.08)
+                                  : Colors.black.withOpacity(0.06),
+                            ),
+                        ],
+                      );
+                    }).toList(),
+                  ),
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 28),
             ],
           );
         },
       ),
     );
+  }
+
+  static String _getToneTitle(AppTone tone) {
+    switch (tone) {
+      case AppTone.normal:
+        return 'Normal (Standar)';
+      case AppTone.genZ:
+        return 'Gen-Z (Slang / Casual)';
+      case AppTone.milenial:
+        return 'Milenial (Semi-Formal)';
+      case AppTone.boomer:
+        return 'Boomer (Klasik & Santun)';
+      case AppTone.pasangan:
+        return 'Pasangan (Hangat & Romantis)';
+    }
+  }
+
+  static IconData _getToneIcon(AppTone tone) {
+    switch (tone) {
+      case AppTone.normal:
+        return CupertinoIcons.doc_text_fill;
+      case AppTone.genZ:
+        return CupertinoIcons.sparkles;
+      case AppTone.milenial:
+        return CupertinoIcons.briefcase_fill;
+      case AppTone.boomer:
+        return CupertinoIcons.book_fill;
+      case AppTone.pasangan:
+        return CupertinoIcons.heart_fill;
+    }
+  }
+
+  static Color _getToneColor(AppTone tone) {
+    switch (tone) {
+      case AppTone.normal:
+        return const Color(0xFF60A5FA);
+      case AppTone.genZ:
+        return const Color(0xFFA78BFA);
+      case AppTone.milenial:
+        return const Color(0xFF38BDF8);
+      case AppTone.boomer:
+        return const Color(0xFFFBBF24);
+      case AppTone.pasangan:
+        return const Color(0xFFFF746C);
+    }
   }
 
   static Future<T?> showPremiumBottomSheet<T>({

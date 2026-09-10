@@ -5971,7 +5971,7 @@ class _StaggeredReveal extends StatefulWidget {
     super.key,
     required this.child,
     required this.index,
-    this.delayStep = const Duration(milliseconds: 55),
+    this.delayStep = const Duration(milliseconds: 65),
   });
 
   @override
@@ -5982,16 +5982,14 @@ class _StaggeredRevealState extends State<_StaggeredReveal>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
-  late Animation<double> _scaleAnimation;
   late Animation<Offset> _slideAnimation;
-  bool _hasTriggered = false;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 550),
     );
 
     _fadeAnimation = CurvedAnimation(
@@ -5999,49 +5997,17 @@ class _StaggeredRevealState extends State<_StaggeredReveal>
       curve: Curves.easeOutCubic,
     );
 
-    _scaleAnimation = Tween<double>(begin: 0.93, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeOutCubic,
-      ),
-    );
-
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.15),
+      begin: const Offset(0, 0.12),
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _controller,
       curve: Curves.easeOutCubic,
     ));
-  }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _checkVisibility();
-  }
-
-  void _checkVisibility() {
-    if (_hasTriggered) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || _hasTriggered) return;
-      final renderBox = context.findRenderObject() as RenderBox?;
-      if (renderBox != null && renderBox.hasSize) {
-        final position = renderBox.localToGlobal(Offset.zero);
-        final screenHeight = MediaQuery.of(context).size.height;
-
-        if (position.dy < screenHeight * 0.94) {
-          _hasTriggered = true;
-          final initialDelay = position.dy < screenHeight
-              ? widget.delayStep * widget.index
-              : Duration.zero;
-
-          Future.delayed(initialDelay, () {
-            if (mounted) {
-              _controller.forward();
-            }
-          });
-        }
+    Future.delayed(widget.delayStep * widget.index, () {
+      if (mounted) {
+        _controller.forward();
       }
     });
   }
@@ -6054,20 +6020,11 @@ class _StaggeredRevealState extends State<_StaggeredReveal>
 
   @override
   Widget build(BuildContext context) {
-    return NotificationListener<ScrollNotification>(
-      onNotification: (notification) {
-        _checkVisibility();
-        return false;
-      },
-      child: FadeTransition(
-        opacity: _fadeAnimation,
-        child: ScaleTransition(
-          scale: _scaleAnimation,
-          child: SlideTransition(
-            position: _slideAnimation,
-            child: widget.child,
-          ),
-        ),
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: widget.child,
       ),
     );
   }

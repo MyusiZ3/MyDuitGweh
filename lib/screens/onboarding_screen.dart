@@ -59,8 +59,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final pages = _getPages();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryBg = isDark ? const Color(0xFF121214) : const Color(0xFFFAFAFA);
-    // Brand identity pastel periwinkle blue accent matching user swatch
-    final accentColor = const Color(0xFF6366F1); 
+    // Brand identity pastel blue accent matching design system #60A5FA
+    final accentColor = const Color(0xFF60A5FA); 
 
     return Scaffold(
       backgroundColor: primaryBg,
@@ -185,7 +185,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget _buildHeroWidget(OnboardingType type, bool isDark) {
     switch (type) {
       case OnboardingType.balance:
-        return _buildArtisticLedgerIllustration(isDark, const Color(0xFF6366F1)); // Brand Periwinkle Blue
+        return _buildArtisticLedgerIllustration(isDark, const Color(0xFF60A5FA)); // Pastel Blue
       case OnboardingType.shared:
         return _buildArtisticDoorwayIllustration(isDark, const Color(0xFFA78BFA)); // Pastel Lavender
       case OnboardingType.report:
