@@ -159,7 +159,7 @@ class PdfService {
                 ),
                 pw.SizedBox(height: 2),
                 pw.Text(
-                  'MyDuitGweh • Smart Financial Tracker',
+                  'MyDuitGweh | Smart Financial Tracker',
                   style: pw.TextStyle(
                     fontSize: 10,
                     color: PdfColors.blueGrey500,
@@ -407,7 +407,7 @@ class PdfService {
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         children: [
           pw.Text(
-            'MyDuitGweh — Laporan Resmi Keuangan',
+            'MyDuitGweh | Laporan Resmi Keuangan',
             style: pw.TextStyle(fontSize: 8, color: PdfColors.grey600),
           ),
           pw.Text(
