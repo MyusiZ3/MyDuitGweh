@@ -124,8 +124,8 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
       setState(() {
         _hasApiKey = key != null && key.isNotEmpty;
         final savedState =
-            prefs.getBool('receipt_scanner_use_ai_mode') ?? false;
-        _useAiAnalysis = _hasApiKey && savedState;
+            prefs.getBool('receipt_scanner_use_ai_mode') ?? true;
+        _useAiAnalysis = savedState;
       });
     }
   }
@@ -553,84 +553,75 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
 
             // AI Mode Toggle Pill (Bottom Left)
             Positioned(
-              left: 32,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(24),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.35),
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(
-                        color: _useAiAnalysis
-                            ? _pastelPrimary.withOpacity(0.4)
-                            : Colors.white.withOpacity(0.12),
+              left: 20,
+              child: GestureDetector(
+                onTap: () {
+                  if (_hasApiKey) {
+                    _showAiSourcePicker();
+                  } else {
+                    _toggleAiMode(!_useAiAnalysis);
+                  }
+                },
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.35),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: _useAiAnalysis
+                              ? _pastelPrimary.withOpacity(0.4)
+                              : Colors.white.withOpacity(0.12),
+                        ),
                       ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          "AI",
-                          style: TextStyle(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            CupertinoIcons.sparkles,
+                            size: 13,
                             color: _useAiAnalysis ? _pastelPrimary : Colors.white60,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
                           ),
-                        ),
-                        const SizedBox(width: 4),
-                        Transform.scale(
-                          scale: 0.8,
-                          child: Switch(
-                            value: _useAiAnalysis,
-                            onChanged: (val) async {
-                              if (val) {
-                                if (!_hasApiKey) {
-                                  UIHelper.showInfoDialog(
-                                      context,
-                                      'API Key Belum Diatur',
-                                      'Waduh, fitur AI Mode membutuhkan API Key. Silakan atur terlebih dahulu melalui fitur Chat AI.');
-                                  return;
-                                }
-
-                                final bool? confirm = await UIHelper.showConfirmDialog(
-                                  context: context,
-                                  title: 'Gunakan AI Mode?',
-                                  message:
-                                      'Analisis struk ini akan menggunakan API Key pribadi Anda yang telah disetel. Proses ini dapat memotong limit kuota API pihak ketiga Anda. Lanjutkan?',
-                                  confirmText: 'Lanjutkan',
-                                  cancelText: 'Batal',
-                                  isDangerous: false,
-                                );
-
-                                if (confirm == true && mounted) {
-                                  setState(() => _useAiAnalysis = true);
-                                  final prefs = await SharedPreferences.getInstance();
-                                  await prefs.setBool(
-                                      'receipt_scanner_use_ai_mode', true);
-                                } else if (mounted) {
-                                  setState(() => _useAiAnalysis = false);
-                                  final prefs = await SharedPreferences.getInstance();
-                                  await prefs.setBool(
-                                      'receipt_scanner_use_ai_mode', false);
-                                }
-                              } else {
-                                setState(() {
-                                  _useAiAnalysis = false;
-                                });
-                                final prefs = await SharedPreferences.getInstance();
-                                await prefs.setBool(
-                                    'receipt_scanner_use_ai_mode', false);
-                              }
-                            },
-                            activeColor: _pastelPrimary,
-                            inactiveThumbColor: Colors.white70,
-                            inactiveTrackColor: Colors.white24,
+                          const SizedBox(width: 4),
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "AI Mode",
+                                style: TextStyle(
+                                  color: _useAiAnalysis ? Colors.white : Colors.white60,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              if (_useAiAnalysis)
+                                Text(
+                                  _hasApiKey ? 'Custom Key' : 'System AI',
+                                  style: const TextStyle(
+                                    color: _pastelPrimary,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                            ],
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 2),
+                          Transform.scale(
+                            scale: 0.75,
+                            child: Switch(
+                              value: _useAiAnalysis,
+                              onChanged: (val) => _toggleAiMode(val),
+                              activeColor: _pastelPrimary,
+                              inactiveThumbColor: Colors.white70,
+                              inactiveTrackColor: Colors.white24,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -639,6 +630,203 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
           ],
         ),
       ),
+    );
+  }
+
+  void _toggleAiMode(bool enable) async {
+    setState(() {
+      _useAiAnalysis = enable;
+    });
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('receipt_scanner_use_ai_mode', enable);
+  }
+
+  void _showAiSourcePicker() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final cardBg = Theme.of(context).cardColor;
+        final textColor = isDark ? Colors.white : const Color(0xFF18181B);
+
+        return Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 38,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white24 : Colors.black12,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Opsi AI Scanner',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Pilih opsi sumber AI yang ingin digunakan untuk menganalisis struk belanja:',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: isDark ? Colors.white60 : Colors.black54,
+                ),
+              ),
+              const SizedBox(height: 20),
+              // Option 1: Custom API Key
+              InkWell(
+                onTap: () {
+                  Navigator.pop(context);
+                  _toggleAiMode(true);
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: _hasApiKey
+                        ? _pastelPrimary.withOpacity(0.12)
+                        : (isDark ? Colors.white.withOpacity(0.05) : Colors.grey[100]),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: _hasApiKey ? _pastelPrimary : Colors.transparent,
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: _pastelPrimary.withOpacity(0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(CupertinoIcons.lock_fill,
+                            color: _pastelPrimary, size: 20),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  'API Key Pribadi (Custom)',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: textColor,
+                                  ),
+                                ),
+                                if (_hasApiKey) ...[
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: _pastelPrimary.withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: const Text(
+                                      'Aktif',
+                                      style: TextStyle(
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.bold,
+                                        color: _pastelPrimary,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Menggunakan Gemini/Groq API Key milikmu yang disetel di Chat AI.',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                color: isDark ? Colors.white60 : Colors.black54,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              // Option 2: System AI
+              InkWell(
+                onTap: () {
+                  Navigator.pop(context);
+                  _toggleAiMode(true);
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[100],
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFC4B5FD).withOpacity(0.25),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(CupertinoIcons.sparkles,
+                            color: Color(0xFF8B5CF6), size: 20),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'System AI (Bawaan Aplikasi)',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: textColor,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Menggunakan kuota server AI terintegrasi MyDuitGweh.',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                color: isDark ? Colors.white60 : Colors.black54,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        );
+      },
     );
   }
 
