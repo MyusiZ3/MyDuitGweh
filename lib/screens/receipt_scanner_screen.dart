@@ -4,9 +4,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
-import '../utils/app_theme.dart';
-import '../utils/ui_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../utils/ui_helper.dart';
 
 class ReceiptScannerScreen extends StatefulWidget {
   const ReceiptScannerScreen({super.key});
@@ -22,8 +21,6 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
   bool _isInitializing = true;
   bool _isFlashOn = false;
   bool _isProcessing = false;
-  late AnimationController _fadeController;
-  late Animation<double> _fadeAnimation;
 
   bool _useAiAnalysis = false;
   bool _hasApiKey = false;
@@ -32,6 +29,8 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
   late Animation<double> _scanLineAnimation;
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
+
+  static const Color _pastelPrimary = Color(0xFF60A5FA);
 
   @override
   void initState() {
@@ -42,7 +41,7 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
 
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 3),
+      duration: const Duration(milliseconds: 2400),
     )..repeat(reverse: true);
 
     _scanLineAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -51,33 +50,24 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
 
     _pulseController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 1600),
     )..repeat(reverse: true);
 
-    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.04).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
-
-    _fadeController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 800),
-    )..repeat(reverse: true);
-    _fadeAnimation = Tween<double>(begin: 0.4, end: 1.0).animate(
-      CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
     );
   }
 
   Future<void> _initializeCamera() async {
     try {
-      // Small delay helps with native channel connection on some devices
-      await Future.delayed(const Duration(milliseconds: 500));
+      await Future.delayed(const Duration(milliseconds: 400));
 
       _cameras = await availableCameras();
       if (_cameras.isEmpty) throw 'Kamera tidak ditemukan';
 
       _controller = CameraController(
         _cameras.first,
-        ResolutionPreset.ultraHigh, // Using UltraHigh for better detail
+        ResolutionPreset.ultraHigh,
         enableAudio: false,
         imageFormatGroup: ImageFormatGroup.jpeg,
       );
@@ -110,7 +100,6 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
     _controller?.dispose();
     _animationController.dispose();
     _pulseController.dispose();
-    _fadeController.dispose();
     super.dispose();
   }
 
@@ -203,7 +192,9 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
     if (_isInitializing) {
       return const Scaffold(
         backgroundColor: Colors.black,
-        body: Center(child: CircularProgressIndicator(color: Colors.white)),
+        body: Center(
+          child: CircularProgressIndicator(color: _pastelPrimary),
+        ),
       );
     }
 
@@ -212,13 +203,11 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // 1. Camera Preview
+          // 1. Camera Preview with Tap-to-Focus
           GestureDetector(
             onTapDown: (TapDownDetails details) async {
-              if (_controller == null || !_controller!.value.isInitialized)
-                return;
+              if (_controller == null || !_controller!.value.isInitialized) return;
               final screenSize = MediaQuery.of(context).size;
-              // Map tap coordinates to 0..1 range
               final x = details.localPosition.dx / screenSize.width;
               final y = details.localPosition.dy / screenSize.height;
               try {
@@ -231,26 +220,51 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
             child: _buildCameraPreview(),
           ),
 
-          // 2. The Custom Overlay (Scanner Lens)
+          // 2. Clean Scanner Overlay (Pastel Lens & Mask)
           _buildScannerOverlay(context),
 
-          // 3. UI Controls
+          // 3. Top Header Bar (Flash, Title, Close)
+          _buildTopBar(context),
+
+          // 4. Bottom Controls Bar (Gallery, Shutter, AI Mode Switch)
           _buildControls(context),
 
-          // 4. Processing Overlay
+          // 5. Processing Glass Loading Overlay
           if (_isProcessing)
             Container(
-              color: Colors.black45,
-              child: const Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(color: Colors.white),
-                    SizedBox(height: 16),
-                    Text("Memproses Gambar...",
-                        style: TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.bold)),
-                  ],
+              color: Colors.black.withOpacity(0.6),
+              child: Center(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.white.withOpacity(0.2)),
+                      ),
+                      child: const Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(
+                            color: _pastelPrimary,
+                            strokeWidth: 3,
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            "Memproses Struk...",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -282,84 +296,149 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
     );
   }
 
+  Widget _buildTopBar(BuildContext context) {
+    final topPadding = MediaQuery.of(context).padding.top;
+
+    return Positioned(
+      top: topPadding + 16,
+      left: 20,
+      right: 20,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Flash Action
+          _buildCircleAction(
+            icon: _isFlashOn ? CupertinoIcons.bolt_fill : CupertinoIcons.bolt_slash_fill,
+            onTap: _toggleFlash,
+            color: _isFlashOn ? _pastelPrimary : Colors.black.withOpacity(0.4),
+            iconColor: Colors.white,
+            tooltip: "Flash",
+          ),
+
+          // Title Badge
+          ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.35),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.white.withOpacity(0.12)),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(CupertinoIcons.doc_text_viewfinder, color: _pastelPrimary, size: 16),
+                    SizedBox(width: 8),
+                    Text(
+                      'Scan Struk',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // Close Action
+          _buildCircleAction(
+            icon: CupertinoIcons.xmark,
+            onTap: () => Navigator.pop(context),
+            color: Colors.black.withOpacity(0.4),
+            iconColor: Colors.white,
+            tooltip: "Tutup",
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildScannerOverlay(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final rectWidth = size.width * 0.76;
+    final rectHeight = size.height * 0.44;
+
     return Stack(
       children: [
-        // Pulsing Lens Effect around the cutout area
+        // Subtle Lens Pulse Glow
         Center(
           child: Transform.translate(
-            offset: const Offset(0, -70), // ALIGNED with -70 offset
+            offset: const Offset(0, -45),
             child: ScaleTransition(
               scale: _pulseAnimation,
               child: Container(
-                width: MediaQuery.of(context).size.width * 0.72,
-                height: MediaQuery.of(context).size.height * 0.42,
+                width: rectWidth,
+                height: rectHeight,
                 decoration: BoxDecoration(
-                  border: Border.all(
-                      color: AppColors.primary.withOpacity(0.08), width: 10),
                   borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _pastelPrimary.withOpacity(0.12),
+                      blurRadius: 24,
+                      spreadRadius: 2,
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
         ),
 
-        // Dark mask with cutout
+        // Dark Mask Painter
         CustomPaint(
           painter: ScannerMaskPainter(),
           size: Size.infinite,
         ),
 
-        // Scanning Line Animation
+        // Scanning Sweeping Line Animation
         AnimatedBuilder(
           animation: _scanLineAnimation,
           builder: (context, child) {
-            final size = MediaQuery.of(context).size;
-            final rectWidth = size.width * 0.72;
-            final rectHeight = size.height * 0.42;
             final rectLeft = (size.width - rectWidth) / 2;
-            final rectTop = (size.height - rectHeight) / 2 - 70;
+            final rectTop = (size.height - rectHeight) / 2 - 45;
 
             return Positioned(
               top: rectTop + (rectHeight * _scanLineAnimation.value),
-              left: rectLeft + 5, // Narrower to stay inside border
-              right: rectLeft + 5, // Narrower to stay inside border
+              left: rectLeft + 8,
+              right: rectLeft + 8,
               child: Column(
                 children: [
                   Container(
-                    height: 2,
+                    height: 2.5,
                     decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(2),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primary,
-                          blurRadius: 15,
-                          spreadRadius: 2,
-                        ),
-                        BoxShadow(
-                          color: AppColors.primary.withOpacity(0.5),
-                          blurRadius: 30,
-                          spreadRadius: 5,
+                          color: _pastelPrimary.withOpacity(0.8),
+                          blurRadius: 12,
+                          spreadRadius: 1.5,
                         ),
                       ],
                       gradient: LinearGradient(
                         colors: [
-                          AppColors.primary.withOpacity(0),
-                          AppColors.primary,
-                          AppColors.primary.withOpacity(0),
+                          _pastelPrimary.withOpacity(0),
+                          _pastelPrimary,
+                          _pastelPrimary.withOpacity(0),
                         ],
                       ),
                     ),
                   ),
-                  // Light flare below the line
                   Container(
-                    height: 40,
+                    height: 30,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          AppColors.primary.withOpacity(0.15),
-                          AppColors.primary.withOpacity(0),
+                          _pastelPrimary.withOpacity(0.12),
+                          _pastelPrimary.withOpacity(0),
                         ],
                       ),
                     ),
@@ -370,76 +449,35 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
           },
         ),
 
-        // Futuristic HUD Elements (Corners)
-        AnimatedBuilder(
-          animation: _fadeAnimation,
-          builder: (context, child) => Opacity(
-            opacity: _fadeAnimation.value,
-            child: _buildHUDelements(context),
-          ),
-        ),
-
-        // Flash (Top Left)
+        // Clean Hint Text Pill
         Positioned(
-          top: MediaQuery.of(context).padding.top + 20,
-          left: 20,
-          child: _buildCircleAction(
-            icon: _isFlashOn ? CupertinoIcons.bolt_fill : CupertinoIcons.bolt_slash_fill,
-            onTap: _toggleFlash,
-            color: _isFlashOn
-                ? const Color.fromARGB(255, 234, 234, 234).withOpacity(0.3)
-                : Colors.black38,
-            iconColor: _isFlashOn
-                ? const Color.fromARGB(255, 255, 255, 255)
-                : Colors.white,
-            tooltip: "Flash",
-          ),
-        ),
-
-        // Close (Top Right)
-        Positioned(
-          top: MediaQuery.of(context).padding.top + 20,
-          right: 20,
-          child: _buildCircleAction(
-            icon: CupertinoIcons.xmark,
-            onTap: () => Navigator.pop(context),
-            color: Colors.black38,
-            tooltip: "Tutup",
-          ),
-        ),
-
-        // Hint Text
-        Positioned(
-          top: (MediaQuery.of(context).size.height / 2) +
-              (MediaQuery.of(context).size.height * 0.42 / 2) -
-              40, // Recalculated for shorter border
+          top: (size.height / 2) + (rectHeight / 2) - 15,
           left: 0,
           right: 0,
           child: Center(
             child: ClipRRect(
               borderRadius: BorderRadius.circular(20),
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
+                    color: Colors.black.withOpacity(0.4),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.white.withOpacity(0.2)),
+                    border: Border.all(color: Colors.white.withOpacity(0.12)),
                   ),
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(CupertinoIcons.viewfinder,
-                          color: Colors.white, size: 18),
-                      SizedBox(width: 10),
+                      Icon(CupertinoIcons.viewfinder, color: _pastelPrimary, size: 16),
+                      SizedBox(width: 8),
                       Text(
                         "Posisikan struk di dalam kotak",
                         style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold),
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ],
                   ),
@@ -452,194 +490,150 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
     );
   }
 
-  Widget _buildHUDelements(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final rectWidth = size.width * 0.72;
-    final rectHeight = size.height * 0.42;
-    final rectLeft = (size.width - rectWidth) / 2;
-    final rectTop = (size.height - rectHeight) / 2 - 70;
-
-    return Stack(
-      children: [
-        // Target corner markers (HUD style)
-        Positioned(
-          left: rectLeft,
-          top: rectTop,
-          child: _buildHUDcorner(0), // Top Left
-        ),
-        Positioned(
-          right: rectLeft,
-          top: rectTop,
-          child: _buildHUDcorner(1), // Top Right
-        ),
-        Positioned(
-          right: rectLeft,
-          bottom: size.height - (rectTop + rectHeight),
-          child: _buildHUDcorner(2), // Bottom Right
-        ),
-        Positioned(
-          left: rectLeft,
-          bottom: size.height - (rectTop + rectHeight),
-          child: _buildHUDcorner(3), // Bottom Left
-        ),
-
-        // Small target crosshair in center
-        Center(
-          child: Transform.translate(
-            offset: const Offset(0, -70), // Match the -70 rectTop offset
-            child: Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.white12, width: 0.5),
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Container(width: 4, height: 4, color: Colors.white24),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHUDcorner(int quadrant) {
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        border: Border(
-          top: (quadrant == 0 || quadrant == 1)
-              ? const BorderSide(color: Colors.white30, width: 1)
-              : BorderSide.none,
-          bottom: (quadrant == 2 || quadrant == 3)
-              ? const BorderSide(color: Colors.white30, width: 1)
-              : BorderSide.none,
-          left: (quadrant == 0 || quadrant == 3)
-              ? const BorderSide(color: Colors.white30, width: 1)
-              : BorderSide.none,
-          right: (quadrant == 1 || quadrant == 2)
-              ? const BorderSide(color: Colors.white30, width: 1)
-              : BorderSide.none,
-        ),
-      ),
-    );
-  }
-
   Widget _buildControls(BuildContext context) {
     return Positioned(
       bottom: 0,
       left: 0,
       right: 0,
       child: Container(
-        padding: const EdgeInsets.only(bottom: 60, top: 40),
+        padding: const EdgeInsets.only(bottom: 50, top: 32),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Colors.transparent, Colors.black.withOpacity(0.5)],
+            colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
           ),
         ),
         child: Stack(
           alignment: Alignment.center,
           children: [
-            // Capture Button (Center)
-            GestureDetector(
+            // Shutter Button (Center)
+            _BouncingScaleButton(
               onTap: _takePicture,
               child: Container(
-                width: 80,
-                height: 80,
-                padding: const EdgeInsets.all(4),
+                width: 78,
+                height: 78,
+                padding: const EdgeInsets.all(5),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 3),
+                  border: Border.all(color: Colors.white.withOpacity(0.85), width: 3.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _pastelPrimary.withOpacity(0.25),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: Container(
                   decoration: const BoxDecoration(
-                    color: Colors.white,
+                    color: _pastelPrimary,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(CupertinoIcons.camera_fill,
-                      color: AppColors.primary, size: 36),
+                  child: const Icon(
+                    CupertinoIcons.camera_fill,
+                    color: Colors.white,
+                    size: 34,
+                  ),
                 ),
               ),
             ),
 
-            // Gallery (Bottom Right Corner as requested)
+            // Gallery Action Button (Bottom Right)
             Positioned(
-              right: 32,
+              right: 36,
               child: _buildCircleAction(
                 icon: CupertinoIcons.photo_fill,
                 onTap: _pickFromGallery,
-                color: Colors.white12,
+                color: Colors.black.withOpacity(0.4),
+                iconColor: Colors.white,
                 tooltip: "Galeri",
               ),
             ),
 
-            // AI Toggle (Bottom Left Corner)
+            // AI Mode Toggle Pill (Bottom Left)
             Positioned(
               left: 32,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    "AI Mode",
-                    style: TextStyle(
-                      color:
-                          _useAiAnalysis ? AppColors.primary : Colors.white54,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.35),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: _useAiAnalysis
+                            ? _pastelPrimary.withOpacity(0.4)
+                            : Colors.white.withOpacity(0.12),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          "AI",
+                          style: TextStyle(
+                            color: _useAiAnalysis ? _pastelPrimary : Colors.white60,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Transform.scale(
+                          scale: 0.8,
+                          child: Switch(
+                            value: _useAiAnalysis,
+                            onChanged: (val) async {
+                              if (val) {
+                                if (!_hasApiKey) {
+                                  UIHelper.showInfoDialog(
+                                      context,
+                                      'API Key Belum Diatur',
+                                      'Waduh, fitur AI Mode membutuhkan API Key. Silakan atur terlebih dahulu melalui fitur Chat AI.');
+                                  return;
+                                }
+
+                                final bool? confirm = await UIHelper.showConfirmDialog(
+                                  context: context,
+                                  title: 'Gunakan AI Mode?',
+                                  message:
+                                      'Analisis struk ini akan menggunakan API Key pribadi Anda yang telah disetel. Proses ini dapat memotong limit kuota API pihak ketiga Anda. Lanjutkan?',
+                                  confirmText: 'Lanjutkan',
+                                  cancelText: 'Batal',
+                                  isDangerous: false,
+                                );
+
+                                if (confirm == true && mounted) {
+                                  setState(() => _useAiAnalysis = true);
+                                  final prefs = await SharedPreferences.getInstance();
+                                  await prefs.setBool(
+                                      'receipt_scanner_use_ai_mode', true);
+                                } else if (mounted) {
+                                  setState(() => _useAiAnalysis = false);
+                                  final prefs = await SharedPreferences.getInstance();
+                                  await prefs.setBool(
+                                      'receipt_scanner_use_ai_mode', false);
+                                }
+                              } else {
+                                setState(() {
+                                  _useAiAnalysis = false;
+                                });
+                                final prefs = await SharedPreferences.getInstance();
+                                await prefs.setBool(
+                                    'receipt_scanner_use_ai_mode', false);
+                              }
+                            },
+                            activeColor: _pastelPrimary,
+                            inactiveThumbColor: Colors.white70,
+                            inactiveTrackColor: Colors.white24,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Switch(
-                    value: _useAiAnalysis,
-                    onChanged: (val) async {
-                      if (val) {
-                        if (!_hasApiKey) {
-                          UIHelper.showInfoDialog(
-                              context,
-                              'API Key Belum Diatur',
-                              'Waduh, fitur AI Mode membutuhkan API Key. Silakan atur terlebih dahulu melalui fitur Chat AI.');
-                          return;
-                        }
-
-                        final bool? confirm = await UIHelper.showConfirmDialog(
-                          context: context,
-                          title: 'Gunakan AI Mode?',
-                          message:
-                              'Analisis struk ini akan menggunakan API Key pribadi Anda yang telah disetel. Proses ini dapat memotong limit kuota API pihak ketiga Anda. Lanjutkan?',
-                          confirmText: 'Lanjutkan',
-                          cancelText: 'Batal',
-                          isDangerous: false,
-                        );
-
-                        if (confirm == true && mounted) {
-                          setState(() => _useAiAnalysis = true);
-                          final prefs = await SharedPreferences.getInstance();
-                          await prefs.setBool(
-                              'receipt_scanner_use_ai_mode', true);
-                        } else if (mounted) {
-                          setState(() => _useAiAnalysis = false);
-                          final prefs = await SharedPreferences.getInstance();
-                          await prefs.setBool(
-                              'receipt_scanner_use_ai_mode', false);
-                        }
-                      } else {
-                        setState(() {
-                          _useAiAnalysis = false;
-                        });
-                        final prefs = await SharedPreferences.getInstance();
-                        await prefs.setBool(
-                            'receipt_scanner_use_ai_mode', false);
-                      }
-                    },
-                    activeColor: AppColors.primary,
-                    inactiveThumbColor: Colors.white70,
-                    inactiveTrackColor: Colors.white24,
-                  ),
-                ],
+                ),
               ),
             ),
           ],
@@ -654,20 +648,59 @@ class _ReceiptScannerScreenState extends State<ReceiptScannerScreen>
       required Color color,
       Color iconColor = Colors.white,
       String? tooltip}) {
-    return InkWell(
+    return _BouncingScaleButton(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(30),
       child: Tooltip(
         message: tooltip ?? "",
-        child: Container(
-          width: 54,
-          height: 54,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(30),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+            child: Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white.withOpacity(0.12)),
+              ),
+              child: Icon(icon, color: iconColor, size: 24),
+            ),
           ),
-          child: Icon(icon, color: iconColor, size: 26),
         ),
+      ),
+    );
+  }
+}
+
+class _BouncingScaleButton extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onTap;
+
+  const _BouncingScaleButton({
+    required this.child,
+    required this.onTap,
+  });
+
+  @override
+  State<_BouncingScaleButton> createState() => _BouncingScaleButtonState();
+}
+
+class _BouncingScaleButtonState extends State<_BouncingScaleButton> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
+      onTap: widget.onTap,
+      child: AnimatedScale(
+        scale: _isPressed ? 0.94 : 1.0,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOutCubic,
+        child: widget.child,
       ),
     );
   }
@@ -680,20 +713,20 @@ class ScannerMaskPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.black.withOpacity(0.7);
+    final paint = Paint()..color = Colors.black.withOpacity(0.65);
 
-    // 1. Calculate the scanning rectangle
-    final rectWidth = size.width * 0.72;
-    final rectHeight = size.height * 0.42;
+    // Calculate scanning rectangle
+    final rectWidth = size.width * 0.76;
+    final rectHeight = size.height * 0.44;
     final rectLeft = (size.width - rectWidth) / 2;
-    final rectTop = (size.height - rectHeight) / 2 - 70;
+    final rectTop = (size.height - rectHeight) / 2 - 45;
 
     final scanRect = RRect.fromRectAndRadius(
       Rect.fromLTWH(rectLeft, rectTop, rectWidth, rectHeight),
-      const Radius.circular(19),
+      const Radius.circular(24),
     );
 
-    // 2. Draw the mask (background with hole)
+    // Draw dark background mask with smooth cutout
     canvas.drawPath(
       Path.combine(
         PathOperation.difference,
@@ -703,41 +736,42 @@ class ScannerMaskPainter extends CustomPainter {
       paint,
     );
 
-    // 3. Draw the border of the hole
+    // Draw smooth pastel corner lens brackets
     final borderPaint = Paint()
-      ..color = AppColors.primary
+      ..color = const Color(0xFF60A5FA)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3;
+      ..strokeWidth = 3.5
+      ..strokeCap = StrokeCap.round;
 
-    // We only draw the corners to make it look like a lens
-    final cornerLength = 40.0;
+    final cornerLength = 36.0;
+    final radius = 24.0;
     final path = Path();
 
-    // Top Left
+    // Top Left Corner
     path.moveTo(rectLeft, rectTop + cornerLength);
-    path.lineTo(rectLeft, rectTop + 12);
-    path.quadraticBezierTo(rectLeft, rectTop, rectLeft + 12, rectTop);
+    path.lineTo(rectLeft, rectTop + radius);
+    path.quadraticBezierTo(rectLeft, rectTop, rectLeft + radius, rectTop);
     path.lineTo(rectLeft + cornerLength, rectTop);
 
-    // Top Right
+    // Top Right Corner
     path.moveTo(rectLeft + rectWidth - cornerLength, rectTop);
-    path.lineTo(rectLeft + rectWidth - 12, rectTop);
+    path.lineTo(rectLeft + rectWidth - radius, rectTop);
     path.quadraticBezierTo(
-        rectLeft + rectWidth, rectTop, rectLeft + rectWidth, rectTop + 12);
+        rectLeft + rectWidth, rectTop, rectLeft + rectWidth, rectTop + radius);
     path.lineTo(rectLeft + rectWidth, rectTop + cornerLength);
 
-    // Bottom Right
+    // Bottom Right Corner
     path.moveTo(rectLeft + rectWidth, rectTop + rectHeight - cornerLength);
-    path.lineTo(rectLeft + rectWidth, rectTop + rectHeight - 12);
+    path.lineTo(rectLeft + rectWidth, rectTop + rectHeight - radius);
     path.quadraticBezierTo(rectLeft + rectWidth, rectTop + rectHeight,
-        rectLeft + rectWidth - 12, rectTop + rectHeight);
+        rectLeft + rectWidth - radius, rectTop + rectHeight);
     path.lineTo(rectLeft + rectWidth - cornerLength, rectTop + rectHeight);
 
-    // Bottom Left
+    // Bottom Left Corner
     path.moveTo(rectLeft + cornerLength, rectTop + rectHeight);
-    path.lineTo(rectLeft + 12, rectTop + rectHeight);
+    path.lineTo(rectLeft + radius, rectTop + rectHeight);
     path.quadraticBezierTo(
-        rectLeft, rectTop + rectHeight, rectLeft, rectTop + rectHeight - 12);
+        rectLeft, rectTop + rectHeight, rectLeft, rectTop + rectHeight - radius);
     path.lineTo(rectLeft, rectTop + rectHeight - cornerLength);
 
     canvas.drawPath(path, borderPaint);
